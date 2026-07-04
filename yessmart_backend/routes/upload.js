@@ -3,6 +3,7 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const { getBackendBaseUrl } = require("../utils/baseUrl");
 
 const uploadRoot = path.join(__dirname, "..", "uploads", "mart-products");
 const extensionFromMime = (mime = "") => {
@@ -44,7 +45,7 @@ function runUpload(req, res) {
 }
 
 function uploadUrl(filename) {
-  const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 8081}`;
+  const baseUrl = getBackendBaseUrl();
   return `${baseUrl}/uploads/mart-products/${filename}`;
 }
 

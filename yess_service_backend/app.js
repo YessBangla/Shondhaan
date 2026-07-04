@@ -6,21 +6,19 @@ dotenv.config();
 
 const app = express();
 
-const defaultCorsOrigins = [
-  "http://localhost:8080",
-  "http://localhost:5173",
-  "https://shondhaan.yessbd.top",
-  "https://www.shondhaan.yessbd.top",
-];
-
 const corsOrigin = [
-  ...new Set([
-    ...defaultCorsOrigins,
-    ...(process.env.CORS_ORIGIN || "")
-      .split(",")
-      .map((origin) => origin.trim())
-      .filter(Boolean),
-  ]),
+  ...new Set(
+    [
+      ...(process.env.CORS_ORIGIN || "")
+        .split(",")
+        .map((origin) => origin.trim())
+        .filter(Boolean),
+      process.env.FRONTEND_BASE_URL,
+      "http://localhost:5173",
+      "https://shondhaan.yessbd.top",
+      "https://www.shondhaan.yessbd.top",
+    ].filter(Boolean),
+  ),
 ];
 
 app.use(cors({ origin: corsOrigin, credentials: true }));

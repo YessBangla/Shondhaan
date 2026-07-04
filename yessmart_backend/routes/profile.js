@@ -3,6 +3,7 @@ const crypto = require("crypto");
 const fs = require("fs");
 const path = require("path");
 const pool = require("../db");
+const { getBackendBaseUrl } = require("../utils/baseUrl");
 
 const router = express.Router();
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
@@ -145,7 +146,7 @@ router.post("/:userId/image", requireAuth, requireProfileOwner, async (req, res)
     const fileName = `${req.profileUserId}-${Date.now()}.${ext}`;
     fs.writeFileSync(path.join(uploadDir, fileName), buffer);
 
-    const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 8081}`;
+    const baseUrl = getBackendBaseUrl();
     const profileImageUrl = `${baseUrl}/uploads/user-profiles/${fileName}`;
 
     await pool.query(

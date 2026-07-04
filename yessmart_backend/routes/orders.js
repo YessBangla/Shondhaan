@@ -2,6 +2,7 @@ const express = require("express");
 const axios = require("axios");
 const pool = require("../db");
 const { generateInvoiceNumber } = require("../utils/invoiceNumber");
+const { getBackendBaseUrl } = require("../utils/baseUrl");
 
 const router = express.Router();
 
@@ -61,7 +62,7 @@ const getSslCommerzConfig = () => {
   const isLive = String(process.env.SSLCOMMERZ_IS_LIVE || "").toLowerCase() === "true";
   const storeId = process.env.SSLCOMMERZ_STORE_ID || (!isLive ? "testbox" : "");
   const storePassword = process.env.SSLCOMMERZ_STORE_PASSWORD || process.env.SSLCOMMERZ_STORE_PASSWD || (!isLive ? "qwerty" : "");
-  const backendUrl = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 8081}`;
+  const backendUrl = getBackendBaseUrl();
   const frontendUrl = process.env.FRONTEND_URL || "http://localhost:8080";
 
   return {

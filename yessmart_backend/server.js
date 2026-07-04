@@ -43,6 +43,7 @@ const profileRoutes = require("./routes/profile");
 const wishlistRoutes = require("./routes/wishlist"); // Import the wishlist routes
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
 const { registerMartMessageSocket } = require("./socket/martMessages");
+const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
 const PORT = process.env.PORT || 8081;
 const server = http.createServer(app);
@@ -56,7 +57,17 @@ const io = new Server(server, {
 app.set("io", io);
 registerMartMessageSocket(io);
 
-app.use(cors());
+const corsOrigins = [process.env.FRONTEND_URL, process.env.CORS_ORIGIN]
+  .flatMap((value) => String(value || "").split(","))
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(
+  cors({
+    origin: corsOrigins,
+    credentials: true,
+  }),
+);
 // Needed for base64 JSON uploads (frontend sends { image: "data:image/...;base64,..." })
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -119,7 +130,8 @@ app.use("/api/delivery-requests", deliveryRequestsRouter);
 app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 server.listen(PORT, async () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  const backendBaseUrl = getBackendBaseUrl();
+  console.log(`Server running on ${backendBaseUrl}`);
 
   try {
     const connection = await pool.getConnection();

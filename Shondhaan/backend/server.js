@@ -7,6 +7,7 @@ import dotenv from "dotenv";
 import express from "express";
 import mysql from "mysql2/promise";
 import nodemailer from "nodemailer";
+import { getBackendBaseUrl } from "./utils/baseUrl.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -1601,7 +1602,8 @@ app.post("/api/auth/login", async (req, res) => {
 initDatabase()
   .then(() => {
     app.listen(PORT, () => {
-      console.log(`Server running on http://localhost:${PORT}`);
+      const backendBaseUrl = getBackendBaseUrl();
+      console.log(`Server running on ${backendBaseUrl}`);
     });
   })
   .catch((error) => {

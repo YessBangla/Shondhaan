@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const router = express.Router();
 const pool = require("../db");
+const { getBackendBaseUrl } = require("../utils/baseUrl");
 
 const USERS_DB_NAME =
   process.env.USERS_DB_NAME ||
@@ -138,7 +139,7 @@ router.post("/upload", express.json({ limit: "8mb" }), async (req, res) => {
     const buffer = Buffer.from(file, "base64");
     fs.writeFileSync(path.join(uploadDir, filename), buffer);
 
-    const url = `${process.env.API_BASE || "http://localhost:8081"}/uploads/delivery-kyc/${filename}`;
+    const url = `${getBackendBaseUrl()}/uploads/delivery-kyc/${filename}`;
     res.json({ success: true, url });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
