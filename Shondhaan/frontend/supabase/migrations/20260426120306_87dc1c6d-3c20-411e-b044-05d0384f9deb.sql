@@ -1,0 +1,1 @@
+UPDATE public.jobs SET company_logo_url = NULL WHERE company_logo_url LIKE '%clearbit%';

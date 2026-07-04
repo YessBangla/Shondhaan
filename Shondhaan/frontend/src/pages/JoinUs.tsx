@@ -1,0 +1,354 @@
+import { useState, useRef } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Send, X, Camera } from "lucide-react";
+import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { useLanguage } from "@/contexts/LanguageContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { useSEO } from "@/hooks/useSEO";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+
+const SERVICE_API_BASE_URL = INDIVIDUAL_API_BASE_URL;
+
+const categories = [
+  { value: "ac-service", bn: "এসি সার্ভিস", en: "AC Service" },
+  { value: "cleaning", bn: "ক্লিনিং", en: "Cleaning" },
+  { value: "electrical", bn: "ইলেকট্রিক্যাল", en: "Electrical" },
+  { value: "plumbing", bn: "প্লাম্বিং", en: "Plumbing" },
+  { value: "painting", bn: "পেইন্টিং", en: "Painting" },
+  { value: "appliance-repair", bn: "অ্যাপ্লায়েন্স রিপেয়ার", en: "Appliance Repair" },
+  { value: "beauty-salon", bn: "বিউটি ও সেলুন", en: "Beauty & Salon" },
+  { value: "pest-control", bn: "পেস্ট কন্ট্রোল", en: "Pest Control" },
+  { value: "shifting", bn: "শিফটিং", en: "Shifting" },
+  { value: "driver", bn: "ড্রাইভার", en: "Driver" },
+  { value: "other", bn: "অন্যান্য", en: "Other" },
+];
+
+const joinSchema = z.object({
+  full_name: z.string().trim().min(1, "Name is required").max(100),
+  phone: z.string().trim().min(1, "Phone is required").max(20),
+  email: z.string().trim().email("Invalid email").max(255).optional().or(z.literal("")),
+  address: z.string().trim().min(1, "Address is required").max(500),
+  service_category: z.string().min(1, "Category is required"),
+  experience_years: z.coerce.number().min(0).max(50).optional(),
+});
+
+type JoinForm = z.infer<typeof joinSchema>;
+
+const NidUpload = ({
+  label,
+  file,
+  onFileChange,
+  preview,
+}: {
+  label: string;
+  file: File | null;
+  onFileChange: (f: File | null) => void;
+  preview: string | null;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <p className="text-sm font-medium text-foreground">{label}</p>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="relative flex h-32 w-full items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 overflow-hidden"
+      >
+        {preview ? (
+          <>
+            <img src={preview} alt={label} className="h-full w-full object-contain" />
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onFileChange(null);
+              }}
+              className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+            >
+              <X className="h-3 w-3" />
+            </button>
+          </>
+        ) : (
+          <div className="flex flex-col items-center gap-1 text-muted-foreground">
+            <Camera className="h-6 w-6" />
+            <span className="text-xs">ছবি আপলোড করুন</span>
+          </div>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0] ?? null;
+          if (f && f.size > 5 * 1024 * 1024) {
+            toast.error("ফাইল সাইজ ৫MB এর বেশি হতে পারবে না");
+            return;
+          }
+          onFileChange(f);
+        }}
+      />
+    </div>
+  );
+};
+
+const JoinUs = () => {
+  const { language } = useLanguage();
+  const bn = language === "bn";
+  const [submitting, setSubmitting] = useState(false);
+  const [nidFront, setNidFront] = useState<File | null>(null);
+  const [nidBack, setNidBack] = useState<File | null>(null);
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [backPreview, setBackPreview] = useState<string | null>(null);
+
+  useSEO({
+    title: bn ? "আমাদের সাথে যোগ দিন" : "Join Us — Become a Provider",
+    description: bn
+      ? "Yess Service টিমে যোগ দিন — সার্ভিস প্রোভাইডার হিসেবে আবেদন করুন এবং আপনার আয় বাড়ান।"
+      : "Join the Yess Service team — apply as a service provider and grow your income.",
+    canonical: "/join",
+    locale: bn ? "bn_BD" : "en_US",
+  });
+
+  const form = useForm<JoinForm>({
+    resolver: zodResolver(joinSchema),
+    defaultValues: {
+      full_name: "",
+      phone: "",
+      email: "",
+      address: "",
+      service_category: "",
+      experience_years: 0,
+    },
+  });
+
+  const handleFileChange = (side: "front" | "back") => (file: File | null) => {
+    if (side === "front") {
+      setNidFront(file);
+      setFrontPreview(file ? URL.createObjectURL(file) : null);
+    } else {
+      setNidBack(file);
+      setBackPreview(file ? URL.createObjectURL(file) : null);
+    }
+  };
+
+  const uploadFile = async (file: File, prefix: string): Promise<string> => {
+    const ext = file.name.split(".").pop() || "jpg";
+    const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase.storage.from("applications").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+    if (error) throw error;
+    // Return path (admins will use authenticated URL to view)
+    return path;
+  };
+
+  const onSubmit = async (data: JoinForm) => {
+    if (!nidFront || !nidBack) {
+      toast.error(bn ? "এনআইডির দুই পাশের ছবি আপলোড করুন" : "Please upload both sides of NID");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const [frontPath, backPath] = await Promise.all([
+        uploadFile(nidFront, "nid-front"),
+        uploadFile(nidBack, "nid-back"),
+      ]);
+
+      const { error } = await supabase.from("job_applications" as any).insert({
+        full_name: data.full_name,
+        phone: data.phone,
+        email: data.email || null,
+        address: data.address,
+        service_category: data.service_category,
+        experience_years: data.experience_years || 0,
+        nid_front_url: frontPath,
+        nid_back_url: backPath,
+      } as any);
+
+      if (error) throw error;
+
+      toast.success(bn ? "আপনার আবেদন সফলভাবে জমা হয়েছে!" : "Your application has been submitted!");
+      form.reset();
+      setNidFront(null);
+      setNidBack(null);
+      setFrontPreview(null);
+      setBackPreview(null);
+    } catch (err: any) {
+      toast.error(bn ? "আবেদন জমা দিতে সমস্যা হয়েছে" : "Failed to submit application");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="pt-[44px] md:pt-[104px]" />
+
+      <div className="mx-auto max-w-2xl px-4 md:px-6 py-8 md:py-14">
+        <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground text-center">
+          {bn ? "আমাদের সাথে যোগ দিন" : "Join Our Team"}
+        </h1>
+        <p className="mt-2 text-center text-sm text-muted-foreground max-w-md mx-auto">
+          {bn
+            ? "দক্ষ সার্ভিস প্রোভাইডার হিসেবে Yess Service-এ যোগ দিন। নিচের ফর্মটি পূরণ করুন।"
+            : "Join Yess Service as a skilled service provider. Fill out the form below."}
+        </p>
+
+        <div className="mt-8 rounded-xl border border-border bg-card p-5 md:p-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="full_name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{bn ? "পুরো নাম" : "Full Name"} *</FormLabel>
+                    <FormControl>
+                      <Input placeholder={bn ? "আপনার পুরো নাম" : "Your full name"} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{bn ? "ফোন নম্বর" : "Phone"} *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="01XXXXXXXXX" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{bn ? "ইমেইল (ঐচ্ছিক)" : "Email (optional)"}</FormLabel>
+                      <FormControl>
+                        <Input type="email" placeholder={bn ? "আপনার ইমেইল" : "Your email"} {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <FormField
+                control={form.control}
+                name="address"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>{bn ? "ঠিকানা" : "Address"} *</FormLabel>
+                    <FormControl>
+                      <Textarea rows={2} placeholder={bn ? "আপনার বর্তমান ঠিকানা" : "Your current address"} {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="service_category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{bn ? "সেবার ক্যাটেগরি" : "Service Category"} *</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder={bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select category"} />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {bn ? c.bn : c.en}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="experience_years"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>{bn ? "অভিজ্ঞতা (বছর)" : "Experience (years)"}</FormLabel>
+                      <FormControl>
+                        <Input type="number" min={0} max={50} placeholder="0" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* NID Upload */}
+              <div>
+                <p className="text-sm font-semibold text-foreground mb-3">
+                  {bn ? "জাতীয় পরিচয়পত্র (NID) আপলোড করুন *" : "Upload National ID (NID) *"}
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                  <NidUpload
+                    label={bn ? "সামনের পাশ" : "Front Side"}
+                    file={nidFront}
+                    onFileChange={handleFileChange("front")}
+                    preview={frontPreview}
+                  />
+                  <NidUpload
+                    label={bn ? "পেছনের পাশ" : "Back Side"}
+                    file={nidBack}
+                    onFileChange={handleFileChange("back")}
+                    preview={backPreview}
+                  />
+                </div>
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
+                  {bn ? "সর্বোচ্চ ৫MB, JPG/PNG ফরম্যাট" : "Max 5MB, JPG/PNG format"}
+                </p>
+              </div>
+
+              <Button type="submit" disabled={submitting} className="w-full gap-2 mt-2">
+                <Send className="h-4 w-4" />
+                {submitting
+                  ? (bn ? "জমা দেওয়া হচ্ছে..." : "Submitting...")
+                  : (bn ? "আবেদন জমা দিন" : "Submit Application")}
+              </Button>
+            </form>
+          </Form>
+        </div>
+      </div>
+
+      <Footer />
+      <div className="h-16 md:hidden" />
+    </div>
+  );
+};
+
+export default JoinUs;

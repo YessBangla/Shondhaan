@@ -1,0 +1,513 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Pacifico&family=Hind+Siliguri:wght@700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 210 20% 98%;
+    --foreground: 210 11% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 11% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 11% 15%;
+
+    --primary: 152 60% 38%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 150 20% 95%;
+    --secondary-foreground: 210 11% 15%;
+
+    --muted: 210 10% 96%;
+    --muted-foreground: 215 14% 50%;
+
+    --accent: 152 60% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 92%;
+    --input: 214 20% 92%;
+    --ring: 152 60% 38%;
+
+    --radius: 0.75rem;
+
+    --sidebar-background: 0 0% 99%;
+    --sidebar-foreground: 210 11% 15%;
+    --sidebar-primary: 152 60% 38%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 150 20% 95%;
+    --sidebar-accent-foreground: 210 11% 15%;
+    --sidebar-border: 214 20% 92%;
+    --sidebar-ring: 152 60% 38%;
+
+    /* Custom tokens */
+    --primary-light: 152 55% 92%;
+    --primary-dark: 152 65% 30%;
+
+    /* Mobile accent (per mobile mockup) */
+    --mobile-accent: 258 70% 58%;
+    --mobile-accent-foreground: 0 0% 100%;
+    --mobile-accent-soft: 258 100% 97%;
+
+    /* Glass tokens */
+    --glass-bg: 0 0% 100% / 0.65;
+    --glass-border: 0 0% 100% / 0.45;
+    --glass-blur: 20px;
+    --glass-shadow: 0 8px 32px 0 hsl(210 11% 15% / 0.08);
+    --glass-bg-strong: 0 0% 100% / 0.82;
+    --glass-bg-subtle: 0 0% 100% / 0.45;
+  }
+
+  .dark {
+    --background: 220 16% 8%;
+    --foreground: 210 15% 92%;
+
+    --card: 220 14% 12%;
+    --card-foreground: 210 15% 92%;
+
+    --popover: 220 14% 12%;
+    --popover-foreground: 210 15% 92%;
+
+    --primary: 152 55% 48%;
+    --primary-foreground: 210 20% 8%;
+
+    --secondary: 220 12% 18%;
+    --secondary-foreground: 210 15% 92%;
+
+    --muted: 220 12% 16%;
+    --muted-foreground: 215 12% 65%;
+
+    --accent: 152 55% 48%;
+    --accent-foreground: 210 20% 8%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 12% 22%;
+    --input: 220 12% 22%;
+    --ring: 152 55% 48%;
+
+    --sidebar-background: 220 16% 10%;
+    --sidebar-foreground: 210 15% 92%;
+    --sidebar-primary: 152 55% 48%;
+    --sidebar-primary-foreground: 210 20% 8%;
+    --sidebar-accent: 220 12% 18%;
+    --sidebar-accent-foreground: 210 15% 92%;
+    --sidebar-border: 220 12% 22%;
+    --sidebar-ring: 152 55% 48%;
+
+    --primary-light: 152 40% 18%;
+    --primary-dark: 152 60% 60%;
+
+    --mobile-accent: 258 70% 68%;
+    --mobile-accent-foreground: 210 20% 8%;
+    --mobile-accent-soft: 258 30% 18%;
+
+    --glass-bg: 220 14% 14% / 0.65;
+    --glass-border: 220 12% 30% / 0.45;
+    --glass-shadow: 0 8px 32px 0 hsl(0 0% 0% / 0.4);
+    --glass-bg-strong: 220 14% 14% / 0.85;
+    --glass-bg-subtle: 220 14% 14% / 0.45;
+  }
+
+  .dark body {
+    background-image:
+      radial-gradient(ellipse at 20% 50%, hsl(152 60% 38% / 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(210 60% 60% / 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, hsl(280 50% 60% / 0.06) 0%, transparent 50%);
+  }
+
+  /* Mobile dark — keep purple accent but darker bg already applied via .dark */
+  @media (max-width: 767px) {
+    .dark {
+      --primary: 258 70% 68%;
+      --primary-foreground: 210 20% 8%;
+      --ring: 258 70% 68%;
+      --accent: 258 70% 68%;
+    }
+  }
+}
+
+/* Mobile-first: override primary to purple on small screens */
+@media (max-width: 767px) {
+  :root {
+    --primary: 258 70% 58%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 258 70% 58%;
+    --accent: 258 70% 58%;
+    --accent-foreground: 0 0% 100%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body antialiased;
+    background-image: 
+      radial-gradient(ellipse at 20% 50%, hsl(152 60% 38% / 0.06) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, hsl(210 60% 60% / 0.05) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 100%, hsl(280 50% 60% / 0.04) 0%, transparent 50%);
+    background-attachment: fixed;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading;
+  }
+}
+
+@layer utilities {
+  .text-gradient-green {
+    background: linear-gradient(135deg, hsl(152 60% 38%), hsl(152 55% 48%));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .card-cinematic {
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-cinematic::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      180deg,
+      transparent 0%,
+      transparent 30%,
+      hsl(210 11% 15% / 0.5) 65%,
+      hsl(210 11% 15% / 0.9) 100%
+    );
+    pointer-events: none;
+  }
+
+  /* Glassmorphism utilities */
+  .glass {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-strong {
+    background: hsl(var(--glass-bg-strong));
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: var(--glass-shadow);
+  }
+
+  .glass-subtle {
+    background: hsl(var(--glass-bg-subtle));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid hsl(0 0% 100% / 0.3);
+    box-shadow: 0 4px 16px 0 hsl(210 11% 15% / 0.05);
+  }
+
+  .glass-card {
+    background: hsl(var(--glass-bg));
+    backdrop-filter: blur(var(--glass-blur));
+    -webkit-backdrop-filter: blur(var(--glass-blur));
+    border: 1px solid hsl(var(--glass-border));
+    box-shadow: 
+      var(--glass-shadow),
+      inset 0 1px 0 0 hsl(0 0% 100% / 0.2);
+  }
+
+  .glass-nav {
+    background: hsl(var(--glass-bg-strong));
+    backdrop-filter: blur(28px) saturate(1.5);
+    -webkit-backdrop-filter: blur(28px) saturate(1.5);
+    border-bottom: 1px solid hsl(var(--glass-border));
+    box-shadow: 0 1px 16px 0 hsl(210 11% 15% / 0.06);
+  }
+}
+
+/* ===== Global readable typography for all panels & sections ===== */
+
+/* Bump small text sizes globally for readability */
+.text-xs  { font-size: 0.8125rem !important; line-height: 1.5 !important; }
+.text-\[10px\] { font-size: 0.75rem !important; line-height: 1.4 !important; }
+.text-\[11px\] { font-size: 0.8125rem !important; line-height: 1.45 !important; }
+.text-\[9px\]  { font-size: 0.6875rem !important; line-height: 1.4 !important; }
+.text-sm  { font-size: 0.9375rem !important; line-height: 1.55 !important; }
+
+/* Table cells — more padding & readable size */
+td, th {
+  font-size: 0.875rem;
+  padding-top: 0.625rem;
+  padding-bottom: 0.625rem;
+}
+
+/* Form inputs & labels — comfortable reading size */
+input, textarea, select, [role="combobox"] {
+  font-size: 0.9375rem !important;
+}
+
+label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+/* Badge readability */
+[class*="Badge"], .badge {
+  font-size: 0.75rem !important;
+  padding: 0.2rem 0.5rem;
+}
+
+/* Mobile app-like behavior */
+@media (max-width: 767px) {
+  html {
+    overscroll-behavior-y: contain;
+    -webkit-tap-highlight-color: transparent;
+    /* Prevent iOS auto-zoom on input focus by ensuring 16px font baseline */
+    text-size-adjust: 100%;
+    -webkit-text-size-adjust: 100%;
+  }
+  
+  body {
+    -webkit-user-select: none;
+    user-select: text;
+    overscroll-behavior: contain;
+    /* Smoother momentum & inertia on iOS */
+    scroll-behavior: smooth;
+  }
+
+  /* iOS auto-zoom prevention: inputs must be ≥16px on focus */
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  /* WCAG 2.5.5 — minimum 44×44 touch target for interactive controls
+     (only when not explicitly sized smaller via inline classes) */
+  button:not([class*="h-3"]):not([class*="h-4"]):not([class*="h-5"]):not([class*="h-6"]):not([class*="h-7"]):not([class*="h-8"]):not([class*="size-"]),
+  a[role="button"]:not([class*="h-"]) {
+    min-height: 44px;
+  }
+
+  /* Disable text selection on UI chrome to feel native */
+  nav, header, [role="tablist"], [role="navigation"] {
+    -webkit-user-select: none;
+    user-select: none;
+  }
+
+  /* Smooth scrolling for iOS */
+  .overflow-y-auto,
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .overflow-y-auto::-webkit-scrollbar,
+  .overflow-x-auto::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Hide focus ring on mouse, keep on keyboard for a11y */
+  *:focus { outline: none; }
+  *:focus-visible {
+    outline: 2px solid hsl(var(--ring));
+    outline-offset: 2px;
+    border-radius: 8px;
+  }
+
+  /* Use dynamic viewport height to avoid iOS Safari URL-bar jumps */
+  .min-h-screen { min-height: 100svh; min-height: 100dvh; }
+  .h-screen     { height: 100svh; height: 100dvh; }
+}
+
+/* ───────── Native-feel utilities (all viewports) ───────── */
+@layer utilities {
+  /* App-like press: scale + faint opacity, hardware-accelerated */
+  .press {
+    -webkit-tap-highlight-color: transparent;
+    transition: transform 140ms cubic-bezier(0.2, 0.8, 0.2, 1), opacity 140ms;
+    will-change: transform;
+    touch-action: manipulation;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  .press:active { transform: scale(0.96); opacity: 0.85; }
+
+  /* Snap horizontal scroll for category rails */
+  .snap-x-mobile {
+    scroll-snap-type: x mandatory;
+    -webkit-overflow-scrolling: touch;
+    scroll-padding-left: 1rem;
+  }
+  .snap-x-mobile > * { scroll-snap-align: start; }
+
+  /* Hide scrollbars but keep scroll */
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+
+  /* iOS-style bottom-sheet handle */
+  .sheet-handle {
+    width: 36px;
+    height: 4px;
+    border-radius: 9999px;
+    background: hsl(var(--muted-foreground) / 0.35);
+    margin: 6px auto 8px;
+  }
+
+  /* Reduced motion respect */
+  @media (prefers-reduced-motion: reduce) {
+    .press, .tappable, .animate-pulse, .animate-pulse-slow {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+}
+
+/* Image optimization */
+img {
+  content-visibility: auto;
+  image-rendering: auto;
+}
+
+img[loading="lazy"] {
+  background: hsl(var(--muted));
+}
+
+/* ───────── Safe-area helpers (notched phones) ───────── */
+.safe-top    { padding-top: env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left   { padding-left: env(safe-area-inset-left); }
+.safe-right  { padding-right: env(safe-area-inset-right); }
+.safe-bottom-nav {
+  /* For floating bottom nav: keep above iOS home indicator */
+  padding-bottom: max(env(safe-area-inset-bottom), 0px);
+}
+
+/* Subtle press feedback for app-like buttons */
+.tappable {
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 120ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.tappable:active { transform: scale(0.97); }
+
+/* ───────── Yess Service brand watermark on service/product imagery ─────────
+   Add the `yess-wm` class to any *positioned* container that already wraps an
+   <img> (e.g. `.relative.overflow-hidden`). It renders a small frosted-glass
+   logo badge in the bottom-right corner. */
+.yess-wm {
+  position: relative;
+  isolation: isolate;
+}
+.yess-wm::after {
+  content: "";
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  z-index: 2;
+  pointer-events: none;
+  width: 52px;
+  height: 22px;
+  border-radius: 9999px;
+  background: hsl(0 0% 100% / 0.78);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  box-shadow:
+    0 1px 0 hsl(0 0% 100% / 0.6) inset,
+    0 2px 6px -2px hsl(0 0% 0% / 0.18);
+  border: 1px solid hsl(0 0% 100% / 0.6);
+}
+.yess-wm::before {
+  content: "";
+  position: absolute;
+  right: 10px;
+  bottom: 9px;
+  z-index: 3;
+  pointer-events: none;
+  width: 44px;
+  height: 16px;
+  background-image: url("/yess-service-logo.png");
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  opacity: 0.95;
+  filter: drop-shadow(0 1px 1px hsl(0 0% 0% / 0.18));
+}
+/* Smaller variant for tiny thumbnails (compare bar, chips) */
+.yess-wm-sm::after {
+  width: 30px;
+  height: 14px;
+  right: 3px;
+  bottom: 3px;
+}
+.yess-wm-sm::before {
+  width: 24px;
+  height: 10px;
+  right: 6px;
+  bottom: 5px;
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+
+/* ───────── Yess Deal — Bikroy.com inspired theme ─────────
+   Applied via <body class="deal-theme"> on /deal routes.
+   Bikroy uses a fresh green primary (#62B146) on a clean white surface
+   with light gray cards. We override the semantic tokens so every
+   Tailwind class (bg-primary, text-primary, ring, etc.) re-themes
+   automatically without touching individual components. The Yess Deal
+   logo and brand wordmark remain unchanged. */
+body.deal-theme {
+  --primary: 102 45% 49%;            /* #62B146 Bikroy green */
+  --primary-foreground: 0 0% 100%;
+  --primary-light: 102 55% 94%;
+  --primary-dark: 102 50% 38%;
+
+  --accent: 102 45% 49%;
+  --accent-foreground: 0 0% 100%;
+
+  --ring: 102 45% 49%;
+
+  --secondary: 102 30% 96%;
+  --secondary-foreground: 102 30% 18%;
+
+  --background: 0 0% 100%;
+  --foreground: 210 11% 15%;
+  --muted: 210 14% 96%;
+  --muted-foreground: 215 12% 45%;
+  --border: 214 18% 90%;
+  --input: 214 18% 90%;
+
+  background-image: none;
+}
+
+body.deal-theme.dark,
+.dark body.deal-theme {
+  --primary: 102 50% 55%;
+  --primary-foreground: 210 20% 8%;
+  --accent: 102 50% 55%;
+  --ring: 102 50% 55%;
+  --secondary: 102 25% 16%;
+}
+
+/* Mobile: keep Bikroy green even though global mobile override sets purple */
+@media (max-width: 767px) {
+  body.deal-theme {
+    --primary: 102 45% 49%;
+    --primary-foreground: 0 0% 100%;
+    --ring: 102 45% 49%;
+    --accent: 102 45% 49%;
+    --accent-foreground: 0 0% 100%;
+  }
+  .dark body.deal-theme {
+    --primary: 102 50% 60%;
+    --ring: 102 50% 60%;
+    --accent: 102 50% 60%;
+  }
+}
