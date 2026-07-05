@@ -125,6 +125,13 @@ const parsePaymentPayload = (value) => {
   }
 };
 
+const normalizeLookupValue = (value) => {
+  if (Array.isArray(value)) return value[0] ?? null;
+  if (value === undefined || value === null) return null;
+  const normalized = String(value).trim();
+  return normalized ? normalized : null;
+};
+
 const getBooking = async (id) => {
   const [rows] = await pool.execute(
     `
@@ -138,30 +145,49 @@ const getBooking = async (id) => {
   return rows[0] || null;
 };
 
-const getBookingByPaymentRef = async ({ bookingId, orderId }) => {
-  if (bookingId) return getBooking(bookingId);
-  if (!orderId) return null;
-
-  const [rows] = await pool.execute(
-    `
-    SELECT *
-    FROM bookings
-    WHERE payment_order_id = ?
-       OR payment_payload LIKE ?
-       OR payment_payload LIKE ?
-       OR payment_payload LIKE ?
-    ORDER BY created_at DESC
-    LIMIT 1
-    `,
-    [
-      orderId,
-      `%"customer_order_id":"${orderId}"%`,
-      `%"gateway_order_id":"${orderId}"%`,
-      `%"sp_order_id":"${orderId}"%`,
-    ]
+const getBookingByPaymentRef = async ({ bookingId, orderId, lookupValues = [] }) => {
+  const candidates = Array.from(
+    new Set(
+      [bookingId, orderId, ...lookupValues]
+        .map(normalizeLookupValue)
+        .filter(Boolean)
+    )
   );
 
-  return rows[0] || null;
+  for (const candidate of candidates) {
+    const booking = await getBooking(candidate);
+    if (booking) return booking;
+  }
+
+  for (const candidate of candidates) {
+    const escapedCandidate = String(candidate).replace(/'/g, "''");
+    const [rows] = await pool.execute(
+      `
+      SELECT *
+      FROM bookings
+      WHERE payment_order_id = ?
+         OR payment_payload LIKE ?
+         OR payment_payload LIKE ?
+         OR payment_payload LIKE ?
+         OR payment_payload LIKE ?
+         OR payment_payload LIKE ?
+      ORDER BY created_at DESC
+      LIMIT 1
+      `,
+      [
+        candidate,
+        `%"customer_order_id":"${escapedCandidate}"%`,
+        `%"gateway_order_id":"${escapedCandidate}"%`,
+        `%"sp_order_id":"${escapedCandidate}"%`,
+        `%"order_id":"${escapedCandidate}"%`,
+        `%"invoice_no":"${escapedCandidate}"%`,
+      ]
+    );
+
+    if (rows[0]) return rows[0];
+  }
+
+  return null;
 };
 
 const verifyShurjopayBooking = async ({ booking, orderId }) => {
@@ -257,6 +283,7 @@ export const initiateBookingPayment = async (req, res) => {
 
     const returnUrl = appendQuery(`${serviceBackendBaseUrl(req)}/api/bookings/payment/return`, {
       booking_id: booking.id,
+      order_id: customerOrderId,
     });
     const cancelUrl = appendQuery(`${serviceBackendBaseUrl(req)}/api/bookings/payment/cancel`, {
       booking_id: booking.id,
@@ -357,8 +384,12 @@ export const verifyBookingPayment = async (req, res) => {
       req.query.orderId ||
       req.body.sp_order_id ||
       req.query.sp_order_id;
+    const lookupValues = Object.values({ ...req.body, ...req.query })
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .map(normalizeLookupValue)
+      .filter(Boolean);
 
-    const booking = await getBookingByPaymentRef({ bookingId, orderId });
+    const booking = await getBookingByPaymentRef({ bookingId, orderId, lookupValues });
 
     if (!booking) {
       return res.status(404).json({ message: "Booking payment not found" });
@@ -389,8 +420,12 @@ export const handleBookingPaymentReturn = async (req, res) => {
       req.query.orderId ||
       req.query.sp_order_id ||
       req.query.invoice_no;
+    const lookupValues = Object.values(req.query)
+      .flatMap((value) => (Array.isArray(value) ? value : [value]))
+      .map(normalizeLookupValue)
+      .filter(Boolean);
 
-    const booking = await getBookingByPaymentRef({ bookingId, orderId });
+    const booking = await getBookingByPaymentRef({ bookingId, orderId, lookupValues });
 
     if (!booking) {
       return res.redirect(frontendUrl("PAYMENT_FAILED_REDIRECT_URL", "/payment-failed", {

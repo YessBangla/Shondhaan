@@ -32,6 +32,7 @@ import VideoProviderPreview from "@/components/VideoProviderPreview";
 import AIReviewSummary from "@/components/AIReviewSummary";
 import { useState, useEffect } from "react";
 import { format } from "date-fns";
+import { useQuery } from "@tanstack/react-query";
 import { getServiceBySlug, allServices } from "@/data/services";
 import { getServiceImage } from "@/data/serviceImages";
 import { serviceCategories } from "@/data/categories";
@@ -45,17 +46,9 @@ import {
   BreadcrumbPage,
 } from "@/components/ui/breadcrumb";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { useCart } from "@/contexts/CartContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useLocation } from "@/contexts/LocationContext";
-import {
-  useCmsServices,
-  useCmsPackages,
-  useCmsCategories,
-  CmsService,
-} from "@/hooks/useCmsData";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -69,6 +62,204 @@ import StickyBottomCTA from "@/components/StickyBottomCTA";
 import { useSEO } from "@/hooks/useSEO";
 import { createBooking, startBookingPayment } from "@/lib/bookingApi";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import {
+  createReview,
+  deleteReview,
+  listServiceReviews,
+} from "@/lib/reviewApi";
+
+type CmsService = {
+  id: string;
+  slug: string;
+  title: string;
+  title_en?: string | null;
+  image_url?: string | null;
+  description?: string | null;
+  rating?: number;
+  total_reviews?: number;
+  total_orders?: number;
+  commission_percent?: number;
+  features?: string[];
+  available_cities?: string[];
+  category_id?: string | null;
+  is_active?: boolean;
+  sort_order?: number;
+  price?: number;
+  color_overlay?: string;
+};
+
+type ServiceReview = {
+  id: string;
+  service_slug?: string;
+  user_id?: number | string;
+  rating: number;
+  reviewer_name?: string;
+  comment?: string | null;
+  created_at?: string;
+};
+
+const SERVICE_API_BASE_URL = (
+  INDIVIDUAL_API_BASE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
+
+const getServiceApiHeaders = () => {
+  const auth = getMySqlAuth();
+
+  return {
+    "Content-Type": "application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+  };
+};
+
+const parseList = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value !== "string") return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+  } catch {
+    // fallback to comma separated string
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const getPayload = (raw: any) =>
+  raw?.data ?? raw?.service ?? raw?.item ?? raw?.result ?? raw;
+
+const normalizeCmsService = (raw: any): CmsService | null => {
+  const service = Array.isArray(raw) ? raw[0] : getPayload(raw);
+  if (!service || typeof service !== "object") return null;
+
+  return {
+    ...service,
+    id: String(service.id ?? ""),
+    slug: String(service.slug ?? ""),
+    title: String(service.title ?? service.name ?? ""),
+    title_en: service.title_en ?? service.name_en ?? null,
+    image_url: service.image_url ?? service.image ?? null,
+    description: service.description ?? null,
+    rating: Number(service.rating ?? 4.5),
+    total_reviews: Number(service.total_reviews ?? service.reviews_count ?? 0),
+    total_orders: Number(service.total_orders ?? service.orders_count ?? 0),
+    commission_percent: Number(service.commission_percent ?? 0),
+    features: parseList(service.features),
+    available_cities: parseList(service.available_cities),
+    category_id:
+      service.category_id === undefined || service.category_id === null
+        ? null
+        : String(service.category_id),
+    is_active:
+      service.is_active === false || service.is_active === 0 ? false : true,
+    sort_order: Number(service.sort_order ?? 0),
+    price: Number(service.price ?? 0),
+  };
+};
+
+const normalizePackages = (raw: any): any[] => {
+  const payload = getPayload(raw);
+
+  const packages =
+    raw?.packages ??
+    raw?.service_packages ??
+    raw?.data?.packages ??
+    raw?.data?.service_packages ??
+    payload?.packages ??
+    payload?.service_packages ??
+    (Array.isArray(payload) ? payload : []);
+
+  if (!Array.isArray(packages)) return [];
+
+  return packages.map((pkg) => ({
+    ...pkg,
+    id: pkg.id === undefined || pkg.id === null ? undefined : String(pkg.id),
+    service_id:
+      pkg.service_id === undefined || pkg.service_id === null
+        ? undefined
+        : String(pkg.service_id),
+    name: pkg.name ?? pkg.package_name ?? "Basic Service",
+    price: Number(pkg.price ?? 0),
+    original_price:
+      pkg.original_price === undefined ||
+      pkg.original_price === null ||
+      pkg.original_price === ""
+        ? null
+        : Number(pkg.original_price),
+    features: parseList(pkg.features),
+    sort_order: Number(pkg.sort_order ?? 0),
+  }));
+};
+
+const makePricePackage = (service: CmsService | null): any[] => {
+  const price = Number(service?.price ?? 0);
+  if (!service || !Number.isFinite(price) || price <= 0) return [];
+
+  return [
+    {
+      id: `${service.id || service.slug}-default-package`,
+      service_id: service.id,
+      name: "Basic Service",
+      price,
+      original_price: null,
+      features: Array.isArray(service.features) ? service.features : [],
+      sort_order: 0,
+    },
+  ];
+};
+
+const useServiceBySlug = (slug?: string) =>
+  useQuery({
+    queryKey: ["service-detail-by-slug", slug],
+    queryFn: async () => {
+      const response = await fetch(
+        `${SERVICE_API_BASE_URL}/api/services/${encodeURIComponent(
+          slug || ""
+        )}`,
+        { headers: getServiceApiHeaders() }
+      );
+
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || "Service load failed");
+      }
+
+      return {
+        service: normalizeCmsService(json),
+        packages: normalizePackages(json),
+      };
+    },
+    enabled: !!slug,
+    retry: 1,
+  });
+
+const useServicePackages = (serviceId?: string, enabled = true) =>
+  useQuery({
+    queryKey: ["service-detail-packages", serviceId],
+    queryFn: async () => {
+      const response = await fetch(
+        `${SERVICE_API_BASE_URL}/api/packages?service_id=${encodeURIComponent(
+          serviceId || ""
+        )}`,
+        { headers: getServiceApiHeaders() }
+      );
+
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(json?.message || "Package load failed");
+      }
+
+      return normalizePackages(json);
+    },
+    enabled: !!serviceId && enabled,
+    retry: 1,
+  });
 
 const ServiceDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -79,14 +270,44 @@ const ServiceDetail = () => {
   const bn = language === "bn";
   const [selectedPackage, setSelectedPackage] = useState<number>(0);
 
-  const { data: cmsServices = [] } = useCmsServices();
-  const { data: cmsCategories = [] } = useCmsCategories();
-  const cmsService = cmsServices.find((s) => s.slug === slug && s.is_active);
+  const serviceDetailQuery = useServiceBySlug(slug);
+  const cmsService = serviceDetailQuery.data?.service || null;
+  const servicePackagesQuery = useServicePackages(cmsService?.id);
 
   const legacyService = getServiceBySlug(slug || "");
-  const useCms = !!cmsService;
 
-  const { data: cmsPackages = [] } = useCmsPackages(cmsService?.id);
+  const fallbackPackages = makePricePackage(cmsService);
+
+  const servicePackages =
+    (servicePackagesQuery.data && servicePackagesQuery.data.length > 0
+      ? servicePackagesQuery.data
+      : serviceDetailQuery.data?.packages) || [];
+
+  const canUseFallbackPackage =
+    !!cmsService &&
+    !servicePackagesQuery.isLoading &&
+    servicePackages.length === 0;
+
+  const cmsPackages =
+    servicePackages.length > 0
+      ? servicePackages
+      : canUseFallbackPackage
+      ? fallbackPackages
+      : [];
+
+  if (serviceDetailQuery.isLoading && !legacyService) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <div className="pt-[44px] md:pt-[104px] flex items-center justify-center min-h-[60vh] px-4">
+          <p className="text-sm text-muted-foreground">
+            {bn ? "সেবা লোড হচ্ছে..." : "Loading service..."}
+          </p>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!cmsService && !legacyService) {
     return (
@@ -109,13 +330,13 @@ const ServiceDetail = () => {
     );
   }
 
-  if (useCms && cmsService) {
+  if (cmsService) {
     return (
       <CmsServiceDetail
         service={cmsService}
         packages={cmsPackages}
-        categories={cmsCategories}
-        allServices={cmsServices}
+        categories={[]}
+        allServices={[]}
         selectedPackage={selectedPackage}
         setSelectedPackage={setSelectedPackage}
         addItem={addItem}
@@ -228,7 +449,9 @@ const ServiceDetail = () => {
             </BreadcrumbSeparator>
 
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-xs">{serviceTitle}</BreadcrumbPage>
+              <BreadcrumbPage className="text-xs">
+                {serviceTitle}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -312,7 +535,9 @@ const ServiceDetail = () => {
               </div>
             </motion.div>
 
-            {service.slug === "medicine-delivery" && <PrescriptionUpload bn={bn} />}
+            {service.slug === "medicine-delivery" && (
+              <PrescriptionUpload bn={bn} />
+            )}
             {service.slug === "lab-test" && <LabTestTracker bn={bn} />}
 
             <motion.div
@@ -541,18 +766,15 @@ const CmsServiceDetail = ({
   bn: boolean;
   selectedCity: string;
 }) => {
-  const { user } = useAuth();
   const mysqlAuth = getMySqlAuth();
   const mysqlUser = mysqlAuth?.user;
-  const activeUserId = user?.id || mysqlUser?.id;
+  const activeUserId = mysqlUser?.id;
 
   const serviceTitle = bn ? service.title : service.title_en || service.title;
   const category = categories.find((c: any) => c.id === service.category_id);
-  const features = Array.isArray(service.features)
-    ? (service.features as string[])
-    : [];
+  const features = Array.isArray(service.features) ? service.features : [];
   const cities = Array.isArray(service.available_cities)
-    ? (service.available_cities as string[])
+    ? service.available_cities
     : [];
 
   const pkg = packages[selectedPackage] || packages[0];
@@ -560,7 +782,7 @@ const CmsServiceDetail = ({
   const { addItem: addRecentlyViewed, getItems: getRecentItems } =
     useRecentlyViewed();
 
-  const heroImage = getServiceImage(service.slug, service.image_url);
+  const heroImage = getServiceImage(service.slug, service.image_url || undefined);
 
   const minPrice = packages.length
     ? Math.min(...packages.map((p: any) => Number(p.price) || 0))
@@ -592,7 +814,7 @@ const CmsServiceDetail = ({
         ? {
             "@type": "AggregateRating",
             ratingValue: service.rating,
-            reviewCount: 50,
+            reviewCount: service.total_reviews || 0,
           }
         : undefined,
       offers: minPrice
@@ -614,7 +836,14 @@ const CmsServiceDetail = ({
       image: heroImage,
       rating: service.rating ?? 4.5,
     });
-  }, [service.slug, service.title, service.title_en, service.rating, heroImage]);
+  }, [
+    service.slug,
+    service.title,
+    service.title_en,
+    service.rating,
+    heroImage,
+    addRecentlyViewed,
+  ]);
 
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
   const [bookingTime, setBookingTime] = useState("");
@@ -643,11 +872,13 @@ const CmsServiceDetail = ({
     const sameCategory = allServices
       .filter(
         (s) =>
-          s.id !== service.id && s.is_active && s.category_id === service.category_id
+          s.id !== service.id &&
+          s.is_active &&
+          s.category_id === service.category_id
       )
       .filter((s) => {
         const c = Array.isArray(s.available_cities)
-          ? (s.available_cities as string[])
+          ? s.available_cities
           : [];
         return c.length === 0 || c.includes(selectedCity);
       });
@@ -664,7 +895,7 @@ const CmsServiceDetail = ({
       )
       .filter((s) => {
         const c = Array.isArray(s.available_cities)
-          ? (s.available_cities as string[])
+          ? s.available_cities
           : [];
         return c.length === 0 || c.includes(selectedCity);
       })
@@ -680,7 +911,7 @@ const CmsServiceDetail = ({
     addItem({
       serviceSlug: service.slug,
       serviceTitle,
-      serviceImage: getServiceImage(service.slug, service.image_url),
+      serviceImage: getServiceImage(service.slug, service.image_url || undefined),
       packageName: pkg.name,
       packagePrice: pkg.price,
       originalPrice: pkg.original_price,
@@ -716,7 +947,7 @@ const CmsServiceDetail = ({
     setSubmitting(true);
 
     try {
-      const createdBooking = await createBooking({
+      const createdBooking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
         package_id: pkg.id || null,
@@ -733,16 +964,18 @@ const CmsServiceDetail = ({
         payment_status: "unpaid",
       });
 
-      const payment = await startBookingPayment(
-        createdBooking.id,
-        Number(pkg.price || 0)
+      const paymentAmount = Number(
+        createdBooking?.payment_amount ||
+          createdBooking?.service_charge_amount ||
+          pkg.price ||
+          0
       );
+
+      const payment = await startBookingPayment(createdBooking.id, paymentAmount);
 
       if (!payment.checkout_url) {
         throw new Error(
-          bn
-            ? "পেমেন্ট লিংক পাওয়া যায়নি"
-            : "Payment link was not returned"
+          bn ? "পেমেন্ট লিংক পাওয়া যায়নি" : "Payment link was not returned"
         );
       }
 
@@ -795,7 +1028,9 @@ const CmsServiceDetail = ({
     {
       icon: Users,
       title: bn ? "২৪/৭ সাপোর্ট" : "24/7 Support",
-      desc: bn ? "যেকোনো সময় কাস্টমার সাপোর্ট" : "Customer support available anytime",
+      desc: bn
+        ? "যেকোনো সময় কাস্টমার সাপোর্ট"
+        : "Customer support available anytime",
     },
   ];
 
@@ -847,7 +1082,9 @@ const CmsServiceDetail = ({
             </BreadcrumbSeparator>
 
             <BreadcrumbItem>
-              <BreadcrumbPage className="text-xs">{serviceTitle}</BreadcrumbPage>
+              <BreadcrumbPage className="text-xs">
+                {serviceTitle}
+              </BreadcrumbPage>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
@@ -855,7 +1092,7 @@ const CmsServiceDetail = ({
 
       <div className="relative h-[220px] md:h-[360px] yess-wm">
         <img
-          src={getServiceImage(service.slug, service.image_url)}
+          src={getServiceImage(service.slug, service.image_url || undefined)}
           alt={serviceTitle}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -963,7 +1200,9 @@ const CmsServiceDetail = ({
               )}
             </motion.div>
 
-            {service.slug === "medicine-delivery" && <PrescriptionUpload bn={bn} />}
+            {service.slug === "medicine-delivery" && (
+              <PrescriptionUpload bn={bn} />
+            )}
             {service.slug === "lab-test" && <LabTestTracker bn={bn} />}
 
             <VideoProviderPreview
@@ -986,19 +1225,18 @@ const CmsServiceDetail = ({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {packages.map((p: any, i: number) => {
-                    const pFeats = Array.isArray(p.features)
-                      ? (p.features as string[])
-                      : [];
+                    const pFeats = Array.isArray(p.features) ? p.features : [];
                     const isSelected = selectedPackage === i;
                     const discount = p.original_price
                       ? Math.round(
-                          ((p.original_price - p.price) / p.original_price) * 100
+                          ((p.original_price - p.price) / p.original_price) *
+                            100
                         )
                       : 0;
 
                     return (
                       <button
-                        key={p.id}
+                        key={p.id || p.name}
                         onClick={() => setSelectedPackage(i)}
                         className={`relative rounded-xl border p-4 text-left transition-all ${
                           isSelected
@@ -1035,7 +1273,7 @@ const CmsServiceDetail = ({
 
                         {pFeats.length > 0 && (
                           <ul className="mt-3 space-y-1.5 border-t border-border pt-3">
-                            {pFeats.map((f) => (
+                            {pFeats.map((f: string) => (
                               <li
                                 key={f}
                                 className="flex items-start gap-1.5 text-xs text-muted-foreground"
@@ -1061,7 +1299,9 @@ const CmsServiceDetail = ({
             >
               <h2 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
                 <Award className="h-5 w-5 text-primary" />
-                {bn ? "এই সেবা নিলে যা যা পাবেন" : "What You Get With This Service"}
+                {bn
+                  ? "এই সেবা নিলে যা যা পাবেন"
+                  : "What You Get With This Service"}
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1473,7 +1713,12 @@ const CmsServiceDetail = ({
             </h2>
             <div className="flex gap-3 pb-2 flex-wrap pt-[120px] -mt-[120px]">
               {relatedServices.map((rs) => (
-                <RelatedThumb key={rs.id} service={rs} bn={bn} navigate={navigate} />
+                <RelatedThumb
+                  key={rs.id}
+                  service={rs}
+                  bn={bn}
+                  navigate={navigate}
+                />
               ))}
             </div>
           </motion.div>
@@ -1486,7 +1731,9 @@ const CmsServiceDetail = ({
         <div className="fixed bottom-[56px] left-0 right-0 z-40 border-t border-border bg-background/98 backdrop-blur-md px-4 py-2.5 md:hidden">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-xs text-muted-foreground truncate">{pkg.name}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {pkg.name}
+              </p>
               <p className="text-base font-bold text-primary">৳{pkg.price}</p>
             </div>
             <button
@@ -1509,6 +1756,7 @@ const CmsServiceDetail = ({
       )}
 
       <div className="h-[120px] md:h-0 md:hidden" />
+
       {pkg && (
         <StickyBottomCTA
           price={pkg.price}
@@ -1532,7 +1780,7 @@ const RelatedThumb = ({
   navigate: any;
 }) => {
   const [hovered, setHovered] = useState(false);
-  const { data: pkgs } = useCmsPackages(service.id);
+  const { data: pkgs } = useServicePackages(service.id);
   const title = bn ? service.title : service.title_en || service.title;
   const cheapest =
     pkgs && pkgs.length > 0
@@ -1548,7 +1796,7 @@ const RelatedThumb = ({
     >
       <div className="relative rounded-xl overflow-hidden border border-border bg-card aspect-square">
         <img
-          src={getServiceImage(service.slug, service.image_url)}
+          src={getServiceImage(service.slug, service.image_url || undefined)}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
           loading="lazy"
@@ -1628,8 +1876,13 @@ const ReviewSection = ({
   bn: boolean;
   navigate: any;
 }) => {
-  const { user } = useAuth();
-  const [reviews, setReviews] = useState<any[]>([]);
+  const mysqlAuth = getMySqlAuth();
+  const mysqlUser = mysqlAuth?.user;
+  const activeUserId = mysqlUser?.id;
+  const reviewerName =
+    mysqlUser?.name || mysqlUser?.email?.split("@")[0] || "User";
+
+  const [reviews, setReviews] = useState<ServiceReview[]>([]);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
@@ -1638,14 +1891,17 @@ const ReviewSection = ({
   const [showForm, setShowForm] = useState(false);
 
   const fetchReviews = async () => {
-    const { data } = await supabase
-      .from("service_reviews")
-      .select("*")
-      .eq("service_slug", serviceSlug)
-      .order("created_at", { ascending: false });
-
-    setReviews(data || []);
-    setLoading(false);
+    try {
+      setLoading(true);
+      const data = await listServiceReviews(serviceSlug);
+      setReviews(data || []);
+    } catch (error) {
+      console.error("Fetch service reviews error:", error);
+      toast.error(t("rv.error"));
+      setReviews([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -1655,24 +1911,26 @@ const ReviewSection = ({
   const avgRating =
     reviews.length > 0
       ? (
-          reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+          reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) /
+          reviews.length
         ).toFixed(1)
       : "0";
 
   const ratingDist = [5, 4, 3, 2, 1].map((star) => ({
     star,
-    count: reviews.filter((r) => r.rating === star).length,
+    count: reviews.filter((r) => Number(r.rating) === star).length,
     pct:
       reviews.length > 0
         ? Math.round(
-            (reviews.filter((r) => r.rating === star).length / reviews.length) *
+            (reviews.filter((r) => Number(r.rating) === star).length /
+              reviews.length) *
               100
           )
         : 0,
   }));
 
   const handleSubmit = async () => {
-    if (!user) {
+    if (!activeUserId) {
       toast.error(t("rv.loginFirst"));
       navigate("/auth");
       return;
@@ -1685,33 +1943,37 @@ const ReviewSection = ({
 
     setSubmitting(true);
 
-    const { error } = await supabase.from("service_reviews").insert({
-      service_slug: serviceSlug,
-      user_id: user.id,
-      rating,
-      reviewer_name:
-        user.user_metadata?.full_name || user.email?.split("@")[0] || "User",
-      comment: comment.trim() || null,
-    });
+    try {
+      await createReview({
+        service_slug: serviceSlug,
+        user_id: activeUserId,
+        rating,
+        reviewer_name: reviewerName,
+        comment: comment.trim() || null,
+      });
 
-    setSubmitting(false);
-
-    if (error) {
+      toast.success(t("rv.success"));
+      setRating(0);
+      setComment("");
+      setShowForm(false);
+      fetchReviews();
+    } catch (error) {
+      console.error("Create service review error:", error);
       toast.error(t("rv.error"));
-      return;
+    } finally {
+      setSubmitting(false);
     }
-
-    toast.success(t("rv.success"));
-    setRating(0);
-    setComment("");
-    setShowForm(false);
-    fetchReviews();
   };
 
   const handleDelete = async (id: string) => {
-    await supabase.from("service_reviews").delete().eq("id", id);
-    toast.success(t("rv.deleted"));
-    fetchReviews();
+    try {
+      await deleteReview(id);
+      toast.success(t("rv.deleted"));
+      fetchReviews();
+    } catch (error) {
+      console.error("Delete service review error:", error);
+      toast.error(t("rv.error"));
+    }
   };
 
   return (
@@ -1729,7 +1991,7 @@ const ReviewSection = ({
 
         <button
           onClick={() => {
-            if (!user) {
+            if (!activeUserId) {
               toast.error(t("rv.loginFirst"));
               navigate("/auth");
               return;
@@ -1750,6 +2012,7 @@ const ReviewSection = ({
               <p className="font-heading text-3xl font-bold text-foreground">
                 {avgRating}
               </p>
+
               <div className="flex items-center gap-0.5 mt-1">
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Star
@@ -1762,6 +2025,7 @@ const ReviewSection = ({
                   />
                 ))}
               </div>
+
               <p className="text-xs text-muted-foreground mt-1">
                 {reviews.length}
                 {t("rv.totalReviews")}
@@ -1789,7 +2053,7 @@ const ReviewSection = ({
 
           <AIReviewSummary
             reviews={reviews.map((r) => ({
-              rating: r.rating,
+              rating: Number(r.rating || 0),
               comment: r.comment,
             }))}
             productName={serviceSlug}
@@ -1876,12 +2140,15 @@ const ReviewSection = ({
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
                     {review.reviewer_name?.charAt(0)?.toUpperCase() || "U"}
                   </div>
+
                   <div>
                     <span className="font-medium text-sm text-foreground">
                       {review.reviewer_name}
                     </span>
                     <p className="text-[10px] text-muted-foreground">
-                      {format(new Date(review.created_at), "dd MMM yyyy")}
+                      {review.created_at
+                        ? format(new Date(review.created_at), "dd MMM yyyy")
+                        : ""}
                     </p>
                   </div>
                 </div>
@@ -1892,7 +2159,7 @@ const ReviewSection = ({
                       <Star
                         key={i}
                         className={`h-3 w-3 ${
-                          i < review.rating
+                          i < Number(review.rating || 0)
                             ? "fill-yellow-400 text-yellow-400"
                             : "text-border"
                         }`}
@@ -1900,7 +2167,7 @@ const ReviewSection = ({
                     ))}
                   </div>
 
-                  {user?.id === review.user_id && (
+                  {String(activeUserId) === String(review.user_id) && (
                     <button
                       onClick={() => handleDelete(review.id)}
                       className="text-muted-foreground hover:text-destructive transition-colors"
@@ -1990,8 +2257,8 @@ const ShareButtons = ({
 
       <button
         onClick={handleCopy}
-        className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-muted text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-200"
-        title="Copy Link"
+        className="inline-flex items-center justify-center rounded-full w-8 h-8 bg-secondary text-muted-foreground hover:bg-primary hover:text-primary-foreground transition-all duration-200"
+        title="Copy link"
       >
         <Copy className="h-4 w-4" />
       </button>

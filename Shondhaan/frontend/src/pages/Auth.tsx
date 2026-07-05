@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Phone, User, ArrowLeft, Lock, Eye, EyeOff, MapPin, Building2, UserPlus, LogIn, Store } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -277,15 +276,11 @@ if (role === "mart_vendor" && !shopType) {
   const handleGoogleSignIn = async () => {
     setLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: { redirectTo: `${window.location.origin}/auth/callback` },
-      });
-      if (error) {
-        toast.error(t("auth.googleError"));
-      }
-    } catch {
-      toast.error(t("auth.googleError"));
+      toast.info(
+        language === "bn"
+          ? "লগইন বা রেজিস্ট্রেশনের জন্য ইমেইল/ফোন ব্যবহার করুন।"
+          : "Please use email or phone to log in or register.",
+      );
     } finally {
       setLoading(false);
     }

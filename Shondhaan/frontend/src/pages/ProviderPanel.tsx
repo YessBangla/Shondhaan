@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AccountsSection from "@/components/AccountsSection";
@@ -24,8 +23,20 @@ import {
   updateBookingStatus as updateBackendBookingStatus,
   type BookingRecord,
 } from "@/lib/bookingApi";
+import { listReviews } from "@/lib/reviewApi";
 
 type Booking = BookingRecord;
+
+interface ProviderProfile {
+  id?: string | number;
+  user_id?: string | number;
+  full_name?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+}
+
+const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
 
 interface Review {
   id: string;
@@ -35,7 +46,6 @@ interface Review {
   comment: string | null;
   created_at: string;
 }
-
 const statusOptions = [
   { value: "pending", label: "অপেক্ষমাণ", className: "bg-yellow-100 text-yellow-800" },
   { value: "confirmed", label: "নিশ্চিত", className: "bg-blue-100 text-blue-800" },
@@ -98,26 +108,20 @@ const fetchProviderProfileByUserId = async (
   if (!res.ok) {
     throw new Error(payload?.message || "Provider profile load failed");
   }
-
   return extractObject(payload);
 };
-
 const fetchProviderProfileFallback = async (
   mysqlUser: any
 ): Promise<ProviderProfile | null> => {
   if (!mysqlUser?.email && !mysqlUser?.mobile) return null;
-
   const res = await fetch(`${API_BASE_URL}/api/providers?status=approved`, {
     method: "GET",
     headers: getAuthHeaders(),
   });
-
   const payload = await res.json().catch(() => ({}));
-
   if (!res.ok) {
     throw new Error(payload?.message || "Provider profile load failed");
   }
-
   const providers = extractArray(payload) as ProviderProfile[];
   const email = String(mysqlUser.email || "").trim().toLowerCase();
   const mobile = String(mysqlUser.mobile || "").trim();
@@ -173,6 +177,7 @@ const ProviderPanel = () => {
 
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
+  const [providerProfile, setProviderProfile] = useState<ProviderProfile | null>(null);
   const [profile, setProfile] = useState({ display_name: "", phone: "", address: "" });
   const [saving, setSaving] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -185,40 +190,37 @@ const ProviderPanel = () => {
     if (!authLoading && !user) navigate("/main-login", { replace: true });
   }, [user, authLoading, navigate]);
 
-  const checkRole = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = data?.map(r => r.role) || [];
-    if (roles.includes("provider") || roles.includes("admin")) {
+  const checkRole = useCallback(() => {
+    const mysqlAuth = getMySqlAuth();
+    const role = mysqlAuth?.user?.type || mysqlAuth?.user?.role;
+
+    if (role === "provider" || role === "admin" || role === "super_admin") {
       setIsProvider(true);
     } else {
       setIsProvider(false);
       setLoading(false);
     }
-  }, [user]);
+  }, []);
 
   const fetchData = useCallback(async () => {
     if (!user) return;
     setLoading(true);
-
     try {
+      const mysqlAuth = getMySqlAuth();
+      const mysqlUser = mysqlAuth?.user;
+      const currentUserId = user?.id ? String(user.id) : "";
       let currentProviderProfile: ProviderProfile | null = null;
-
-      if (currentMysqlUser?.id) {
+      if (mysqlUser?.id) {
         try {
-          currentProviderProfile = await fetchProviderProfileByUserId(
-            currentMysqlUser.id
-          );
+          currentProviderProfile = await fetchProviderProfileByUserId(mysqlUser.id);
           if (!currentProviderProfile) {
-            currentProviderProfile =
-              await fetchProviderProfileFallback(currentMysqlUser);
+            currentProviderProfile = await fetchProviderProfileFallback(mysqlUser);
           }
           setProviderProfile(currentProviderProfile);
         } catch (error) {
           console.warn("Provider profile fetch failed:", error);
           try {
-            currentProviderProfile =
-              await fetchProviderProfileFallback(currentMysqlUser);
+            currentProviderProfile = await fetchProviderProfileFallback(mysqlUser);
             setProviderProfile(currentProviderProfile);
           } catch (fallbackError) {
             console.warn("Provider profile fallback failed:", fallbackError);
@@ -230,17 +232,15 @@ const ProviderPanel = () => {
       const bookingLookupIds = [
         currentProviderProfile?.id,
         currentProviderProfile?.user_id,
-        currentMysqlUser?.id,
+        mysqlUser?.id,
         currentUserId,
       ];
 
       try {
         let assignedBookings: Booking[] = [];
 
-        if (currentMysqlUser?.id) {
-          assignedBookings = (await listProviderAssignedBookings(
-            currentMysqlUser.id
-          )).map(normalizeBooking);
+        if (mysqlUser?.id) {
+          assignedBookings = (await listProviderAssignedBookings(mysqlUser.id)).map(normalizeBooking);
         }
 
         if (!assignedBookings.length) {
@@ -254,47 +254,36 @@ const ProviderPanel = () => {
         setBookings([]);
       }
 
-      if (user?.id) {
-        const [reviewsRes, profileRes] = await Promise.all([
-          supabase
-            .from("service_reviews")
-            .select("*")
-            .order("created_at", { ascending: false }),
-          supabase
-            .from("profiles")
-            .select("display_name, phone, address")
-            .eq("user_id", user.id)
-            .single(),
-        ]);
-
-        if (!reviewsRes.error && reviewsRes.data) {
-          setReviews(reviewsRes.data as Review[]);
-        }
-
-        if (!profileRes.error && profileRes.data) {
-          setProfile({
-            display_name: profileRes.data.display_name || "",
-            phone: profileRes.data.phone || "",
-            address: profileRes.data.address || "",
-          });
-        }
-      } else {
+      try {
+        const reviewsData = await listReviews();
+        setReviews(
+          (reviewsData || []).map((review) => ({
+            id: String(review.id),
+            service_slug: review.service_slug,
+            reviewer_name: review.reviewer_name,
+            rating: review.rating,
+            comment: review.comment,
+            created_at: review.created_at,
+          }))
+        );
+      } catch (error) {
+        console.warn("Reviews fetch failed:", error);
         setReviews([]);
-
-        setProfile((prev) => ({
-          display_name:
-            currentProviderProfile?.full_name ||
-            currentMysqlUser?.name ||
-            prev.display_name ||
-            "",
-          phone:
-            currentProviderProfile?.phone ||
-            currentMysqlUser?.mobile ||
-            prev.phone ||
-            "",
-          address: currentProviderProfile?.address || prev.address || "",
-        }));
       }
+
+      setProfile((prev) => ({
+        display_name:
+          currentProviderProfile?.full_name ||
+          mysqlUser?.name ||
+          prev.display_name ||
+          "",
+        phone:
+          currentProviderProfile?.phone ||
+          mysqlUser?.mobile ||
+          prev.phone ||
+          "",
+        address: currentProviderProfile?.address || prev.address || "",
+      }));
     } finally {
       setLoading(false);
     }
@@ -321,19 +310,35 @@ const ProviderPanel = () => {
     }
   };
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!user) return;
-    if (!profile.display_name.trim()) { toast.error("নাম দিন"); return; }
+    if (!profile.display_name.trim()) {
+      toast.error("নাম দিন");
+      return;
+    }
+
     setSaving(true);
-    const { error } = await supabase.from("profiles").update({
-      display_name: profile.display_name.trim(),
-      phone: profile.phone.trim() || null,
-      address: profile.address.trim() || null,
-    }).eq("user_id", user.id);
-    setSaving(false);
-    if (error) toast.error("আপডেট ব্যর্থ");
-    else toast.success("প্রোফাইল আপডেট হয়েছে");
+    try {
+      setProfile((prev) => ({
+        ...prev,
+        display_name: profile.display_name.trim(),
+        phone: profile.phone.trim(),
+        address: profile.address.trim(),
+      }));
+      setProviderProfile((prev) => ({
+        ...(prev || {}),
+        full_name: profile.display_name.trim(),
+        phone: profile.phone.trim(),
+        address: profile.address.trim(),
+      }));
+      toast.success("প্রোফাইল আপডেট হয়েছে");
+    } catch (error: any) {
+      console.error("Profile update failed:", error);
+      toast.error(error.message || "আপডেট ব্যর্থ");
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Earnings calculation
