@@ -1,4 +1,5 @@
 import { ROLES, type RoleKey } from "@/config/roles";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
 
 export interface MySqlAuthUser {
   id: number;
@@ -18,7 +19,7 @@ interface AuthResponse {
   token: string;
 }
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL = CENTRAL_API_BASE_URL.replace(/\/+$/, "");
 const STORAGE_KEY = "yess_mysql_auth";
 const VALID_ROLES = new Set(ROLES.map((role) => role.key));
 

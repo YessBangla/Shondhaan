@@ -2,7 +2,14 @@ import bcrypt from "bcrypt";
 import crypto from "crypto";
 import { pool } from "../config/db.js";
 import { createToken } from "../utils/jwt.js";
-import { findUserByIdentifier, normalizeEmail, normalizeMobile, safeUser } from "../services/user.service.js";
+import {
+  ALLOWED_USER_TYPES,
+  findUserByIdentifier,
+  normalizeEmail,
+  normalizeMobile,
+  normalizeUserType,
+  safeUser,
+} from "../services/user.service.js";
 import { verifyPassword } from "../services/auth.service.js";
 import { sendOtpEmail } from "../services/otp.service.js";
 
@@ -10,6 +17,7 @@ const OTP_LENGTH = 6;
 const DEFAULT_OTP_EXPIRY_MINUTES = 10;
 
 const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const ALLOWED_SHOP_TYPES = new Set(["grocery", "electronics", "fashion", "pharmacy", "others"]);
 
 const createOtp = () => {
   const min = 10 ** (OTP_LENGTH - 1);
@@ -62,6 +70,10 @@ export const signupRequestOtp = async (req, res) => {
     const cleanPassword = String(password || "");
     const cleanEmail = normalizeEmail(email);
     const cleanMobile = normalizeMobile(mobile);
+    const cleanAddress = String(req.body.address || "").trim();
+    const cleanType = normalizeUserType(req.body.type || "user");
+    const shopName = String(req.body.shop_name || "").trim();
+    const shopType = String(req.body.shop_type || "").trim();
 
     if (!cleanName || !cleanMobile || !cleanEmail || !cleanPassword) {
       return res.status(400).json({ message: "Name, mobile, email and password are required" });
@@ -77,6 +89,18 @@ export const signupRequestOtp = async (req, res) => {
 
     if (cleanPassword.length < 8) {
       return res.status(400).json({ message: "Password must be at least 8 characters" });
+    }
+
+    if (!ALLOWED_USER_TYPES.has(cleanType)) {
+      return res.status(400).json({ message: "Valid account type is required" });
+    }
+
+    if (cleanType === "mart_vendor" && !shopName) {
+      return res.status(400).json({ message: "Shop name is required for mart vendor signup" });
+    }
+
+    if (cleanType === "mart_vendor" && !ALLOWED_SHOP_TYPES.has(shopType)) {
+      return res.status(400).json({ message: "Valid shop type is required for mart vendor signup" });
     }
 
     const [existing] = await pool.execute(
@@ -105,17 +129,40 @@ export const signupRequestOtp = async (req, res) => {
     if (existingUser) {
       await pool.execute(
         `UPDATE users
-         SET name = ?, mobile = ?, email = ?, password = ?, type = ?, otp_hash = ?, otp_expires_at = ?, email_verified = 0
+         SET name = ?, mobile = ?, address = ?, email = ?, password = ?, type = ?, shop_name = ?, shop_type = ?, otp_hash = ?, otp_expires_at = ?, email_verified = 0
          WHERE id = ?`,
-        [cleanName, cleanMobile, cleanEmail, hashedPassword, "user", otpHash, otpExpires, existingUser.id]
+        [
+          cleanName,
+          cleanMobile,
+          cleanAddress || null,
+          cleanEmail,
+          hashedPassword,
+          cleanType,
+          shopName || null,
+          cleanType === "mart_vendor" ? shopType : null,
+          otpHash,
+          otpExpires,
+          existingUser.id,
+        ]
       );
       touchedUserId = existingUser.id;
     } else {
       const [result] = await pool.execute(
         `INSERT INTO users
-        (name, mobile, email, password, type, otp_hash, otp_expires_at, email_verified)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 0)`,
-        [cleanName, cleanMobile, cleanEmail, hashedPassword, "user", otpHash, otpExpires]
+        (name, mobile, address, email, password, type, shop_name, shop_type, otp_hash, otp_expires_at, email_verified)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        [
+          cleanName,
+          cleanMobile,
+          cleanAddress || null,
+          cleanEmail,
+          hashedPassword,
+          cleanType,
+          shopName || null,
+          cleanType === "mart_vendor" ? shopType : null,
+          otpHash,
+          otpExpires,
+        ]
       );
       touchedUserId = result.insertId;
       createdNewUser = true;
