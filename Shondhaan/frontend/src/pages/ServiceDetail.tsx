@@ -212,6 +212,23 @@ const makePricePackage = (service: CmsService | null): any[] => {
   ];
 };
 
+
+const isRealUuid = (value?: string | null) =>
+  !!value &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
+const getSafePackageId = (value: unknown): string | null => {
+  if (value === undefined || value === null) return null;
+
+  const id = String(value).trim();
+
+  if (!id || id.includes("default-package")) return null;
+
+  return isRealUuid(id) ? id : null;
+};
+
 const useServiceBySlug = (slug?: string) =>
   useQuery({
     queryKey: ["service-detail-by-slug", slug],
@@ -950,7 +967,7 @@ const CmsServiceDetail = ({
       const createdBooking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
-        package_id: pkg.id || null,
+        package_id: getSafePackageId(pkg?.id),
         service_slug: service.slug,
         service_title: serviceTitle,
         package_name: pkg.name,
