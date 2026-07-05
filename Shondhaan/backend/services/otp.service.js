@@ -6,14 +6,14 @@ export async function sendOtpEmail({ to, otp }) {
 
   const transporter = createTransporter();
 
-  const from = process.env.SMTP_FROM || `Yess Service <${process.env.SMTP_USER}>`;
+  const from = process.env.SMTP_FROM || `Shondhaan <${process.env.SMTP_USER}>`;
 
   const expiryMinutes = Number(process.env.OTP_EXPIRY_MINUTES || 10);
-  const subject = "Yess Service OTP Code";
-  const text = `Your Yess Service OTP code is ${otp}. It will expire in ${expiryMinutes} minutes. Do not share this code.`;
+  const subject = "Shondhaan OTP Code";
+  const text = `Your Shondhaan OTP code is ${otp}. It will expire in ${expiryMinutes} minutes. Do not share this code.`;
   const html = `
     <div style="font-family:Arial,sans-serif;line-height:1.5;color:#111827">
-      <h2 style="margin:0 0 12px">Yess Service verification code</h2>
+      <h2 style="margin:0 0 12px">Shondhaan verification code</h2>
       <p>Your OTP code is:</p>
       <p style="font-size:28px;font-weight:700;letter-spacing:4px;margin:12px 0">${otp}</p>
       <p>It will expire in ${expiryMinutes} minutes.</p>
