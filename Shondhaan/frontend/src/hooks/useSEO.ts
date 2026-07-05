@@ -24,9 +24,8 @@ export interface SEOOptions {
 }
 
 const DEFAULT_TITLE = "Yess Service";
-const DEFAULT_IMAGE =
-  "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/3c951804-9c1f-44a5-a8c3-25aa1dff6501/id-preview-869f71c4--5de51f7c-4b17-4251-9b65-d9b4c973ca39.lovable.app-1773223473678.png";
-const SITE_URL = "https://yess-service.lovable.app";
+const SITE_URL = "https://shondhaan.yessbd.top";
+const DEFAULT_IMAGE = `${SITE_URL}/yess-service-logo.png`;
 
 /** Truncate to maxLen at a word boundary, appending an ellipsis when cut. */
 function smartTruncate(text: string, maxLen: number): string {

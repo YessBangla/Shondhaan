@@ -270,11 +270,13 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 </div>
                 <div className="mt-2 flex items-end justify-between">
                   <p className="text-sm font-bold text-foreground md:text-base">
-                    {service.price && service.price > 0
-                      ? `৳${service.price}`
-                      : (bn ? "দাম দেখুন" : "View")}
-                    {service.price && service.price > 0 && (
-                      <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
+                    {service.price && service.price > 0 ? (
+                      <>
+                        ৳{service.price}
+                        <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
+                      </>
+                    ) : (
+                      <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
                     )}
                   </p>
                   <div className="flex items-center gap-0.5">
