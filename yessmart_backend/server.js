@@ -21,14 +21,16 @@ const createDeliveryAreasTable = require("./database/delivery_areas.table");
 const createCouponsTable = require("./database/coupons.table");
 const createDeliveryRequestsTable = require("./database/createDeliveryRequestsTable");
 const createDeliverymenTable = require("./database/deliverymen.table");
-const deliveryRequestsRouter      = require("./routes/deliveryRequests");
+
 const createWishlistTable = require("./database/createWishlist.table"); // Import the createWishlistTable function
 const createMessagesTable = require("./database/Createmessage.table"); // Import the createMessagesTable function
 const createUserProfileTable = require("./database/user_profile.table");
+const createBannersTable = require("./database/banners.table"); // ★ NEW — banners table for mart home carousel
 // create table
 
 const categoriesRoutes = require("./routes/categories");
 const subCategoriesRoutes = require("./routes/sub_categories");
+const deliveryRequestsRouter      = require("./routes/deliveryRequests");
 const sellersRoutes = require("./routes/sellers");
 const productsRoutes = require("./routes/products");
 const ordersRoutes = require("./routes/orders");
@@ -42,6 +44,8 @@ const uploadRouter = require("./routes/upload");
 const profileRoutes = require("./routes/profile");
 const wishlistRoutes = require("./routes/wishlist"); // Import the wishlist routes
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
+const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
+
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
@@ -129,6 +133,7 @@ app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 app.use("/api/delivery-requests", deliveryRequestsRouter);
 app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
+app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 server.listen(PORT, async () => {
   const backendBaseUrl = getBackendBaseUrl();
   console.log(`Server running on ${backendBaseUrl}`);
@@ -155,7 +160,8 @@ await createShippingAddressesTable();
     await createCouponsTable();
     await createUserProfileTable();
     await createWishlistTable(); // Create the product_wishlists table
-    await createMessagesTable(); // Create the mart_conversations and mart_messages tables`
+    await createMessagesTable(); // Create the mart_conversations and mart_messages tables
+    await createBannersTable(); // ★ NEW — Create the banners table
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);
