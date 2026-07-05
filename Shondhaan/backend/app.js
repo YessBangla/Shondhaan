@@ -12,7 +12,9 @@ const app = express();
 
 const defaultCorsOrigins = [
   "http://localhost:8080",
+  "http://127.0.0.1:8080",
   "http://localhost:5173",
+  "http://127.0.0.1:5173",
   "https://shondhaan.yessbd.top",
   "https://www.shondhaan.yessbd.top",
 ];
@@ -29,10 +31,12 @@ const corsOrigin = [
 
 const isAllowedCorsOrigin = (origin) => {
   if (!origin) return true;
-  if (corsOrigin.includes(origin)) return true;
+
+  const normalizedOrigin = origin.trim();
+  if (corsOrigin.includes(normalizedOrigin)) return true;
 
   try {
-    const { hostname, protocol } = new URL(origin);
+    const { hostname, protocol } = new URL(normalizedOrigin);
     return protocol === "https:" && hostname.endsWith(".yessbd.top");
   } catch {
     return false;
