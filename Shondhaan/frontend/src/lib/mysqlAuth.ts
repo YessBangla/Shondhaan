@@ -1,4 +1,5 @@
 import { ROLES, type RoleKey } from "@/config/roles";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
 
 export interface MySqlAuthUser {
   id: number;
