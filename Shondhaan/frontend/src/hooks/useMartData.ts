@@ -2,6 +2,12 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toPublicProduct } from "@/lib/martApi";
 
+const API_BASE =
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:8081";
+
 const isSellerVerified = (value: unknown) =>
   value === true || value === 1 || value === "1";
 
@@ -85,8 +91,7 @@ async function fetchVendorProducts(categoryIds?: string[], search?: string) {
     params.set("category_id", categoryIds.join(","));
   }
 
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
-  const response = await fetch(`${apiUrl}/api/products?${params.toString()}`);
+  const response = await fetch(`${API_BASE}/api/products?${params.toString()}`);
   const json = await response.json().catch(() => ({}));
   if (!response.ok || json.success === false) {
     throw new Error(json.message || "Vendor products fetch failed");
@@ -109,10 +114,9 @@ async function fetchVendorProducts(categoryIds?: string[], search?: string) {
 async function fetchBackendCategoryIds(categorySlug?: string) {
   if (!categorySlug || categorySlug === "all") return undefined;
 
-  const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
   const [categoriesResponse, subCategoriesResponse] = await Promise.all([
-    fetch(`${apiUrl}/api/categories`),
-    fetch(`${apiUrl}/api/sub-categories`),
+    fetch(`${API_BASE}/api/categories`),
+    fetch(`${API_BASE}/api/sub-categories`),
   ]);
   const [categoriesJson, subCategoriesJson] = await Promise.all([
     categoriesResponse.json().catch(() => ({})),
@@ -175,8 +179,7 @@ export function useMartProduct(slug: string) {
     queryFn: async () => {
       if (slug.startsWith("mysql-product-")) {
         const productId = slug.replace("mysql-product-", "");
-        const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:8081";
-        const response = await fetch(`${apiUrl}/api/products/${encodeURIComponent(productId)}`);
+        const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(productId)}`);
         const json = await response.json().catch(() => ({}));
         if (!response.ok || json.success === false) {
           throw new Error(json.message || "Vendor product not found");
@@ -233,6 +236,10 @@ export interface MartBanner {
   subtitle_en: string | null;
   image_url: string | null;
   link_url: string | null;
+  button_label: string | null;
+  button_label_en: string | null;
+  button_bg_color: string | null;
+  button_text_color: string | null;
   is_active: boolean;
   sort_order: number;
 }
@@ -241,13 +248,14 @@ export function useMartBanners() {
   return useQuery({
     queryKey: ["mart-banners"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mart_banners")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-      if (error) throw error;
-      return (data || []) as MartBanner[];
+      const response = await fetch(`${API_BASE}/api/banners`);
+      const json = await response.json().catch(() => ({}));
+
+      if (!response.ok || json.success === false) {
+        throw new Error(json.message || "Mart banners fetch failed");
+      }
+
+      return (Array.isArray(json.data) ? json.data : []) as MartBanner[];
     },
   });
 }

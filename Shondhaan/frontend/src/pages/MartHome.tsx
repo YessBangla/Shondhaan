@@ -82,6 +82,13 @@ const normalizeCategoryId = (value: unknown) => {
 const normalizeSearchValue = (value: unknown) =>
   String(value ?? "").toLowerCase().trim();
 
+const isExternalUrl = (value: string) => /^https?:\/\//i.test(value);
+
+const safeHexColor = (value: unknown, fallback: string) => {
+  const color = String(value || "").trim();
+  return /^#[0-9a-f]{6}$/i.test(color) ? color : fallback;
+};
+
 const sortForYouProducts = (items: any[], sort: string) =>
   [...items].sort((a: any, b: any) => {
     switch (sort) {
@@ -195,7 +202,7 @@ const getCategoryColor = (name: string): string => {
   return "#fff7ed";
 };
 
-// ── Category Carousel ──
+// ── Category Carousel — services style (circular illustrated avatars) ──
 const CategoryCarousel = ({
   categories,
   bn,
@@ -209,13 +216,13 @@ const CategoryCarousel = ({
 
   const scroll = (dir: "left" | "right") => {
     if (!scrollRef.current) return;
-    scrollRef.current.scrollBy({ left: dir === "right" ? 240 : -240, behavior: "smooth" });
+    scrollRef.current.scrollBy({ left: dir === "right" ? 280 : -280, behavior: "smooth" });
   };
 
   return (
     <div className="mb-6">
       {/* Header */}
-      <div className="flex items-center justify-between mb-3 px-0.5">
+      <div className="flex items-center justify-between mb-4 px-0.5">
         <h2 className="text-[15px] md:text-[16px] font-bold text-foreground">
           {bn ? "আমাদের ক্যাটাগরি" : "Our Categories"}
         </h2>
@@ -228,12 +235,12 @@ const CategoryCarousel = ({
         </button>
       </div>
 
-      {/* Strip */}
-      <div className="relative bg-[#f3edf7] dark:bg-purple-950/20 rounded-2xl px-2 py-3">
+      {/* Strip — plain background, circular avatars */}
+      <div className="relative">
         {/* Left arrow */}
         <button
           onClick={() => scroll("left")}
-          className="absolute left-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-white dark:bg-card border border-border/60 shadow flex items-center justify-center hover:bg-muted transition-colors"
+          className="absolute -left-3 top-[38px] z-10 h-8 w-8 rounded-full bg-white dark:bg-card border border-border/50 shadow-md flex items-center justify-center hover:bg-muted transition-colors"
         >
           <ChevronLeft className="h-4 w-4 text-foreground" />
         </button>
@@ -241,10 +248,10 @@ const CategoryCarousel = ({
         {/* Scrollable row */}
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto px-6 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
+          className="flex gap-6 overflow-x-auto px-6 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
         >
           {categories.map((cat: any) => {
-            // Prefer image_url (full category image), then icon_url, then emoji fallback
+            // Prefer image_url (full category illustration), then icon_url, then emoji fallback
             const imgSrc = cat.image_url || cat.icon_url || null;
             const isHttpImg = imgSrc && imgSrc.startsWith("http");
             const isEmojiIcon = imgSrc && !imgSrc.startsWith("http");
@@ -254,39 +261,39 @@ const CategoryCarousel = ({
               <button
                 key={cat.id}
                 onClick={() => navigate(`/mart/category/${cat.slug ?? cat.id}`)}
-                className="group shrink-0 w-[90px]"
+                className="group shrink-0 w-[84px] flex flex-col items-center gap-2"
               >
-                <div className="flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl bg-white dark:bg-card border border-border/30 shadow-sm group-hover:shadow-md group-hover:scale-[1.04] transition-all duration-200 h-[140px] justify-center">
-
-                  {/* Icon area */}
-                  <div className="h-[56px] w-[56px] flex items-center justify-center shrink-0">
-                    {isHttpImg ? (
-                      <img
-                        src={imgSrc}
-                        className="h-full w-full object-contain"
-                        alt={cat.name}
-                        onError={(e) => {
-                          const el = e.currentTarget as HTMLImageElement;
-                          el.style.display = "none";
-                          const sibling = el.nextElementSibling as HTMLElement | null;
-                          if (sibling) sibling.style.display = "flex";
-                        }}
-                      />
-                    ) : null}
-                    {/* emoji fallback — shown when no http image, or when image fails */}
-                    <span
-                      className="text-3xl leading-none items-center justify-center"
-                      style={{ display: isHttpImg ? "none" : "flex" }}
-                    >
-                      {isEmojiIcon ? imgSrc : fallbackEmoji}
-                    </span>
-                  </div>
-
-                  {/* Label */}
-                  <span className="text-[10px] font-medium text-foreground text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors w-full">
-                    {bn ? cat.name : cat.name_en || cat.name}
+                {/* Circular illustrated avatar */}
+                <div
+                  className="h-[76px] w-[76px] rounded-full flex items-center justify-center shrink-0 overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200"
+                  style={{ background: getCategoryColor(cat.name || "") }}
+                >
+                  {isHttpImg ? (
+                    <img
+                      src={imgSrc}
+                      className="h-full w-full object-cover"
+                      alt={cat.name}
+                      onError={(e) => {
+                        const el = e.currentTarget as HTMLImageElement;
+                        el.style.display = "none";
+                        const sibling = el.nextElementSibling as HTMLElement | null;
+                        if (sibling) sibling.style.display = "flex";
+                      }}
+                    />
+                  ) : null}
+                  {/* emoji fallback — shown when no http image, or when image fails */}
+                  <span
+                    className="text-3xl leading-none items-center justify-center"
+                    style={{ display: isHttpImg ? "none" : "flex" }}
+                  >
+                    {isEmojiIcon ? imgSrc : fallbackEmoji}
                   </span>
                 </div>
+
+                {/* Label */}
+                <span className="text-[12px] font-medium text-foreground text-center leading-tight line-clamp-2 group-hover:text-primary transition-colors w-full">
+                  {bn ? cat.name : cat.name_en || cat.name}
+                </span>
               </button>
             );
           })}
@@ -295,7 +302,7 @@ const CategoryCarousel = ({
         {/* Right arrow */}
         <button
           onClick={() => scroll("right")}
-          className="absolute right-1 top-1/2 -translate-y-1/2 z-10 h-7 w-7 rounded-full bg-white dark:bg-card border border-border/60 shadow flex items-center justify-center hover:bg-muted transition-colors"
+          className="absolute -right-3 top-[38px] z-10 h-8 w-8 rounded-full bg-white dark:bg-card border border-border/50 shadow-md flex items-center justify-center hover:bg-muted transition-colors"
         >
           <ChevronRight className="h-4 w-4 text-foreground" />
         </button>
@@ -357,6 +364,20 @@ const MartHome = () => {
   const { data: products = [] } = useMartProducts(undefined, undefined, 40);
   const { data: featured = [] } = useFeaturedProducts();
   const { data: banners = [] } = useMartBanners();
+
+  const openBannerLink = (link: unknown) => {
+    const target = String(link || "").trim();
+    if (!target) return;
+
+    if (isExternalUrl(target)) {
+      window.open(target, "_blank", "noopener,noreferrer");
+      return;
+    }
+
+    if (target.startsWith("/")) {
+      navigate(target);
+    }
+  };
 
   const wishlistCategoryIds = useMemo(
     () => wishlistItems
@@ -707,7 +728,7 @@ const MartHome = () => {
                 <div
                   key={banner.id}
                   className={`absolute inset-0 transition-opacity duration-700 ${i === currentBanner ? "opacity-100 z-10" : "opacity-0 z-0"}`}
-                  onClick={() => banner.link_url && navigate(banner.link_url)}
+                  onClick={() => openBannerLink(banner.link_url)}
                   style={{ cursor: banner.link_url ? "pointer" : "default" }}
                 >
                   {banner.image_url ? (
@@ -723,6 +744,25 @@ const MartHome = () => {
                       <p className="text-xs md:text-sm text-white/80 drop-shadow-sm">
                         {bn ? banner.subtitle : banner.subtitle_en || banner.subtitle}
                       </p>
+                    )}
+                    {banner.link_url && (
+                      <button
+                        type="button"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openBannerLink(banner.link_url);
+                        }}
+                        className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition-colors hover:bg-white/90 md:text-sm"
+                        style={{
+                          backgroundColor: safeHexColor(banner.button_bg_color, "#ffffff"),
+                          color: safeHexColor(banner.button_text_color, "#0f172a"),
+                        }}
+                      >
+                        {bn
+                          ? banner.button_label || "à¦¦à§‡à¦–à§à¦¨"
+                          : banner.button_label_en || banner.button_label || "View"}
+                        <ArrowRight className="h-3.5 w-3.5" />
+                      </button>
                     )}
                   </div>
                 </div>
@@ -834,13 +874,13 @@ const MartHome = () => {
         {products.filter((p: any) => Number(p.total_sold || 0) > 0).length > 0 && (
           <section className="mb-1">
             <SectionHeader
-  icon={<Award className="h-5 w-5" />}
-  title={bn ? "সেরা বিক্রিত পণ্য" : "Top Selling"}
-  subtitle={bn ? "সবচেয়ে বেশি বিক্রিত পণ্যগুলো" : "Most purchased by shoppers"}
-  onViewAll={() => navigate("/mart/category/all?sort=top-selling")}
-  viewAllLabel={bn ? "আরও দেখুন" : "View All"}
-  accent="amber"
-/>
+              icon={<Award className="h-5 w-5" />}
+              title={bn ? "সেরা বিক্রিত পণ্য" : "Top Selling"}
+              subtitle={bn ? "সবচেয়ে বেশি বিক্রিত পণ্যগুলো" : "Most purchased by shoppers"}
+              onViewAll={() => navigate("/mart/category/all?sort=top-selling")}
+              viewAllLabel={bn ? "আরও দেখুন" : "View All"}
+              accent="amber"
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {[...products]
                 .sort((a: any, b: any) => Number(b.total_sold || 0) - Number(a.total_sold || 0))
@@ -856,13 +896,13 @@ const MartHome = () => {
         {products.filter((p: any) => p.original_price && Number(p.original_price) > Number(p.price)).length > 0 && (
           <section className="mb-1">
             <SectionHeader
-  icon={<Flame className="h-5 w-5" />}
-  title={bn ? "সেরা ডিসকাউন্ট" : "Best Deals"}
-  subtitle={bn ? "সর্বোচ্চ ছাড়ের পণ্যগুলো" : "Highest discounts right now"}
-  onViewAll={() => navigate("/mart/category/all?filter=deals")}
-  viewAllLabel={bn ? "আরও দেখুন" : "View All"}
-  accent="orange"
-/>
+              icon={<Flame className="h-5 w-5" />}
+              title={bn ? "সেরা ডিসকাউন্ট" : "Best Deals"}
+              subtitle={bn ? "সর্বোচ্চ ছাড়ের পণ্যগুলো" : "Highest discounts right now"}
+              onViewAll={() => navigate("/mart/category/all?filter=deals")}
+              viewAllLabel={bn ? "আরও দেখুন" : "View All"}
+              accent="orange"
+            />
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
               {[...products]
                 .filter((p: any) => p.original_price && Number(p.original_price) > Number(p.price))

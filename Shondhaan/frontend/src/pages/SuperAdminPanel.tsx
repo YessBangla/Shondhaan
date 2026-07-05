@@ -52,6 +52,7 @@ import StaffAssignmentManager from "@/components/admin/StaffAssignmentManager";
 import AdminMartKyc from "@/components/mart/AdminMartKyc";
 import AdminDeliveryKyc from "@/components/mart/AdminDeliveryKyc";
 import AdminMartCategories from "@/components/admin/Adminmartcategories";
+import AdminMartBanners from "@/components/mart/Adminmartbanners";
 const sidebarItems = [
   // ড্যাশবোর্ড
   { value: "overview", label: "ওভারভিউ", icon: <LayoutDashboard />, group: "ড্যাশবোর্ড" },
@@ -81,7 +82,7 @@ const sidebarItems = [
    { value: "kyc verification", label: "SELLER KYC VERIFICATION", icon: <UserCheck />, group: "ইয়েস মার্ট" },
    { value: "delivery kyc verification", label: "DELIVERY KYC VERIFICATION", icon: <Truck />, group: "ইয়েস মার্ট" },
    { value: "category add", label: "Category Add", icon: <UserCheck />, group: "ইয়েস মার্ট" },
-
+{ value: "mart-banners", label: "মার্ট ব্যানার", icon: <Image />, group: "ইয়েস মার্ট" },
   // ইয়েস ডিল
   { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "ইয়েস ডিল" },
   { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "ইয়েস ডিল" },
@@ -224,6 +225,7 @@ const SuperAdminPanel = () => {
       case "kyc verification": return <div className="p-4"><AdminMartKyc /></div>;
       case "delivery kyc verification": return <div className="p-4"><AdminDeliveryKyc /></div>;
       case "category add": return <div className="p-4"><AdminMartCategories /></div>;
+      case "mart-banners": return <div className="p-4"><AdminMartBanners /></div>;
       default: return null;
     }
   };
