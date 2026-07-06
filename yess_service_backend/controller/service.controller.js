@@ -54,6 +54,7 @@ const normalizeBool = (value, defaultValue = true) => {
 const formatService = (item) => ({
   ...item,
   price: Number(item.price || 0),
+  platform_fee: Number(item.platform_fee || 0),
   rating: Number(item.rating || 0),
   total_reviews: Number(item.total_reviews || 0),
   total_orders: Number(item.total_orders || 0),
@@ -83,6 +84,7 @@ export const createService = async (req, res) => {
       is_active,
       sort_order,
       price,
+      platform_fee,
     } = req.body;
 
     if (!slug || !title) {
@@ -104,6 +106,17 @@ export const createService = async (req, res) => {
       });
     }
 
+    const finalPlatformFee =
+      platform_fee !== undefined && platform_fee !== null && platform_fee !== ""
+        ? Number(platform_fee)
+        : 0;
+
+    if (Number.isNaN(finalPlatformFee) || finalPlatformFee < 0) {
+      return res.status(400).json({
+        message: "Platform fee must be a valid number",
+      });
+    }
+
     const query = `
       INSERT INTO services (
         id,
@@ -117,13 +130,14 @@ export const createService = async (req, res) => {
         total_orders,
         commission_percent,
         price,
+        platform_fee,
         features,
         available_cities,
         category_id,
         is_active,
         sort_order
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
@@ -138,6 +152,7 @@ export const createService = async (req, res) => {
       total_orders || 0,
       commission_percent || 10,
       finalPrice,
+      finalPlatformFee,
       stringifyArray(features),
       stringifyArray(available_cities),
       category_id || null,
@@ -212,6 +227,7 @@ export const getServices = async (req, res) => {
     const formatted = rows.map((item) => ({
       ...item,
       price: Number(item.price || 0),
+      platform_fee: Number(item.platform_fee || 0),
       rating: Number(item.rating || 0),
       total_reviews: Number(item.total_reviews || 0),
       total_orders: Number(item.total_orders || 0),
@@ -315,6 +331,7 @@ export const updateService = async (req, res) => {
       is_active,
       sort_order,
       price,
+      platform_fee,
     } = req.body;
 
     const [existing] = await pool.execute(
@@ -350,6 +367,17 @@ export const updateService = async (req, res) => {
       });
     }
 
+    const finalPlatformFee =
+      platform_fee !== undefined && platform_fee !== null && platform_fee !== ""
+        ? Number(platform_fee)
+        : Number(existing[0].platform_fee || 0);
+
+    if (Number.isNaN(finalPlatformFee) || finalPlatformFee < 0) {
+      return res.status(400).json({
+        message: "Platform fee must be a valid number",
+      });
+    }
+
     const query = `
       UPDATE services SET
         slug = ?,
@@ -362,6 +390,7 @@ export const updateService = async (req, res) => {
         total_orders = ?,
         commission_percent = ?,
         price = ?,
+        platform_fee = ?,
         features = ?,
         available_cities = ?,
         category_id = ?,
@@ -381,6 +410,7 @@ export const updateService = async (req, res) => {
       total_orders || 0,
       commission_percent || 10,
       finalPrice,
+      finalPlatformFee,
       stringifyArray(features),
       stringifyArray(available_cities),
       category_id || null,
