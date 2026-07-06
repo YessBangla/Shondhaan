@@ -24,9 +24,11 @@ import MartOrdersTab from "@/components/client/MartOrdersTab";
 import AIWeeklySummaryCard from "@/components/client/AIWeeklySummaryCard";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8081";
 const PROFILE_API_BASE = MART_API_BASE;
+const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
 
 interface Booking {
   id: string;
@@ -67,6 +69,23 @@ type MartOrderRecord = Record<string, unknown> & {
   items?: unknown[];
   order_items?: unknown[];
   mart_order_items?: unknown[];
+};
+
+
+const extractApiArray = <T,>(payload: any): T[] => {
+  const data =
+    payload?.data ??
+    payload?.bookings ??
+    payload?.items ??
+    payload?.rows ??
+    payload?.result ??
+    payload;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  if (Array.isArray(data?.items)) return data.items;
+
+  return [];
 };
 
 const normalizeMartOrders = (orders: unknown[]): MartOrderRecord[] =>
@@ -158,16 +177,10 @@ const ClientDashboard = () => {
     setProfile(fallbackProfile);
 
     const [
-      bookingsRes,
       reviewsRes,
       notificationsRes,
       dealAdsRes,
     ] = await Promise.all([
-      supabase
-        .from("bookings")
-        .select("*")
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false }),
       supabase
         .from("service_reviews")
         .select("id, service_slug, reviewer_name, rating, comment, created_at")
@@ -185,13 +198,51 @@ const ClientDashboard = () => {
         .eq("user_id", user.id),
     ]);
 
-    if (!bookingsRes.error && bookingsRes.data) setBookings(bookingsRes.data as Booking[]);
     if (!reviewsRes.error && reviewsRes.data) setReviews(reviewsRes.data as Review[]);
     if (!notificationsRes.error && notificationsRes.data) setNotifications(notificationsRes.data as Notification[]);
     if (!dealAdsRes.error) setDealAdsCount(dealAdsRes.count || 0);
 
     const mysqlAuth = getMySqlAuth();
-    const userId = Number(localUser.id);
+    const userId = Number(mysqlAuth?.user?.id ?? localUser.id);
+
+    // MySQL service bookings by logged-in user's numeric ID
+    if (Number.isInteger(userId) && userId > 0) {
+      try {
+        const bookingRes = await fetch(
+          `${SERVICE_API_BASE}/api/bookings?user_id=${encodeURIComponent(String(userId))}`,
+          {
+            headers: {
+              ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+            },
+          }
+        );
+
+        const bookingData = await bookingRes.json().catch(() => ({}));
+
+        if (!bookingRes.ok) {
+          throw new Error(
+            bookingData?.message ||
+              bookingData?.error ||
+              "Failed to load bookings"
+          );
+        }
+
+        const safeBookings = extractApiArray<Booking>(bookingData);
+        setBookings(safeBookings);
+        console.log("✅ Client bookings by user id:", userId, safeBookings);
+      } catch (err) {
+        console.error("fetchUserBookings error:", err);
+        setBookings([]);
+        toast.error(bn ? "বুকিং লোড ব্যর্থ" : "Failed to load bookings");
+      }
+    } else {
+      console.warn("No valid MySQL user id found for bookings", {
+        mysqlUser: mysqlAuth?.user,
+        localUser,
+      });
+      setBookings([]);
+    }
+
     if (mysqlAuth?.token && Number.isInteger(userId) && userId > 0) {
       try {
         const res = await fetch(`${PROFILE_API_BASE}/api/profile/${userId}`, {
@@ -500,7 +551,7 @@ const ClientDashboard = () => {
                     <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-base text-muted-foreground">{bn ? "à¦•à§‹à¦¨à§‹ à¦¬à§à¦•à¦¿à¦‚ à¦¨à§‡à¦‡" : "No bookings yet"}</p>
                     <button onClick={() => navigate("/")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
-                      {bn ? "à¦¸à§‡à¦¬à¦¾ à¦¦à§‡à¦–à§à¦¨" : "Browse Services"}
+                      {bn ? "সেবা দেখুন" : "Browse Services"}
                     </button>
                   </div>
                 ) : (

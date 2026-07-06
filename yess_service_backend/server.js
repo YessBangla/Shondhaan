@@ -1,6 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import path from "path";
+
 import providerRoutes from "./routes/provider.route.js";
 import packageRoutes from "./routes/package.route.js";
 import serviceRoutes from "./routes/service.route.js";
@@ -9,6 +11,8 @@ import bookingRoutes from "./routes/booking.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import heroBannerRoutes from "./routes/heroBanner.route.js";
 import homepageSectionRoutes from "./routes/homepageSection.route.js";
+import uploadRoutes from "./routes/upload.route.js";
+
 import { reconcilePendingShurjopayPayments } from "./controller/shurjopay.controller.js";
 import { ensurePlatformFeeSchema } from "./config/db.js";
 
@@ -25,25 +29,31 @@ const corsOrigin = [
       "http://localhost:5173",
       "https://shondhaan.yessbd.top",
       "https://www.shondhaan.yessbd.top",
-    ].filter(Boolean),
+    ].filter(Boolean)
   ),
 ];
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
-app.use(express.json());
-app.use("/uploads", express.static("uploads"));
 
-// Base route
+app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+
+// Static uploaded files
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
+// API routes
 app.use("/api/providers", providerRoutes);
-app.use("/api/services", serviceRoutes )
+app.use("/api/services", serviceRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
 app.use("/api/hero-banners", heroBannerRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
+app.use("/api/uploads", uploadRoutes);
 
 const PORT = process.env.PORT || 3000;
+
 const SERVICE_BACKEND_BASE_URL =
   process.env.YESS_SERVICE_BACKEND_BASE_URL || `http://localhost:${PORT}`;
 
