@@ -113,6 +113,39 @@ const getServiceApiHeaders = () => {
   };
 };
 
+const getBackendImageUrl = (value?: string | null) => {
+  const imageUrl = String(value || "").trim();
+
+  if (!imageUrl) return "";
+
+  if (
+    /^https?:\/\//i.test(imageUrl) ||
+    imageUrl.startsWith("data:") ||
+    imageUrl.startsWith("blob:")
+  ) {
+    return imageUrl;
+  }
+
+  if (
+    imageUrl.startsWith("/assets/") ||
+    imageUrl.startsWith("/src/") ||
+    imageUrl.startsWith("/images/")
+  ) {
+    return imageUrl;
+  }
+
+  const path = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
+  return `${SERVICE_API_BASE_URL}${path}`;
+};
+
+const getServiceDisplayImage = (slug: string, imageUrl?: string | null) => {
+  const backendImage = getBackendImageUrl(imageUrl);
+
+  if (backendImage) return backendImage;
+
+  return getServiceImage(slug, undefined);
+};
+
 const parseList = (value: unknown): string[] => {
   if (Array.isArray(value)) return value.map(String).filter(Boolean);
   if (typeof value !== "string") return [];
@@ -802,7 +835,7 @@ const CmsServiceDetail = ({
   const { addItem: addRecentlyViewed, getItems: getRecentItems } =
     useRecentlyViewed();
 
-  const heroImage = getServiceImage(service.slug, service.image_url || undefined);
+  const heroImage = getServiceDisplayImage(service.slug, service.image_url);
 
   const minPrice = packages.length
     ? Math.min(...packages.map((p: any) => Number(p.price) || 0))
@@ -931,7 +964,7 @@ const CmsServiceDetail = ({
     addItem({
       serviceSlug: service.slug,
       serviceTitle,
-      serviceImage: getServiceImage(service.slug, service.image_url || undefined),
+      serviceImage: getServiceDisplayImage(service.slug, service.image_url),
       packageName: pkg.name,
       packagePrice: pkg.price,
       originalPrice: pkg.original_price,
@@ -1113,7 +1146,7 @@ const CmsServiceDetail = ({
 
       <div className="relative h-[220px] md:h-[360px] yess-wm">
         <img
-          src={getServiceImage(service.slug, service.image_url || undefined)}
+          src={getServiceDisplayImage(service.slug, service.image_url)}
           alt={serviceTitle}
           className="absolute inset-0 h-full w-full object-cover"
         />
@@ -1227,7 +1260,7 @@ const CmsServiceDetail = ({
             {service.slug === "lab-test" && <LabTestTracker bn={bn} />}
 
             <VideoProviderPreview
-              poster={service.image_url || undefined}
+              poster={heroImage}
               rating={service.rating ?? 4.8}
               totalJobs={service.total_orders ?? 240}
             />
@@ -1832,7 +1865,7 @@ const RelatedThumb = ({
     >
       <div className="relative rounded-xl overflow-hidden border border-border bg-card aspect-square">
         <img
-          src={getServiceImage(service.slug, service.image_url || undefined)}
+          src={getServiceDisplayImage(service.slug, service.image_url)}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
           loading="lazy"

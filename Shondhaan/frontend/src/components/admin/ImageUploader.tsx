@@ -1,91 +1,171 @@
-import { useState, useRef } from "react";
-import { Upload, X, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useRef, useState } from "react";
+import { Upload, X, Loader2, Image as ImageIcon } from "lucide-react";
 import { toast } from "sonner";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-interface ImageUploaderProps {
-  value: string;
+type ImageUploaderProps = {
+  value?: string;
   onChange: (url: string) => void;
   folder?: string;
   label?: string;
-}
+};
 
-const ImageUploader = ({ value, onChange, folder = "general", label = "ছবি আপলোড" }: ImageUploaderProps) => {
+const API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+);
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url)) return url;
+
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${API_BASE_URL}${path}`;
+};
+
+const ImageUploader = ({
+  value = "",
+  onChange,
+  folder = "common",
+  label = "ছবি",
+}: ImageUploaderProps) => {
+  const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
-  const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
+
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("শুধুমাত্র ছবি আপলোড করা যাবে");
+      toast.error("শুধুমাত্র image file upload করুন");
       return;
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("ফাইল সাইজ ৫MB এর বেশি হতে পারবে না");
+      toast.error("Image size 5MB এর কম হতে হবে");
       return;
     }
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("folder", folder);
 
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error } = await supabase.storage.from("cms-images").upload(fileName, file);
+    try {
+      const auth = getMySqlAuth();
 
-    if (error) {
-      toast.error("আপলোড ব্যর্থ: " + error.message);
+      const response = await fetch(
+        `${API_BASE_URL}/api/uploads?folder=${encodeURIComponent(folder)}`,
+        {
+          method: "POST",
+          headers: {
+            ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+          },
+          body: formData,
+        }
+      );
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || !data?.success) {
+        throw new Error(data?.message || data?.error || "Image upload failed");
+      }
+
+      const imageUrl = data.image_url || data.url;
+
+      if (!imageUrl) {
+        throw new Error("Image URL missing from server response");
+      }
+
+      onChange(imageUrl);
+      toast.success("ছবি আপলোড হয়েছে");
+    } catch (error: any) {
+      console.error("Image upload error:", error);
+      toast.error(error.message || "Image upload failed");
+    } finally {
       setUploading(false);
-      return;
     }
-
-    const { data: urlData } = supabase.storage.from("cms-images").getPublicUrl(fileName);
-    onChange(urlData.publicUrl);
-    toast.success("ছবি আপলোড হয়েছে");
-    setUploading(false);
   };
 
+  const preview = getImageSrc(value);
+
   return (
-    <div className="space-y-2">
-      <label className="text-xs font-medium text-muted-foreground">{label}</label>
-      <div className="flex items-center gap-3">
-        {value && (
-          <div className="relative h-16 w-16 rounded-lg border border-border overflow-hidden bg-secondary">
-            <img src={value} alt="" className="h-full w-full object-cover" />
+    <div>
+      <label className="mb-1 block text-xs font-semibold text-muted-foreground">
+        {label}
+      </label>
+
+      <div className="rounded-xl border border-dashed border-border bg-background p-3">
+        {preview ? (
+          <div className="relative overflow-hidden rounded-lg border border-border">
+            <img
+              src={preview}
+              alt={label}
+              className="h-44 w-full object-cover"
+            />
+
             <button
+              type="button"
               onClick={() => onChange("")}
-              className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
             >
-              <X className="h-3 w-3" />
+              <X className="h-4 w-4" />
             </button>
           </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="flex h-44 w-full flex-col items-center justify-center gap-2 rounded-lg bg-secondary/50 text-muted-foreground transition hover:bg-secondary disabled:opacity-60"
+          >
+            {uploading ? (
+              <Loader2 className="h-7 w-7 animate-spin" />
+            ) : (
+              <ImageIcon className="h-8 w-8" />
+            )}
+
+            <span className="text-sm font-medium">
+              {uploading ? "Uploading..." : "Click to upload image"}
+            </span>
+
+            <span className="text-xs">JPG, PNG, WEBP — max 5MB</span>
+          </button>
         )}
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={uploading}
-          className="flex items-center gap-1.5 rounded-lg border border-dashed border-border px-3 py-2 text-xs text-muted-foreground hover:border-primary hover:text-foreground transition-colors disabled:opacity-50"
-        >
-          {uploading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-          {uploading ? "আপলোড হচ্ছে..." : "ছবি বাছুন"}
-        </button>
-        <input ref={inputRef} type="file" accept="image/*" onChange={handleUpload} className="hidden" />
+
+        {preview && (
+          <button
+            type="button"
+            onClick={() => inputRef.current?.click()}
+            disabled={uploading}
+            className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary disabled:opacity-60"
+          >
+            {uploading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Upload className="h-3.5 w-3.5" />
+            )}
+            Change Image
+          </button>
+        )}
+
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/webp"
+          onChange={handleFileChange}
+          className="hidden"
+        />
       </div>
+
       {value && (
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="অথবা URL পেস্ট করুন"
-          className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-        />
-      )}
-      {!value && (
-        <input
-          value=""
-          onChange={(e) => onChange(e.target.value)}
-          placeholder="অথবা ছবির URL পেস্ট করুন"
-          className="w-full rounded-lg border border-input bg-background px-3 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring"
-        />
+        <p className="mt-1 break-all text-[10px] text-muted-foreground">
+          Saved URL: {value}
+        </p>
       )}
     </div>
   );

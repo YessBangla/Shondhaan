@@ -11,6 +11,10 @@ const empty: Partial<CmsService> = {
   platform_fee: 0,
 };
 
+const labelClass = "mb-1 block text-xs font-semibold text-muted-foreground";
+const inputClass = "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring";
+const smallInputClass = "w-full rounded border border-input bg-background px-2 py-1 text-xs outline-none focus:ring-1 focus:ring-ring";
+
 const AdminServices = () => {
   const { data: services = [], isLoading, upsert, remove } = useCmsServices();
   const { data: categories = [] } = useCmsCategories();
@@ -53,36 +57,76 @@ const AdminServices = () => {
       {editing && (
         <div className="mb-6 rounded-xl border border-primary/30 bg-card p-4 space-y-3">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <input value={editing.title || ""} onChange={e => setEditing({...editing, title: e.target.value})} placeholder="টাইটেল (বাংলা)" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" />
-            <input value={editing.title_en || ""} onChange={e => setEditing({...editing, title_en: e.target.value})} placeholder="Title (English)" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" />
-            <input value={editing.slug || ""} onChange={e => setEditing({...editing, slug: e.target.value})} placeholder="স্লাগ (e.g. plumbing)" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" />
-            <select value={editing.category_id || ""} onChange={e => setEditing({...editing, category_id: e.target.value || null})} className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring">
-              <option value="">ক্যাটেগরি নির্বাচন</option>
-              {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-            </select>
+            <div>
+              <label className={labelClass}>টাইটেল (বাংলা) *</label>
+              <input value={editing.title || ""} onChange={e => setEditing({...editing, title: e.target.value})} placeholder="যেমন: এসি সার্ভিস" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>Title (English)</label>
+              <input value={editing.title_en || ""} onChange={e => setEditing({...editing, title_en: e.target.value})} placeholder="e.g. AC Service" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>স্লাগ *</label>
+              <input value={editing.slug || ""} onChange={e => setEditing({...editing, slug: e.target.value})} placeholder="e.g. ac-service" className={inputClass} />
+              <p className="mt-1 text-[10px] text-muted-foreground">URL এ ব্যবহার হবে। Space দিবেন না। Example: plumbing</p>
+            </div>
+            <div>
+              <label className={labelClass}>ক্যাটেগরি</label>
+              <select value={editing.category_id || ""} onChange={e => setEditing({...editing, category_id: e.target.value || null})} className={inputClass}>
+                <option value="">ক্যাটেগরি নির্বাচন</option>
+                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </select>
+            </div>
           </div>
           <ImageUploader value={editing.image_url || ""} onChange={(v) => setEditing({...editing, image_url: v})} folder="services" label="সেবার ছবি" />
-          <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="বিবরণ" rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" />
+          <div>
+            <label className={labelClass}>বিবরণ</label>
+            <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="সেবার সংক্ষিপ্ত বিবরণ লিখুন" rows={2} className={inputClass} />
+          </div>
           <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-            <input type="number" step="0.1" value={editing.rating || 0} onChange={e => setEditing({...editing, rating: parseFloat(e.target.value)})} placeholder="রেটিং" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
-            <input type="number" value={editing.total_reviews || 0} onChange={e => setEditing({...editing, total_reviews: parseInt(e.target.value)})} placeholder="রিভিউ" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
-            <input type="number" value={editing.total_orders || 0} onChange={e => setEditing({...editing, total_orders: parseInt(e.target.value)})} placeholder="অর্ডার" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
-            <div className="relative">
-              <input type="number" step="0.5" min="0" max="100" value={(editing as any).commission_percent ?? 10} onChange={e => setEditing({...editing, commission_percent: parseFloat(e.target.value)} as any)} placeholder="কমিশন %" className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm outline-none w-full" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            <div>
+              <label className={labelClass}>রেটিং</label>
+              <input type="number" step="0.1" value={editing.rating || 0} onChange={e => setEditing({...editing, rating: parseFloat(e.target.value)})} placeholder="4.5" className={inputClass} />
             </div>
-            <div className="relative">
-              <input type="number" step="1" min="0" value={(editing as any).platform_fee ?? 0} onChange={e => setEditing({...editing, platform_fee: parseFloat(e.target.value) || 0} as any)} placeholder="Platform fee" className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none w-full" />
-              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
+            <div>
+              <label className={labelClass}>মোট রিভিউ</label>
+              <input type="number" value={editing.total_reviews || 0} onChange={e => setEditing({...editing, total_reviews: parseInt(e.target.value)})} placeholder="0" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>মোট অর্ডার</label>
+              <input type="number" value={editing.total_orders || 0} onChange={e => setEditing({...editing, total_orders: parseInt(e.target.value)})} placeholder="0" className={inputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>কমিশন</label>
+              <div className="relative">
+                <input type="number" step="0.5" min="0" max="100" value={(editing as any).commission_percent ?? 10} onChange={e => setEditing({...editing, commission_percent: parseFloat(e.target.value)} as any)} placeholder="10" className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+              </div>
+            </div>
+            <div>
+              <label className={labelClass}>Platform Fee</label>
+              <div className="relative">
+                <input type="number" step="1" min="0" value={(editing as any).platform_fee ?? 0} onChange={e => setEditing({...editing, platform_fee: parseFloat(e.target.value) || 0} as any)} placeholder="0" className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
+              </div>
             </div>
           </div>
-          <input value={featuresText} onChange={e => setFeaturesText(e.target.value)} placeholder="ফিচার (কমা দিয়ে আলাদা)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
-          <input value={citiesText} onChange={e => setCitiesText(e.target.value)} placeholder="শহর (কমা দিয়ে আলাদা)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
-          <div className="flex items-center gap-3">
-            <label className="flex items-center gap-1.5 text-xs">
+          <div>
+            <label className={labelClass}>ফিচারসমূহ</label>
+            <input value={featuresText} onChange={e => setFeaturesText(e.target.value)} placeholder="কমা দিয়ে লিখুন: দ্রুত সার্ভিস, অভিজ্ঞ টেকনিশিয়ান" className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>সেবা পাওয়া যাবে যে শহরে</label>
+            <input value={citiesText} onChange={e => setCitiesText(e.target.value)} placeholder="কমা দিয়ে লিখুন: dhaka, chittagong, sylhet" className={inputClass} />
+          </div>
+          <div className="flex flex-wrap items-end gap-3">
+            <label className="flex items-center gap-1.5 text-xs text-foreground">
               <input type="checkbox" checked={editing.is_active ?? true} onChange={e => setEditing({...editing, is_active: e.target.checked})} /> সক্রিয়
             </label>
-            <input type="number" value={editing.sort_order || 0} onChange={e => setEditing({...editing, sort_order: parseInt(e.target.value)})} className="w-20 rounded-lg border border-input bg-background px-2 py-1 text-xs" placeholder="ক্রম" />
+            <div>
+              <label className={labelClass}>ক্রম</label>
+              <input type="number" value={editing.sort_order || 0} onChange={e => setEditing({...editing, sort_order: parseInt(e.target.value)})} className="w-24 rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring" placeholder="0" />
+            </div>
           </div>
           <div className="flex gap-2">
             <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
@@ -136,7 +180,6 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
     setEditing({ ...item });
     setFeatText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
   };
-
   const handleSave = () => {
     if (!editing?.name) return;
     upsert.mutate({ ...editing, features: featText.split(",").map(s => s.trim()).filter(Boolean) } as any, {
@@ -153,12 +196,24 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
       </div>
       {editing && (
         <div className="mb-2 rounded-lg border border-primary/20 p-2 space-y-2">
-          <div className="grid grid-cols-3 gap-2">
-            <input value={editing.name || ""} onChange={e => setEditing({...editing, name: e.target.value})} placeholder="নাম" className="col-span-1 rounded border border-input px-2 py-1 text-xs" />
-            <input type="number" value={editing.price || 0} onChange={e => setEditing({...editing, price: parseInt(e.target.value)})} placeholder="দাম" className="rounded border border-input px-2 py-1 text-xs" />
-            <input type="number" value={editing.original_price || ""} onChange={e => setEditing({...editing, original_price: e.target.value ? parseInt(e.target.value) : null})} placeholder="আগের দাম" className="rounded border border-input px-2 py-1 text-xs" />
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div>
+              <label className={labelClass}>প্যাকেজ নাম *</label>
+              <input value={editing.name || ""} onChange={e => setEditing({...editing, name: e.target.value})} placeholder="যেমন: Basic" className={smallInputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>দাম *</label>
+              <input type="number" value={editing.price || 0} onChange={e => setEditing({...editing, price: parseInt(e.target.value)})} placeholder="500" className={smallInputClass} />
+            </div>
+            <div>
+              <label className={labelClass}>আগের দাম</label>
+              <input type="number" value={editing.original_price || ""} onChange={e => setEditing({...editing, original_price: e.target.value ? parseInt(e.target.value) : null})} placeholder="800" className={smallInputClass} />
+            </div>
           </div>
-          <input value={featText} onChange={e => setFeatText(e.target.value)} placeholder="ফিচার (কমা দিয়ে)" className="w-full rounded border border-input px-2 py-1 text-xs" />
+          <div>
+            <label className={labelClass}>প্যাকেজ ফিচার</label>
+            <input value={featText} onChange={e => setFeatText(e.target.value)} placeholder="কমা দিয়ে লিখুন" className={smallInputClass} />
+          </div>
           <div className="flex gap-1">
             <button onClick={handleSave} className="rounded bg-primary px-2 py-1 text-[10px] text-primary-foreground">সেভ</button>
             <button onClick={() => setEditing(null)} className="rounded border px-2 py-1 text-[10px]">বাতিল</button>
