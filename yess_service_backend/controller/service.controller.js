@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { pool } from "../config/db.js";
+import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
 const parseJsonArray = (value) => {
   if (!value) return [];
@@ -68,6 +68,8 @@ export const createService = async (req, res) => {
   console.log("BODY:", req.body);
 
   try {
+    await ensurePlatformFeeSchema();
+
     const {
       slug,
       title,
@@ -194,6 +196,8 @@ export const createService = async (req, res) => {
 
 export const getServices = async (req, res) => {
   try {
+    await ensurePlatformFeeSchema();
+
     const { category_id } = req.query;
 
     let query = `
@@ -255,6 +259,8 @@ export const getServices = async (req, res) => {
 
 export const getServiceBySlug = async (req, res) => {
   try {
+    await ensurePlatformFeeSchema();
+
     const { slug } = req.params;
 
     const [rows] = await pool.execute(
@@ -313,6 +319,8 @@ export const getServiceBySlug = async (req, res) => {
 
 export const updateService = async (req, res) => {
   try {
+    await ensurePlatformFeeSchema();
+
     const { id } = req.params;
 
     const {

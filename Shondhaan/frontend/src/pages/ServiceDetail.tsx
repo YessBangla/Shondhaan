@@ -1477,7 +1477,7 @@ const CmsServiceDetail = ({
                         {bn ? "Booking platform fee" : "Booking platform fee"}
                       </span>
                       <span className="font-semibold text-foreground">
-                        à§³{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}
+                        TK: {platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}
                       </span>
                     </div>
                     <p className="mt-1 text-[10px] leading-snug text-muted-foreground">

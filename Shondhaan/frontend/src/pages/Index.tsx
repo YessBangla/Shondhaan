@@ -22,6 +22,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import ForYouSection from "@/components/ForYouSection";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 type Service = {
   id: string;
@@ -37,8 +38,9 @@ type Service = {
   features?: string[] | string;
   available_cities?: string[] | string;
   category_id?: string | null;
-  is_active?: boolean | number;
+  is_active?: boolean | number | string | null;
   sort_order?: number;
+  price?: string | number;
 };
 
 type Category = {
@@ -49,7 +51,34 @@ type Category = {
   title_en?: string;
 };
 
-const API_BASE = "http://localhost:3000/api";
+type HomepageSection = {
+  id: string | number;
+  section_key: string;
+  title_bn: string;
+  title_en?: string;
+  service_slugs: string[] | string;
+  sort_order?: number;
+  is_active?: boolean | number | string | null;
+};
+
+type FormattedService = {
+  id: string;
+  title: string;
+  image: string;
+  slug: string;
+  rating: number;
+  total_reviews: number;
+  total_orders: number;
+  description: string;
+  features: string[];
+  price: number;
+  commission_percent: string;
+};
+
+const API_BASE = `${(INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(
+  /\/+$/,
+  ""
+)}/api`;
 
 const parseJsonArray = (value: unknown): string[] => {
   if (!value) return [];
@@ -59,11 +88,19 @@ const parseJsonArray = (value: unknown): string[] => {
   }
 
   if (typeof value === "string") {
+    const splitList = () =>
+      value
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+
     try {
       const parsed = JSON.parse(value);
-      return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [value];
+      return Array.isArray(parsed)
+        ? parsed.map(String).filter(Boolean)
+        : splitList();
     } catch {
-      return [value];
+      return splitList();
     }
   }
 
@@ -78,6 +115,7 @@ const normalizeCity = (value: unknown) => {
     dhaka: "dhaka",
     চট্টগ্রাম: "chittagong",
     chittagong: "chittagong",
+    chattogram: "chittagong",
     sylhet: "sylhet",
     সিলেট: "sylhet",
     khulna: "khulna",
@@ -87,12 +125,42 @@ const normalizeCity = (value: unknown) => {
   return cityMap[text] || text;
 };
 
-const isActiveService = (service: Service) => {
-  return (
-    service.is_active === true ||
-    service.is_active === 1 ||
-    service.is_active === undefined
+const normalizeSlug = (value: unknown) =>
+  String(value || "").trim().toLowerCase();
+
+const isActiveValue = (value: unknown) => {
+  if (value === undefined || value === null) return true;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+
+  return ["1", "true", "active", "yes"].includes(
+    String(value).trim().toLowerCase()
   );
+};
+
+const isActiveService = (service: Service) => isActiveValue(service.is_active);
+const isActiveSection = (section: HomepageSection) =>
+  isActiveValue(section.is_active);
+
+const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
+  if (Array.isArray(payload)) return payload;
+
+  for (const key of keys) {
+    if (Array.isArray(payload?.[key])) return payload[key];
+  }
+
+  const data =
+    payload?.data ??
+    payload?.items ??
+    payload?.rows ??
+    payload?.result ??
+    payload;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.items)) return data.items;
+  if (Array.isArray(data?.rows)) return data.rows;
+
+  return [];
 };
 
 const Index = () => {
@@ -103,6 +171,9 @@ const Index = () => {
 
   const [services, setServices] = useState<Service[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [homepageSections, setHomepageSections] = useState<HomepageSection[]>(
+    []
+  );
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("all");
   const [loading, setLoading] = useState(true);
 
@@ -127,42 +198,56 @@ const Index = () => {
       try {
         setLoading(true);
 
-        console.log("🚀 Fetching services and categories...");
+        console.log("🚀 Fetching homepage data...");
         console.log("🌐 Services URL:", `${API_BASE}/services`);
         console.log("🌐 Categories URL:", `${API_BASE}/categories`);
+        console.log(
+          "🌐 Homepage sections URL:",
+          `${API_BASE}/homepage-sections?active=1`
+        );
 
-        const [servicesRes, categoriesRes] = await Promise.all([
+        const [servicesRes, categoriesRes, sectionsRes] = await Promise.all([
           fetch(`${API_BASE}/services`),
           fetch(`${API_BASE}/categories`),
+          fetch(`${API_BASE}/homepage-sections?active=1`),
         ]);
 
         console.log("📡 Services status:", servicesRes.status);
         console.log("📡 Categories status:", categoriesRes.status);
+        console.log("📡 Homepage sections status:", sectionsRes.status);
 
-        const servicesData = await servicesRes.json();
-        const categoriesData = await categoriesRes.json();
+        const servicesData = await servicesRes.json().catch(() => ({}));
+        const categoriesData = await categoriesRes.json().catch(() => ({}));
+        const sectionsData = await sectionsRes.json().catch(() => ({}));
 
         console.log("📦 Raw services response:", servicesData);
         console.log("📦 Raw categories response:", categoriesData);
+        console.log("📦 Raw homepage sections response:", sectionsData);
 
-        const safeServices: Service[] = Array.isArray(servicesData)
-          ? servicesData
-          : servicesData?.data || servicesData?.services || [];
-
-        const safeCategories: Category[] = Array.isArray(categoriesData)
-          ? categoriesData
-          : categoriesData?.data || categoriesData?.categories || [];
+        const safeServices = extractArray<Service>(servicesData, ["services"]);
+        const safeCategories = extractArray<Category>(categoriesData, [
+          "categories",
+        ]);
+        const safeSections = extractArray<HomepageSection>(sectionsData, [
+          "sections",
+          "homepage_sections",
+        ]);
 
         console.log("✅ Safe services:", safeServices);
         console.log("✅ Safe categories:", safeCategories);
+        console.log("✅ Safe homepage sections:", safeSections);
 
         setServices(safeServices);
         setCategories(safeCategories);
+        setHomepageSections(safeSections);
       } catch (err) {
-        console.error("❌ Fetch error:", err);
+        console.error("❌ Homepage fetch error:", err);
+        setServices([]);
+        setCategories([]);
+        setHomepageSections([]);
       } finally {
         setLoading(false);
-        console.log("✅ Loading finished");
+        console.log("✅ Homepage loading finished");
       }
     };
 
@@ -179,22 +264,22 @@ const Index = () => {
     );
   };
 
-  const formatService = (s: Service) => ({
-    id: s.id,
-    title: bn ? s.title : s.title_en || s.title,
-    image: getServiceImage(s.slug, s.image_url),
-    slug: s.slug,
-    rating: Number(s.rating || 0),
-    total_reviews: s.total_reviews || 0,
-    total_orders: s.total_orders || 0,
-    description: s.description || "",
-    features: parseJsonArray(s.features),
-    price: 0,
-    commission_percent: s.commission_percent || "0",
+  const formatService = (service: Service): FormattedService => ({
+    id: service.id,
+    title: bn ? service.title : service.title_en || service.title,
+    image: getServiceImage(service.slug, service.image_url),
+    slug: service.slug,
+    rating: Number(service.rating || 0),
+    total_reviews: service.total_reviews || 0,
+    total_orders: service.total_orders || 0,
+    description: service.description || "",
+    features: parseJsonArray(service.features),
+    price: Number(service.price || 0),
+    commission_percent: service.commission_percent || "0",
   });
 
   const groupedServices = useMemo(() => {
-    console.log("🧮 Grouping services...");
+    console.log("🧮 Grouping services by category...");
     console.log("📍 Selected city:", selectedCity);
     console.log("📁 Selected category:", selectedCategoryId);
 
@@ -207,7 +292,9 @@ const Index = () => {
 
     return visibleCategories.map((category) => {
       const filteredServices = services
-        .filter((s) => String(s.category_id || "") === String(category.id))
+        .filter(
+          (service) => String(service.category_id || "") === String(category.id)
+        )
         .filter(isActiveService)
         .filter(cityMatched)
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
@@ -227,8 +314,16 @@ const Index = () => {
   const uncategorizedServices = useMemo(() => {
     if (selectedCategoryId !== "all") return [];
 
+    const knownCategoryIds = new Set(
+      categories.map((category) => String(category.id))
+    );
+
     const items = services
-      .filter((s) => !s.category_id)
+      .filter(
+        (service) =>
+          !service.category_id ||
+          !knownCategoryIds.has(String(service.category_id))
+      )
       .filter(isActiveService)
       .filter(cityMatched)
       .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
@@ -236,9 +331,73 @@ const Index = () => {
 
     console.log("📌 Uncategorized services:", items);
     return items;
-  }, [services, selectedCity, language, selectedCategoryId]);
+  }, [services, categories, selectedCity, language, selectedCategoryId]);
+
+  const dynamicHomepageSections = useMemo(() => {
+    if (!homepageSections.length) return [];
+    if (selectedCategoryId !== "all") return [];
+
+    const allActiveServices = services.filter(isActiveService);
+    const cityActiveServices = allActiveServices.filter(cityMatched);
+
+    const allServiceBySlug = new Map(
+      allActiveServices.map((service) => [normalizeSlug(service.slug), service])
+    );
+
+    const cityServiceBySlug = new Map(
+      cityActiveServices.map((service) => [normalizeSlug(service.slug), service])
+    );
+
+    console.log("✅ Homepage sections from API:", homepageSections);
+    console.log(
+      "✅ All service slugs:",
+      allActiveServices.map((service) => service.slug)
+    );
+    console.log(
+      "✅ City filtered service slugs:",
+      cityActiveServices.map((service) => service.slug)
+    );
+
+    const sections = homepageSections
+      .filter(isActiveSection)
+      .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
+      .map((section) => {
+        const slugs = parseJsonArray(section.service_slugs).map(normalizeSlug);
+
+        console.log(`🔎 Section "${section.section_key}" slugs:`, slugs);
+
+        const sectionServices = slugs
+          .map((slug) => {
+            const cityMatchedService = cityServiceBySlug.get(slug);
+            const fallbackService = allServiceBySlug.get(slug);
+
+            if (!cityMatchedService && !fallbackService) {
+              console.warn(`❌ No service found for slug: ${slug}`);
+            }
+
+            return cityMatchedService || fallbackService;
+          })
+          .filter(Boolean)
+          .map((service) => formatService(service as Service));
+
+        console.log(
+          `✅ Section "${section.section_key}" matched services:`,
+          sectionServices
+        );
+
+        return {
+          section,
+          services: sectionServices,
+        };
+      })
+      .filter((group) => group.services.length > 0);
+
+    console.log("🏠 Dynamic homepage sections:", sections);
+    return sections;
+  }, [homepageSections, services, selectedCity, language, selectedCategoryId]);
 
   const hasAnyService =
+    dynamicHomepageSections.some((group) => group.services.length > 0) ||
     groupedServices.some((group) => group.services.length > 0) ||
     uncategorizedServices.length > 0;
 
@@ -272,6 +431,24 @@ const Index = () => {
           </>
         ) : (
           <>
+            {/* 1) Admin added homepage sections always show first */}
+            {selectedCategoryId === "all" &&
+              dynamicHomepageSections.map(({ section, services }) => {
+                const heading = bn
+                  ? section.title_bn || "সার্ভিস"
+                  : section.title_en || section.title_bn || "Services";
+
+                return (
+                  <ServiceSection
+                    key={`dynamic-${section.id}`}
+                    heading={heading}
+                    services={services}
+                    viewAllLink="/all-services"
+                  />
+                );
+              })}
+
+            {/* 2) Category-wise services show below dynamic sections */}
             {groupedServices.map(({ category, services }) => {
               if (!services.length) return null;
 
@@ -285,7 +462,7 @@ const Index = () => {
 
               return (
                 <ServiceSection
-                  key={category.id}
+                  key={`category-${category.id}`}
                   heading={heading}
                   services={services}
                   viewAllLink={`/all-services?category=${category.id}`}
@@ -293,6 +470,7 @@ const Index = () => {
               );
             })}
 
+            {/* 3) Uncategorized services show at the bottom */}
             {uncategorizedServices.length > 0 && (
               <ServiceSection
                 heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}

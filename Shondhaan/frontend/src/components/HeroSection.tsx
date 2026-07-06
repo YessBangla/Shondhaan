@@ -9,7 +9,6 @@ import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { useHomeServices, type HomeService } from "@/hooks/useHomeServices";
 import LocationSelector from "@/components/LocationSelector";
-import heroBg from "../../public/hero1.png";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -21,6 +20,18 @@ type SearchService = {
   sortOrder: number;
   searchText: string;
 };
+
+type HeroBanner = {
+  id?: string | number;
+  title_bn?: string | null;
+  title_en?: string | null;
+  subtitle_bn?: string | null;
+  subtitle_en?: string | null;
+  image_url?: string | null;
+  is_active?: boolean | number | string | null;
+  sort_order?: number | string | null;
+};
+
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -76,8 +87,64 @@ const normalizeCity = (value: unknown) => {
   return cityMap[text] || text;
 };
 
-const isActiveService = (service: HomeService) =>
-  service.is_active === true || service.is_active === 1 || service.is_active === undefined;
+const isActiveService = (service: HomeService) => {
+  const value = service.is_active;
+  if (value === undefined || value === null) return true;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["1", "true", "active", "yes"].includes(value.trim().toLowerCase());
+  }
+  return false;
+};
+
+const isActiveBanner = (banner: HeroBanner) => {
+  const value = banner.is_active;
+  if (value === undefined || value === null) return true;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["1", "true", "active", "yes"].includes(value.trim().toLowerCase());
+  }
+  return false;
+};
+
+const getAuthHeaders = () => {
+  const auth = getMySqlAuth();
+
+  return {
+    "Content-Type": "application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+  };
+};
+
+const extractBanners = (payload: any): HeroBanner[] => {
+  const data =
+    payload?.data ??
+    payload?.banners ??
+    payload?.hero_banners ??
+    payload?.items ??
+    payload?.rows ??
+    payload;
+
+  if (Array.isArray(data)) return data;
+  if (Array.isArray(data?.rows)) return data.rows;
+  if (Array.isArray(data?.items)) return data.items;
+
+  return [];
+};
+
+const normalizeHeroBanner = (banner: any): HeroBanner => ({
+  id: banner.id,
+  title_bn: banner.title_bn ?? "",
+  title_en: banner.title_en ?? "",
+  subtitle_bn: banner.subtitle_bn ?? "",
+  subtitle_en: banner.subtitle_en ?? "",
+  image_url: banner.image_url ?? "",
+  is_active: banner.is_active,
+  sort_order: Number(banner.sort_order ?? 0),
+});
+
 
 // ─── Shortcut card data ───────────────────────────────────────────────────────
 
@@ -230,6 +297,49 @@ const HeroSection = () => {
   const navigate = useNavigate();
   const { services, categories } = useHomeServices();
 
+  const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+
+    const fetchHeroBanners = async () => {
+      try {
+        const response = await fetch(
+          `${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/hero-banners?active=1`,
+          { headers: getAuthHeaders() }
+        );
+
+        const payload = await response.json().catch(() => ({}));
+
+        if (!response.ok) {
+          throw new Error(payload?.message || "Hero banners load failed");
+        }
+
+        const rows = extractBanners(payload)
+          .map(normalizeHeroBanner)
+          .filter(isActiveBanner)
+          .sort(
+            (a, b) =>
+              Number(a.sort_order || 0) - Number(b.sort_order || 0)
+          );
+
+        if (!cancelled) {
+          setHeroBanners(rows);
+        }
+      } catch (error) {
+        console.error("Hero banners load error:", error);
+        if (!cancelled) {
+          setHeroBanners([]);
+        }
+      }
+    };
+
+    fetchHeroBanners();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const authUser = getMySqlAuth()?.user;
   const isDemo = authUser?.email ? DEMO_EMAILS.has(authUser.email) : false;
   const rawName = authUser?.name;
@@ -239,6 +349,34 @@ const HeroSection = () => {
       ? rawName || (authUser?.email ? authUser.email.split("@")[0] : null)
       : null;
   const greetName = userName || (bn ? "অতিথি" : "Guest");
+
+  const activeHeroBanner = heroBanners[0];
+
+  const heroTitle =
+    (bn
+      ? activeHeroBanner?.title_bn
+      : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) ||
+    (bn ? "আপনার ব্যক্তিগত সহকারী" : "Your Personal Assistant");
+
+  const heroSubtitle =
+    (bn
+      ? activeHeroBanner?.subtitle_bn
+      : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
+    (bn
+      ? "আপনার সকল সেবার এক ছাদের নীচে সমাধান। যেকোনো সময়, যেকোনো সেবা অর্ডার করুন।"
+      : "One-stop solution for your services. Order any service, anytime.");
+
+  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
+
+  const mobileBannerTitle =
+    (bn
+      ? activeHeroBanner?.title_bn
+      : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) || "";
+
+  const mobileBannerSubtitle =
+    (bn
+      ? activeHeroBanner?.subtitle_bn
+      : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) || "";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
@@ -472,6 +610,35 @@ const HeroSection = () => {
             />
           </motion.div>
 
+          {activeHeroBanner && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: 0.14 }}
+              className="relative z-10 mt-4 overflow-hidden rounded-3xl border border-white/20 bg-card shadow-xl"
+            >
+              <div
+                className="absolute inset-0 bg-cover bg-center"
+                style={{
+                  backgroundImage: `linear-gradient(90deg, hsl(210 11% 12% / 0.82), hsl(210 11% 12% / 0.35)), url(${heroImage})`,
+                }}
+              />
+              <div className="relative p-4">
+                <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75">
+                  {bn ? "আজকের হাইলাইট" : "Today’s highlight"}
+                </p>
+                <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white">
+                  {mobileBannerTitle || heroTitle}
+                </h2>
+                {mobileBannerSubtitle && (
+                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
+                    {mobileBannerSubtitle}
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {/* Platform shortcuts */}
           <AnimatePresence initial={false}>
             {!suggestionsOpen && (
@@ -543,7 +710,7 @@ const HeroSection = () => {
                 hsl(210 11% 12% / 0.35) 50%,
                 hsl(210 11% 12% / 0.72) 100%
               ),
-              url(${heroBg})
+              url(${heroImage})
             `,
           }}
         >
@@ -558,12 +725,10 @@ const HeroSection = () => {
               className="text-center"
             >
               <h1 className="font-heading text-2xl font-bold leading-tight text-white drop-shadow-lg md:text-3xl lg:text-5xl">
-                {bn ? "আপনার ব্যক্তিগত সহকারী" : "Your Personal Assistant"}
+                {heroTitle}
               </h1>
               <p className="mx-auto mt-3 max-w-2xl text-sm text-white/85 drop-shadow md:mt-5 md:text-lg leading-relaxed">
-                {bn
-                  ? "আপনার সকল সেবার এক ছাদের নীচে সমাধান। যেকোনো সময়, যেকোনো সেবা অর্ডার করুন।"
-                  : "One-stop solution for your services. Order any service, anytime."}
+                {heroSubtitle}
               </p>
             </motion.div>
 

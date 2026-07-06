@@ -7,7 +7,10 @@ import serviceRoutes from "./routes/service.route.js";
 import categoryRoutes from "./routes/category.route.js";
 import bookingRoutes from "./routes/booking.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import heroBannerRoutes from "./routes/heroBanner.route.js";
+import homepageSectionRoutes from "./routes/homepageSection.route.js";
 import { reconcilePendingShurjopayPayments } from "./controller/shurjopay.controller.js";
+import { ensurePlatformFeeSchema } from "./config/db.js";
 
 const app = express();
 
@@ -37,14 +40,23 @@ app.use("/api/packages", packageRoutes);
 app.use("/api/categories", categoryRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/hero-banners", heroBannerRoutes);
+app.use("/api/homepage-sections", homepageSectionRoutes);
 
 const PORT = process.env.PORT || 3000;
 const SERVICE_BACKEND_BASE_URL =
   process.env.YESS_SERVICE_BACKEND_BASE_URL || `http://localhost:${PORT}`;
 
-app.listen(PORT, () => {
-  console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
-});
+try {
+  await ensurePlatformFeeSchema();
+
+  app.listen(PORT, () => {
+    console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
+  });
+} catch (error) {
+  console.error("Service backend schema initialization failed:", error);
+  process.exit(1);
+}
 
 if (process.env.SHURJOPAY_RECONCILE_DISABLED !== "true") {
   setInterval(() => {
