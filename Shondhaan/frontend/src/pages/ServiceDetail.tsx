@@ -80,6 +80,7 @@ type CmsService = {
   total_reviews?: number;
   total_orders?: number;
   commission_percent?: number;
+  platform_fee?: number;
   features?: string[];
   available_cities?: string[];
   category_id?: string | null;
@@ -148,6 +149,7 @@ const normalizeCmsService = (raw: any): CmsService | null => {
     total_reviews: Number(service.total_reviews ?? service.reviews_count ?? 0),
     total_orders: Number(service.total_orders ?? service.orders_count ?? 0),
     commission_percent: Number(service.commission_percent ?? 0),
+    platform_fee: Number(service.platform_fee ?? service.platform_fee_amount ?? 0),
     features: parseList(service.features),
     available_cities: parseList(service.available_cities),
     category_id:
@@ -210,6 +212,23 @@ const makePricePackage = (service: CmsService | null): any[] => {
       sort_order: 0,
     },
   ];
+};
+
+
+const isRealUuid = (value?: string | null) =>
+  !!value &&
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    value
+  );
+
+const getSafePackageId = (value: unknown): string | null => {
+  if (value === undefined || value === null) return null;
+
+  const id = String(value).trim();
+
+  if (!id || id.includes("default-package")) return null;
+
+  return isRealUuid(id) ? id : null;
 };
 
 const useServiceBySlug = (slug?: string) =>
@@ -778,6 +797,7 @@ const CmsServiceDetail = ({
     : [];
 
   const pkg = packages[selectedPackage] || packages[0];
+  const platformFee = Number(service.platform_fee || 0);
 
   const { addItem: addRecentlyViewed, getItems: getRecentItems } =
     useRecentlyViewed();
@@ -950,11 +970,12 @@ const CmsServiceDetail = ({
       const createdBooking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
-        package_id: pkg.id || null,
+        package_id: getSafePackageId(pkg?.id),
         service_slug: service.slug,
         service_title: serviceTitle,
         package_name: pkg.name,
         package_price: Number(pkg.price || 0),
+        platform_fee_amount: platformFee,
         customer_name: bookingName.trim(),
         customer_phone: bookingPhone.trim(),
         customer_address: bookingAddress.trim(),
@@ -965,9 +986,9 @@ const CmsServiceDetail = ({
       });
 
       const paymentAmount = Number(
-        createdBooking?.payment_amount ||
-          createdBooking?.service_charge_amount ||
-          pkg.price ||
+        createdBooking?.platform_fee_amount ||
+          createdBooking?.payment_amount ||
+          platformFee ||
           0
       );
 
@@ -1449,6 +1470,21 @@ const CmsServiceDetail = ({
                         ৳{pkg.original_price}
                       </span>
                     )}
+                  </div>
+                  <div className="mt-3 rounded-lg border border-border bg-background/70 px-3 py-2">
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="text-muted-foreground">
+                        {bn ? "Booking platform fee" : "Booking platform fee"}
+                      </span>
+                      <span className="font-semibold text-foreground">
+                        à§³{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-[10px] leading-snug text-muted-foreground">
+                      {bn
+                        ? "Pay this fee to send the booking to admin and call center."
+                        : "Pay this fee to send the booking to admin and call center."}
+                    </p>
                   </div>
                 </div>
               )}
@@ -2230,7 +2266,7 @@ const ShareButtons = ({
         "bg-foreground/10 text-foreground hover:bg-foreground hover:text-background",
     },
   ];
-
+  
   const handleCopy = () => {
     navigator.clipboard.writeText(url);
     toast.success(t("sd.copyLink"));

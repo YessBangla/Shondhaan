@@ -3,6 +3,9 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { CENTRAL_API_BASE_URL } from "@/lib/api";
 
 const API_BASE_URL = CENTRAL_API_BASE_URL;
+const SERVICE_API_BASE_URL = (
+  import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 
 
 async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -21,6 +24,114 @@ async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T
   }
   return data as T;
 }
+
+async function serviceRequest<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
+  const auth = getMySqlAuth();
+  const response = await fetch(`${SERVICE_API_BASE_URL}${path}`, {
+    ...options,
+    headers: {
+      ...(options.body ? { "Content-Type": "application/json" } : {}),
+      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+      ...options.headers,
+    },
+  });
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.message || "Service API request failed");
+  }
+
+  return data as T;
+}
+
+const unwrapRows = <T,>(payload: any): T[] => {
+  if (Array.isArray(payload)) return payload as T[];
+  if (Array.isArray(payload?.data)) return payload.data as T[];
+  if (Array.isArray(payload?.services)) return payload.services as T[];
+  if (Array.isArray(payload?.categories)) return payload.categories as T[];
+  if (Array.isArray(payload?.packages)) return payload.packages as T[];
+  if (Array.isArray(payload?.results)) return payload.results as T[];
+  return [];
+};
+
+const unwrapItem = <T,>(payload: any): T => {
+  return (payload?.data ?? payload?.service ?? payload?.category ?? payload?.package ?? payload) as T;
+};
+
+const parseList = (value: unknown): string[] => {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  if (typeof value !== "string") return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+  } catch {
+    // keep going with comma separated text
+  }
+
+  return value
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+};
+
+const normalizeCategory = (row: any): CmsCategory => ({
+  ...row,
+  id: String(row.id ?? ""),
+  name: String(row.name ?? ""),
+  name_en: row.name_en ?? row.nameEn ?? null,
+  icon_url: row.icon_url ?? row.icon ?? null,
+  color_gradient: row.color_gradient ?? "from-blue-600 to-blue-800",
+  color_overlay: row.color_overlay ?? "from-blue-900/80 to-blue-700/40",
+  color_chip_bg: row.color_chip_bg ?? "bg-blue-500/15",
+  color_chip_text: row.color_chip_text ?? "text-blue-700",
+  color_accent: row.color_accent ?? "#2563eb",
+  sort_order: Number(row.sort_order ?? 0),
+  is_active: row.is_active === false || row.is_active === 0 ? false : true,
+});
+
+const normalizeService = (row: any): CmsService => ({
+  ...row,
+  id: String(row.id ?? ""),
+  slug: String(row.slug ?? ""),
+  title: String(row.title ?? row.name ?? ""),
+  title_en: row.title_en ?? row.name_en ?? null,
+  image_url: row.image_url ?? row.image ?? null,
+  description: row.description ?? null,
+  rating: Number(row.rating ?? 4.5),
+  total_reviews: Number(row.total_reviews ?? row.reviews_count ?? 0),
+  total_orders: Number(row.total_orders ?? row.orders_count ?? 0),
+  commission_percent: Number(row.commission_percent ?? 10),
+  platform_fee: Number(row.platform_fee ?? row.platform_fee_amount ?? 0),
+  features: parseList(row.features),
+  available_cities: parseList(row.available_cities),
+  category_id:
+    row.category_id === undefined || row.category_id === null
+      ? null
+      : String(row.category_id),
+  is_active: row.is_active === false || row.is_active === 0 ? false : true,
+  sort_order: Number(row.sort_order ?? 0),
+});
+
+const normalizePackage = (row: any): CmsServicePackage => ({
+  ...row,
+  id: String(row.id ?? ""),
+  service_id: String(row.service_id ?? ""),
+  name: String(row.name ?? row.package_name ?? ""),
+  price: Number(row.price ?? 0),
+  original_price:
+    row.original_price === undefined ||
+    row.original_price === null ||
+    row.original_price === ""
+      ? null
+      : Number(row.original_price),
+  features: parseList(row.features),
+  sort_order: Number(row.sort_order ?? 0),
+});
+
 // Generic CMS table hook
 function useCmsTable<T extends Record<string, any>>(
   table: string,
@@ -87,6 +198,8 @@ export interface CmsService {
   features: string[];
   available_cities: string[];
   category_id: string | null;
+  commission_percent?: number;
+  platform_fee?: number;
   is_active: boolean;
   sort_order: number;
 }
@@ -141,33 +254,104 @@ export interface CmsHomepageSection {
   is_active: boolean;
 }
 
-export const useCmsCategories = () => useCmsTable<CmsCategory>("cms_categories", "cms-categories");
-export const useCmsServices = () => useCmsTable<CmsService>("cms_services", "cms-services");
+export const useCmsCategories = () => {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ["cms-categories"],
+    queryFn: async () => {
+      const payload = await serviceRequest<any>("/api/categories");
+      return unwrapRows<any>(payload).map(normalizeCategory);
+    },
+  });
+
+  const upsert = useMutation({
+    mutationFn: async (item: Partial<CmsCategory>) => {
+      const payload = await serviceRequest<any>("/api/categories", {
+        method: "POST",
+        body: JSON.stringify(item),
+      });
+      return normalizeCategory(unwrapItem<any>(payload));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-categories"] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      await serviceRequest(`/api/categories/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-categories"] }),
+  });
+
+  return { ...query, upsert, remove };
+};
+
+export const useCmsServices = () => {
+  const qc = useQueryClient();
+  const query = useQuery({
+    queryKey: ["cms-services"],
+    queryFn: async () => {
+      const payload = await serviceRequest<any>("/api/services");
+      return unwrapRows<any>(payload).map(normalizeService);
+    },
+  });
+
+  const upsert = useMutation({
+    mutationFn: async (item: Partial<CmsService>) => {
+      const isEdit = Boolean(item.id);
+      const payload = await serviceRequest<any>(
+        isEdit ? `/api/services/${encodeURIComponent(String(item.id))}` : "/api/services",
+        {
+        method: isEdit ? "PUT" : "POST",
+        body: JSON.stringify(item),
+        }
+      );
+      return normalizeService(unwrapItem<any>(payload));
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),
+  });
+
+  const remove = useMutation({
+    mutationFn: async (id: string) => {
+      await serviceRequest(`/api/services/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+      });
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),
+  });
+
+  return { ...query, upsert, remove };
+};
 export const useCmsPackages = (serviceId?: string) => {
   const qc = useQueryClient();
   const query = useQuery({
     queryKey: ["cms-packages", serviceId],
     queryFn: async () => {
-      const { data } = await cmsRequest<{ data: CmsServicePackage[] }>(
-        `/api/cms/cms_service_packages?orderBy=sort_order&service_id=${encodeURIComponent(serviceId || "")}`
+      const payload = await serviceRequest<any>(
+        `/api/packages?service_id=${encodeURIComponent(serviceId || "")}`
       );
-      return data as CmsServicePackage[];
+      return unwrapRows<any>(payload).map(normalizePackage);
     },
     enabled: !!serviceId,
   });
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsServicePackage>) => {
-      const { data } = await cmsRequest<{ data: CmsServicePackage }>("/api/cms/cms_service_packages", {
-        method: "POST",
+      const isEdit = Boolean(item.id);
+      const payload = await serviceRequest<any>(
+        isEdit ? `/api/packages/${encodeURIComponent(String(item.id))}` : "/api/packages",
+        {
+        method: isEdit ? "PUT" : "POST",
         body: JSON.stringify(item),
-      });
-      return data;
+        }
+      );
+      return normalizePackage(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-packages"] }),
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      await cmsRequest(`/api/cms/cms_service_packages/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await serviceRequest(`/api/packages/${encodeURIComponent(id)}`, { method: "DELETE" });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-packages"] }),
   });

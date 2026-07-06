@@ -44,6 +44,9 @@ interface Booking {
   booking_date: string;
   booking_time: string;
   status: string;
+  payment_status?: string | null;
+  payment_amount?: number | null;
+  platform_fee_amount?: number | null;
   created_at: string;
   is_emergency: boolean;
   provider_id: string | number | null;
@@ -131,6 +134,17 @@ const normalizeBooking = (item: any): Booking => ({
     ? String(item.booking_time).slice(0, 5)
     : item.bookingTime || "",
   status: item.status || "pending",
+  payment_status: item.payment_status ?? item.paymentStatus ?? null,
+  payment_amount:
+    item.payment_amount === undefined || item.payment_amount === null
+      ? null
+      : Number(item.payment_amount),
+  platform_fee_amount:
+    item.platform_fee_amount === undefined || item.platform_fee_amount === null
+      ? item.payment_amount === undefined || item.payment_amount === null
+        ? null
+        : Number(item.payment_amount)
+      : Number(item.platform_fee_amount),
   created_at: item.created_at || item.createdAt || new Date().toISOString(),
   is_emergency: Boolean(item.is_emergency || item.isEmergency),
   provider_id: item.provider_id ?? item.providerId ?? null,

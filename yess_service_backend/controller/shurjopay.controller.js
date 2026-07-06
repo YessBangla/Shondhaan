@@ -234,10 +234,6 @@ const verifyShurjopayBooking = async ({ booking, orderId }) => {
     `
     UPDATE bookings
     SET payment_status = ?,
-        status = CASE
-          WHEN ? = 'paid' AND status = 'pending' THEN 'confirmed'
-          ELSE status
-        END,
         payment_gateway = COALESCE(payment_gateway, 'shurjopay'),
         payment_order_id = ?,
         payment_transaction_id = ?,
@@ -245,7 +241,7 @@ const verifyShurjopayBooking = async ({ booking, orderId }) => {
         payment_payload = ?
     WHERE id = ?
     `,
-    [paid ? "paid" : "unpaid", paid ? "paid" : "unpaid", verifiedOrderId, transactionId, payload, booking.id]
+    [paid ? "paid" : "unpaid", verifiedOrderId, transactionId, payload, booking.id]
   );
 
   const updated = await getBooking(booking.id);
@@ -270,11 +266,14 @@ export const initiateBookingPayment = async (req, res) => {
     }
 
     const declaredTotal = Number(req.body?.total_amount || 0);
-    const paymentBase = Math.max(Number(booking.package_price || 0), Number.isFinite(declaredTotal) ? declaredTotal : 0);
-    const payableAmount = money(paymentBase * 0.2);
+    const payableAmount = money(
+      booking.platform_fee_amount ??
+        booking.payment_amount ??
+        (Number.isFinite(declaredTotal) ? declaredTotal : 0)
+    );
 
     if (payableAmount <= 0) {
-      return res.status(400).json({ message: "Booking amount is not payable" });
+      return res.status(400).json({ message: "Platform fee is not payable" });
     }
 
     const tokenData = await getToken();
@@ -305,7 +304,7 @@ export const initiateBookingPayment = async (req, res) => {
       client_ip: req.ip || req.socket?.remoteAddress || "127.0.0.1",
       value1: booking.id,
       value2: "service_booking",
-      value3: money(paymentBase),
+      value3: money(booking.package_price || 0),
       value4: payableAmount,
     };
 

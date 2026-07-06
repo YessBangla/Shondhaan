@@ -8,6 +8,7 @@ const empty: Partial<CmsService> = {
   slug: "", title: "", title_en: "", image_url: "", description: "",
   rating: 4.5, total_reviews: 0, total_orders: 0,
   features: [], available_cities: [], category_id: null, is_active: true, sort_order: 0,
+  platform_fee: 0,
 };
 
 const AdminServices = () => {
@@ -62,13 +63,17 @@ const AdminServices = () => {
           </div>
           <ImageUploader value={editing.image_url || ""} onChange={(v) => setEditing({...editing, image_url: v})} folder="services" label="সেবার ছবি" />
           <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="বিবরণ" rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring" />
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
             <input type="number" step="0.1" value={editing.rating || 0} onChange={e => setEditing({...editing, rating: parseFloat(e.target.value)})} placeholder="রেটিং" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
             <input type="number" value={editing.total_reviews || 0} onChange={e => setEditing({...editing, total_reviews: parseInt(e.target.value)})} placeholder="রিভিউ" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
             <input type="number" value={editing.total_orders || 0} onChange={e => setEditing({...editing, total_orders: parseInt(e.target.value)})} placeholder="অর্ডার" className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />
             <div className="relative">
               <input type="number" step="0.5" min="0" max="100" value={(editing as any).commission_percent ?? 10} onChange={e => setEditing({...editing, commission_percent: parseFloat(e.target.value)} as any)} placeholder="কমিশন %" className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-sm outline-none w-full" />
               <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
+            </div>
+            <div className="relative">
+              <input type="number" step="1" min="0" value={(editing as any).platform_fee ?? 0} onChange={e => setEditing({...editing, platform_fee: parseFloat(e.target.value) || 0} as any)} placeholder="Platform fee" className="rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none w-full" />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
             </div>
           </div>
           <input value={featuresText} onChange={e => setFeaturesText(e.target.value)} placeholder="ফিচার (কমা দিয়ে আলাদা)" className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none" />

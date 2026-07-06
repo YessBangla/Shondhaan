@@ -47,6 +47,7 @@ export interface CreateBookingPayload {
   booking_time: string;
   status?: string;
   payment_status?: string;
+  platform_fee_amount?: number | null;
   note?: string | null;
   is_emergency?: boolean;
 }
