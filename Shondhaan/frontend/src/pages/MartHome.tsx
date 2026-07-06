@@ -612,7 +612,7 @@ const MartHome = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-5 md:py-7">
+      <div className="max-w-7xl mx-auto px-4 py-1 md:py-2">
 
         {/* Hero Banner Carousel */}
         <section className="mb-7">
