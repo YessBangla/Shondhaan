@@ -12,6 +12,33 @@ type HomeApiResponse<T> =
   | { results?: T[] }
   | { items?: T[] };
 
+const parseStringList = (value: unknown): string[] => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value.map(String).map((item) => item.trim()).filter(Boolean);
+  if (typeof value === "string") {
+    const splitList = () => value.split(",").map((item) => item.trim()).filter(Boolean);
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed)
+        ? parsed.map(String).map((item) => item.trim()).filter(Boolean)
+        : splitList();
+    } catch {
+      return splitList();
+    }
+  }
+  return [];
+};
+
+const normalizeActive = (value: unknown) => {
+  if (value === undefined || value === null) return true;
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value === 1;
+  if (typeof value === "string") {
+    return ["1", "true", "active", "yes"].includes(value.trim().toLowerCase());
+  }
+  return false;
+};
+
 async function fetchJson<T>(path: string): Promise<T> {
   const auth = getMySqlAuth();
   const res = await fetch(`${API_BASE_URL}${path}`, {
@@ -37,7 +64,7 @@ export type HomeService = {
   rating?: number;
   price?: number;
   features?: string[] | string | null;
-  is_active?: boolean;
+  is_active?: boolean | number | string | null;
   available_cities?: string[] | string | null;
   [key: string]: any;
 };
@@ -47,7 +74,7 @@ export type HomeCategory = {
   name: string;
   name_bn?: string;
   name_en?: string | null;
-  is_active?: boolean;
+  is_active?: boolean | number | string | null;
   [key: string]: any;
 };
 
@@ -59,7 +86,16 @@ export function useHomeServices() {
       const list = Array.isArray(raw)
         ? raw
         : (raw as any)?.data || (raw as any)?.services || (raw as any)?.results || (raw as any)?.items || [];
-      return Array.isArray(list) ? list : [];
+      return Array.isArray(list)
+        ? list.map((service) => ({
+            ...service,
+            price: Number((service as any).price || 0),
+            rating: Number((service as any).rating || 0),
+            features: parseStringList((service as any).features),
+            available_cities: parseStringList((service as any).available_cities),
+            is_active: normalizeActive((service as any).is_active),
+          }))
+        : [];
     },
     staleTime: 2 * 60 * 1000,
     retry: 1,
@@ -72,7 +108,12 @@ export function useHomeServices() {
       const list = Array.isArray(raw)
         ? raw
         : (raw as any)?.data || (raw as any)?.categories || (raw as any)?.results || (raw as any)?.items || [];
-      return Array.isArray(list) ? list : [];
+      return Array.isArray(list)
+        ? list.map((category) => ({
+            ...category,
+            is_active: normalizeActive((category as any).is_active),
+          }))
+        : [];
     },
     staleTime: 2 * 60 * 1000,
     retry: 1,

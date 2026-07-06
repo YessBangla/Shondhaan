@@ -4,17 +4,15 @@ import { motion } from "framer-motion";
 import {
   ChevronLeft, Search, User, Phone, MapPin, Calendar, Clock,
   Plus, RefreshCw, FileText, ClipboardList, Headphones, Loader2,
-  Zap, Bot, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart
+  Zap, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import AccountsSection from "@/components/AccountsSection";
 import NotificationBell from "@/components/NotificationBell";
 import CategoryFilterDropdown, { useServiceCategoryMap } from "@/components/CategoryFilterDropdown";
-import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import {
   assignBookingProvider,
   createBooking,
@@ -70,14 +68,61 @@ const requestStatusOptions = [
   { value: "rejected", label: "বাতিল", className: "bg-red-100 text-red-800" },
 ];
 
-const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
+const API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+const CENTRAL_API_URL = (CENTRAL_API_BASE_URL || "http://localhost:5000").replace(/\/+$/, "");
+
+const getAuthHeaders = () => {
+  const auth = getMySqlAuth();
+
+  return {
+    "Content-Type": "application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+  };
+};
+
+const extractArray = <T,>(payload: any): T[] => {
+  const data =
+    payload?.data ??
+    payload?.items ??
+    payload?.rows ??
+    payload?.result ??
+    payload?.bookings ??
+    payload?.providers ??
+    payload?.users ??
+    payload;
+
+  if (Array.isArray(data)) return data as T[];
+  if (Array.isArray(data?.rows)) return data.rows as T[];
+  if (Array.isArray(data?.items)) return data.items as T[];
+  if (Array.isArray(data?.users)) return data.users as T[];
+
+  return [];
+};
+
+const fetchOptionalArray = async <T,>(url: string): Promise<T[]> => {
+  try {
+    const response = await fetch(url, { headers: getAuthHeaders() });
+    const payload = await response.json().catch(() => ({}));
+
+    if (!response.ok) return [];
+    return extractArray<T>(payload);
+  } catch {
+    return [];
+  }
+};
+
+const normalizeUserToProfile = (item: any): Profile => ({
+  user_id: String(item.id ?? item.user_id ?? ""),
+  display_name: item.name ?? item.display_name ?? item.full_name ?? null,
+  phone: item.mobile ?? item.phone ?? null,
+  address: item.address ?? null,
+});
 
 const CallCenterPanel = () => {
-  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const mysqlAuth = getMySqlAuth();
   const mysqlUser = mysqlAuth?.user;
-  const activeUserId = mysqlUser?.id || user?.id;
+  const activeUserId = mysqlUser?.id;
   const [isCallCenter, setIsCallCenter] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -107,71 +152,105 @@ const CallCenterPanel = () => {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!authLoading && !activeUserId) navigate("/main-login", { replace: true });
-  }, [activeUserId, authLoading, navigate]);
-
-  const checkRole = useCallback(async () => {
-    if (mysqlUser?.type) {
-      setIsCallCenter(["call_center", "admin", "super_admin"].includes(mysqlUser.type));
-      setLoading(false);
-      return;
+    if (!mysqlAuth?.token || !activeUserId) {
+      navigate("/main-login", { replace: true });
     }
+  }, [activeUserId, mysqlAuth?.token, navigate]);
 
-    if (!user) {
-      setIsCallCenter(false);
-      setLoading(false);
-      return;
-    }
+  const checkRole = useCallback(() => {
+    const role = mysqlUser?.type || mysqlUser?.role;
 
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = data?.map(r => r.role) || [];
-    if (roles.includes("call_center") || roles.includes("admin") || roles.includes("super_admin")) {
-      setIsCallCenter(true);
-    } else {
-      setIsCallCenter(false);
-      setLoading(false);
-    }
-  }, [mysqlUser?.type, user]);
+    setIsCallCenter(
+      ["call_center", "admin", "super_admin"].includes(String(role || ""))
+    );
+
+    setLoading(false);
+  }, [mysqlUser?.role, mysqlUser?.type]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
+
     try {
-      const [bookingRows, providersRes, requestsRes, labRes] = await Promise.all([
-        listBookings(),
-        fetch(`${API_BASE_URL}/api/providers?status=approved`, {
-          headers: {
-            ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
-          },
-        }),
-        supabase.from("service_requests").select("*").order("created_at", { ascending: false }),
-        supabase.from("lab_test_reports").select("*").order("created_at", { ascending: false }),
-      ]);
+      const providersRes = await fetch(`${API_BASE_URL}/api/providers?status=approved`, {
+        headers: getAuthHeaders(),
+      });
 
       const providerPayload = await providersRes.json().catch(() => ({}));
-      if (!providersRes.ok) throw new Error(providerPayload.message || "Failed to fetch providers");
 
-      setBookings(bookingRows as Booking[]);
-      setProviders(Array.isArray(providerPayload?.data) ? providerPayload.data : []);
-      if (requestsRes.data) setRequests(requestsRes.data);
-      if (labRes.data) setLabTests(labRes.data);
+      if (!providersRes.ok) {
+        throw new Error(providerPayload.message || "Failed to fetch providers");
+      }
+
+      const [bookingRows, requestRows, labRows] = await Promise.all([
+        listBookings(),
+        fetchOptionalArray<ServiceRequest>(`${API_BASE_URL}/api/service-requests`),
+        fetchOptionalArray<any>(`${API_BASE_URL}/api/lab-test-reports`),
+      ]);
+
+      setBookings((bookingRows || []) as Booking[]);
+      setProviders(extractArray<Provider>(providerPayload));
+      setRequests(requestRows || []);
+      setLabTests(labRows || []);
     } catch (error: any) {
+      console.error("Call center data load error:", error);
       toast.error(error?.message || "Failed to load call center data");
     } finally {
       setLoading(false);
     }
-  }, [mysqlAuth?.token]);
+  }, []);
 
   useEffect(() => { checkRole(); }, [checkRole]);
   useEffect(() => { if (isCallCenter) fetchData(); }, [isCallCenter, fetchData]);
 
   const searchCustomer = async () => {
     if (!searchQuery.trim()) return;
+
     setSearching(true);
-    const q = searchQuery.trim();
-    const { data } = await supabase.from("profiles").select("user_id, display_name, phone, address")
-      .or(`phone.ilike.%${q}%,display_name.ilike.%${q}%`);
-    setSearchResults(data || []);
-    setSearching(false);
+
+    try {
+      const q = searchQuery.trim();
+
+      const response = await fetch(
+        `${CENTRAL_API_URL}/api/admin/users?search=${encodeURIComponent(q)}`,
+        { headers: getAuthHeaders() }
+      );
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Customer search failed");
+      }
+
+      let users = extractArray<any>(payload);
+
+      // Some backends ignore ?search=. If so, filter on frontend.
+      users = users.filter((item) => {
+        const text = [
+          item.id,
+          item.user_id,
+          item.name,
+          item.display_name,
+          item.full_name,
+          item.mobile,
+          item.phone,
+          item.email,
+          item.address,
+        ]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        return text.includes(q.toLowerCase());
+      });
+
+      setSearchResults(users.map(normalizeUserToProfile));
+    } catch (error: any) {
+      console.error("Customer search error:", error);
+      toast.error(error?.message || "Customer search failed");
+      setSearchResults([]);
+    } finally {
+      setSearching(false);
+    }
   };
 
   const updateBookingStatus = async (id: string, status: string) => {
@@ -201,9 +280,26 @@ const CallCenterPanel = () => {
 
   const updateRequestStatus = async (id: string, status: string) => {
     setUpdatingId(id);
-    const { error } = await supabase.from("service_requests").update({ status }).eq("id", id);
-    if (!error) setRequests(prev => prev.map(r => r.id === id ? { ...r, status } : r));
-    setUpdatingId(null);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/service-requests/${id}/status`, {
+        method: "PATCH",
+        headers: getAuthHeaders(),
+        body: JSON.stringify({ status }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Request status update failed");
+      }
+
+      setRequests((prev) =>
+        prev.map((request) => (request.id === id ? { ...request, status } : request))
+      );
+    } catch (error: any) {
+      toast.error(error?.message || "Request status update failed");
+    } finally {
+      setUpdatingId(null);
+    }
   };
 
   const handleCreateBooking = async (e: React.FormEvent) => {
@@ -215,11 +311,25 @@ const CallCenterPanel = () => {
     setSubmitting(true);
     try {
       await createBooking({
-        ...newBooking,
-        package_price: Number(newBooking.package_price),
-        service_slug: newBooking.service_slug || newBooking.service_title.toLowerCase().trim().replace(/\s+/g, "-"),
-        customer_address: newBooking.customer_address || "Call center booking",
-      });
+        user_id: String(newBooking.user_id),
+        service_id: null,
+        package_id: null,
+        service_title: newBooking.service_title,
+        service_slug:
+          newBooking.service_slug ||
+          newBooking.service_title.toLowerCase().trim().replace(/\s+/g, "-"),
+        package_name: newBooking.package_name || "Call Center Package",
+        package_price: Number(newBooking.package_price || 0),
+        customer_name: newBooking.customer_name.trim(),
+        customer_phone: newBooking.customer_phone.trim(),
+        customer_address:
+          newBooking.customer_address.trim() || "Call center booking",
+        booking_date: newBooking.booking_date,
+        booking_time: newBooking.booking_time,
+        status: "pending",
+        payment_status: "unpaid",
+        note: newBooking.is_emergency ? "Emergency booking" : null,
+      } as any);
     } catch (error: any) {
       setSubmitting(false);
       toast.error(error?.message || "Booking create failed");
@@ -233,7 +343,7 @@ const CallCenterPanel = () => {
   };
 
   const statusFilteredBookings = filterStatus === "all" ? bookings
-    : filterStatus === "emergency" ? bookings.filter(b => b.is_emergency)
+    : filterStatus === "emergency" ? bookings.filter(b => b.is_emergency || b.note === "Emergency booking")
     : bookings.filter(b => b.status === filterStatus);
   const filteredBookings = filterCategory === "all" ? statusFilteredBookings
     : statusFilteredBookings.filter(b => serviceCategoryMap?.get(b.service_slug) === filterCategory);
@@ -243,7 +353,7 @@ const CallCenterPanel = () => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  if (authLoading || loading) {
+  if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
@@ -401,7 +511,7 @@ const CallCenterPanel = () => {
                               <div>
                                 <div className="flex items-center gap-1.5">
                                   <p className="text-sm font-semibold text-foreground">{b.service_title}</p>
-                                  {b.is_emergency && <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive"><Zap className="h-3 w-3" /> জরুরী</span>}
+                                  {(b.is_emergency || b.note === "Emergency booking") && <span className="inline-flex items-center gap-0.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive"><Zap className="h-3 w-3" /> জরুরী</span>}
                                 </div>
                                 <p className="text-xs text-muted-foreground">{b.package_name} — ৳{b.package_price}</p>
                               </div>
@@ -420,7 +530,7 @@ const CallCenterPanel = () => {
                                 <option value="">Provider assign করুন</option>
                                 {providers.map(provider => (
                                   <option key={provider.id} value={provider.id}>
-                                    {provider.full_name}{provider.phone ? ` - ${provider.phone}` : ""}
+                                    {provider.full_name || provider.name || provider.shop_name || `Provider ${provider.id}`}{provider.phone || provider.mobile ? ` - ${provider.phone || provider.mobile}` : ""}
                                   </option>
                                 ))}
                               </select>

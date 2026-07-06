@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from "uuid";
-import { pool } from "../config/db.js";
+import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
 const allowedStatuses = [
   "pending",
@@ -36,6 +36,8 @@ const formatBooking = (booking) => ({
 
 export const createBooking = async (req, res) => {
   try {
+    await ensurePlatformFeeSchema();
+
     const {
       user_id,
       service_id,
