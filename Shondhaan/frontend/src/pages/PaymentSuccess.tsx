@@ -121,7 +121,7 @@ const PaymentSuccess = () => {
             </div>
             <p className="text-muted-foreground">{result.booking.package_name}</p>
             <p className="mt-2 font-medium text-primary">
-              {bn ? "অগ্রিম পেমেন্ট" : "Advance paid"}: ৳{Number(result.booking.payment_amount || 0).toLocaleString(bn ? "bn-BD" : "en-US")}
+              {bn ? "প্ল্যাটফর্ম ফি পেমেন্ট" : "Platform fee paid"}: ৳{Number(result.booking.platform_fee_amount || result.booking.payment_amount || 0).toLocaleString(bn ? "bn-BD" : "en-US")}
             </p>
           </div>
         )}

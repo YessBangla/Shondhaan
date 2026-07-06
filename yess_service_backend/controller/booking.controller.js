@@ -12,15 +12,7 @@ const allowedStatuses = [
 
 const allowedPaymentStatuses = ["unpaid", "paid", "refunded"];
 
-const SERVICE_CHARGE_PERCENT = Number(
-  process.env.SERVICE_CHARGE_PERCENT || 20
-);
-
-const calculateServiceCharge = (total) => {
-  const price = Number(total || 0);
-  const charge = (price * SERVICE_CHARGE_PERCENT) / 100;
-  return Math.round(charge * 100) / 100;
-};
+const money = (value) => Math.round(Number(value || 0) * 100) / 100;
 
 const calculateDueAmount = (booking) => {
   const total = Number(booking.package_price || 0);
@@ -33,10 +25,12 @@ const formatBooking = (booking) => ({
   ...booking,
   package_price: Number(booking.package_price || 0),
   payment_amount: Number(booking.payment_amount || 0),
+  platform_fee_amount: Number(
+    booking.platform_fee_amount ?? booking.payment_amount ?? 0
+  ),
   paid_amount:
     booking.payment_status === "paid" ? Number(booking.payment_amount || 0) : 0,
   service_charge_amount: Number(booking.payment_amount || 0),
-  platform_fee_amount: Number(booking.payment_amount || 0),
   due_amount: calculateDueAmount(booking),
 });
 
@@ -56,6 +50,7 @@ export const createBooking = async (req, res) => {
       booking_date,
       booking_time,
       note,
+      platform_fee_amount,
     } = req.body;
 
     if (
@@ -86,8 +81,46 @@ export const createBooking = async (req, res) => {
 
     const id = uuidv4();
 
-    // User must pay this amount now.
-    const serviceChargeAmount = calculateServiceCharge(price);
+    let platformFeeAmount =
+      platform_fee_amount !== undefined &&
+      platform_fee_amount !== null &&
+      platform_fee_amount !== ""
+        ? Number(platform_fee_amount)
+        : 0;
+
+    if (Number.isNaN(platformFeeAmount) || platformFeeAmount < 0) {
+      return res.status(400).json({
+        message: "Invalid platform fee",
+      });
+    }
+
+    if (platformFeeAmount === 0 && service_id) {
+      const [serviceRows] = await pool.execute(
+        `
+        SELECT platform_fee
+        FROM services
+        WHERE id = ?
+        LIMIT 1
+        `,
+        [service_id]
+      );
+      platformFeeAmount = Number(serviceRows[0]?.platform_fee || 0);
+    }
+
+    if (platformFeeAmount === 0 && service_slug) {
+      const [serviceRows] = await pool.execute(
+        `
+        SELECT platform_fee
+        FROM services
+        WHERE slug = ?
+        LIMIT 1
+        `,
+        [service_slug]
+      );
+      platformFeeAmount = Number(serviceRows[0]?.platform_fee || 0);
+    }
+
+    platformFeeAmount = money(platformFeeAmount);
 
     // Booking starts pending until service charge payment is successful.
     const finalStatus = "pending";
@@ -111,10 +144,11 @@ export const createBooking = async (req, res) => {
         booking_time,
         status,
         payment_status,
+        platform_fee_amount,
         payment_amount,
         note
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -132,7 +166,8 @@ export const createBooking = async (req, res) => {
         booking_time,
         finalStatus,
         finalPaymentStatus,
-        serviceChargeAmount,
+        platformFeeAmount,
+        platformFeeAmount,
         note || null,
       ]
     );
@@ -194,6 +229,8 @@ export const getBookings = async (req, res) => {
     if (payment_status) {
       query += ` AND payment_status = ?`;
       values.push(payment_status);
+    } else if (!user_id) {
+      query += ` AND payment_status = 'paid'`;
     }
 
     if (service_slug) {
@@ -509,24 +546,18 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
-    const nextStatus =
-      payment_status === "paid" && existing[0].status === "pending"
-        ? "confirmed"
-        : existing[0].status;
-
     await pool.execute(
       `
       UPDATE bookings
       SET
         payment_status = ?,
-        status = ?,
         payment_verified_at = CASE
           WHEN ? = 'paid' THEN NOW()
           ELSE payment_verified_at
         END
       WHERE id = ?
       `,
-      [payment_status, nextStatus, payment_status, id]
+      [payment_status, payment_status, id]
     );
 
     const [rows] = await pool.execute(
@@ -542,7 +573,7 @@ export const updatePaymentStatus = async (req, res) => {
     return res.json({
       message:
         payment_status === "paid"
-          ? "Service charge paid and booking confirmed"
+          ? "Platform fee paid and booking request is ready"
           : "Payment status updated successfully",
       data: formatBooking(rows[0]),
     });

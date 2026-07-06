@@ -43,6 +43,7 @@ CREATE TABLE `bookings` (
   `booking_time` time NOT NULL,
   `status` enum('pending','confirmed','processing','assigned','completed','cancelled') NOT NULL DEFAULT 'pending',
   `payment_status` enum('unpaid','paid','refunded') NOT NULL DEFAULT 'unpaid',
+  `platform_fee_amount` decimal(10,2) NOT NULL DEFAULT 0.00,
   `provider_id` char(36) DEFAULT NULL,
   `assigned_to` char(36) DEFAULT NULL,
   `note` text DEFAULT NULL,
@@ -124,7 +125,8 @@ CREATE TABLE `services` (
   `sort_order` int(11) DEFAULT 0,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
-  `price` decimal(10,2) NOT NULL DEFAULT 0.00
+  `price` decimal(10,2) NOT NULL DEFAULT 0.00,
+  `platform_fee` decimal(10,2) NOT NULL DEFAULT 0.00
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --

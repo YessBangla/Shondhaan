@@ -25,6 +25,7 @@ interface Booking {
   status: string;
   payment_status?: string | null;
   payment_amount?: number | null;
+  platform_fee_amount?: number | null;
   due_amount?: number | null;
   created_at: string;
 }
@@ -126,7 +127,7 @@ const BookingHistory = () => {
                       </button>
                       <p className="text-xs text-muted-foreground mt-0.5">{b.package_name} — ৳{b.package_price}</p>
                       <p className="mt-1 text-[11px] font-medium text-primary">
-                        20% platform fee: ৳{Number(b.payment_amount || 0).toLocaleString("bn-BD")}
+                        Platform fee: ৳{Number(b.platform_fee_amount || b.payment_amount || 0).toLocaleString("bn-BD")}
                         {b.payment_status === "paid" ? " paid" : " unpaid"}
                       </p>
                     </div>
