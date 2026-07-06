@@ -43,6 +43,7 @@ const shippingAddressesRoutes = require("./routes/shipping_addresses");
 const uploadRouter = require("./routes/upload");
 const profileRoutes = require("./routes/profile");
 const wishlistRoutes = require("./routes/wishlist"); // Import the wishlist routes
+const notificationsRoutes = require("./routes/notifications");
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
 const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
 
@@ -132,6 +133,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 app.use("/api/delivery-requests", deliveryRequestsRouter);
 app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
+app.use("/api/notifications", notificationsRoutes);
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 server.listen(PORT, async () => {

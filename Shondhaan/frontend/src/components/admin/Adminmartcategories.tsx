@@ -18,6 +18,13 @@ interface Category {
   created_at: string;
 }
 
+interface SubCategory {
+  id: number;
+  category_id: number;
+  name: string;
+  category_name?: string | null;
+}
+
 const slugify = (text: string) =>
   text.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
 
@@ -35,6 +42,10 @@ const AdminMartCategories = () => {
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMsg, setSuccessMsg] = useState("");
+  const [subEditId, setSubEditId] = useState<number | null>(null);
+  const [subCategoryId, setSubCategoryId] = useState("");
+  const [subCategoryName, setSubCategoryName] = useState("");
+  const [subSaving, setSubSaving] = useState(false);
 
   const { data: categories = [], isLoading } = useQuery<Category[]>({
     queryKey: ["mart-categories-admin"],
@@ -45,9 +56,20 @@ const AdminMartCategories = () => {
     },
   });
 
+  const { data: subCategories = [], isLoading: subCategoriesLoading } = useQuery<SubCategory[]>({
+    queryKey: ["mart-sub-categories-admin"],
+    queryFn: async () => {
+      const res = await fetch(`${API_BASE}/api/sub-categories`);
+      const json = await res.json();
+      return json.success ? json.data : [];
+    },
+  });
+
   const invalidate = () => {
     queryClient.invalidateQueries({ queryKey: ["mart-categories-admin"] });
+    queryClient.invalidateQueries({ queryKey: ["mart-sub-categories-admin"] });
     queryClient.invalidateQueries({ queryKey: ["mart-categories"] });
+    queryClient.invalidateQueries({ queryKey: ["mart-sub-categories"] });
   };
 
   const showSuccess = (msg: string) => {
@@ -139,6 +161,67 @@ const AdminMartCategories = () => {
       if (json.success) {
         invalidate();
         showSuccess("Category deleted.");
+      } else {
+        alert("Delete failed: " + json.message);
+      }
+    } catch (err: any) {
+      alert("Delete error: " + err.message);
+    }
+  };
+
+  const resetSubForm = () => {
+    setSubEditId(null);
+    setSubCategoryId("");
+    setSubCategoryName("");
+  };
+
+  const openSubEdit = (sub: SubCategory) => {
+    setSubEditId(sub.id);
+    setSubCategoryId(String(sub.category_id));
+    setSubCategoryName(sub.name);
+  };
+
+  const handleSubSave = async () => {
+    if (!subCategoryId) return alert("Select a parent category");
+    if (!subCategoryName.trim()) return alert("Sub category name is required");
+
+    setSubSaving(true);
+    try {
+      const res = await fetch(
+        subEditId ? `${API_BASE}/api/sub-categories/${subEditId}` : `${API_BASE}/api/sub-categories`,
+        {
+          method: subEditId ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            category_id: Number(subCategoryId),
+            name: subCategoryName.trim(),
+          }),
+        }
+      );
+      const json = await res.json();
+      if (json.success) {
+        invalidate();
+        showSuccess(subEditId ? "Sub category updated!" : "Sub category added!");
+        resetSubForm();
+      } else {
+        alert("Error: " + (json.message || "Failed to save sub category"));
+      }
+    } catch (err: any) {
+      alert("Error: " + err.message);
+    } finally {
+      setSubSaving(false);
+    }
+  };
+
+  const handleSubDelete = async (id: number, name: string) => {
+    if (!confirm(`Delete sub category "${name}"?`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/sub-categories/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (json.success) {
+        invalidate();
+        showSuccess("Sub category deleted.");
+        if (subEditId === id) resetSubForm();
       } else {
         alert("Delete failed: " + json.message);
       }
@@ -367,6 +450,117 @@ const AdminMartCategories = () => {
           ))}
         </div>
       )}
+
+      <div className="border-t border-border pt-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Mart Sub Categories</h2>
+            <p className="text-[12px] text-muted-foreground mt-0.5">
+              Add sub categories under a parent category. They appear on MartHome and product category pages.
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white dark:bg-card border border-border rounded-2xl p-5 shadow-sm mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-3 items-end">
+            <div>
+              <label className="text-[12px] font-semibold text-muted-foreground mb-1 block">
+                Parent Category *
+              </label>
+              <select
+                value={subCategoryId}
+                onChange={e => setSubCategoryId(e.target.value)}
+                className="w-full border border-border rounded-xl px-3 py-2 text-[13px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              >
+                <option value="">Select category</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name_en || cat.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-[12px] font-semibold text-muted-foreground mb-1 block">
+                Sub Category Name *
+              </label>
+              <input
+                value={subCategoryName}
+                onChange={e => setSubCategoryName(e.target.value)}
+                placeholder="e.g. Smartphones"
+                className="w-full border border-border rounded-xl px-3 py-2 text-[13px] bg-background focus:outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={handleSubSave}
+                disabled={subSaving}
+                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              >
+                {subSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
+                {subEditId ? "Update" : "Add"}
+              </button>
+              {subEditId && (
+                <button
+                  onClick={resetSubForm}
+                  className="px-4 py-2 rounded-xl text-[13px] font-medium text-muted-foreground border border-border hover:bg-muted transition-colors"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {subCategoriesLoading ? (
+          <div className="flex items-center justify-center py-10">
+            <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+          </div>
+        ) : subCategories.length === 0 ? (
+          <div className="text-center py-10 text-muted-foreground border border-dashed border-border rounded-2xl">
+            <p className="text-[14px] font-medium">No sub categories yet</p>
+            <p className="text-[12px] mt-1 opacity-70">Select a parent category and add the first one.</p>
+          </div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border bg-white dark:bg-card">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-muted-foreground">
+                <tr>
+                  <th className="text-left px-4 py-3 font-semibold">Sub Category</th>
+                  <th className="text-left px-4 py-3 font-semibold">Parent Category</th>
+                  <th className="text-right px-4 py-3 font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {subCategories.map((sub) => (
+                  <tr key={sub.id} className="border-t border-border/60">
+                    <td className="px-4 py-3 font-medium text-foreground">{sub.name}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{sub.category_name || "Unknown"}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => openSubEdit(sub)}
+                          className="h-8 w-8 rounded-lg border border-border flex items-center justify-center hover:bg-muted transition-colors"
+                          title="Edit sub category"
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleSubDelete(sub.id, sub.name)}
+                          className="h-8 w-8 rounded-lg border border-border flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                          title="Delete sub category"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 };
