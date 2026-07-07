@@ -798,7 +798,9 @@ async function initDatabase() {
       otp_hash VARCHAR(64) NULL,
       otp_expires_at DATETIME NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_users_email (email),
+      INDEX idx_users_mobile (mobile)
     )
   `);
   await pool.query(`
@@ -956,6 +958,22 @@ await pool.query(`
 
   for (const [column, alterSql] of columns) {
     await ensureTableColumn("users", column, alterSql);
+  }
+
+  const [emailIndexExists] = await pool.execute(
+    "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_email'",
+    [DB_NAME],
+  );
+  if (!emailIndexExists.length) {
+    await pool.query("CREATE INDEX idx_users_email ON users (email)");
+  }
+
+  const [mobileIndexExists] = await pool.execute(
+    "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_mobile'",
+    [DB_NAME],
+  );
+  if (!mobileIndexExists.length) {
+    await pool.query("CREATE INDEX idx_users_mobile ON users (mobile)");
   }
 
   const sellerColumns = [
@@ -1641,11 +1659,14 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ message: "Email/mobile and password are required" });
     }
 
-    const emailOrMobile = identifier.includes("@") ? normalizeEmail(identifier) : normalizeMobile(identifier);
-    const [rows] = await pool.execute("SELECT * FROM users WHERE email = ? OR mobile = ? LIMIT 1", [
-      emailOrMobile,
-      emailOrMobile,
-    ]);
+    const isEmailLogin = identifier.includes("@");
+    const normalizedIdentifier = isEmailLogin ? normalizeEmail(identifier) : normalizeMobile(identifier);
+    const [rows] = await pool.execute(
+      isEmailLogin
+        ? "SELECT * FROM users WHERE email = ? LIMIT 1"
+        : "SELECT * FROM users WHERE mobile = ? LIMIT 1",
+      [normalizedIdentifier],
+    );
     const user = rows[0];
 
     if (!user || !(await verifyPassword(password, user.password))) {

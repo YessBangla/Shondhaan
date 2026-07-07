@@ -1,34 +1,13 @@
 const express = require("express");
-const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
 const router = express.Router();
-
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
 
 function verifyToken(token = "") {
-  const [payload, signature] = String(token).split(".");
-  if (!payload || !signature) return null;
-
-  const expected = crypto
-    .createHmac("sha256", TOKEN_SECRET)
-    .update(payload)
-    .digest("base64url");
-
-  const signatureBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-
-  if (
-    signatureBuffer.length !== expectedBuffer.length ||
-    !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-  ) {
-    return null;
-  }
-
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!data.exp || data.exp < Date.now()) return null;
-    return data;
+    return jwt.verify(token, TOKEN_SECRET);
   } catch {
     return null;
   }

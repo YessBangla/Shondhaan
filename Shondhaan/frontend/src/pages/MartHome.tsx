@@ -355,9 +355,29 @@ const MartHome = () => {
   const { data: categories = [] } = useQuery({
     queryKey: ["mart-categories"],
     queryFn: async () => {
-      const res = await fetch(`${API_BASE}/api/categories`);
-      const json = await res.json();
-      return json.success ? json.data : [];
+      const [categoriesRes, subCategoriesRes] = await Promise.all([
+        fetch(`${API_BASE}/api/categories`),
+        fetch(`${API_BASE}/api/sub-categories`),
+      ]);
+      const [categoriesJson, subCategoriesJson] = await Promise.all([
+        categoriesRes.json().catch(() => ({})),
+        subCategoriesRes.json().catch(() => ({})),
+      ]);
+      const rawCategories = categoriesJson.success && Array.isArray(categoriesJson.data) ? categoriesJson.data : [];
+      const rawSubCategories = subCategoriesJson.success && Array.isArray(subCategoriesJson.data) ? subCategoriesJson.data : [];
+
+      return rawCategories.map((category: any) => ({
+        ...category,
+        children: rawSubCategories
+          .filter((subCategory: any) => String(subCategory.category_id) === String(category.id))
+          .map((subCategory: any) => ({
+            id: `sub-${subCategory.id}`,
+            parent_id: String(category.id),
+            name: subCategory.name,
+            name_en: null,
+            slug: `sub-${subCategory.id}`,
+          })),
+      }));
     },
   });
 

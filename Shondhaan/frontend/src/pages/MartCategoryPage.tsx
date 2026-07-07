@@ -55,7 +55,11 @@ const MartCategoryPage = () => {
     setSearchQ(searchParams.get("q") || "");
   }, [searchParams]);
 
-  const currentCat = slug !== "all" ? categories.find((c) => c.slug === slug) : null;
+  const allSubCats = categories.flatMap((category) => category.children || []);
+  const currentSubCat = slug !== "all" ? allSubCats.find((sub) => sub.slug === slug) : null;
+  const currentCat = slug !== "all"
+    ? categories.find((c) => c.slug === slug) || categories.find((c) => c.id === currentSubCat?.parent_id) || null
+    : null;
   const subCats = currentCat?.children || [];
 
   const filtered = useMemo(() => {
@@ -83,7 +87,9 @@ const MartCategoryPage = () => {
     ? (bn ? "সেরা ডিসকাউন্ট" : "Best Deals")
     : sortParam === "top-selling"
       ? (bn ? "সেরা বিক্রিত পণ্য" : "Top Selling")
-      : currentCat
+      : currentSubCat
+        ? (bn ? currentSubCat.name : (currentSubCat.name_en || currentSubCat.name))
+        : currentCat
         ? (bn ? currentCat.name : (currentCat.name_en || currentCat.name))
         : (bn ? "সকল পণ্য" : "All Products");
 
@@ -122,7 +128,7 @@ const MartCategoryPage = () => {
               {bn ? "সকল" : "All"}
             </Button>
             {subCats.map((sub) => (
-              <Button key={sub.id} variant="outline" size="sm" className="shrink-0 text-xs" onClick={() => navigate(`/mart/category/${sub.slug}`)}>
+              <Button key={sub.id} variant={slug === sub.slug ? "default" : "outline"} size="sm" className="shrink-0 text-xs" onClick={() => navigate(`/mart/category/${sub.slug}`)}>
                 {bn ? sub.name : (sub.name_en || sub.name)}
               </Button>
             ))}

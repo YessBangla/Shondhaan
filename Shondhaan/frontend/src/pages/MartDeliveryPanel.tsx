@@ -37,6 +37,7 @@ import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { divisions, thanaEnMap } from "@/data/locations";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
 import { toast } from "sonner";
 
@@ -46,20 +47,6 @@ const API_BASE =
   "http://localhost:8081";
 
 // ─── types ────────────────────────────────────────────────────────────────────
-interface ApiDistrict {
-  id: number;
-  name: string;
-  name_bn: string;
-  thanas: string[];
-}
-
-interface ApiDivision {
-  id: number;
-  name: string;
-  name_bn: string;
-  districts: ApiDistrict[];
-}
-
 interface DistrictOption {
   divisionId: number;
   division: string;
@@ -68,6 +55,7 @@ interface DistrictOption {
   district: string;
   districtEn: string;
   thanas: string[];
+  thanasEn: string[];
 }
 
 interface DeliveryArea {
@@ -165,12 +153,35 @@ const MartDeliveryPanel = () => {
   const bn = language === "bn";
 
   // location data
-  const [locationsLoading, setLocationsLoading] = useState(true);
-  const [districtOptions, setDistrictOptions]   = useState<DistrictOption[]>([]);
+  const districtOptions = useMemo(() => {
+    const reverseThanaMap = Object.entries(thanaEnMap).reduce<Record<string, string>>(
+      (acc, [en, bn]) => {
+        acc[bn] = en;
+        return acc;
+      },
+      {}
+    );
+
+    return divisions.flatMap((div, divisionIndex) =>
+      div.districts.map((dist, districtIndex) => ({
+        divisionId: divisionIndex,
+        division: dist.nameBn,
+        divisionEn: dist.name,
+        districtId: districtIndex,
+        district: dist.nameBn,
+        districtEn: dist.name,
+        thanas: dist.thanas || [],
+        thanasEn: (dist.thanas || []).map((thana) => reverseThanaMap[thana] || ""),
+      }))
+    );
+  }, []);
+  const locationsLoading = false;
 
   // delivery area form
   const [siteDistrict, setSiteDistrict]               = useState("");
   const [districtPickerOpen, setDistrictPickerOpen]   = useState(false);
+  const [districtFilter, setDistrictFilter]           = useState("");
+  const [deliverySiteFilter, setDeliverySiteFilter]   = useState("");
   const [selectedSites, setSelectedSites]             = useState<string[]>([]);
   const [savingDeliveryAreas, setSavingDeliveryAreas] = useState(false);
   const [deliveryAreasLoading, setDeliveryAreasLoading] = useState(false);
@@ -188,36 +199,6 @@ const MartDeliveryPanel = () => {
   const [requestsLoading, setRequestsLoading]     = useState(false);
   const [processingRequest, setProcessingRequest] = useState<Record<number, boolean>>({});
 
-  // ── fetch locations ──────────────────────────────────────────────────────
-  useEffect(() => {
-    const fetchLocations = async () => {
-      setLocationsLoading(true);
-      try {
-        const resp   = await fetch(`${API_BASE}/api/locations`);
-        const result = await resp.json();
-        if (!resp.ok || !result.success) throw new Error(result.message || "Failed");
-        const divisions: ApiDivision[] = result.data || [];
-        const flat: DistrictOption[] = divisions.flatMap((div) =>
-          div.districts.map((dist) => ({
-            divisionId: div.id,
-            division:   div.name_bn,
-            divisionEn: div.name,
-            districtId: dist.id,
-            district:   dist.name_bn,
-            districtEn: dist.name,
-            thanas:     dist.thanas || [],
-          }))
-        );
-        setDistrictOptions(flat);
-      } catch {
-        toast.error("Failed to load location data");
-      } finally {
-        setLocationsLoading(false);
-      }
-    };
-    fetchLocations();
-  }, []);
-
   // ── derived values ───────────────────────────────────────────────────────
   const selectedSiteDistrict = useMemo(
     () => districtOptions.find((item) => item.districtEn === siteDistrict),
@@ -229,9 +210,39 @@ const MartDeliveryPanel = () => {
     : "";
 
   const deliverySiteOptions = useMemo(
-    () => selectedSiteDistrict?.thanas || [],
+    () =>
+      (selectedSiteDistrict?.thanas || []).map((site, index) => ({
+        site,
+        siteEn: selectedSiteDistrict?.thanasEn[index] || "",
+      })),
     [selectedSiteDistrict]
   );
+
+  const filteredDeliverySiteOptions = useMemo(() => {
+    const query = deliverySiteFilter.trim().toLowerCase();
+    if (!query) return deliverySiteOptions;
+    return deliverySiteOptions.filter(({ site, siteEn }) =>
+      [site, siteEn].join(" ").toLowerCase().includes(query)
+    );
+  }, [deliverySiteFilter, deliverySiteOptions]);
+
+  const filteredDistrictOptions = useMemo(() => {
+    const query = districtFilter.trim().toLowerCase();
+    if (!query) return districtOptions;
+    return districtOptions.filter((item) => {
+      const haystack = [
+        item.district,
+        item.districtEn,
+        item.division,
+        item.divisionEn,
+        ...item.thanas,
+        ...item.thanasEn,
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(query);
+    });
+  }, [districtFilter, districtOptions]);
 
   const groupedDeliveryAreas = useMemo(
     () =>
@@ -409,6 +420,7 @@ const MartDeliveryPanel = () => {
         throw new Error(result.message || "Failed to add delivery sites");
       toast.success("Delivery sites added");
       setSiteDistrict("");
+      setDeliverySiteFilter("");
       setSelectedSites([]);
       await fetchDeliveryAreas();
     } catch (err: any) {
@@ -578,23 +590,30 @@ const MartDeliveryPanel = () => {
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-0">
-                        <Command>
-                          <CommandInput placeholder="Search district..." />
+                        <Command shouldFilter={false}>
+                          <CommandInput
+                            value={districtFilter}
+                            onValueChange={setDistrictFilter}
+                            placeholder="Search district, division or area..."
+                          />
                           <CommandList>
                             <CommandEmpty>No district found</CommandEmpty>
                             <CommandGroup>
-                              {districtOptions.map((item) => {
+                              {filteredDistrictOptions.map((item) => {
                                 const label    = bn ? item.district : item.districtEn;
                                 const meta     = bn ? item.division : item.divisionEn;
                                 const selected = siteDistrict === item.districtEn;
                                 return (
                                   <CommandItem
                                     key={`${item.divisionEn}-${item.districtEn}`}
-                                    value={`${item.district} ${item.districtEn} ${item.division} ${item.divisionEn}`}
+                                    value={item.districtEn}
+                                    keywords={[item.district, item.districtEn, item.division, item.divisionEn, ...item.thanas]}
                                     onSelect={() => {
                                       setSiteDistrict(item.districtEn);
                                       setSelectedSites([]);
+                                      setDeliverySiteFilter("");
                                       setDistrictPickerOpen(false);
+                                      setDistrictFilter("");
                                     }}
                                   >
                                     <Check className={`mr-2 h-4 w-4 ${selected ? "opacity-100" : "opacity-0"}`} />
@@ -623,23 +642,41 @@ const MartDeliveryPanel = () => {
 
                 {siteDistrict ? (
                   <>
-                    <p className="text-xs font-semibold text-slate-500">Area / Thana</p>
-                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
-                      {deliverySiteOptions.map((site) => (
-                        <label
-                          key={site}
-                          className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/40 transition-colors cursor-pointer"
-                        >
-                          <Checkbox
-                            checked={selectedSites.includes(site)}
-                            onCheckedChange={(checked) =>
-                              toggleDeliverySite(site, checked === true)
-                            }
-                          />
-                          <span className="truncate">{site}</span>
-                        </label>
-                      ))}
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <p className="text-xs font-semibold text-slate-500">Area / Thana</p>
+                      <div className="relative w-full sm:w-72">
+                        <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                        <Input
+                          value={deliverySiteFilter}
+                          onChange={(e) => setDeliverySiteFilter(e.target.value)}
+                          placeholder="Search area..."
+                          className="h-9 rounded-xl border-slate-200 bg-slate-50 pl-9 text-sm"
+                        />
+                      </div>
                     </div>
+                    {filteredDeliverySiteOptions.length > 0 ? (
+                      <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-2">
+                        {filteredDeliverySiteOptions.map(({ site, siteEn }) => (
+                          <label
+                            key={site}
+                            className="flex items-center gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-700 hover:border-emerald-200 hover:bg-emerald-50/40 transition-colors cursor-pointer"
+                            title={siteEn || site}
+                          >
+                            <Checkbox
+                              checked={selectedSites.includes(site)}
+                              onCheckedChange={(checked) =>
+                                toggleDeliverySite(site, checked === true)
+                              }
+                            />
+                            <span className="truncate">{site}</span>
+                          </label>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">
+                        No area found
+                      </div>
+                    )}
                   </>
                 ) : (
                   <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-6 text-center text-sm text-slate-400">

@@ -1,10 +1,21 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
-import { Loader2, RefreshCw, ShieldCheck, UploadCloud } from "lucide-react";
+import { Check, ChevronsUpDown, Loader2, MapPin, RefreshCw, Search, ShieldCheck, UploadCloud } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/contexts/AuthContext";
+import { divisions, thanaEnMap } from "@/data/locations";
 import { toast } from "sonner";
 
 const API_BASE =
@@ -60,6 +71,15 @@ interface DeliveryArea {
   area?: string | null;
 }
 
+interface DistrictOption {
+  division: string;
+  divisionEn: string;
+  district: string;
+  districtEn: string;
+  thanas: string[];
+  thanasEn: string[];
+}
+
 const emptyForm: DeliverymanKyc = {
   user_id: "",
   full_name: "",
@@ -105,30 +125,121 @@ export default function DeliverymanKycForm() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState<string | null>(null);
   const [deliveryAreas, setDeliveryAreas] = useState<DeliveryArea[]>([]);
+  const [savingDeliveryAreas, setSavingDeliveryAreas] = useState(false);
+  const [siteDistrict, setSiteDistrict] = useState("");
+  const [districtPickerOpen, setDistrictPickerOpen] = useState(false);
+  const [districtFilter, setDistrictFilter] = useState("");
+  const [deliverySiteFilter, setDeliverySiteFilter] = useState("");
+  const [selectedSites, setSelectedSites] = useState<string[]>([]);
 
   const currentStatus = (form.kyc_status || "draft") as KycStatus;
   const statusLabel = currentStatus.charAt(0).toUpperCase() + currentStatus.slice(1);
+
+  const districtOptions = useMemo<DistrictOption[]>(() => {
+    const reverseThanaMap = Object.entries(thanaEnMap).reduce<Record<string, string>>(
+      (acc, [en, bn]) => {
+        acc[bn] = en;
+        return acc;
+      },
+      {}
+    );
+
+    return divisions.flatMap((div) =>
+      div.districts.map((dist) => ({
+        division: dist.nameBn,
+        divisionEn: dist.name,
+        district: dist.nameBn,
+        districtEn: dist.name,
+        thanas: dist.thanas || [],
+        thanasEn: (dist.thanas || []).map((thana) => reverseThanaMap[thana] || ""),
+      }))
+    );
+  }, []);
+
+  const selectedSiteDistrict = useMemo(
+    () => districtOptions.find((item) => item.districtEn === siteDistrict),
+    [districtOptions, siteDistrict]
+  );
+
+  const filteredDistrictOptions = useMemo(() => {
+    const query = districtFilter.trim().toLowerCase();
+    if (!query) return districtOptions;
+    return districtOptions.filter((item) =>
+      [
+        item.district,
+        item.districtEn,
+        item.division,
+        item.divisionEn,
+        ...item.thanas,
+        ...item.thanasEn,
+      ]
+        .join(" ")
+        .toLowerCase()
+        .includes(query)
+    );
+  }, [districtFilter, districtOptions]);
+
+  const deliverySiteOptions = useMemo(
+    () =>
+      (selectedSiteDistrict?.thanas || []).map((site, index) => ({
+        site,
+        siteEn: selectedSiteDistrict?.thanasEn[index] || "",
+      })),
+    [selectedSiteDistrict]
+  );
+
+  const filteredDeliverySiteOptions = useMemo(() => {
+    const query = deliverySiteFilter.trim().toLowerCase();
+    if (!query) return deliverySiteOptions;
+    return deliverySiteOptions.filter(({ site, siteEn }) =>
+      [site, siteEn].join(" ").toLowerCase().includes(query)
+    );
+  }, [deliverySiteFilter, deliverySiteOptions]);
+
+  const selectedDistrictLabel = selectedSiteDistrict?.districtEn || "";
 
   const requiredMissing = useMemo(() => {
     return !form.full_name || !form.phone || !form.nid_number || !form.present_address || !form.nid_front_url || !form.nid_back_url || !form.selfie_url;
   }, [form]);
 
+  const pendingDeliveryAreas = useMemo<DeliveryArea[]>(() => {
+    if (!selectedSiteDistrict || selectedSites.length === 0) return [];
+    return selectedSites.map((site, index) => ({
+      id: -(index + 1),
+      user_id: userId,
+      district: selectedSiteDistrict.district,
+      thana: site,
+      area: site,
+    }));
+  }, [selectedSiteDistrict, selectedSites, userId]);
+
+  const displayedDeliveryAreas = useMemo(() => {
+    if (pendingDeliveryAreas.length === 0) return deliveryAreas;
+    const seen = new Set<string>();
+    return [...deliveryAreas, ...pendingDeliveryAreas].filter((item) => {
+      const key = `${item.district}|${item.thana || item.area || ""}`;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }, [deliveryAreas, pendingDeliveryAreas]);
+
   const deliveryAreaSummary = useMemo(() => {
-    if (deliveryAreas.length) {
-      return deliveryAreas
+    if (displayedDeliveryAreas.length) {
+      return displayedDeliveryAreas
         .map((item) => `${item.district}: ${item.thana || item.area || ""}`.trim())
         .filter(Boolean)
         .join("; ");
     }
     return form.delivery_area_summary || "";
-  }, [deliveryAreas, form.delivery_area_summary]);
+  }, [displayedDeliveryAreas, form.delivery_area_summary]);
 
   const deliveryDistricts = useMemo(() => {
-    if (deliveryAreas.length) {
-      return [...new Set(deliveryAreas.map((item) => item.district).filter(Boolean))].join(", ");
+    if (displayedDeliveryAreas.length) {
+      return [...new Set(displayedDeliveryAreas.map((item) => item.district).filter(Boolean))].join(", ");
     }
     return form.delivery_districts || form.primary_service_district || form.service_district || "";
-  }, [deliveryAreas, form.delivery_districts, form.primary_service_district, form.service_district]);
+  }, [displayedDeliveryAreas, form.delivery_districts, form.primary_service_district, form.service_district]);
 
   const fetchKyc = async () => {
     if (!Number.isFinite(userId)) {
@@ -200,6 +311,68 @@ export default function DeliverymanKycForm() {
     }
   };
 
+  const toggleDeliverySite = (site: string, checked: boolean) => {
+    setSelectedSites((prev) =>
+      checked ? [...prev, site] : prev.filter((item) => item !== site)
+    );
+  };
+
+  const saveSelectedDeliveryAreas = async (silent = false) => {
+    if (!Number.isFinite(userId)) {
+      toast.error("Login user id not found");
+      return false;
+    }
+    if (!selectedSiteDistrict || selectedSites.length === 0) {
+      if (!silent) toast.error("Please select a district and at least one area");
+      return false;
+    }
+
+    const alreadySaved = new Set(
+      deliveryAreas
+        .filter((item) => item.district === selectedSiteDistrict.district)
+        .map((item) => item.thana || item.area || "")
+    );
+    const thanasToSave = selectedSites.filter((site) => !alreadySaved.has(site));
+
+    if (thanasToSave.length === 0) {
+      if (!silent) toast.info("Selected delivery areas are already saved");
+      setSelectedSites([]);
+      setDeliverySiteFilter("");
+      return true;
+    }
+
+    setSavingDeliveryAreas(true);
+    try {
+      const resp = await fetch(`${API_BASE}/api/delivery-areas`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: userId,
+          district: selectedSiteDistrict.district,
+          district_en: selectedSiteDistrict.districtEn,
+          thanas: thanasToSave,
+        }),
+      });
+      const result = await resp.json().catch(() => ({}));
+      if (!resp.ok || result.success === false) {
+        throw new Error(result.message || "Failed to add delivery areas");
+      }
+
+      const areasResp = await fetch(`${API_BASE}/api/delivery-areas?user_id=${encodeURIComponent(String(userId))}`);
+      const areasResult = await areasResp.json().catch(() => ({}));
+      if (areasResp.ok && areasResult.success) setDeliveryAreas(areasResult.data || []);
+      setSelectedSites([]);
+      setDeliverySiteFilter("");
+      if (!silent) toast.success("Delivery areas added");
+      return true;
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to add delivery areas");
+      return false;
+    } finally {
+      setSavingDeliveryAreas(false);
+    }
+  };
+
   const submitKyc = async (event: FormEvent) => {
     event.preventDefault();
     if (!Number.isFinite(userId)) {
@@ -213,6 +386,11 @@ export default function DeliverymanKycForm() {
 
     setSaving(true);
     try {
+      if (selectedSites.length > 0) {
+        const areasSaved = await saveSelectedDeliveryAreas(true);
+        if (!areasSaved) return;
+      }
+
       const payload = {
         ...form,
         user_id: userId,
@@ -292,8 +470,111 @@ export default function DeliverymanKycForm() {
           <SelectField label="Vehicle type" value={form.vehicle_type} onChange={(value) => setField("vehicle_type", value)} options={["bicycle", "motorcycle", "car", "van", "walking", "other"]} />
           <Field label="Vehicle registration number" value={form.vehicle_registration_number} onChange={(value) => setField("vehicle_registration_number", value)} />
           <Field label="Driving license number" value={form.driving_license_number} onChange={(value) => setField("driving_license_number", value)} />
-          <ReadOnlyValue label="Service districts" value={deliveryDistricts || "Add delivery areas from the Delivery Area sidebar"} />
+          <ReadOnlyValue label="Service districts" value={deliveryDistricts || "Choose delivery areas below"} />
           <ReadOnlyValue label="Service areas" value={deliveryAreaSummary || "No delivery area saved yet"} />
+        </div>
+        <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50 p-4">
+          <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+            <div className="space-y-1.5 sm:w-72">
+              <span className="text-xs font-semibold text-slate-500">Add delivery district</span>
+              <Popover open={districtPickerOpen} onOpenChange={setDistrictPickerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={districtPickerOpen}
+                    className="h-10 w-full justify-between rounded-xl border-slate-200 bg-white px-3 text-sm font-normal text-slate-700"
+                  >
+                    <span className="truncate">{selectedDistrictLabel || "Select district"}</span>
+                    <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 text-slate-400" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="start" className="w-[min(22rem,calc(100vw-2rem))] p-0">
+                  <Command shouldFilter={false}>
+                    <CommandInput
+                      value={districtFilter}
+                      onValueChange={setDistrictFilter}
+                      placeholder="Search district or area..."
+                    />
+                    <CommandList>
+                      <CommandEmpty>No district found</CommandEmpty>
+                      <CommandGroup>
+                        {filteredDistrictOptions.map((item) => {
+                          const selected = siteDistrict === item.districtEn;
+                          return (
+                            <CommandItem
+                              key={`${item.divisionEn}-${item.districtEn}`}
+                              value={item.districtEn}
+                              onSelect={() => {
+                                setSiteDistrict(item.districtEn);
+                                setSelectedSites([]);
+                                setDeliverySiteFilter("");
+                                setDistrictPickerOpen(false);
+                                setDistrictFilter("");
+                              }}
+                            >
+                              <Check className={`mr-2 h-4 w-4 ${selected ? "opacity-100" : "opacity-0"}`} />
+                              <span className="flex-1">{item.districtEn}</span>
+                              <span className="text-xs text-slate-400">{item.divisionEn}</span>
+                            </CommandItem>
+                          );
+                        })}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+            </div>
+            <Button
+              type="button"
+              onClick={() => saveSelectedDeliveryAreas(false)}
+              disabled={!selectedSiteDistrict || selectedSites.length === 0 || savingDeliveryAreas}
+              className="h-10 gap-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+            >
+              {savingDeliveryAreas ? <Loader2 className="h-4 w-4 animate-spin" /> : <MapPin className="h-4 w-4" />}
+              Add Areas
+            </Button>
+          </div>
+
+          {selectedSiteDistrict ? (
+            <div className="space-y-3">
+              <div className="relative max-w-sm">
+                <Search className="absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                <Input
+                  value={deliverySiteFilter}
+                  onChange={(event) => setDeliverySiteFilter(event.target.value)}
+                  placeholder="Search area..."
+                  className="h-9 rounded-xl border-slate-200 bg-white pl-9 text-sm"
+                />
+              </div>
+              {filteredDeliverySiteOptions.length > 0 ? (
+                <div className="grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+                  {filteredDeliverySiteOptions.map(({ site, siteEn }) => (
+                    <label
+                      key={site}
+                      className="flex items-center gap-2 rounded-xl border border-slate-100 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition-colors hover:border-emerald-200 hover:bg-emerald-50/40"
+                      title={siteEn || site}
+                    >
+                      <Checkbox
+                        checked={selectedSites.includes(site)}
+                        onCheckedChange={(checked) => toggleDeliverySite(site, checked === true)}
+                      />
+                      <span className="truncate">{site}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-400">
+                  No area found
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-xl border border-dashed border-slate-200 bg-white px-4 py-6 text-center text-sm text-slate-400">
+              Select a district to choose delivery areas
+            </div>
+          )}
         </div>
       </section>
 
