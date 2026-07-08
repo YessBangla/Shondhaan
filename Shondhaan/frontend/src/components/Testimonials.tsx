@@ -44,6 +44,24 @@ const testimonials = [
     titleEn: "Partner, FlyOut BD",
     avatar: avatarArif,
   },
+   {
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Yess Service অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Yess Service app. The beautician arrived on time.",
+    name: "জেবা ফারিবা",
+    nameEn: "Zeba Fariba",
+    title: "ম্যানেজমেন্ট ট্রেইনি",
+    titleEn: "Management Trainee",
+    avatar: avatarZeba,
+  },
+   {
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Yess Service অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Yess Service app. The beautician arrived on time.",
+    name: "জেবা ফারিবা",
+    nameEn: "Zeba Fariba",
+    title: "ম্যানেজমেন্ট ট্রেইনি",
+    titleEn: "Management Trainee",
+    avatar: avatarZeba,
+  },
 ];
 
 const Testimonials = () => {
@@ -53,7 +71,7 @@ const Testimonials = () => {
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({
-        left: direction === "left" ? -320 : 320,
+        left: direction === "left" ? -336 : 336,
         behavior: "smooth",
       });
     }
@@ -67,20 +85,41 @@ const Testimonials = () => {
       transition={{ duration: 0.5 }}
       className="py-10 md:py-16"
     >
-      <div className="text-center mb-8">
-        <p className="text-sm font-medium text-primary uppercase tracking-wider mb-1">{t("testimonials.label")}</p>
-        <h2 className="font-heading text-xl font-bold text-foreground md:text-2xl">{t("testimonials.title")}</h2>
+      <div className="text-center mb-10">
+        <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-2">
+          {t("testimonials.label")}
+        </p>
+        <h2 className="font-heading text-2xl font-bold text-foreground md:text-3xl">
+          {t("testimonials.title")}
+        </h2>
+        <div className="mx-auto mt-3 h-1 w-14 rounded-full bg-gradient-to-r from-primary/80 to-primary/30" />
       </div>
 
       <div className="relative group/section">
-        <button onClick={() => scroll("left")} className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex">
+        {/* Edge fade masks */}
+        <div className="pointer-events-none absolute left-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-r from-background to-transparent md:block" />
+        <div className="pointer-events-none absolute right-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-l from-background to-transparent md:block" />
+
+        <button
+          onClick={() => scroll("left")}
+          aria-label="Scroll left"
+          className="absolute -left-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg border border-border h-10 w-10 text-muted-foreground opacity-0 transition-all duration-300 hover:text-primary hover:border-primary/40 hover:scale-105 group-hover/section:opacity-100 md:flex"
+        >
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex">
+        <button
+          onClick={() => scroll("right")}
+          aria-label="Scroll right"
+          className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg border border-border h-10 w-10 text-muted-foreground opacity-0 transition-all duration-300 hover:text-primary hover:border-primary/40 hover:scale-105 group-hover/section:opacity-100 md:flex"
+        >
           <ChevronRight className="h-4 w-4" />
         </button>
 
-        <div ref={scrollRef} className="flex gap-4 overflow-x-auto px-4 pb-2 md:px-0" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        <div
+          ref={scrollRef}
+          className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 md:px-2"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+        >
           {testimonials.map((item, i) => (
             <motion.div
               key={i}
@@ -88,23 +127,31 @@ const Testimonials = () => {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: i * 0.1 }}
-              className="shrink-0 w-[280px] md:w-[320px] rounded-xl glass-card p-5 flex flex-col"
+              className="relative shrink-0 w-[280px] md:w-[320px] snap-start rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 flex flex-col shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/30"
             >
-              <Quote className="h-6 w-6 text-primary/40 mb-3" />
-              <p className="text-sm text-muted-foreground leading-relaxed flex-1">
+              <div className="absolute -top-3 -left-1 h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
+                <Quote className="h-4 w-4 text-primary" />
+              </div>
+
+              <p className="mt-3 text-sm text-muted-foreground leading-relaxed flex-1 italic">
                 "{language === "bn" ? item.quote : item.quoteEn}"
               </p>
-              <div className="mt-4 pt-3 border-t border-border flex items-center gap-3">
+
+              <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
                 <img
                   src={item.avatar}
                   alt={language === "bn" ? item.name : item.nameEn}
-                  className="h-10 w-10 rounded-full object-cover border-2 border-primary/20 shrink-0"
+                  className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20 shrink-0"
                   loading="lazy"
                   decoding="async"
                 />
-                <div>
-                  <p className="text-sm font-semibold text-foreground">{language === "bn" ? item.name : item.nameEn}</p>
-                  <p className="text-xs text-muted-foreground">{language === "bn" ? item.title : item.titleEn}</p>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground truncate">
+                    {language === "bn" ? item.name : item.nameEn}
+                  </p>
+                  <p className="text-xs text-muted-foreground truncate">
+                    {language === "bn" ? item.title : item.titleEn}
+                  </p>
                 </div>
               </div>
             </motion.div>
