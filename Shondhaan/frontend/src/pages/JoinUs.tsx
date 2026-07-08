@@ -2,7 +2,8 @@ import { useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Send, X, Camera } from "lucide-react";
+import { motion } from "framer-motion";
+import { Send, X, Camera, UserRound, Briefcase, IdCard, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -44,6 +45,15 @@ const joinSchema = z.object({
 
 type JoinForm = z.infer<typeof joinSchema>;
 
+const SectionHeading = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+    <h2 className="text-sm font-semibold text-foreground tracking-wide">{children}</h2>
+  </div>
+);
+
 const NidUpload = ({
   label,
   file,
@@ -63,7 +73,11 @@ const NidUpload = ({
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="relative flex h-32 w-full items-center justify-center rounded-xl border-2 border-dashed border-border bg-muted/30 transition-colors hover:border-primary/40 hover:bg-muted/50 overflow-hidden"
+        className={`relative flex h-32 w-full items-center justify-center rounded-xl border-2 border-dashed overflow-hidden transition-all duration-300 ${
+          preview
+            ? "border-primary/40 bg-primary/[0.03]"
+            : "border-border bg-muted/30 hover:border-primary/40 hover:bg-primary/[0.04]"
+        }`}
       >
         {preview ? (
           <>
@@ -74,14 +88,16 @@ const NidUpload = ({
                 e.stopPropagation();
                 onFileChange(null);
               }}
-              className="absolute top-1 right-1 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground"
+              className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm transition-transform hover:scale-110"
             >
               <X className="h-3 w-3" />
             </button>
           </>
         ) : (
-          <div className="flex flex-col items-center gap-1 text-muted-foreground">
-            <Camera className="h-6 w-6" />
+          <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-background border border-border">
+              <Camera className="h-4 w-4" />
+            </div>
             <span className="text-xs">ছবি আপলোড করুন</span>
           </div>
         )}
@@ -200,149 +216,199 @@ const JoinUs = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-2xl px-4 md:px-6 py-8 md:py-14">
-        <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground text-center">
-          {bn ? "আমাদের সাথে যোগ দিন" : "Join Our Team"}
-        </h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground max-w-md mx-auto">
-          {bn
-            ? "দক্ষ সার্ভিস প্রোভাইডার হিসেবে Yess Service-এ যোগ দিন। নিচের ফর্মটি পূরণ করুন।"
-            : "Join Yess Service as a skilled service provider. Fill out the form below."}
-        </p>
+      {/* Hero */}
+      <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-primary/[0.06] to-transparent">
+        <div className="absolute -top-24 left-1/2 h-64 w-64 -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" />
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="relative mx-auto max-w-4xl px-4 md:px-6 pt-10 pb-8 md:pt-16 md:pb-10 text-center"
+        >
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
+            <Sparkles className="h-3 w-3" />
+            {bn ? "প্রোভাইডার নিয়োগ চলছে" : "We're hiring providers"}
+          </div>
+          <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground">
+            {bn ? "আমাদের সাথে যোগ দিন" : "Join Our Team"}
+          </h1>
+          <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-md mx-auto">
+            {bn
+              ? "দক্ষ সার্ভিস প্রোভাইডার হিসেবে Yess Service-এ যোগ দিন। নিচের ফর্মটি পূরণ করুন।"
+              : "Join Yess Service as a skilled service provider. Fill out the form below."}
+          </p>
+        </motion.div>
+      </div>
 
-        <div className="mt-8 rounded-xl border border-border bg-card p-5 md:p-6">
+      <div className="mx-auto max-w-4xl px-4 md:px-6 py-8 md:py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 md:p-8"
+        >
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="full_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{bn ? "পুরো নাম" : "Full Name"} *</FormLabel>
-                    <FormControl>
-                      <Input placeholder={bn ? "আপনার পুরো নাম" : "Your full name"} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                {/* Left column: personal + work info */}
+                <div className="space-y-8">
+                  <div>
+                    <SectionHeading icon={UserRound}>
+                      {bn ? "ব্যক্তিগত তথ্য" : "Personal Information"}
+                    </SectionHeading>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{bn ? "ফোন নম্বর" : "Phone"} *</FormLabel>
-                      <FormControl>
-                        <Input placeholder="01XXXXXXXXX" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{bn ? "ইমেইল (ঐচ্ছিক)" : "Email (optional)"}</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder={bn ? "আপনার ইমেইল" : "Your email"} {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="full_name"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "পুরো নাম" : "Full Name"} *</FormLabel>
+                            <FormControl>
+                              <Input placeholder={bn ? "আপনার পুরো নাম" : "Your full name"} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-              <FormField
-                control={form.control}
-                name="address"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>{bn ? "ঠিকানা" : "Address"} *</FormLabel>
-                    <FormControl>
-                      <Textarea rows={2} placeholder={bn ? "আপনার বর্তমান ঠিকানা" : "Your current address"} {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "ফোন নম্বর" : "Phone"} *</FormLabel>
+                            <FormControl>
+                              <Input placeholder="01XXXXXXXXX" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="service_category"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{bn ? "সেবার ক্যাটেগরি" : "Service Category"} *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder={bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select category"} />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {categories.map((c) => (
-                            <SelectItem key={c.value} value={c.value}>
-                              {bn ? c.bn : c.en}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="experience_years"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>{bn ? "অভিজ্ঞতা (বছর)" : "Experience (years)"}</FormLabel>
-                      <FormControl>
-                        <Input type="number" min={0} max={50} placeholder="0" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+                      <FormField
+                        control={form.control}
+                        name="email"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "ইমেইল (ঐচ্ছিক)" : "Email (optional)"}</FormLabel>
+                            <FormControl>
+                              <Input type="email" placeholder={bn ? "আপনার ইমেইল" : "Your email"} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-              {/* NID Upload */}
-              <div>
-                <p className="text-sm font-semibold text-foreground mb-3">
-                  {bn ? "জাতীয় পরিচয়পত্র (NID) আপলোড করুন *" : "Upload National ID (NID) *"}
-                </p>
-                <div className="grid grid-cols-2 gap-3">
-                  <NidUpload
-                    label={bn ? "সামনের পাশ" : "Front Side"}
-                    file={nidFront}
-                    onFileChange={handleFileChange("front")}
-                    preview={frontPreview}
-                  />
-                  <NidUpload
-                    label={bn ? "পেছনের পাশ" : "Back Side"}
-                    file={nidBack}
-                    onFileChange={handleFileChange("back")}
-                    preview={backPreview}
-                  />
+                      <FormField
+                        control={form.control}
+                        name="address"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "ঠিকানা" : "Address"} *</FormLabel>
+                            <FormControl>
+                              <Textarea rows={2} placeholder={bn ? "আপনার বর্তমান ঠিকানা" : "Your current address"} {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="pt-6 border-t border-border/60">
+                    <SectionHeading icon={Briefcase}>
+                      {bn ? "কাজের তথ্য" : "Work Information"}
+                    </SectionHeading>
+
+                    <div className="space-y-4">
+                      <FormField
+                        control={form.control}
+                        name="service_category"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "সেবার ক্যাটেগরি" : "Service Category"} *</FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value}>
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder={bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select category"} />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {categories.map((c) => (
+                                  <SelectItem key={c.value} value={c.value}>
+                                    {bn ? c.bn : c.en}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="experience_years"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>{bn ? "অভিজ্ঞতা (বছর)" : "Experience (years)"}</FormLabel>
+                            <FormControl>
+                              <Input type="number" min={0} max={50} placeholder="0" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
                 </div>
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  {bn ? "সর্বোচ্চ ৫MB, JPG/PNG ফরম্যাট" : "Max 5MB, JPG/PNG format"}
-                </p>
-              </div>
 
-              <Button type="submit" disabled={submitting} className="w-full gap-2 mt-2">
-                <Send className="h-4 w-4" />
-                {submitting
-                  ? (bn ? "জমা দেওয়া হচ্ছে..." : "Submitting...")
-                  : (bn ? "আবেদন জমা দিন" : "Submit Application")}
-              </Button>
+                {/* Right column: NID upload + submit, sticky on desktop */}
+                <div className="md:sticky md:top-24 md:self-start">
+                  <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
+                    <SectionHeading icon={IdCard}>
+                      {bn ? "জাতীয় পরিচয়পত্র (NID)" : "National ID (NID)"} *
+                    </SectionHeading>
+                    <div className="grid grid-cols-2 gap-3">
+                      <NidUpload
+                        label={bn ? "সামনের পাশ" : "Front Side"}
+                        file={nidFront}
+                        onFileChange={handleFileChange("front")}
+                        preview={frontPreview}
+                      />
+                      <NidUpload
+                        label={bn ? "পেছনের পাশ" : "Back Side"}
+                        file={nidBack}
+                        onFileChange={handleFileChange("back")}
+                        preview={backPreview}
+                      />
+                    </div>
+                    <p className="mt-2 text-[11px] text-muted-foreground text-center">
+                      {bn ? "সর্বোচ্চ ৫MB, JPG/PNG ফরম্যাট" : "Max 5MB, JPG/PNG format"}
+                    </p>
+                  </div>
+
+                  <Button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-transform hover:scale-[1.01] active:scale-[0.99] mt-6"
+                  >
+                    <Send className="h-4 w-4" />
+                    {submitting
+                      ? (bn ? "জমা দেওয়া হচ্ছে..." : "Submitting...")
+                      : (bn ? "আবেদন জমা দিন" : "Submit Application")}
+                  </Button>
+
+                  <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
+                    {bn
+                      ? "জমা দেওয়ার মাধ্যমে আপনি আমাদের শর্তাবলীতে সম্মত হচ্ছেন।"
+                      : "By submitting, you agree to our terms and application review process."}
+                  </p>
+                </div>
+              </div>
             </form>
           </Form>
-        </div>
+        </motion.div>
       </div>
 
       <Footer />
