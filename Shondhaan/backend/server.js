@@ -18,9 +18,7 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
-const DB_NAME = process.env.DB_NAME || "shondhaan_db";
-const MART_DB_NAME = process.env.MART_DB_NAME || process.env.YSERVICE_DB_NAME || "yservice_mart";
-const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
+const DB_NAME = process.env.DB_NAME;
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
 
 const scrypt = promisify(crypto.scrypt);
@@ -757,7 +755,6 @@ async function initDatabase() {
   });
 
   await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\``);
-  await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${MART_DB_NAME}\``);
   await bootstrap.end();
 
   pool = mysql.createPool({
@@ -773,9 +770,9 @@ async function initDatabase() {
   martPool = mysql.createPool({
     host: process.env.MART_DB_HOST || process.env.DB_HOST || "localhost",
     port: Number(process.env.MART_DB_PORT || process.env.DB_PORT || 3306),
-    user: process.env.MART_DB_USER || process.env.DB_USER || "root",
-    password: process.env.MART_DB_PASSWORD || process.env.DB_PASSWORD || "",
-    database: MART_DB_NAME,
+    user: process.env.DB_USER || process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: DB_NAME,
     waitForConnections: true,
     connectionLimit: Number(process.env.MART_DB_CONNECTION_LIMIT || process.env.DB_CONNECTION_LIMIT || 10),
   });
