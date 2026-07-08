@@ -26,6 +26,7 @@ interface SidebarItem {
   label: string;
   icon: React.ReactNode;
   group?: string;
+  badge?: number | string;
 }
 
 export interface PanelHeroConfig {
@@ -669,7 +670,24 @@ const NavBtn = ({
         {item.icon}
       </span>
       {!collapsed && <span className="truncate flex-1 text-left">{item.label}</span>}
+      {!collapsed && item.badge != null && String(item.badge) !== "0" && (
+        <span
+          className={cn(
+            "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
+            active
+              ? "bg-primary-foreground/20 text-primary-foreground"
+              : "bg-destructive text-destructive-foreground"
+          )}
+        >
+          {typeof item.badge === "number" && item.badge > 99 ? "99+" : item.badge}
+        </span>
+      )}
       {!collapsed && active && <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/80" />}
+      {collapsed && item.badge != null && String(item.badge) !== "0" && (
+        <span className="absolute -right-1 -top-1 h-4 min-w-4 rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 text-destructive-foreground">
+          {typeof item.badge === "number" && item.badge > 9 ? "9+" : item.badge}
+        </span>
+      )}
     </button>
 
     {collapsed && (

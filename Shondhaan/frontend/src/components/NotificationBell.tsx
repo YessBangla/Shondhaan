@@ -61,6 +61,16 @@ const NotificationBell = () => {
     return () => window.removeEventListener("yess-mart-seller-notifications-changed", handler);
   }, [user]);
 
+  useEffect(() => {
+    if (!user || !isNumericMartUserId(user.id)) return;
+
+    const interval = window.setInterval(() => {
+      fetchNotifications().catch(() => {});
+    }, 15000);
+
+    return () => window.clearInterval(interval);
+  }, [fetchNotifications, user]);
+
 
   // Realtime (disabled temporarily to prevent sidebar freeze when backend/Supabase is slow)
   // useEffect(() => {
