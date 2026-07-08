@@ -3,7 +3,7 @@ const cors = require("cors");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const pool = require("./db");
 const initDatabase = require("./database/initDatabase");
