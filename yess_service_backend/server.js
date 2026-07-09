@@ -57,17 +57,20 @@ const PORT = process.env.PORT || 3000;
 const SERVICE_BACKEND_BASE_URL =
   process.env.YESS_SERVICE_BACKEND_BASE_URL || `http://localhost:${PORT}`;
 
-try {
-  await ensurePlatformFeeSchema();
+async function startServer() {
+  try {
+    await ensurePlatformFeeSchema();
 
-  app.listen(PORT, () => {
-    console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
-  });
-  
-} catch (error) {
-  console.error("Service backend schema initialization failed:", error);
-  process.exit(1);
+    app.listen(PORT, () => {
+      console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
+    });
+  } catch (error) {
+    console.error("Service backend schema initialization failed:", error);
+    process.exit(1);
+  }
 }
+
+startServer();
 
 if (process.env.SHURJOPAY_RECONCILE_DISABLED !== "true") {
   setInterval(() => {

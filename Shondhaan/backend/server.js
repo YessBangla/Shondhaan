@@ -18,9 +18,7 @@ dotenv.config();
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
-const DB_NAME = process.env.DB_NAME || "shondhaan_db";
-const MART_DB_NAME = process.env.MART_DB_NAME || process.env.YSERVICE_DB_NAME || "yservice_mart";
-const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
+const DB_NAME = process.env.DB_NAME;
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
 
 const scrypt = promisify(crypto.scrypt);
@@ -757,7 +755,6 @@ async function initDatabase() {
   });
 
   await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\``);
-  await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${MART_DB_NAME}\``);
   await bootstrap.end();
 
   pool = mysql.createPool({
@@ -773,9 +770,9 @@ async function initDatabase() {
   martPool = mysql.createPool({
     host: process.env.MART_DB_HOST || process.env.DB_HOST || "localhost",
     port: Number(process.env.MART_DB_PORT || process.env.DB_PORT || 3306),
-    user: process.env.MART_DB_USER || process.env.DB_USER || "root",
-    password: process.env.MART_DB_PASSWORD || process.env.DB_PASSWORD || "",
-    database: MART_DB_NAME,
+    user: process.env.DB_USER || process.env.DB_USER || "root",
+    password: process.env.DB_PASSWORD || "",
+    database: DB_NAME,
     waitForConnections: true,
     connectionLimit: Number(process.env.MART_DB_CONNECTION_LIMIT || process.env.DB_CONNECTION_LIMIT || 10),
   });
@@ -798,7 +795,9 @@ async function initDatabase() {
       otp_hash VARCHAR(64) NULL,
       otp_expires_at DATETIME NULL,
       created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_users_email (email),
+      INDEX idx_users_mobile (mobile)
     )
   `);
   await pool.query(`
@@ -956,6 +955,22 @@ await pool.query(`
 
   for (const [column, alterSql] of columns) {
     await ensureTableColumn("users", column, alterSql);
+  }
+
+  const [emailIndexExists] = await pool.execute(
+    "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_email'",
+    [DB_NAME],
+  );
+  if (!emailIndexExists.length) {
+    await pool.query("CREATE INDEX idx_users_email ON users (email)");
+  }
+
+  const [mobileIndexExists] = await pool.execute(
+    "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_mobile'",
+    [DB_NAME],
+  );
+  if (!mobileIndexExists.length) {
+    await pool.query("CREATE INDEX idx_users_mobile ON users (mobile)");
   }
 
   const sellerColumns = [
@@ -1641,11 +1656,14 @@ app.post("/api/auth/login", async (req, res) => {
       return res.status(400).json({ message: "Email/mobile and password are required" });
     }
 
-    const emailOrMobile = identifier.includes("@") ? normalizeEmail(identifier) : normalizeMobile(identifier);
-    const [rows] = await pool.execute("SELECT * FROM users WHERE email = ? OR mobile = ? LIMIT 1", [
-      emailOrMobile,
-      emailOrMobile,
-    ]);
+    const isEmailLogin = identifier.includes("@");
+    const normalizedIdentifier = isEmailLogin ? normalizeEmail(identifier) : normalizeMobile(identifier);
+    const [rows] = await pool.execute(
+      isEmailLogin
+        ? "SELECT * FROM users WHERE email = ? LIMIT 1"
+        : "SELECT * FROM users WHERE mobile = ? LIMIT 1",
+      [normalizedIdentifier],
+    );
     const user = rows[0];
 
     if (!user || !(await verifyPassword(password, user.password))) {

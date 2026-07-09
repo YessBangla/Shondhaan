@@ -493,6 +493,47 @@ router.post("/", async (req, res) => {
     }
 
     await conn.commit();
+
+    // ── Notify every seller who has at least one item in this order ──
+    // order_items.seller_id stores sellers.id, but notifications are keyed
+    // by the seller's login user_id, so we resolve sellers.id -> sellers.user_id.
+    try {
+      const distinctSellerIds = [...new Set(
+        itemsValues.map((row) => row[2]).filter((id) => id != null)
+      )];
+
+      if (distinctSellerIds.length > 0) {
+        const [sellerRows] = await pool.query(
+          `SELECT id, user_id FROM sellers WHERE id IN (?)`,
+          [distinctSellerIds]
+        );
+
+        const notifyRows = sellerRows
+          .filter((s) => s.user_id != null)
+          .map((s) => [
+            s.user_id,
+            "New order received",
+            `Order ${orderNumber} — ৳${Number(verifiedTotal).toLocaleString()}`,
+            "order",
+            orderId,
+            null,
+            `/mart?tab=orders`,
+          ]);
+
+        if (notifyRows.length > 0) {
+          await pool.query(
+            `INSERT INTO notifications
+               (user_id, title, message, type, reference_id, product_id, action_url, is_read, created_at)
+             VALUES ${notifyRows.map(() => "(?, ?, ?, ?, ?, ?, ?, 0, NOW())").join(", ")}`,
+            notifyRows.flat()
+          );
+        }
+      }
+    } catch (notifyError) {
+      // Never let a notification failure break order creation
+      console.error("Order notification error:", notifyError.message);
+    }
+
     res.json({ success: true, order_id: orderId, order_number: orderNumber });
   } catch (error) {
     await conn.rollback();

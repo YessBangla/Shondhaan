@@ -26,6 +26,7 @@ const API_BASE_URL = (
 ).replace(/\/+$/, "");
 const STORAGE_KEY = "yess_mysql_auth";
 const VALID_ROLES = new Set(ROLES.map((role) => role.key));
+const DEFAULT_REQUEST_TIMEOUT_MS = 2000;
 
 const normalizeRoleKey = (value?: string | null) =>
   String(value || "")
@@ -33,22 +34,53 @@ const normalizeRoleKey = (value?: string | null) =>
     .toLowerCase()
     .replace(/[\s-]+/g, "_") as RoleKey;
 
-async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+export async function requestWithTimeout<T>(
+  path: string,
+  body: Record<string, unknown>,
+  timeoutMs = DEFAULT_REQUEST_TIMEOUT_MS,
+): Promise<T> {
+  const controller = new AbortController();
+  const timeoutError = new Error(`Request timed out after ${timeoutMs}ms`);
+
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    const timeoutId = globalThis.setTimeout(() => {
+      controller.abort();
+      reject(timeoutError);
+    }, timeoutMs);
+
+    const cleanup = () => globalThis.clearTimeout(timeoutId);
+    void Promise.resolve().then(cleanup, cleanup);
   });
 
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok) {
-    const detail =
-      data.error && data.error !== data.message ? ` (${data.error})` : "";
-    const error = new Error(`${data.message || "Request failed"}${detail}`);
-    (error as Error & { status?: number }).status = response.status;
+  try {
+    const response = await Promise.race([
+      fetch(`${API_BASE_URL}${path}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        signal: controller.signal,
+      }),
+      timeoutPromise,
+    ]);
+
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      const detail = data.error && data.error !== data.message ? ` (${data.error})` : "";
+      const error = new Error(`${data.message || "Request failed"}${detail}`);
+      (error as Error & { status?: number }).status = response.status;
+      throw error;
+    }
+    return data as T;
+  } catch (error) {
+    if (error === timeoutError || controller.signal.aborted) {
+      throw timeoutError;
+    }
     throw error;
   }
-  return data as T;
+}
+
+async function request<T>(path: string, body: Record<string, unknown>): Promise<T> {
+  return requestWithTimeout<T>(path, body);
 }
 
 export async function requestSignupOtp(payload: {

@@ -40,7 +40,7 @@ const { data: categories = [] } = useQuery({
     const res = await fetch(`${API_BASE}/api/categories`);
     const json = await res.json();
     if (!json.success) throw new Error("Failed to fetch categories");
-    return json.data as { id: number; name: string }[];
+    return json.data as { id: number; name: string; name_en?: string | null }[];
   },
 });
 
@@ -187,7 +187,9 @@ const { data: subCategories = [] } = useQuery({
   };
 
   // Add these:
-const filteredSubCategories = subCategories;
+const filteredSubCategories = categoryId
+  ? subCategories.filter((subCategory) => String(subCategory.category_id) === String(categoryId))
+  : [];
 
   const handleSubmit = async () => {
     if (!name.trim() || !price) {
@@ -357,7 +359,7 @@ const filteredSubCategories = subCategories;
                   className="gap-1.5 text-xs h-7"
                   disabled={aiLoading}
                   onClick={async () => {
-                    const categoryName = categories.find(c => c.id === categoryId)?.name || "";
+                    const categoryName = categories.find(c => String(c.id) === String(categoryId))?.name || "";
                     const desc = await generateMartDescription(name, categoryName, price);
                     if (desc) setDescription(desc);
                   }}
