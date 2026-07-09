@@ -63,6 +63,7 @@ try {
   app.listen(PORT, () => {
     console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
   });
+  
 } catch (error) {
   console.error("Service backend schema initialization failed:", error);
   process.exit(1);

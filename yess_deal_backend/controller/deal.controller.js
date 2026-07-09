@@ -1,4 +1,4 @@
-import dealDb from "./config.js";
+import dealDb from "../config.js";
 
 const parseImages = (value) => {
   if (!value) return [];
@@ -21,6 +21,21 @@ const parseImages = (value) => {
 
 const isTrue = (value) =>
   value === true || value === 1 || value === "1" || value === "true";
+
+const ensureDealFavoritesTable = async () => {
+  await dealDb.query(`
+    CREATE TABLE IF NOT EXISTS deal_favorites (
+      id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+      user_id VARCHAR(191) NOT NULL,
+      listing_id BIGINT UNSIGNED NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (id),
+      UNIQUE KEY unique_deal_favorite (user_id, listing_id),
+      KEY idx_deal_favorites_user (user_id, created_at),
+      KEY idx_deal_favorites_listing (listing_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+  `);
+};
 
 const mapListingRow = (row) => ({
   id: String(row.id),
@@ -175,18 +190,16 @@ export const getDealListings = async (req, res) => {
         c.name_en AS category_name_en,
         c.slug AS category_slug,
         c.icon AS category_icon,
-        COALESCE(
-          JSON_ARRAYAGG(
-            CASE 
-              WHEN i.image_url IS NOT NULL THEN i.image_url 
-              ELSE NULL 
-            END
-          ),
-          JSON_ARRAY()
-        ) AS images
+        img.images AS images
       FROM deal_listings l
       LEFT JOIN deal_categories c ON c.id = l.category_id
-      LEFT JOIN deal_listing_images i ON i.listing_id = l.id
+      LEFT JOIN (
+        SELECT 
+          listing_id,
+          GROUP_CONCAT(image_url ORDER BY sort_order ASC SEPARATOR ',') AS images
+        FROM deal_listing_images
+        GROUP BY listing_id
+      ) img ON img.listing_id = l.id
       WHERE 1 = 1
     `;
 
@@ -267,8 +280,6 @@ export const getDealListings = async (req, res) => {
       params.push(Number(maxPrice));
     }
 
-    sql += ` GROUP BY l.id`;
-
     if (sortBy === "price_asc") {
       sql += ` ORDER BY l.price ASC`;
     } else if (sortBy === "price_desc") {
@@ -287,6 +298,7 @@ export const getDealListings = async (req, res) => {
     });
   } catch (error) {
     console.error("Get deal listings error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to load deal listings",
@@ -312,20 +324,17 @@ export const getDealListingById = async (req, res) => {
         c.name_en AS category_name_en,
         c.slug AS category_slug,
         c.icon AS category_icon,
-        COALESCE(
-          JSON_ARRAYAGG(
-            CASE 
-              WHEN i.image_url IS NOT NULL THEN i.image_url 
-              ELSE NULL 
-            END
-          ),
-          JSON_ARRAY()
-        ) AS images
+        img.images AS images
       FROM deal_listings l
       LEFT JOIN deal_categories c ON c.id = l.category_id
-      LEFT JOIN deal_listing_images i ON i.listing_id = l.id
+      LEFT JOIN (
+        SELECT 
+          listing_id,
+          GROUP_CONCAT(image_url ORDER BY sort_order ASC SEPARATOR ',') AS images
+        FROM deal_listing_images
+        GROUP BY listing_id
+      ) img ON img.listing_id = l.id
       WHERE l.id = ?
-      GROUP BY l.id
       LIMIT 1
       `,
       [id]
@@ -344,6 +353,7 @@ export const getDealListingById = async (req, res) => {
     });
   } catch (error) {
     console.error("Get deal listing error:", error);
+
     res.status(500).json({
       success: false,
       message: "Failed to load listing",
@@ -466,5 +476,258 @@ export const createDealListing = async (req, res) => {
     });
   } finally {
     connection.release();
+  }
+};
+
+export const deleteDealListing = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user_id = req.query.user_id || req.body?.user_id;
+
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Listing id is required",
+      });
+    }
+
+    const params = [id];
+
+    let sql = `
+      DELETE FROM deal_listings
+      WHERE id = ?
+    `;
+
+    if (user_id) {
+      sql += ` AND user_id = ?`;
+      params.push(user_id);
+    }
+
+    const [result] = await dealDb.query(sql, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Listing not found or not allowed",
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Listing deleted successfully",
+    });
+  } catch (error) {
+    console.error("Delete deal listing error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to delete listing",
+      error: error.message,
+    });
+  }
+};
+
+export const getDealFavorites = async (req, res) => {
+  try {
+    const { user_id } = req.query;
+
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id is required",
+      });
+    }
+
+    await ensureDealFavoritesTable();
+
+    const [rows] = await dealDb.query(
+      `
+      SELECT
+        f.id AS favorite_id,
+        f.created_at AS favorite_created_at,
+        l.*,
+        c.name AS category_name,
+        c.name_en AS category_name_en,
+        c.slug AS category_slug,
+        c.icon AS category_icon,
+        img.images AS images
+      FROM deal_favorites f
+      INNER JOIN deal_listings l ON l.id = f.listing_id
+      LEFT JOIN deal_categories c ON c.id = l.category_id
+      LEFT JOIN (
+        SELECT
+          listing_id,
+          GROUP_CONCAT(image_url ORDER BY sort_order ASC SEPARATOR ',') AS images
+        FROM deal_listing_images
+        GROUP BY listing_id
+      ) img ON img.listing_id = l.id
+      WHERE f.user_id = ?
+      ORDER BY f.created_at DESC
+      LIMIT 100
+      `,
+      [String(user_id)]
+    );
+
+    res.json({
+      success: true,
+      data: rows.map((row) => ({
+        id: String(row.favorite_id),
+        listing_id: String(row.id),
+        created_at: row.favorite_created_at,
+        listing: mapListingRow(row),
+      })),
+    });
+  } catch (error) {
+    console.error("Get deal favorites error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to load favorites",
+      error: error.message,
+    });
+  }
+};
+
+export const getDealFavoriteStatus = async (req, res) => {
+  try {
+    const { listingId } = req.params;
+    const { user_id } = req.query;
+
+    if (!user_id || !listingId) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id and listing id are required",
+      });
+    }
+
+    await ensureDealFavoritesTable();
+
+    const [rows] = await dealDb.query(
+      `
+      SELECT id
+      FROM deal_favorites
+      WHERE user_id = ? AND listing_id = ?
+      LIMIT 1
+      `,
+      [String(user_id), listingId]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        is_favorite: rows.length > 0,
+        favorite_id: rows[0]?.id ? String(rows[0].id) : null,
+      },
+    });
+  } catch (error) {
+    console.error("Get deal favorite status error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to check favorite",
+      error: error.message,
+    });
+  }
+};
+
+export const addDealFavorite = async (req, res) => {
+  try {
+    const user_id = req.body?.user_id || req.query.user_id;
+    const listing_id = req.body?.listing_id || req.params.listingId;
+
+    if (!user_id || !listing_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id and listing_id are required",
+      });
+    }
+
+    await ensureDealFavoritesTable();
+
+    const [listingRows] = await dealDb.query(
+      `SELECT id, user_id FROM deal_listings WHERE id = ? LIMIT 1`,
+      [listing_id]
+    );
+
+    if (listingRows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Listing not found",
+      });
+    }
+
+    if (String(listingRows[0].user_id) === String(user_id)) {
+      return res.status(400).json({
+        success: false,
+        message: "You cannot favorite your own listing",
+      });
+    }
+
+    await dealDb.query(
+      `
+      INSERT INTO deal_favorites (user_id, listing_id)
+      VALUES (?, ?)
+      ON DUPLICATE KEY UPDATE created_at = created_at
+      `,
+      [String(user_id), listing_id]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: "Added to favorites",
+      data: {
+        listing_id: String(listing_id),
+        is_favorite: true,
+      },
+    });
+  } catch (error) {
+    console.error("Add deal favorite error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to add favorite",
+      error: error.message,
+    });
+  }
+};
+
+export const removeDealFavorite = async (req, res) => {
+  try {
+    const user_id = req.body?.user_id || req.query.user_id;
+    const listing_id = req.body?.listing_id || req.params.listingId;
+
+    if (!user_id || !listing_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id and listing_id are required",
+      });
+    }
+
+    await ensureDealFavoritesTable();
+
+    await dealDb.query(
+      `
+      DELETE FROM deal_favorites
+      WHERE user_id = ? AND listing_id = ?
+      `,
+      [String(user_id), listing_id]
+    );
+
+    res.json({
+      success: true,
+      message: "Removed from favorites",
+      data: {
+        listing_id: String(listing_id),
+        is_favorite: false,
+      },
+    });
+  } catch (error) {
+    console.error("Remove deal favorite error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to remove favorite",
+      error: error.message,
+    });
   }
 };

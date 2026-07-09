@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import yessDealLogo from "@/assets/yess-deal-logo.png";
 
 interface Props {
@@ -8,15 +8,32 @@ interface Props {
   fallbackSize?: "sm" | "md" | "lg";
   loading?: "lazy" | "eager";
   fit?: "cover" | "contain";
-  /** Hide the Yess Deal logo watermark overlay (default: shown). */
+  /** Hide the Yess Deal logo watermark overlay. */
   noWatermark?: boolean;
   watermarkSize?: "sm" | "md" | "lg";
 }
 
-/**
- * Listing image with graceful fallback to a package emoji when the image
- * is missing or fails to load.
- */
+const DEAL_API_BASE_URL = (
+  import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000"
+).replace(/\/+$/, "");
+
+const buildImageUrl = (src?: string | null) => {
+  const value = String(src || "").trim();
+
+  if (!value) return "";
+
+  if (
+    value.startsWith("http://") ||
+    value.startsWith("https://") ||
+    value.startsWith("data:") ||
+    value.startsWith("blob:")
+  ) {
+    return value;
+  }
+
+  return `${DEAL_API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+};
+
 export default function ListingImage({
   src,
   alt,
@@ -28,9 +45,17 @@ export default function ListingImage({
   watermarkSize = "md",
 }: Props) {
   const [errored, setErrored] = useState(false);
-  const showImg = src && !errored;
+
+  const imageUrl = useMemo(() => buildImageUrl(src), [src]);
+
+  const showImg = Boolean(imageUrl) && !errored;
+
   const sizeClass =
-    fallbackSize === "sm" ? "text-2xl" : fallbackSize === "lg" ? "text-4xl" : "text-3xl";
+    fallbackSize === "sm"
+      ? "text-2xl"
+      : fallbackSize === "lg"
+        ? "text-4xl"
+        : "text-3xl";
 
   const wmCls =
     watermarkSize === "sm"
@@ -51,22 +76,28 @@ export default function ListingImage({
 
   if (!showImg) {
     return (
-      <div className={`${className} relative flex items-center justify-center bg-muted ${sizeClass}`}>
+      <div
+        className={`${className} relative flex items-center justify-center bg-muted ${sizeClass}`}
+      >
         📦
         <Watermark />
       </div>
     );
   }
+
   return (
-    <span className={`${className} relative block`}>
+    <span className={`${className} relative block overflow-hidden`}>
       <img
-        src={src!}
+        src={imageUrl}
         alt={alt}
         loading={loading}
         decoding="async"
         onError={() => setErrored(true)}
-        className={`w-full h-full ${fit === "cover" ? "object-cover" : "object-contain"}`}
+        className={`w-full h-full ${
+          fit === "cover" ? "object-cover" : "object-contain"
+        }`}
       />
+
       <Watermark />
     </span>
   );

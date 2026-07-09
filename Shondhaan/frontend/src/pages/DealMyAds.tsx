@@ -6,14 +6,16 @@ import { ChevronLeft, Plus, Eye, MessageSquare, Heart, Edit, Trash2, Loader2, Pa
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import BackToHomeButton from "@/components/BackToHomeButton";
+
+const DEAL_API_BASE_URL = (
+  import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000"
+).replace(/\/+$/, "");
 
 interface DealListing {
   id: string;
@@ -31,6 +33,69 @@ interface DealListing {
   is_featured: boolean | null;
   category: { name: string; icon: string | null } | null;
 }
+
+const extractListings = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.listings)) return payload.listings;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+};
+
+const normalizeImages = (images: any): string[] => {
+  if (Array.isArray(images)) return images.filter(Boolean).map(String);
+
+  if (typeof images === "string") {
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+    } catch {
+      return images
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
+};
+
+const normalizeListing = (listing: any): DealListing => ({
+  id: String(listing.id),
+  title: listing.title || "",
+  price: Number(listing.price || 0),
+  status: listing.status || "active",
+  condition: listing.condition || listing.product_condition || null,
+  images: normalizeImages(listing.images),
+  views_count: Number(listing.views_count || 0),
+  inquiries_count: Number(listing.inquiries_count || 0),
+  location_division: listing.location_division ?? null,
+  location_district: listing.location_district ?? null,
+  location_area: listing.location_area ?? null,
+  created_at: listing.created_at ?? null,
+  is_featured:
+    listing.is_featured === true ||
+    listing.is_featured === 1 ||
+    listing.is_featured === "1" ||
+    listing.is_featured === "true",
+  category: listing.category
+    ? {
+        name: listing.category.name || listing.category_name || "",
+        icon: listing.category.icon ?? listing.category_icon ?? null,
+      }
+    : listing.deal_categories
+      ? {
+          name: listing.deal_categories.name || "",
+          icon: listing.deal_categories.icon ?? null,
+        }
+      : listing.category_name
+        ? {
+            name: listing.category_name,
+            icon: listing.category_icon ?? null,
+          }
+        : null,
+});
 
 const DealMyAds = () => {
   const navigate = useNavigate();
@@ -51,36 +116,85 @@ const DealMyAds = () => {
     if (user) fetchListings();
   }, [user]);
 
-  const fetchListings = async () => {
-    if (!user) return;
-    setLoading(true);
-    const { data, error } = await supabase
-      .from("deal_listings")
-      .select("id, title, price, status, condition, images, views_count, inquiries_count, location_division, location_district, location_area, created_at, is_featured, category:deal_categories(name, icon)")
-      .eq("user_id", user.id)
-      .order("created_at", { ascending: false });
+  const getLoggedInUserId = () => {
+    const authUser = user as any;
 
-    if (error) {
-      console.error(error);
+    return String(
+      authUser?.id ||
+        authUser?.user_id ||
+        authUser?.user?.id ||
+        authUser?.user?.user_id ||
+        ""
+    );
+  };
+
+  const fetchListings = async () => {
+    const userId = getLoggedInUserId();
+    if (!userId) return;
+
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams({ user_id: userId, mine: "1" });
+      const response = await fetch(
+        `${DEAL_API_BASE_URL}/api/deal/listings?${params.toString()}`,
+        {
+          method: "GET",
+          credentials: "include",
+        }
+      );
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.message || payload?.error || "Failed to load ads");
+      }
+
+      const rows = extractListings(payload);
+      const hasUserIds = rows.some((listing) => listing.user_id !== undefined && listing.user_id !== null);
+      const ownListings = rows
+        .filter((listing) => !hasUserIds || String(listing.user_id) === userId)
+        .map(normalizeListing);
+
+      setListings(ownListings);
+    } catch (error) {
+      console.error("Fetch my deal ads error:", error);
       toast.error(bn ? "বিজ্ঞাপন লোড করতে সমস্যা" : "Failed to load ads");
-    } else {
-      setListings(data as any || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleDelete = async (id: string) => {
+    const userId = getLoggedInUserId();
+    if (!userId) return;
+
     setDeletingId(id);
-    const { error } = await supabase.from("deal_listings").delete().eq("id", id);
-    setDeletingId(null);
-    if (error) {
-      toast.error(bn ? "মুছতে সমস্যা হয়েছে" : "Failed to delete");
-    } else {
+
+    try {
+      const response = await fetch(`${DEAL_API_BASE_URL}/api/deal/listings/${id}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ user_id: userId }),
+      });
+
+      const payload = await response.json().catch(() => null);
+
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.message || payload?.error || "Failed to delete");
+      }
+
       toast.success(bn ? "বিজ্ঞাপন মুছে ফেলা হয়েছে" : "Ad deleted");
       setListings(prev => prev.filter(l => l.id !== id));
+    } catch (error: any) {
+      console.error("Delete deal ad error:", error);
+      toast.error(error?.message || (bn ? "মুছতে সমস্যা হয়েছে" : "Failed to delete"));
+    } finally {
+      setDeletingId(null);
     }
   };
-
+  
   const getStatusConfig = (status: string | null) => {
     switch (status) {
       case "active": return { label: bn ? "সক্রিয়" : "Active", icon: CheckCircle, color: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20" };
@@ -99,17 +213,14 @@ const DealMyAds = () => {
     sold: listings.filter(l => l.status === "sold").length,
     inactive: listings.filter(l => l.status === "inactive").length,
   };
-
   const formatDate = (d: string | null) => {
     if (!d) return "";
     return new Date(d).toLocaleDateString("bn-BD", { day: "numeric", month: "short", year: "numeric" });
   };
-
   const getFirstImage = (images: any) => {
     if (Array.isArray(images) && images.length > 0) return images[0];
     return null;
   };
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />

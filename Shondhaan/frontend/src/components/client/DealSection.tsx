@@ -4,9 +4,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { Megaphone, Heart, MessageSquare, Eye, MapPin, Clock, Tag, Trash2, Edit, ArrowRight, CheckCircle2 } from "lucide-react";
+import { Megaphone, MessageSquare, Eye, MapPin, Clock, Tag, Edit, ArrowRight, Heart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import MartFavoritesTab from "@/components/client/MartFavoritesTab";
+import ListingImage from "@/components/deal/ListingImage";
+import {
+  getDealAuthUserId,
+  listDealFavorites,
+  removeDealFavorite,
+} from "@/lib/dealFavoriteApi";
+
+const DEAL_API_BASE_URL = (
+  import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000"
+).replace(/\/+$/, "");
 
 interface DealListing {
   id: string;
@@ -25,13 +34,6 @@ interface DealListing {
   deal_categories?: { name: string; name_en: string | null } | null;
 }
 
-interface DealFavorite {
-  id: string;
-  listing_id: string;
-  created_at: string | null;
-  listing?: DealListing;
-}
-
 interface DealMessage {
   id: string;
   listing_id: string;
@@ -42,11 +44,81 @@ interface DealMessage {
   created_at: string | null;
 }
 
+interface DealFavorite {
+  id: string;
+  listing_id: string;
+  created_at: string | null;
+  listing: DealListing;
+}
+
 type DealTab = "my-ads" | "favorites" | "messages";
 
 interface Props {
   activeTab: DealTab;
 }
+
+const extractListings = (payload: any): any[] => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.listings)) return payload.listings;
+  if (Array.isArray(payload?.items)) return payload.items;
+  if (Array.isArray(payload?.rows)) return payload.rows;
+  return [];
+};
+
+const normalizeImages = (images: any): string[] => {
+  if (Array.isArray(images)) return images.filter(Boolean).map(String);
+
+  if (typeof images === "string") {
+    try {
+      const parsed = JSON.parse(images);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean).map(String);
+    } catch {
+      return images
+        .split(",")
+        .map((item) => item.trim())
+        .filter(Boolean);
+    }
+  }
+
+  return [];
+};
+
+const normalizeDealListing = (listing: any): DealListing => ({
+  id: String(listing.id),
+  title: listing.title || "",
+  title_en: listing.title_en ?? null,
+  price: Number(listing.price || 0),
+  images: normalizeImages(listing.images),
+  status: listing.status || "active",
+  views_count: Number(listing.views_count || 0),
+  inquiries_count: Number(listing.inquiries_count || 0),
+  location_division: listing.location_division ?? null,
+  location_district: listing.location_district ?? null,
+  condition: listing.condition || listing.product_condition || null,
+  is_featured:
+    listing.is_featured === true ||
+    listing.is_featured === 1 ||
+    listing.is_featured === "1" ||
+    listing.is_featured === "true",
+  created_at: listing.created_at ?? null,
+  deal_categories: listing.deal_categories
+    ? {
+        name: listing.deal_categories.name || "",
+        name_en: listing.deal_categories.name_en ?? null,
+      }
+    : listing.category
+      ? {
+          name: listing.category.name || "",
+          name_en: listing.category.name_en ?? null,
+        }
+      : listing.category_name
+        ? {
+            name: listing.category_name,
+            name_en: listing.category_name_en ?? null,
+          }
+        : null,
+});
 
 const DealSection = ({ activeTab }: Props) => {
   const { user } = useAuth();
@@ -55,37 +127,88 @@ const DealSection = ({ activeTab }: Props) => {
   const navigate = useNavigate();
 
   const [myAds, setMyAds] = useState<DealListing[]>([]);
-  const [favorites, setFavorites] = useState<DealFavorite[]>([]);
+  const [dealFavorites, setDealFavorites] = useState<DealFavorite[]>([]);
   const [messages, setMessages] = useState<DealMessage[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const getLoggedInUserId = () => {
+    const authUser = user as any;
+
+    return String(
+      authUser?.id ||
+        authUser?.user_id ||
+        authUser?.user?.id ||
+        authUser?.user?.user_id ||
+        ""
+    );
+  };
 
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
       setLoading(true);
       if (activeTab === "my-ads") {
-        const { data } = await supabase
-          .from("deal_listings")
-          .select("*, deal_categories(name, name_en)")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        setMyAds((data || []).map((d: any) => ({ ...d, images: Array.isArray(d.images) ? d.images : [] })));
+        const userId = getLoggedInUserId();
+
+        if (!userId) {
+          setMyAds([]);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const params = new URLSearchParams({ user_id: userId, mine: "1" });
+          const response = await fetch(
+            `${DEAL_API_BASE_URL}/api/deal/listings?${params.toString()}`,
+            {
+              method: "GET",
+              credentials: "include",
+            }
+          );
+
+          const payload = await response.json().catch(() => null);
+
+          if (!response.ok || payload?.success === false) {
+            throw new Error(payload?.message || payload?.error || "Failed to load ads");
+          }
+
+          const rows = extractListings(payload);
+          const hasUserIds = rows.some((listing) => listing.user_id !== undefined && listing.user_id !== null);
+          setMyAds(
+            rows
+              .filter((listing) => !hasUserIds || String(listing.user_id) === userId)
+              .map(normalizeDealListing)
+          );
+        } catch (error: any) {
+          console.error("Fetch dashboard deal ads error:", error);
+          setMyAds([]);
+          toast.error(error?.message || (bn ? "বিজ্ঞাপন লোড করতে সমস্যা" : "Failed to load ads"));
+        }
       } else if (activeTab === "favorites") {
-        const { data: favs } = await supabase
-          .from("deal_favorites")
-          .select("*")
-          .eq("user_id", user.id)
-          .order("created_at", { ascending: false });
-        if (favs && favs.length > 0) {
-          const listingIds = favs.map(f => f.listing_id);
-          const { data: listings } = await supabase
-            .from("deal_listings")
-            .select("*, deal_categories(name, name_en)")
-            .in("id", listingIds);
-          const listingMap = new Map((listings || []).map((l: any) => [l.id, { ...l, images: Array.isArray(l.images) ? l.images : [] }]));
-          setFavorites(favs.map(f => ({ ...f, listing: listingMap.get(f.listing_id) })));
-        } else {
-          setFavorites([]);
+        const userId = getDealAuthUserId(user);
+
+        if (!userId) {
+          setDealFavorites([]);
+          setLoading(false);
+          return;
+        }
+
+        try {
+          const favorites = await listDealFavorites(userId);
+          setDealFavorites(
+            favorites
+              .filter((item: any) => item?.listing)
+              .map((item: any) => ({
+                id: String(item.id),
+                listing_id: String(item.listing_id),
+                created_at: item.created_at ?? null,
+                listing: normalizeDealListing(item.listing),
+              }))
+          );
+        } catch (error: any) {
+          console.error("Fetch deal favorites error:", error);
+          setDealFavorites([]);
+          toast.error(error?.message || (bn ? "ফেভারিট লোড করতে সমস্যা" : "Failed to load favorites"));
         }
       } else if (activeTab === "messages") {
         const { data } = await supabase
@@ -100,13 +223,22 @@ const DealSection = ({ activeTab }: Props) => {
     fetchData();
   }, [user, activeTab]);
 
-  const removeFavorite = async (favId: string) => {
-    const { error } = await supabase.from("deal_favorites").delete().eq("id", favId);
-    if (!error) {
-      setFavorites(prev => prev.filter(f => f.id !== favId));
-      toast.success(bn ? "ফেভারিট সরানো হয়েছে" : "Removed from favorites");
+  const handleRemoveFavorite = async (listingId: string) => {
+    const userId = getDealAuthUserId(user);
+
+    if (!userId) return;
+
+    try {
+      await removeDealFavorite(userId, listingId);
+      setDealFavorites((prev) =>
+        prev.filter((item) => String(item.listing_id) !== String(listingId))
+      );
+      toast.success(bn ? "Removed from favorites" : "Removed from favorites");
+    } catch (error: any) {
+      toast.error(error?.message || "Could not remove favorite");
     }
   };
+
 
   const statusStyles: Record<string, string> = {
     active: "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
@@ -173,13 +305,9 @@ const DealSection = ({ activeTab }: Props) => {
               onClick={() => navigate(`/deal/ad/${ad.id}`)}
             >
               <div className="flex gap-3">
-                {img ? (
-                  <img src={img} alt="" className="w-20 h-20 rounded-lg object-cover shrink-0" />
-                ) : (
-                  <div className="w-20 h-20 rounded-lg bg-muted flex items-center justify-center shrink-0">
-                    <Tag className="h-6 w-6 text-muted-foreground/50" />
-                  </div>
-                )}
+                <div className="w-20 h-20 rounded-lg bg-muted shrink-0 overflow-hidden">
+                  <ListingImage src={img} alt={ad.title} fallbackSize="sm" />
+                </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="text-sm font-semibold text-foreground truncate">{bn ? ad.title : (ad.title_en || ad.title)}</h3>
@@ -222,9 +350,84 @@ const DealSection = ({ activeTab }: Props) => {
     );
   }
 
-  // Favorites Tab (repurposed to Mart favorites)
+  // Favorites Tab
   if (activeTab === "favorites") {
-    return <MartFavoritesTab />;
+    if (dealFavorites.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Heart className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
+          <p className="text-base text-muted-foreground">{bn ? "No favorites yet" : "No favorites yet"}</p>
+          <button onClick={() => navigate("/deal/ads")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+            {bn ? "Browse Ads" : "Browse Ads"}
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <p className="text-sm text-muted-foreground">
+          {dealFavorites.length} {bn ? "favorites" : "favorites"}
+        </p>
+
+        {dealFavorites.map((favorite, i) => {
+          const ad = favorite.listing;
+          const img = Array.isArray(ad.images) && ad.images.length > 0 ? ad.images[0] : null;
+
+          return (
+            <motion.div
+              key={favorite.id}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.03 }}
+              className="rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors cursor-pointer"
+              onClick={() => navigate(`/deal/ad/${ad.id}`)}
+            >
+              <div className="flex gap-3">
+                <div className="w-20 h-20 rounded-lg bg-muted shrink-0 overflow-hidden">
+                  <ListingImage src={img} alt={ad.title} fallbackSize="sm" />
+                </div>
+
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-sm font-semibold text-foreground truncate">
+                      {bn ? ad.title : (ad.title_en || ad.title)}
+                    </h3>
+                    <button
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        handleRemoveFavorite(ad.id);
+                      }}
+                      className="rounded-full p-1.5 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                      aria-label="remove favorite"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <p className="text-base font-bold text-primary mt-0.5">৳{ad.price.toLocaleString("bn-BD")}</p>
+
+                  <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
+                    {ad.deal_categories && (
+                      <span className="flex items-center gap-1">
+                        <Tag className="h-3 w-3" /> {bn ? ad.deal_categories.name : (ad.deal_categories.name_en || ad.deal_categories.name)}
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {ad.views_count || 0}</span>
+                  </div>
+
+                  {(ad.location_division || ad.location_district) && (
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {ad.location_district || ad.location_division}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </motion.div>
+          );
+        })}
+      </div>
+    );
   }
 
   // Messages Tab
