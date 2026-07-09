@@ -19,7 +19,13 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
 
+function getAuthHeaders() {
+  const auth = getMySqlAuth();
+  return auth?.token ? { Authorization: `Bearer ${auth.token}` } : {};
+}
 interface EmployerProfile {
   id: string;
   user_id: string;
@@ -108,29 +114,51 @@ const EmployerPanel = () => {
     const canAccess = await hasStaffRoleAccess(user.id, ["employer"]);
     if (canAccess) {
       setIsEmployer(true);
-      const { data: ep } = await supabase.from("employer_profiles").select("*").eq("user_id", user.id).maybeSingle();
-      if (ep) setProfile(ep as unknown as EmployerProfile);
-      else setShowSetup(true);
+  try {
+  const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile/me`, {
+    headers: getAuthHeaders(),
+  });
+  if (res.ok) {
+    const ep = await res.json();
+    setProfile(ep as EmployerProfile);
+  } else {
+    setShowSetup(true);
+  }
+} catch (err) {
+  console.error("Failed to load employer profile:", err);
+  setShowSetup(true);
+}
     }
     setLoading(false);
   }, [user]);
 
   useEffect(() => { checkEmployer(); }, [checkEmployer]);
 
-  const saveProfile = async () => {
-    if (!user || !formData.company_name) {
-      toast.error("কোম্পানির নাম আবশ্যক");
+ const saveProfile = async () => {
+  if (!user || !formData.company_name) {
+    toast.error("কোম্পানির নাম আবশ্যক");
+    return;
+  }
+  try {
+    const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+      body: JSON.stringify(formData), // user_id is derived server-side from the token
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.message || "সেভ করতে সমস্যা হয়েছে");
       return;
     }
-    const { data, error } = await supabase.from("employer_profiles").upsert({
-      user_id: user.id, ...formData,
-      ...(profile?.id ? { id: profile.id } : {})
-    } as any).select().single();
-    if (error) { toast.error("সেভ করতে সমস্যা হয়েছে"); return; }
-    setProfile(data as unknown as EmployerProfile);
+    const data = await res.json();
+    setProfile(data as EmployerProfile);
     setShowSetup(false);
     toast.success("প্রোফাইল সেভ হয়েছে");
-  };
+  } catch (err) {
+    console.error(err);
+    toast.error("সেভ করতে সমস্যা হয়েছে");
+  }
+};
 
   // Data states
   const [myJobs, setMyJobs] = useState<any[]>([]);
