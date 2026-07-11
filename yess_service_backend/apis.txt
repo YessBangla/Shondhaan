@@ -1,0 +1,72 @@
+yess_service_backend API endpoints
+Base path: http://localhost:3000
+
+Providers
+GET /api/providers
+GET /api/providers/user/:userId
+GET /api/providers/:id
+PATCH /api/providers/:id/status
+
+Services
+GET /api/services
+POST /api/services
+PUT /api/services/:id
+PATCH /api/services/:id
+DELETE /api/services/:id
+GET /api/services/:slug
+
+Packages
+POST /api/packages
+GET /api/packages
+PUT /api/packages/:id
+PATCH /api/packages/:id
+DELETE /api/packages/:id
+
+Categories
+GET /api/categories
+GET /api/categories/:slug
+POST /api/categories
+PUT /api/categories/:id
+PATCH /api/categories/:id
+DELETE /api/categories/:id
+
+Bookings
+GET /api/bookings
+POST /api/bookings
+GET /api/bookings/payment/return
+GET /api/bookings/payment/cancel
+POST /api/bookings/payment/verify
+POST /api/bookings/:id/payment
+GET /api/bookings/provider/:userId
+GET /api/bookings/:id
+PATCH /api/bookings/:id/status
+PATCH /api/bookings/:id/payment-status
+PATCH /api/bookings/:id/assign-provider
+PUT /api/bookings/:id
+PATCH /api/bookings/:id
+DELETE /api/bookings/:id
+
+Reviews
+GET /api/reviews
+GET /api/reviews/service/:slug
+POST /api/reviews
+DELETE /api/reviews/:id
+Hero banners
+GET /api/hero-banners
+GET /api/hero-banners/:id
+POST /api/hero-banners
+PUT /api/hero-banners/:id
+PATCH /api/hero-banners/:id
+DELETE /api/hero-banners/:id
+
+Homepage sections
+GET /api/homepage-sections
+GET /api/homepage-sections/:id
+POST /api/homepage-sections
+PUT /api/homepage-sections/:id
+PATCH /api/homepage-sections/:id
+DELETE /api/homepage-sections/:id
+
+Uploads
+POST /api/uploads
+GET /uploads/* serves uploaded files from the backend uploads/ folder
