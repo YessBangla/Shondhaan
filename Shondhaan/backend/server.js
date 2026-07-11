@@ -154,8 +154,8 @@ const defaultCorsOrigins = [
   "http://127.0.0.1:8080",
   "http://localhost:5173",
   "http://127.0.0.1:5173",
-  "https://shondhaan.yessbd.top",
-  "https://www.shondhaan.yessbd.top",
+  "https://shondhaan.com",
+  "https://www.shondhaan.com",
 ];
 
 const corsOrigins = [
@@ -176,7 +176,13 @@ const isAllowedCorsOrigin = (origin) => {
 
   try {
     const { hostname, protocol } = new URL(normalizedOrigin);
-    return protocol === "https:" && hostname.endsWith(".yessbd.top");
+    return (
+      protocol === "https:" &&
+      (
+        hostname === "shondhaan.com" ||
+        hostname.endsWith(".shondhaan.com")
+      )
+    );
   } catch {
     return false;
   }
