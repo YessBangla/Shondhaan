@@ -24,7 +24,18 @@ const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localho
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
-  return auth?.token ? { Authorization: `Bearer ${auth.token}` } : {};
+  if (!auth?.token) {
+    // Helps debugging 401s
+    console.warn("[EmployerPanel] Missing MySQL auth token in localStorage yess_mysql_auth");
+    return {};
+  }
+
+  return {
+    // yessjob_backend expects Authorization header in Express as:
+    // req.headers.authorization === "Bearer <jwt>"
+    // and then forwards it to Shondhaan.
+    Authorization: `Bearer ${auth.token}`,
+  };
 }
 interface EmployerProfile {
   id: string;
@@ -147,7 +158,9 @@ const EmployerPanel = () => {
     });
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
-      toast.error(err.message || "সেভ করতে সমস্যা হয়েছে");
+      toast.error(
+        err.message || `সেভ করতে সমস্যা হয়েছে (HTTP ${res.status})`
+      );
       return;
     }
     const data = await res.json();

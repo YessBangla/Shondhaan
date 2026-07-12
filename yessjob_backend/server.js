@@ -17,13 +17,15 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Static public assets
 app.use('/public', express.static(path.join(__dirname, 'public')));
 
-// Ensure tables exist
+// Ensure required tables exist
 const createEmployerProfilesTable = require('./database/createEmployerProfilesTable');
+const createJobsTable = require('./database/createJobsTable');
 createEmployerProfilesTable();
+createJobsTable();
 
 // Routes
 app.use('/api/employer-profile', require('./routes/employerProfile'));
-
+app.use('/api/jobs', require('./routes/jobs'));
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });

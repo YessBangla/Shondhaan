@@ -1,9 +1,22 @@
 // routes/employerProfile.js
 const express = require('express');
+const mysql = require('mysql2');
+const crypto = require('crypto');
 const router = express.Router();
-const pool = require('../database/db');
+
+// MySQL connection pool (inline — no separate db.js file)
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'yessjob_backend',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
+}).promise();
 
 const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'http://localhost:5000';
+const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
 
 const WRITABLE_FIELDS = [
   'company_name', 'company_name_bn', 'company_logo_url', 'company_type',
@@ -11,6 +24,10 @@ const WRITABLE_FIELDS = [
   'description', 'division', 'district', 'thana', 'address',
   'contact_person', 'contact_phone', 'contact_email', 'trade_license_url'
 ];
+
+function getUserRole(user = {}) {
+  return String(user.type || user.role || '').trim().toLowerCase();
+}
 
 function pickWritable(body) {
   const out = {};
@@ -24,6 +41,12 @@ async function verifyShondhaanUser(authHeader) {
   if (!authHeader) {
     console.log('[auth] No Authorization header received from frontend');
     return null;
+  }
+
+  const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+  const localUser = verifyLocalAuthToken(token);
+  if (localUser) {
+    return localUser;
   }
 
   const url = `${SHONDHAAN_API_URL}/api/users/me/profile`;
@@ -56,11 +79,42 @@ async function verifyShondhaanUser(authHeader) {
   }
 }
 
+function verifyLocalAuthToken(token = '') {
+  const [payload, signature] = String(token).split('.');
+  if (!payload || !signature) return null;
+
+  const expected = crypto
+    .createHmac('sha256', TOKEN_SECRET)
+    .update(payload)
+    .digest('base64url');
+
+  const signatureBuffer = Buffer.from(signature);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (
+    signatureBuffer.length !== expectedBuffer.length ||
+    !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
+  ) {
+    return null;
+  }
+
+  try {
+    const data = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if (!data.id || !data.exp || data.exp < Date.now()) return null;
+    return data;
+  } catch {
+    return null;
+  }
+}
+
 function requireVerifiedUser(req, res, next) {
   verifyShondhaanUser(req.headers.authorization)
     .then((user) => {
       if (!user) {
         return res.status(401).json({ message: 'Invalid or missing login token' });
+      }
+      if (getUserRole(user) !== 'employer') {
+        return res.status(403).json({ message: 'Employer role is required' });
       }
       req.shondhaanUser = user;
       next();
