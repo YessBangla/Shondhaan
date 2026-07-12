@@ -270,7 +270,7 @@ export const verifyOtp = async (req, res) => {
 export const login = async (req, res) => {
   try {
     const { identifier, password } = req.body;
-
+console.log("Signup OTP Payload:", req.body);
     const user = await findUserByIdentifier(identifier);
 
     if (!user) {

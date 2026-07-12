@@ -613,6 +613,7 @@ async function seedDefaultSuperAdmin() {
   }
 }
 
+const OTP_EXPIRY_MINUTES = Number(process.env.OTP_EXPIRY_MINUTES || 10);
 function createTransporter() {
   const host = process.env.SMTP_HOST;
   const user = process.env.SMTP_USER;
