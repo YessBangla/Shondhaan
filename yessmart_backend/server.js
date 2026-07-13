@@ -50,7 +50,7 @@ const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD r
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
