@@ -5,11 +5,12 @@ import path from "path";
 import fs from "fs";
 
 import dealRoutes from "./routes/deal.route.js";
+import uploadRoutes from "./routes/upload.route.js";
 import dealDb from "./config.js";
 
 const app = express();
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 4000;
 
 const DEAL_BACKEND_BASE_URL =
   process.env.DEAL_BACKEND_BASE_URL || `http://localhost:${PORT}`;
@@ -31,6 +32,7 @@ const corsOrigin = [
 
       "http://localhost:5173",
       "http://localhost:8080",
+      "http://localhost:4000",
       "https://shondhaan.yessbd.top",
       "https://www.shondhaan.yessbd.top",
     ].filter(Boolean)
@@ -78,6 +80,9 @@ app.get("/api/health", async (req, res) => {
     });
   }
 });
+
+// Upload routes
+app.use("/api/uploads", uploadRoutes);
 
 // Deal routes
 app.use("/api/deal", dealRoutes);
