@@ -556,6 +556,17 @@ function requireCmsAdmin(req, res, next) {
   next();
 }
 
+function requireLoggedIn(req, res, next) {
+  const header = req.headers.authorization || "";
+  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const auth = verifyToken(token);
+  if (!auth || !auth.id) {
+    return res.status(401).json({ message: "Login is required" });
+  }
+  req.auth = auth;
+  next();
+}
+
 async function seedDefaultSuperAdmin() {
   const email = normalizeEmail(process.env.SUPER_ADMIN_EMAIL || "");
   const password = String(process.env.SUPER_ADMIN_PASSWORD || "").trim();
@@ -1482,6 +1493,24 @@ app.get("/api/admin/users", requireSuperAdmin, async (req, res) => {
 
 app.get("/api/admin/types", requireSuperAdmin, (req, res) => {
   res.json({ types: Array.from(ALLOWED_ROLES) });
+});
+
+app.get("/api/users/me/profile", requireLoggedIn, async (req, res) => {
+  try {
+    const [rows] = await pool.execute(
+      "SELECT id, name, mobile, address, email, type, shop_name, shop_type FROM users WHERE id = ? LIMIT 1",
+      [req.auth.id],
+    );
+
+    if (!rows.length) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json(safeUser(rows[0]));
+  } catch (error) {
+    console.error("Get current user profile error:", error);
+    res.status(500).json({ message: "Could not load user profile" });
+  }
 });
 
 app.patch("/api/admin/users/:id/type", requireSuperAdmin, async (req, res) => {
