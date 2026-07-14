@@ -16,9 +16,8 @@ async function apiFetch(path: string, options?: RequestInit) {
 export interface DealMessage {
   id: string | number;
   conversation_id: string;
-  listing_id?: string;
   sender_id: string;
-  receiver_id?: string;
+  receiver_id: string;
   message: string;
   is_read: boolean | number;
   created_at: string;
@@ -26,7 +25,6 @@ export interface DealMessage {
 
 export interface DealConversation {
   conversation_id: string;
-  listing_id: string;
   other_user_id: string;
   listing_title: string;
   listing_image: string | null;
@@ -36,16 +34,41 @@ export interface DealConversation {
   unread_count: number;
 }
 
-// Full message history for a conversation. Also marks it read for the
-// current user as a side effect (server-side, in the /thread route).
-export function useDealMessages(conversationId: string, otherUserId: string) {
+// Full message history for one listing + the other participant.
+// Also marks that thread as read as a side effect, matching "opening a
+// chat clears its unread badge" behavior.
+export function useDealMessages(conversation_id: string, otherUserId: string) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   return useQuery<DealMessage[]>({
-    queryKey: ["deal-messages", conversationId, otherUserId],
-    enabled: !!user && !!conversationId,
+    queryKey: ["deal-messages", conversation_id, otherUserId],
+    enabled: !!user && !!conversation_id && !!otherUserId,
     queryFn: async () => {
-      const data = await apiFetch(`/deal/messages/thread?conversationId=${conversationId}&userId=${user!.id}`);
+      // backend expects: /thread?conversationId=...&userId=...
+      const data = await apiFetch(
+        `/deal/messages/thread?conversationId=${conversation_id}&userId=${user!.id}&otherUserId=${otherUserId}`
+      );
+      const messages: DealMessage[] = data.data || data;
+
+      // side effect handled by backend THREAD route (it marks messages read)
+      // so we only refresh inbox counters after it succeeds.
+      queryClient.invalidateQueries({ queryKey: ["deal-conversations"] });
+
+      return messages;
+    },
+  });
+}
+
+export function useStartDealConversation() {
+  const { user } = useAuth();
+
+  return useMutation({
+    mutationFn: async ({ listingId, otherUserId }: { listingId: string; otherUserId: string }) => {
+      const data = await apiFetch(`/deal/messages/conversation`, {
+        method: "POST",
+        body: JSON.stringify({ listingId, userId: user?.id, otherUserId }),
+      });
       return data.data || data;
     },
   });
@@ -62,32 +85,14 @@ export function useDealConversations() {
     enabled: !!user?.id,
 
     queryFn: async () => {
-      console.log("🚀 Fetching for user:", user?.id);
+      console.log("🚀 Fetching conversations for user:", user?.id);
 
       const data = await apiFetch(
         `/deal/messages/conversations?userId=${user!.id}`
       );
 
-      console.log("✅ API RESPONSE:", data);
+      console.log("✅ API RESULT:", data);
 
-      return data.data || data;
-    },
-  });
-}
-
-// Resolve-or-create a conversation before opening a fresh chat — e.g. a
-// "Message seller" button on a listing detail page, where no
-// conversation_id exists yet. Once resolved, pass the returned id into
-// <DealChatModal conversation_id={...} />.
-export function useStartDealConversation() {
-  const { user } = useAuth();
-
-  return useMutation({
-    mutationFn: async ({ listingId, otherUserId }: { listingId: string; otherUserId: string }) => {
-      const data = await apiFetch(`/deal/messages/conversation`, {
-        method: "POST",
-        body: JSON.stringify({ listingId, userId: user?.id, otherUserId }),
-      });
       return data.data || data;
     },
   });
@@ -100,15 +105,23 @@ export function useSendDealMessage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ conversationId, message }: { conversationId: string; message: string }) => {
+    mutationFn: async ({
+      conversation_id,
+      receiverId,
+      message,
+    }: {
+      conversation_id: string;
+      receiverId: string;
+      message: string;
+    }) => {
       const data = await apiFetch(`/deal/messages`, {
         method: "POST",
-        body: JSON.stringify({ conversationId, senderId: user?.id, message }),
+        body: JSON.stringify({ conversation_id, senderId: user?.id, receiverId, message }),
       });
       return data.data || data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["deal-messages", variables.conversationId] });
+      queryClient.invalidateQueries({ queryKey: ["deal-messages", variables.conversation_id, variables.receiverId] });
       queryClient.invalidateQueries({ queryKey: ["deal-conversations"] });
     },
   });

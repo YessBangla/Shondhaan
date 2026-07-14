@@ -1010,25 +1010,25 @@ export type Database = {
         Row: {
           created_at: string | null
           id: string
-          listing_id: string
+          conversation_id: string
           user_id: string
         }
         Insert: {
           created_at?: string | null
           id?: string
-          listing_id: string
+          conversation_id: string
           user_id: string
         }
         Update: {
           created_at?: string | null
           id?: string
-          listing_id?: string
+          conversation_id?: string
           user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "deal_favorites_listing_id_fkey"
-            columns: ["listing_id"]
+            foreignKeyName: "deal_favorites_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "deal_listings"
             referencedColumns: ["id"]
@@ -1120,7 +1120,7 @@ export type Database = {
           created_at: string | null
           id: string
           is_read: boolean | null
-          listing_id: string
+          conversation_id: string
           message: string
           receiver_id: string
           sender_id: string
@@ -1129,7 +1129,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          listing_id: string
+          conversation_id: string
           message: string
           receiver_id: string
           sender_id: string
@@ -1138,15 +1138,15 @@ export type Database = {
           created_at?: string | null
           id?: string
           is_read?: boolean | null
-          listing_id?: string
+          conversation_id?: string
           message?: string
           receiver_id?: string
           sender_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "deal_messages_listing_id_fkey"
-            columns: ["listing_id"]
+            foreignKeyName: "deal_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "deal_listings"
             referencedColumns: ["id"]
@@ -1159,7 +1159,7 @@ export type Database = {
           created_at: string
           details: string | null
           id: string
-          listing_id: string
+          conversation_id: string
           reason: string
           reporter_id: string
           resolved_at: string | null
@@ -1170,7 +1170,7 @@ export type Database = {
           created_at?: string
           details?: string | null
           id?: string
-          listing_id: string
+          conversation_id: string
           reason: string
           reporter_id: string
           resolved_at?: string | null
@@ -1181,7 +1181,7 @@ export type Database = {
           created_at?: string
           details?: string | null
           id?: string
-          listing_id?: string
+          conversation_id?: string
           reason?: string
           reporter_id?: string
           resolved_at?: string | null
@@ -1189,8 +1189,8 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "deal_reports_listing_id_fkey"
-            columns: ["listing_id"]
+            foreignKeyName: "deal_reports_conversation_id_fkey"
+            columns: ["conversation_id"]
             isOneToOne: false
             referencedRelation: "deal_listings"
             referencedColumns: ["id"]

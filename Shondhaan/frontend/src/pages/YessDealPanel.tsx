@@ -11,7 +11,6 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
@@ -22,13 +21,28 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell
 } from "recharts";
 
+// Same base URL / helper convention as the other Deal admin components
+const API_BASE = "http://localhost:4000/api";
+
+async function apiFetch(path: string, options?: RequestInit) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
+  return data;
+}
+
 interface MyListing {
   id: string; title: string; price: number; condition: string | null; status: string | null;
   is_featured: boolean | null; location_division: string | null; views_count: number | null;
   inquiries_count: number | null; images: any; created_at: string | null; category_id: string | null;
+  user_id?: string;
+  deal_categories?: { id: string; name: string } | null;
 }
 
-interface DealCat { id: string; name: string; }
+interface DealCat { id: string; name: string; is_active?: boolean | null; }
 
 const statusMap: Record<string, { label: string; color: string }> = {
   active: { label: "সক্রিয়", color: "bg-green-100 text-green-800" },
@@ -67,22 +81,43 @@ const YessDealPanel = () => {
 
   const fetchListings = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("deal_listings").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    if (data) setListings(data as MyListing[]);
-  }, [user]);
+    try {
+      const data = await apiFetch(`/deal/listings`);
+      const all: MyListing[] = data.data || data;
+      // Filter to this seller's own listings client-side, since we're not
+      // relying on the API to support a user_id query filter
+      const mine = all
+        .filter(l => String(l.user_id) === String(user.id))
+        .sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      setListings(mine);
+    } catch (err: any) {
+      toast.error(err.message || (bn ? "বিজ্ঞাপন লোড ব্যর্থ" : "Failed to load listings"));
+    }
+  }, [user, bn]);
 
   const fetchCategories = useCallback(async () => {
-    const { data } = await supabase.from("deal_categories").select("id, name").eq("is_active", true);
-    if (data) setCategories(data);
-  }, []);
+    try {
+      const data = await apiFetch(`/deal-categories`);
+      const all: DealCat[] = data.data || data;
+      setCategories(all.filter(c => c.is_active !== false));
+    } catch (err: any) {
+      toast.error(err.message || (bn ? "ক্যাটেগরি লোড ব্যর্থ" : "Failed to load categories"));
+    }
+  }, [bn]);
 
   const fetchMsgCounts = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("deal_messages").select("listing_id").eq("receiver_id", user.id).eq("is_read", false);
-    if (data) {
+    try {
+      const data = await apiFetch(`/deal/messages`);
+      const all: any[] = data.data || data;
       const counts: Record<string, number> = {};
-      data.forEach(m => { counts[m.listing_id] = (counts[m.listing_id] || 0) + 1; });
+      all
+        .filter(m => String(m.receiver_id) === String(user.id) && !m.is_read)
+        .forEach(m => { counts[m.listing_id] = (counts[m.listing_id] || 0) + 1; });
       setMsgCounts(counts);
+    } catch (err) {
+      // Non-critical — unread counts just won't show if this endpoint isn't available
+      console.error(err);
     }
   }, [user]);
 
@@ -90,14 +125,23 @@ const YessDealPanel = () => {
   useEffect(() => { if (hasAccess) { fetchListings(); fetchCategories(); fetchMsgCounts(); } }, [hasAccess, fetchListings, fetchCategories, fetchMsgCounts]);
 
   const deleteListing = async (id: string) => {
-    const { error } = await supabase.from("deal_listings").delete().eq("id", id);
-    if (!error) { toast.success(bn ? "বিজ্ঞাপন মুছে ফেলা হয়েছে" : "Listing deleted"); setListings(prev => prev.filter(l => l.id !== id)); }
-    else toast.error(bn ? "মুছতে ব্যর্থ" : "Delete failed");
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "DELETE" });
+      toast.success(bn ? "বিজ্ঞাপন মুছে ফেলা হয়েছে" : "Listing deleted");
+      setListings(prev => prev.filter(l => l.id !== id));
+    } catch (err: any) {
+      toast.error(err.message || (bn ? "মুছতে ব্যর্থ" : "Delete failed"));
+    }
   };
 
   const markAsSold = async (id: string) => {
-    const { error } = await supabase.from("deal_listings").update({ status: "sold" }).eq("id", id);
-    if (!error) { toast.success(bn ? "বিক্রিত হিসেবে চিহ্নিত" : "Marked as sold"); setListings(prev => prev.map(l => l.id === id ? { ...l, status: "sold" } : l)); }
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ status: "sold" }) });
+      toast.success(bn ? "বিক্রিত হিসেবে চিহ্নিত" : "Marked as sold");
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status: "sold" } : l));
+    } catch (err: any) {
+      toast.error(err.message || (bn ? "আপডেট ব্যর্থ" : "Update failed"));
+    }
   };
 
   if (authLoading || loading) {
@@ -115,7 +159,10 @@ const YessDealPanel = () => {
     );
   }
 
-  const getCatName = (catId: string | null) => catId ? categories.find(c => c.id === catId)?.name || "—" : "—";
+  const getCatName = (catId: string | null, embedded?: MyListing["deal_categories"]) => {
+    if (embedded?.name) return embedded.name;
+    return catId ? categories.find(c => c.id === catId)?.name || "—" : "—";
+  };
   const usedCategories = [...new Set(listings.map(l => l.category_id).filter(Boolean))];
 
   const filteredListings = listings.filter(l => {
@@ -242,7 +289,7 @@ const YessDealPanel = () => {
                                     <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
                                       <span>{listing.condition || "—"}</span><span>•</span>
                                       <span>{listing.location_division || "—"}</span><span>•</span>
-                                      <span>{getCatName(listing.category_id)}</span>
+                                      <span>{getCatName(listing.category_id, listing.deal_categories)}</span>
                                     </div>
                                     <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
                                       <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{listing.views_count || 0}</span>

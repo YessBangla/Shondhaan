@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+
 import { useAuth } from "@/contexts/AuthContext";
+import { useDealConversations } from "@/hooks/useDealChatSocket";
+
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Megaphone, MessageSquare, Eye, MapPin, Clock, Tag, Edit, ArrowRight, Heart, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -34,15 +36,7 @@ interface DealListing {
   deal_categories?: { name: string; name_en: string | null } | null;
 }
 
-interface DealMessage {
-  id: string;
-  listing_id: string;
-  sender_id: string;
-  receiver_id: string;
-  message: string;
-  is_read: boolean | null;
-  created_at: string | null;
-}
+
 
 interface DealFavorite {
   id: string;
@@ -128,8 +122,10 @@ const DealSection = ({ activeTab }: Props) => {
 
   const [myAds, setMyAds] = useState<DealListing[]>([]);
   const [dealFavorites, setDealFavorites] = useState<DealFavorite[]>([]);
-  const [messages, setMessages] = useState<DealMessage[]>([]);
+  const { data: conversations = [], isLoading: conversationsLoading } = useDealConversations();
+
   const [loading, setLoading] = useState(true);
+
 
   const getLoggedInUserId = () => {
     const authUser = user as any;
@@ -146,8 +142,11 @@ const DealSection = ({ activeTab }: Props) => {
   useEffect(() => {
     if (!user) return;
     const fetchData = async () => {
-      setLoading(true);
+      if (activeTab === "my-ads" || activeTab === "favorites") setLoading(true);
+      else setLoading(false);
+
       if (activeTab === "my-ads") {
+
         const userId = getLoggedInUserId();
 
         if (!userId) {
@@ -210,18 +209,13 @@ const DealSection = ({ activeTab }: Props) => {
           setDealFavorites([]);
           toast.error(error?.message || (bn ? "ফেভারিট লোড করতে সমস্যা" : "Failed to load favorites"));
         }
-      } else if (activeTab === "messages") {
-        const { data } = await supabase
-          .from("deal_messages")
-          .select("*")
-          .or(`sender_id.eq.${user.id},receiver_id.eq.${user.id}`)
-          .order("created_at", { ascending: false });
-        setMessages(data || []);
       }
+
       setLoading(false);
     };
     fetchData();
   }, [user, activeTab]);
+
 
   const handleRemoveFavorite = async (listingId: string) => {
     const userId = getDealAuthUserId(user);
@@ -432,19 +426,17 @@ const DealSection = ({ activeTab }: Props) => {
 
   // Messages Tab
   if (activeTab === "messages") {
-    // Group messages by listing_id + other user
-    const grouped = messages.reduce((acc, msg) => {
-      const otherUser = msg.sender_id === user?.id ? msg.receiver_id : msg.sender_id;
-      const key = `${msg.listing_id}_${otherUser}`;
-      if (!acc[key]) acc[key] = { listing_id: msg.listing_id, other_user_id: otherUser, messages: [], unread: 0 };
-      acc[key].messages.push(msg);
-      if (!msg.is_read && msg.receiver_id === user?.id) acc[key].unread++;
-      return acc;
-    }, {} as Record<string, { listing_id: string; other_user_id: string; messages: DealMessage[]; unread: number }>);
+    const filteredConversations = conversations;
 
-    const conversations = Object.values(grouped);
+    if (conversationsLoading || loading) {
+      return (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+        </div>
+      );
+    }
 
-    if (conversations.length === 0) {
+    if (!filteredConversations || filteredConversations.length === 0) {
       return (
         <div className="text-center py-12">
           <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
@@ -456,52 +448,51 @@ const DealSection = ({ activeTab }: Props) => {
       );
     }
 
+    const totalUnread = filteredConversations.reduce((s, c) => s + (c.unread_count || 0), 0);
+
     return (
       <div className="space-y-3">
         <p className="text-sm text-muted-foreground mb-2">
-          {conversations.length} {bn ? "টি কথোপকথন" : "conversations"}
-          {conversations.reduce((s, c) => s + c.unread, 0) > 0 && (
+          {filteredConversations.length} {bn ? "টি কথোপকথন" : "conversations"}
+          {totalUnread > 0 && (
             <span className="ml-2 text-primary font-semibold">
-              ({conversations.reduce((s, c) => s + c.unread, 0)} {bn ? "টি অপঠিত" : "unread"})
+              ({totalUnread} {bn ? "টি অপঠিত" : "unread"})
             </span>
           )}
         </p>
-        {conversations.map((conv, i) => {
-          const lastMsg = conv.messages[0];
-          return (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.03 }}
-              className={`rounded-xl border bg-card p-4 cursor-pointer transition-all ${conv.unread > 0 ? "border-primary/30 bg-primary/5" : "border-border"}`}
-              onClick={() => navigate(`/deal/inbox`)}
-            >
-              <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start gap-2 min-w-0">
-                  <div className={`rounded-full p-2 shrink-0 ${conv.unread > 0 ? "bg-primary/10" : "bg-muted"}`}>
-                    <MessageSquare className={`h-4 w-4 ${conv.unread > 0 ? "text-primary" : "text-muted-foreground"}`} />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-foreground truncate">{lastMsg.message}</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {lastMsg.sender_id === user?.id ? (bn ? "আপনি: " : "You: ") : ""}
-                      {lastMsg.created_at ? new Date(lastMsg.created_at).toLocaleDateString("bn-BD") : ""}
-                    </p>
-                  </div>
+        {filteredConversations.map((conv, i) => (
+          <motion.div
+            key={`${conv.listing_id}_${conv.other_user_id}`}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.03 }}
+            className={`rounded-xl border bg-card p-4 cursor-pointer transition-all ${conv.unread_count > 0 ? "border-primary/30 bg-primary/5" : "border-border"}`}
+            onClick={() => navigate(`/deal/inbox`)}
+          >
+            <div className="flex items-start justify-between gap-2">
+              <div className="flex items-start gap-2 min-w-0">
+                <div className={`rounded-full p-2 shrink-0 ${conv.unread_count > 0 ? "bg-primary/10" : "bg-muted"}`}>
+                  <MessageSquare className={`h-4 w-4 ${conv.unread_count > 0 ? "text-primary" : "text-muted-foreground"}`} />
                 </div>
-                {conv.unread > 0 && (
-                  <span className="bg-primary text-primary-foreground rounded-full text-xs font-bold h-5 w-5 flex items-center justify-center shrink-0">
-                    {conv.unread}
-                  </span>
-                )}
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{conv.last_message}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {conv.last_message_at ? new Date(conv.last_message_at).toLocaleDateString("bn-BD") : ""}
+                  </p>
+                </div>
               </div>
-            </motion.div>
-          );
-        })}
+              {conv.unread_count > 0 && (
+                <span className="bg-primary text-primary-foreground rounded-full text-xs font-bold h-5 w-5 flex items-center justify-center shrink-0">
+                  {conv.unread_count}
+                </span>
+              )}
+            </div>
+          </motion.div>
+        ))}
       </div>
     );
   }
+
 
   return null;
 };

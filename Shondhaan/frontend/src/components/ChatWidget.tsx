@@ -8,14 +8,24 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import LocationPicker from "@/components/LocationPicker";
 import { serviceCategories } from "@/data/categories";
 import { getMobileFloatingBottom } from "@/lib/mobileBottomOffsets";
+import { socket } from "@/lib/socket";
 
+// Same REST convention as the Deal admin components
+const API_BASE = "http://localhost:4000/api";
 
-const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/chat`;
+async function apiFetch(path: string, options?: RequestInit) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
+  return data;
+}
 
 type Msg = { role: "user" | "assistant"; content: string };
 
@@ -45,8 +55,21 @@ const topServiceOptions = allServiceOptions.filter(s =>
 ).slice(0, 2);
 const moreServiceOptions = allServiceOptions.filter(s => !topServiceOptions.includes(s));
 
+// ---------------------------------------------------------------------------
+// Socket-based AI chat protocol.
+//
+// ASSUMED event names — adjust these to whatever your backend actually
+// speaks. Each request carries a `requestId` so concurrent/overlapping
+// calls (e.g. a normal chat message and the auto-extract call below) don't
+// get their responses crossed on the shared socket.
+//
+//   emit "ai_chat"              { requestId, messages, userInfo }
+//   on   "ai_chat_delta"        { requestId, content }   (repeated)
+//   on   "ai_chat_done"         { requestId }
+//   on   "ai_chat_error"        { requestId, error }
+// ---------------------------------------------------------------------------
 
-async function streamChat({
+function streamChat({
   messages,
   userInfo,
   onDelta,
@@ -59,57 +82,85 @@ async function streamChat({
   onDone: () => void;
   onError: (err: string) => void;
 }) {
-  try {
-    const resp = await fetch(CHAT_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-      },
-      body: JSON.stringify({ messages, userInfo }),
-    });
+  const requestId = `chat_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  let settled = false;
 
-    if (!resp.ok) {
-      const errData = await resp.json().catch(() => ({}));
-      onError(errData.error || "সমস্যা হয়েছে, আবার চেষ্টা করুন।");
-      return;
-    }
-
-    if (!resp.body) { onError("No response body"); return; }
-
-    const reader = resp.body.getReader();
-    const decoder = new TextDecoder();
-    let textBuffer = "";
-    let streamDone = false;
-
-    while (!streamDone) {
-      const { done, value } = await reader.read();
-      if (done) break;
-      textBuffer += decoder.decode(value, { stream: true });
-
-      let newlineIndex: number;
-      while ((newlineIndex = textBuffer.indexOf("\n")) !== -1) {
-        let line = textBuffer.slice(0, newlineIndex);
-        textBuffer = textBuffer.slice(newlineIndex + 1);
-        if (line.endsWith("\r")) line = line.slice(0, -1);
-        if (line.startsWith(":") || line.trim() === "") continue;
-        if (!line.startsWith("data: ")) continue;
-        const jsonStr = line.slice(6).trim();
-        if (jsonStr === "[DONE]") { streamDone = true; break; }
-        try {
-          const parsed = JSON.parse(jsonStr);
-          const content = parsed.choices?.[0]?.delta?.content as string | undefined;
-          if (content) onDelta(content);
-        } catch {
-          textBuffer = line + "\n" + textBuffer;
-          break;
-        }
-      }
-    }
+  const handleDelta = (payload: any) => {
+    if (payload?.requestId !== requestId) return;
+    if (payload.content) onDelta(payload.content);
+  };
+  const handleDone = (payload: any) => {
+    if (payload?.requestId !== requestId || settled) return;
+    settled = true;
+    cleanup();
     onDone();
-  } catch {
-    onError("নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন।");
+  };
+  const handleErrorEvt = (payload: any) => {
+    if (payload?.requestId !== requestId || settled) return;
+    settled = true;
+    cleanup();
+    onError(payload?.error || "সমস্যা হয়েছে, আবার চেষ্টা করুন।");
+  };
+
+  function cleanup() {
+    clearTimeout(timeoutTimer);
+    socket.off("ai_chat_delta", handleDelta);
+    socket.off("ai_chat_done", handleDone);
+    socket.off("ai_chat_error", handleErrorEvt);
   }
+
+  const timeoutTimer = setTimeout(() => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    onError("নেটওয়ার্ক সমস্যা, আবার চেষ্টা করুন।");
+  }, 30000);
+
+  socket.on("ai_chat_delta", handleDelta);
+  socket.on("ai_chat_done", handleDone);
+  socket.on("ai_chat_error", handleErrorEvt);
+
+  if (!socket.connected) socket.connect();
+  socket.emit("ai_chat", { requestId, messages, userInfo });
+
+  return cleanup; // exposed in case the caller unmounts mid-stream
+}
+
+// One-off request/response over the socket (used for the silent
+// "extract service request info" call — no streaming needed there).
+function socketRequest<T = any>(
+  emitEvent: string,
+  payload: any,
+  { timeoutMs = 20000 }: { timeoutMs?: number } = {}
+): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const requestId = `${emitEvent}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    let settled = false;
+
+    const handleResult = (res: any) => {
+      if (res?.requestId !== requestId || settled) return;
+      settled = true;
+      cleanup();
+      if (res.error) reject(new Error(res.error));
+      else resolve((res.data ?? res) as T);
+    };
+
+    function cleanup() {
+      clearTimeout(timer);
+      socket.off(`${emitEvent}_result`, handleResult);
+    }
+
+    const timer = setTimeout(() => {
+      if (settled) return;
+      settled = true;
+      cleanup();
+      reject(new Error("Request timed out"));
+    }, timeoutMs);
+
+    socket.on(`${emitEvent}_result`, handleResult);
+    if (!socket.connected) socket.connect();
+    socket.emit(emitEvent, { requestId, ...payload });
+  });
 }
 
 const ChatWidget = () => {
@@ -138,11 +189,14 @@ const ChatWidget = () => {
 
   // Save a message to DB
   const saveMessage = useCallback(async (convId: string, role: "user" | "assistant", content: string) => {
-    await supabase.from("chat_messages").insert({
-      conversation_id: convId,
-      role,
-      content,
-    });
+    try {
+      await apiFetch(`/chat/messages`, {
+        method: "POST",
+        body: JSON.stringify({ conversation_id: convId, role, content }),
+      });
+    } catch (err) {
+      console.error("saveMessage error:", err);
+    }
   }, []);
 
   const createAutoServiceRequest = useCallback(async (transcript: Msg[]) => {
@@ -151,48 +205,41 @@ const ChatWidget = () => {
 If the customer didn't ask for any specific service, set needs_service to false. Always respond with valid JSON only.`;
 
     try {
-      const resp = await fetch(CHAT_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
-        },
-        body: JSON.stringify({
-          messages: [...transcript, { role: "user", content: extractPrompt }],
-          userInfo: { name, email, phone, service },
-          stream: false,
-        }),
+      const result = await socketRequest<{ content?: string }>("ai_extract", {
+        messages: [...transcript, { role: "user", content: extractPrompt }],
+        userInfo: { name, email, phone, service },
       });
 
-      if (!resp.ok) return;
-      const data = await resp.json();
-      const raw = data.choices?.[0]?.message?.content || "";
-      
+      const raw = result?.content || "";
+
       // Parse JSON from response (handle markdown code blocks)
       const jsonMatch = raw.match(/\{[\s\S]*\}/);
       if (!jsonMatch) return;
-      
+
       const extracted = JSON.parse(jsonMatch[0]);
       if (!extracted.needs_service || !extracted.service_description) return;
 
       const serviceLabel = allServiceOptions.find(s => s.value === service);
       const description = extracted.service_description + (serviceLabel ? ` (${bn ? serviceLabel.labelBn : serviceLabel.labelEn})` : "");
 
-      await supabase.from("service_requests").insert({
-        customer_name: name.trim(),
-        customer_phone: phone.trim(),
-        division: extracted.division || locDivision || "ঢাকা",
-        district: extracted.district || locDistrict || "ঢাকা",
-        thana: extracted.thana || locThana || null,
-        detail_area: extracted.detail_area || locDetail || null,
-        service_description: `[AI কল] ${description}`,
-        status: "pending",
+      await apiFetch(`/service-requests`, {
+        method: "POST",
+        body: JSON.stringify({
+          customer_name: name.trim(),
+          customer_phone: phone.trim(),
+          division: extracted.division || locDivision || "ঢাকা",
+          district: extracted.district || locDistrict || "ঢাকা",
+          thana: extracted.thana || locThana || null,
+          detail_area: extracted.detail_area || locDetail || null,
+          service_description: `[AI কল] ${description}`,
+          status: "pending",
+        }),
       });
 
       const confirmMsg = bn
         ? "✅ আপনার কলের ভিত্তিতে একটি **সেবা রিকোয়েস্ট** স্বয়ংক্রিয়ভাবে তৈরি হয়েছে। আমাদের টিম শীঘ্রই যোগাযোগ করবে।"
         : "✅ A **service request** has been automatically created based on your call. Our team will contact you soon.";
-      
+
       setMessages(prev => [...prev, { role: "assistant", content: confirmMsg }]);
       if (conversationId) {
         saveMessage(conversationId, "assistant", confirmMsg);
@@ -213,16 +260,24 @@ If the customer didn't ask for any specific service, set needs_service to false.
   const startChat = useCallback(async () => {
     if (!name.trim() || !phone.trim()) return;
 
-    // Create conversation in DB
-    const { data: conv } = await supabase.from("chat_conversations").insert({
-      customer_name: name.trim(),
-      customer_phone: phone.trim(),
-      customer_email: email.trim() || null,
-      service_interest: service || null,
-      user_id: user?.id || null,
-    }).select("id").single();
+    // Create conversation via API
+    let convId: string | null = null;
+    try {
+      const conv = await apiFetch(`/chat/conversations`, {
+        method: "POST",
+        body: JSON.stringify({
+          customer_name: name.trim(),
+          customer_phone: phone.trim(),
+          customer_email: email.trim() || null,
+          service_interest: service || null,
+          user_id: user?.id || null,
+        }),
+      });
+      convId = (conv.data || conv)?.id || null;
+    } catch (err) {
+      console.error("startChat conversation create error:", err);
+    }
 
-    const convId = conv?.id || null;
     setConversationId(convId);
     setStep("chat");
 
@@ -263,7 +318,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
       });
     };
 
-    await streamChat({
+    streamChat({
       messages: newMessages,
       userInfo: { name, email, phone, service },
       onDelta: upsertAssistant,
