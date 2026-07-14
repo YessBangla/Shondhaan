@@ -3,29 +3,54 @@ import express from "express";
 import cors from "cors";
 import path from "path";
 import fs from "fs";
+import http from "http";
+import { Server } from "socket.io";
 
 import dealRoutes from "./routes/deal.route.js";
+import categoryRoutes from "./routes/categories.route.js";
 import uploadRoutes from "./routes/upload.route.js";
+import createMessagesRouter from "./routes/messages.route.js"; // ✅ FIXED IMPORT
 import dealDb from "./config.js";
+import { registerDealChatSocket } from "./sockets/dealChat.js";
 
 const app = express();
-
+const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 
 const DEAL_BACKEND_BASE_URL =
   process.env.DEAL_BACKEND_BASE_URL || `http://localhost:${PORT}`;
 
-// Create uploads folder if not exists
+//
+// ✅ SOCKET.IO SETUP
+//
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:5173",
+      "http://localhost:8080",
+      "http://127.0.0.1:8080",
+    ],
+    credentials: true,
+  },
+});
+
+registerDealChatSocket(io, dealDb);
+
+//
+// ✅ CREATE UPLOADS FOLDER
+//
 const uploadsDir = path.join(process.cwd(), "uploads");
 fs.mkdirSync(uploadsDir, { recursive: true });
 
-// CORS origins
+//
+// ✅ CORS CONFIG
+//
 const corsOrigin = [
   ...new Set(
     [
       ...(process.env.CORS_ORIGIN || "")
         .split(",")
-        .map((origin) => origin.trim())
+        .map((o) => o.trim())
         .filter(Boolean),
 
       process.env.FRONTEND_BASE_URL,
@@ -46,13 +71,20 @@ app.use(
   })
 );
 
+//
+// ✅ BODY PARSERS
+//
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
-// Static uploaded files
+//
+// ✅ STATIC FILES
+//
 app.use("/uploads", express.static(uploadsDir));
 
-// Base route
+//
+// ✅ BASE ROUTE
+//
 app.get("/", (req, res) => {
   res.json({
     success: true,
@@ -61,33 +93,41 @@ app.get("/", (req, res) => {
   });
 });
 
-// Health check
+//
+// ✅ HEALTH CHECK
+//
 app.get("/api/health", async (req, res) => {
   try {
     await dealDb.query("SELECT 1");
 
     res.json({
       success: true,
-      message: "Yess Deal backend and database connected",
+      message: "Database connected",
     });
   } catch (error) {
-    console.error("Deal DB health check error:", error);
+    console.error("Health check error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Deal database connection failed",
+      message: "Database connection failed",
       error: error.message,
     });
   }
 });
 
-// Upload routes
+//
+// ✅ ROUTES (ORDER MATTERS)
+//
 app.use("/api/uploads", uploadRoutes);
-
-// Deal routes
 app.use("/api/deal", dealRoutes);
 
-// 404
+// IMPORTANT: register messages AFTER /deal (clean separation)
+app.use("/api/deal/messages", createMessagesRouter(dealDb));
+
+app.use("/api/deal-categories", categoryRoutes);
+
+// 404 HANDLER
+
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -95,17 +135,22 @@ app.use((req, res) => {
   });
 });
 
-// Global error handler
-app.use((error, req, res, next) => {
-  console.error("Server error:", error);
+//
+// ❌ GLOBAL ERROR HANDLER
+//
+app.use((err, req, res, next) => {
+  console.error("Server error:", err);
 
-  res.status(error.status || 500).json({
+  res.status(err.status || 500).json({
     success: false,
-    message: error.message || "Internal server error",
+    message: err.message || "Internal server error",
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Yess Deal backend running on ${DEAL_BACKEND_BASE_URL}`);
-  console.log(`Allowed CORS origins: ${corsOrigin.join(", ")}`);
+//
+// ✅ START SERVER
+//
+server.listen(PORT, () => {
+  console.log(` Server running at ${DEAL_BACKEND_BASE_URL}`);
+  console.log(` CORS: ${corsOrigin.join(", ")}`);
 });

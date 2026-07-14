@@ -23,6 +23,8 @@ import {
   Bell,
   ShoppingCart,
   Heart,
+  Sun,
+  Moon,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
@@ -43,6 +45,8 @@ import LongPressTooltip from "@/components/LongPressTooltip";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "@/hooks/useTheme";
+
 
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -66,6 +70,9 @@ const Navbar = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { mode, cycle } = useTheme();
+
 
   const bn = language === "bn";
 
@@ -686,6 +693,23 @@ const Navbar = () => {
                   {totalItems}
                 </span>
               )}
+            </button>
+
+            {/* Theme toggle (dark/light) */}
+            <button
+              onClick={() => cycle()}
+              aria-label={bn ? "থিম পরিবর্তন করুন" : "Toggle theme"}
+              title={bn ? "থিম পরিবর্তন করুন" : "Toggle theme"}
+              className="group flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+            >
+              {mode === "dark" ? (
+                <Moon className="h-4 w-4 text-primary/80" />
+              ) : (
+                <Sun className="h-4 w-4 text-primary/80" />
+              )}
+              <span className="text-[11px] font-bold leading-none tracking-wide">
+                {bn ? (mode === "dark" ? "ডার্ক" : "লাইট") : mode === "dark" ? "Dark" : "Light"}
+              </span>
             </button>
 
             {/* Language */}

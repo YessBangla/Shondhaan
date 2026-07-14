@@ -20,12 +20,12 @@ const REASONS = [
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  listingId: string;
+  conversation_id: string;
   listingTitle: string;
   bn?: boolean;
 }
 
-const DealReportModal = ({ open, onOpenChange, listingId, listingTitle, bn = true }: Props) => {
+const DealReportModal = ({ open, onOpenChange, conversation_id, listingTitle, bn = true }: Props) => {
   const { user } = useAuth();
   const [reason, setReason] = useState("");
   const [details, setDetails] = useState("");
@@ -38,7 +38,7 @@ const DealReportModal = ({ open, onOpenChange, listingId, listingTitle, bn = tru
 
     setSubmitting(true);
     const { error } = await supabase.from("deal_reports" as any).insert({
-      listing_id: listingId,
+      conversation_id: conversation_id,
       reporter_id: user.id,
       reason,
       details: details.trim() || null,
