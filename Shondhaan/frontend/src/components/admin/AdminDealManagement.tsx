@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { RefreshCw, Search, Eye, CheckCircle, XCircle, Clock, Star, Trash2, Tag, Shield, BarChart3, Users, Package, AlertTriangle, MessageSquare, Plus, Pencil, Save, ImageOff, ImagePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -21,6 +20,20 @@ import BulkSelectToggle from "@/components/admin/BulkSelectToggle";
 import BulkSelectCheckbox from "@/components/admin/BulkSelectCheckbox";
 import BulkConfirmDialog, { BulkActionTone, BulkImpactRow } from "@/components/admin/BulkConfirmDialog";
 
+// Single source of truth for the backend base URL. Swap this (or read from
+// an env var) if the API ever moves off localhost:4000.
+const API_BASE = "http://localhost:4000/api";
+
+async function apiFetch(path: string, options?: RequestInit) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
+  return data;
+}
+
 interface DealListing {
   id: string;
   user_id: string;
@@ -37,6 +50,7 @@ interface DealListing {
   created_at: string | null;
   category_id: string | null;
   phone: string | null;
+  deal_categories?: { id: string; name: string; name_en?: string | null; slug?: string; icon?: string | null } | null;
 }
 
 interface DealCat {
@@ -85,25 +99,53 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
   };
 
   const saveCategory = async () => {
-    if (!form.name || !form.slug) { toast.error("নাম ও স্লাগ আবশ্যক"); return; }
-    const payload = { name: form.name, name_en: form.name_en || null, slug: form.slug, icon: form.icon || null, parent_id: form.parent_id || null, sort_order: form.sort_order, is_active: form.is_active };
-    if (editing) {
-      const { error } = await supabase.from("deal_categories").update(payload).eq("id", editing);
-      if (error) toast.error("আপডেট ব্যর্থ: " + error.message);
-      else { toast.success("ক্যাটেগরি আপডেট হয়েছে"); setEditing(null); }
-    } else {
-      const { error } = await supabase.from("deal_categories").insert(payload);
-      if (error) toast.error("যোগ করতে ব্যর্থ: " + error.message);
-      else { toast.success("নতুন ক্যাটেগরি যোগ হয়েছে"); setAdding(false); }
+    if (!form.name || !form.slug) {
+      toast.error("নাম ও স্লাগ আবশ্যক");
+      return;
     }
-    resetForm();
-    onRefresh();
+
+    const payload = {
+      name: form.name,
+      name_en: form.name_en || null,
+      slug: form.slug,
+      icon: form.icon || null,
+      parent_id: form.parent_id || null,
+      sort_order: form.sort_order,
+      is_active: form.is_active,
+    };
+
+    try {
+      if (editing) {
+        await apiFetch(`/deal-categories/${editing}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        });
+      } else {
+        await apiFetch(`/deal-categories`, {
+          method: "POST",
+          body: JSON.stringify(payload),
+        });
+      }
+
+      toast.success(editing ? "ক্যাটেগরি আপডেট হয়েছে" : "নতুন ক্যাটেগরি যোগ হয়েছে");
+
+      setEditing(null);
+      setAdding(false);
+      resetForm();
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err.message || "কিছু সমস্যা হয়েছে");
+    }
   };
 
   const deleteCategory = async (id: string) => {
-    const { error } = await supabase.from("deal_categories").delete().eq("id", id);
-    if (error) toast.error("মুছতে ব্যর্থ: " + error.message);
-    else { toast.success("ক্যাটেগরি মুছে ফেলা হয়েছে"); onRefresh(); }
+    try {
+      await apiFetch(`/deal-categories/${id}`, { method: "DELETE" });
+      toast.success("ক্যাটেগরি মুছে ফেলা হয়েছে");
+      onRefresh();
+    } catch (err: any) {
+      toast.error(err.message || "মুছতে ব্যর্থ");
+    }
   };
 
   const rootCats = categories.filter(c => !c.parent_id);
@@ -215,30 +257,46 @@ const AdminDealManagement = () => {
 
   const fetchListings = useCallback(async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("deal_listings")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .limit(500);
-    if (data) setListings(data as DealListing[]);
-    setLoading(false);
+    try {
+      const data = await apiFetch(`/deal/listings`);
+      const list: DealListing[] = data.data || data;
+      // Sort and cap client-side since we're not relying on the API to support these params
+      list.sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      setListings(list.slice(0, 500));
+    } catch (err: any) {
+      toast.error(err.message || "বিজ্ঞাপন লোড ব্যর্থ");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   const fetchCategories = useCallback(async () => {
-    const { data } = await supabase.from("deal_categories").select("*").order("sort_order");
-    if (data) setCategories(data as DealCat[]);
+    try {
+      const data = await apiFetch(`/deal-categories`);
+      setCategories(data.data || data);
+    } catch (err: any) {
+      toast.error(err.message || "ক্যাটেগরি লোড ব্যর্থ");
+    }
   }, []);
 
   const fetchReports = useCallback(async () => {
-    const { data } = await supabase.from("deal_reports" as any).select("*").order("created_at", { ascending: false }).limit(200);
-    if (data) {
-      // Enrich with listing titles
-      const listingIds = [...new Set((data as any[]).map((r: any) => r.listing_id))];
-      const { data: listingsData } = await supabase.from("deal_listings").select("id, title").in("id", listingIds);
-      const titleMap = new Map((listingsData || []).map((l: any) => [l.id, l.title]));
-      setReports((data as any[]).map((r: any) => ({ ...r, listing_title: titleMap.get(r.listing_id) || "—" })));
+    try {
+      const data = await apiFetch(`/deal/reports`);
+      const rawReports: any[] = data.data || data;
+
+      // Enrich with listing titles from whatever is already loaded in state
+      // (fetchListings runs alongside this, so it may or may not have landed
+      // yet — either way this is best-effort and never blocks the reports list)
+      const titleMap = new Map(listings.map(l => [l.id, l.title]));
+      setReports(rawReports.map((r: any) => ({
+        ...r,
+        listing_title: r.deal_listings?.title || titleMap.get(r.listing_id) || "—",
+      })));
+    } catch (err: any) {
+      toast.error(err.message || "রিপোর্ট লোড ব্যর্থ");
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [listings]);
 
   useEffect(() => {
     fetchListings();
@@ -248,41 +306,48 @@ const AdminDealManagement = () => {
 
   const updateListingStatus = async (id: string, status: string) => {
     setUpdating(id);
-    const { error } = await supabase.from("deal_listings").update({ status }).eq("id", id);
-    if (error) toast.error("আপডেট ব্যর্থ");
-    else {
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ status }) });
       toast.success(`স্ট্যাটাস "${statusConfig[status]?.label}" এ পরিবর্তিত`);
       setListings(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    } catch (err: any) {
+      toast.error(err.message || "আপডেট ব্যর্থ");
+    } finally {
+      setUpdating(null);
     }
-    setUpdating(null);
   };
 
   const toggleFeatured = async (id: string, current: boolean) => {
-    const { error } = await supabase.from("deal_listings").update({ is_featured: !current }).eq("id", id);
-    if (!error) {
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ is_featured: !current }) });
       toast.success(!current ? "ফিচার্ড করা হয়েছে" : "ফিচার্ড সরানো হয়েছে");
       setListings(prev => prev.map(l => l.id === id ? { ...l, is_featured: !current } : l));
+    } catch (err: any) {
+      toast.error(err.message || "আপডেট ব্যর্থ");
     }
   };
 
   const updateListingImage = async (id: string, url: string) => {
     const images = url ? [url] : [];
-    const { error } = await supabase.from("deal_listings").update({ images }).eq("id", id);
-    if (error) {
-      toast.error("ছবি আপডেট ব্যর্থ: " + error.message);
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ images }) });
+      toast.success("ছবি আপডেট হয়েছে");
+      setListings(prev => prev.map(l => l.id === id ? { ...l, images } : l));
+      return true;
+    } catch (err: any) {
+      toast.error("ছবি আপডেট ব্যর্থ: " + (err.message || ""));
       return false;
     }
-    toast.success("ছবি আপডেট হয়েছে");
-    setListings(prev => prev.map(l => l.id === id ? { ...l, images } : l));
-    return true;
   };
 
   const deleteListing = async (id: string) => {
-    const { error } = await supabase.from("deal_listings").delete().eq("id", id);
-    if (!error) {
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "DELETE" });
       toast.success("বিজ্ঞাপন মুছে ফেলা হয়েছে");
       setListings(prev => prev.filter(l => l.id !== id));
-    } else toast.error("মুছতে ব্যর্থ");
+    } catch (err: any) {
+      toast.error(err.message || "মুছতে ব্যর্থ");
+    }
   };
 
   const filtered = listings.filter(l => {
@@ -297,7 +362,8 @@ const AdminDealManagement = () => {
   const featuredCount = listings.filter(l => l.is_featured).length;
   const pendingReportsCount = reports.filter(r => r.status === "pending").length;
 
-  const getCategoryName = (catId: string | null) => {
+  const getCategoryName = (catId: string | null, embedded?: DealListing["deal_categories"]) => {
+    if (embedded?.name) return embedded.name;
     if (!catId) return "—";
     return categories.find(c => c.id === catId)?.name || "—";
   };
@@ -323,30 +389,43 @@ const AdminDealManagement = () => {
 
   const bulkSetStatus = async (status: string) => {
     if (sel.selectedIds.length === 0) return;
-    const { error } = await supabase.from("deal_listings").update({ status }).in("id", sel.selectedIds);
-    if (error) { toast.error("আপডেট ব্যর্থ"); return; }
-    setListings(prev => prev.map(l => sel.selected.has(l.id) ? { ...l, status } : l));
-    toast.success(`${sel.selectedIds.length}টি বিজ্ঞাপন আপডেট হয়েছে`);
-    sel.clear();
+    try {
+      await Promise.all(sel.selectedIds.map(id =>
+        apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ status }) })
+      ));
+      setListings(prev => prev.map(l => sel.selected.has(l.id) ? { ...l, status } : l));
+      toast.success(`${sel.selectedIds.length}টি বিজ্ঞাপন আপডেট হয়েছে`);
+      sel.clear();
+    } catch (err: any) {
+      toast.error(err.message || "আপডেট ব্যর্থ");
+    }
   };
 
   const bulkSetFeatured = async (featured: boolean) => {
     if (sel.selectedIds.length === 0) return;
-    const { error } = await supabase.from("deal_listings").update({ is_featured: featured }).in("id", sel.selectedIds);
-    if (error) { toast.error("আপডেট ব্যর্থ"); return; }
-    setListings(prev => prev.map(l => sel.selected.has(l.id) ? { ...l, is_featured: featured } : l));
-    toast.success(featured ? "ফিচার্ড করা হয়েছে" : "ফিচার্ড সরানো হয়েছে");
-    sel.clear();
+    try {
+      await Promise.all(sel.selectedIds.map(id =>
+        apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ is_featured: featured }) })
+      ));
+      setListings(prev => prev.map(l => sel.selected.has(l.id) ? { ...l, is_featured: featured } : l));
+      toast.success(featured ? "ফিচার্ড করা হয়েছে" : "ফিচার্ড সরানো হয়েছে");
+      sel.clear();
+    } catch (err: any) {
+      toast.error(err.message || "আপডেট ব্যর্থ");
+    }
   };
 
   const bulkDelete = async () => {
     if (sel.selectedIds.length === 0) return;
     const ids = sel.selectedIds;
-    const { error } = await supabase.from("deal_listings").delete().in("id", ids);
-    if (error) { toast.error("মুছতে ব্যর্থ"); return; }
-    setListings(prev => prev.filter(l => !sel.selected.has(l.id)));
-    toast.success(`${ids.length}টি বিজ্ঞাপন মুছে ফেলা হয়েছে`);
-    sel.clear();
+    try {
+      await Promise.all(ids.map(id => apiFetch(`/deal/listings/${id}`, { method: "DELETE" })));
+      setListings(prev => prev.filter(l => !sel.selected.has(l.id)));
+      toast.success(`${ids.length}টি বিজ্ঞাপন মুছে ফেলা হয়েছে`);
+      sel.clear();
+    } catch (err: any) {
+      toast.error(err.message || "মুছতে ব্যর্থ");
+    }
   };
 
   if (loading) return <div className="py-8 text-center text-muted-foreground">লোড হচ্ছে...</div>;
@@ -537,17 +616,31 @@ const AdminDealManagement = () => {
                         <div className="flex gap-1.5 pt-1">
                           <Button size="sm" variant="outline" className="h-7 text-xs text-green-700 border-green-300"
                             onClick={async () => {
-                              await supabase.from("deal_reports" as any).update({ status: "resolved", resolved_at: new Date().toISOString() } as any).eq("id", report.id);
-                              setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "resolved" } : r));
-                              toast.success("রিপোর্ট সমাধান হয়েছে");
+                              try {
+                                await apiFetch(`/deal/reports/${report.id}`, {
+                                  method: "PUT",
+                                  body: JSON.stringify({ status: "resolved", resolved_at: new Date().toISOString() }),
+                                });
+                                setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "resolved" } : r));
+                                toast.success("রিপোর্ট সমাধান হয়েছে");
+                              } catch (err: any) {
+                                toast.error(err.message || "আপডেট ব্যর্থ");
+                              }
                             }}>
                             <CheckCircle className="h-3 w-3 mr-1" /> সমাধান
                           </Button>
                           <Button size="sm" variant="outline" className="h-7 text-xs text-muted-foreground"
                             onClick={async () => {
-                              await supabase.from("deal_reports" as any).update({ status: "dismissed" } as any).eq("id", report.id);
-                              setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "dismissed" } : r));
-                              toast.success("রিপোর্ট বাতিল করা হয়েছে");
+                              try {
+                                await apiFetch(`/deal/reports/${report.id}`, {
+                                  method: "PUT",
+                                  body: JSON.stringify({ status: "dismissed" }),
+                                });
+                                setReports(prev => prev.map(r => r.id === report.id ? { ...r, status: "dismissed" } : r));
+                                toast.success("রিপোর্ট বাতিল করা হয়েছে");
+                              } catch (err: any) {
+                                toast.error(err.message || "আপডেট ব্যর্থ");
+                              }
                             }}>
                             <XCircle className="h-3 w-3 mr-1" /> বাতিল
                           </Button>
@@ -651,7 +744,7 @@ function ListingTable({
   isSelected, onToggleSelect,
 }: {
   listings: DealListing[];
-  getCategoryName: (id: string | null) => string;
+  getCategoryName: (id: string | null, embedded?: DealListing["deal_categories"]) => string;
   updating: string | null;
   onStatusChange: (id: string, status: string) => void;
   onToggleFeatured: (id: string, current: boolean) => void;
@@ -730,7 +823,7 @@ function ListingTable({
                     </div>
                   )}
                   <div className="flex items-center gap-2 mt-1 text-[11px] text-muted-foreground flex-wrap">
-                    <span>{getCategoryName(listing.category_id)}</span>
+                    <span>{getCategoryName(listing.category_id, listing.deal_categories)}</span>
                     <span>•</span>
                     <span>{listing.location_division || "—"}</span>
                     <span>•</span>

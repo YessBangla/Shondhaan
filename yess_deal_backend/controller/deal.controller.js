@@ -79,92 +79,92 @@ const mapListingRow = (row) => ({
     : null,
 });
 
-export const getDealCategories = async (req, res) => {
-  try {
-    const [rows] = await dealDb.query(
-      `
-      SELECT 
-        id,
-        name,
-        name_en,
-        slug,
-        icon,
-        parent_id,
-        sort_order,
-        is_active,
-        created_at,
-        updated_at
-      FROM deal_categories
-      WHERE is_active = 1
-      ORDER BY sort_order ASC, id ASC
-      `
-    );
+// export const getDealCategories = async (req, res) => {
+//   try {
+//     const [rows] = await dealDb.query(
+//       `
+//       SELECT 
+//         id,
+//         name,
+//         name_en,
+//         slug,
+//         icon,
+//         parent_id,
+//         sort_order,
+//         is_active,
+//         created_at,
+//         updated_at
+//       FROM deal_categories
+//       WHERE is_active = 1
+//       ORDER BY sort_order ASC, id ASC
+//       `
+//     );
 
-    res.json({
-      success: true,
-      data: rows.map((row) => ({
-        ...row,
-        id: String(row.id),
-        parent_id: row.parent_id ? String(row.parent_id) : null,
-        is_active: !!Number(row.is_active),
-      })),
-    });
-  } catch (error) {
-    console.error("Get deal categories error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to load deal categories",
-      error: error.message,
-    });
-  }
-};
+//     res.json({
+//       success: true,
+//       data: rows.map((row) => ({
+//         ...row,
+//         id: String(row.id),
+//         parent_id: row.parent_id ? String(row.parent_id) : null,
+//         is_active: !!Number(row.is_active),
+//       })),
+//     });
+//   } catch (error) {
+//     console.error("Get deal categories error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to load deal categories",
+//       error: error.message,
+//     });
+//   }
+// };
 
-export const getDealCategoryTree = async (req, res) => {
-  try {
-    const [rows] = await dealDb.query(
-      `
-      SELECT 
-        id,
-        name,
-        name_en,
-        slug,
-        icon,
-        parent_id,
-        sort_order,
-        is_active
-      FROM deal_categories
-      WHERE is_active = 1
-      ORDER BY sort_order ASC, id ASC
-      `
-    );
+// export const getDealCategoryTree = async (req, res) => {
+//   try {
+//     const [rows] = await dealDb.query(
+//       `
+//       SELECT 
+//         id,
+//         name,
+//         name_en,
+//         slug,
+//         icon,
+//         parent_id,
+//         sort_order,
+//         is_active
+//       FROM deal_categories
+//       WHERE is_active = 1
+//       ORDER BY sort_order ASC, id ASC
+//       `
+//     );
 
-    const all = rows.map((row) => ({
-      ...row,
-      id: String(row.id),
-      parent_id: row.parent_id ? String(row.parent_id) : null,
-      is_active: !!Number(row.is_active),
-    }));
+//     const all = rows.map((row) => ({
+//       ...row,
+//       id: String(row.id),
+//       parent_id: row.parent_id ? String(row.parent_id) : null,
+//       is_active: !!Number(row.is_active),
+//     }));
 
-    const parents = all.filter((cat) => !cat.parent_id);
+//     const parents = all.filter((cat) => !cat.parent_id);
 
-    const tree = parents.map((parent) => ({
-      ...parent,
-      children: all.filter((cat) => cat.parent_id === parent.id),
-    }));
+//     const tree = parents.map((parent) => ({
+//       ...parent,
+//       children: all.filter((cat) => cat.parent_id === parent.id),
+//     }));
 
-    res.json({
-      success: true,
-      data: tree,
-    });
-  } catch (error) {
-    console.error("Get deal category tree error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Failed to load category tree",
-      error: error.message,
-    });
-  }
-};
+//     res.json({
+//       success: true,
+//       data: tree,
+//     });
+//   } catch (error) {
+//     console.error("Get deal category tree error:", error);
+//     res.status(500).json({
+//       success: false,
+//       message: "Failed to load category tree",
+//       error: error.message,
+//     });
+//   }
+// };
 
 export const getDealListings = async (req, res) => {
   try {
