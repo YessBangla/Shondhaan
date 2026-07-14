@@ -29,6 +29,7 @@ import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
 import StoreSettingsTab from "./StoreSettingsTabV2";
 import { Badge } from "@/components/ui/badge";
 import { getMartSocket } from "@/lib/martSocket";
+import { createMartSellerNotification } from "@/lib/martSellerNotifications";
 
 const orderStatusMap: Record<string, { label: string; color: string; dot: string }> = {
   pending:    { label: "অপেক্ষমাণ",       color: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-400"  },
@@ -64,6 +65,13 @@ interface ChatConversation {
   last_message: string | null;
   last_message_at: string | null;
   unread_count: number;
+}
+interface MartConversationUpdatePayload {
+  sellerInbox?: ChatConversation;
+  message?: {
+    sender_role?: "user" | "seller";
+    message?: string;
+  };
 }
 interface OrderItem {
   id?: number; order_id?: number; product_id?: number;
@@ -313,7 +321,7 @@ useEffect(() => {
 
   socket.emit("mart:join", { seller_user_id: sellerUserId });
 
-  const handleConversationUpdate = (payload: { sellerInbox?: ChatConversation }) => {
+  const handleConversationUpdate = (payload: MartConversationUpdatePayload) => {
     if (!payload.sellerInbox) return;
 
     setMessages((prev) => {
@@ -322,6 +330,21 @@ useEffect(() => {
       const rest = prev.filter((row) => Number(row.id) !== Number(nextRow.id));
       return [{ ...existing, ...nextRow }, ...rest];
     });
+
+    if (payload.message?.sender_role === "user") {
+      const chat = payload.sellerInbox;
+      void createMartSellerNotification({
+        userId: sellerUserId,
+        title: bn ? "নতুন কাস্টমার মেসেজ" : "New customer message",
+        message:
+          payload.message.message ||
+          chat.last_message ||
+          (bn ? "একজন কাস্টমার মেসেজ পাঠিয়েছেন" : "A customer sent you a message"),
+        type: "mart_customer_message",
+        productId: chat.product_id,
+        actionUrl: `/mart/vendor/messages/${chat.id}`,
+      });
+    }
   };
 
   socket.on("mart:conversation:updated", handleConversationUpdate);
@@ -329,7 +352,7 @@ useEffect(() => {
   return () => {
     socket.off("mart:conversation:updated", handleConversationUpdate);
   };
-}, [sellerUserId]);
+}, [sellerUserId, bn]);
   const fetchOrders = useCallback(async (resolvedSeller?: MartSeller | null) => {
     if (!user) return;
     const s = resolvedSeller ?? seller;
@@ -668,6 +691,7 @@ useEffect(() => {
   const statusData   = Object.entries(orderStatusMap)
     .map(([k, v]) => ({ name: v.label, value: orders.filter(o => o.status === k).length }))
     .filter(d => d.value > 0);
+  const messageUnreadCount = messages.reduce((sum, chat) => sum + Number(chat.unread_count || 0), 0);
 
   const stats: DashboardStat[] = [
     { icon: DollarSign,   label: bn ? "মোট বিক্রি"   : "Revenue",   value: `৳${totalRevenue.toLocaleString()}`, color: "emerald", targetTab: "orders",   orderPaymentFilter:  "paid" },
@@ -689,6 +713,7 @@ useEffect(() => {
   label: bn ? "মেসেজ" : "Messages",
   icon: <MessageCircle />,
   group: bn ? "যোগাযোগ" : "Communication",
+  badge: messageUnreadCount,
 },
   ];
 

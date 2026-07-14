@@ -1,13 +1,16 @@
 const express = require("express");
 const crypto = require("crypto");
+const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
 const router = express.Router();
+const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
 
-const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
+function verifyCustomToken(token = "") {
+  const parts = String(token).split(".");
+  if (parts.length !== 2) return null;
 
-function verifyToken(token = "") {
-  const [payload, signature] = String(token).split(".");
+  const [payload, signature] = parts;
   if (!payload || !signature) return null;
 
   const expected = crypto
@@ -17,7 +20,6 @@ function verifyToken(token = "") {
 
   const signatureBuffer = Buffer.from(signature);
   const expectedBuffer = Buffer.from(expected);
-
   if (
     signatureBuffer.length !== expectedBuffer.length ||
     !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
@@ -29,6 +31,20 @@ function verifyToken(token = "") {
     const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
     if (!data.exp || data.exp < Date.now()) return null;
     return data;
+  } catch {
+    return null;
+  }
+}
+
+function verifyToken(token = "") {
+  const parts = String(token).split(".");
+
+  if (parts.length === 2) {
+    return verifyCustomToken(token);
+  }
+
+  try {
+    return jwt.verify(token, TOKEN_SECRET);
   } catch {
     return null;
   }

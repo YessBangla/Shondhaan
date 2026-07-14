@@ -99,6 +99,7 @@ const Checkout = lazy(() => import("./pages/Checkout"));
 const Compare = lazy(() => import("./pages/Compare"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const ClientDashboard = lazy(() => import("./pages/ClientDashboard"));
+const UserDashboard = lazy(() => import("./pages/UserDashboard"));
 const CallCenterPanel = lazy(() => import("./pages/CallCenterPanel"));
 const ProviderPanel = lazy(() => import("./pages/ProviderPanel"));
 const RepresentativePanel = lazy(() => import("./pages/RepresentativePanel"));
@@ -329,6 +330,7 @@ const App = () => {
             <Route path="/contact" element={<ContactUs />} />
             <Route path="/join" element={<JoinUs />} />
             <Route path="/dashboard" element={<ClientDashboard />} />
+            <Route path="/user-dashboard" element={<UserDashboard />} />
             <Route path="/call-center" element={<CallCenterPanel />} />
             <Route path="/provider" element={<ProviderPanel />} />
             <Route path="/representative" element={<RepresentativePanel />} />

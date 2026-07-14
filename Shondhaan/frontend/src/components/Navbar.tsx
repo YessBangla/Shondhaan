@@ -881,6 +881,16 @@ const Navbar = () => {
                         {t("nav.logout")}
                       </button>
 
+                      <div className="my-1 border-t border-border" />
+
+                      <button
+                        onClick={() => navigate("/user-dashboard")}
+                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      >
+                        <User className="h-4 w-4 text-blue-600" />
+                        {bn ? "আমার ড্যাশবোর্ড" : "My Dashboard"}
+                      </button>
+
                       <button
                         onClick={handleDashboardClick}
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"

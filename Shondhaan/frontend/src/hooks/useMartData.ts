@@ -31,6 +31,13 @@ export interface MartProductCategory {
   slug: string;
 }
 
+interface BackendMartSubCategory {
+  id: number | string;
+  category_id: number | string;
+  name: string;
+  category_name?: string | null;
+}
+
 export interface MartProduct {
   id: string;
   vendor_id?: string | number | null;
@@ -63,32 +70,56 @@ export function useMartCategories() {
   return useQuery({
     queryKey: ["mart-categories"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("mart_categories")
-        .select("*")
-        .eq("is_active", true)
-        .order("sort_order");
-      if (error) throw error;
+      const [categoriesResponse, subCategoriesResponse] = await Promise.all([
+        fetch(`${API_BASE}/api/categories`),
+        fetch(`${API_BASE}/api/sub-categories`),
+      ]);
+      const [categoriesJson, subCategoriesJson] = await Promise.all([
+        categoriesResponse.json().catch(() => ({})),
+        subCategoriesResponse.json().catch(() => ({})),
+      ]);
 
-      const categories = data as MartCategory[];
-      // Build tree
-      const rootCats = categories.filter((c) => !c.parent_id);
-      return rootCats.map((root) => ({
-        ...root,
-        children: categories
-          .filter((c) => c.parent_id === root.id)
-          .sort((a, b) => a.sort_order - b.sort_order),
-      }));
+      if (!categoriesResponse.ok || categoriesJson.success === false) {
+        throw new Error(categoriesJson.message || "Categories fetch failed");
+      }
+
+      const categories = Array.isArray(categoriesJson.data) ? categoriesJson.data : [];
+      const subCategories = Array.isArray(subCategoriesJson.data) ? subCategoriesJson.data : [];
+
+      return categories.map((category: any) => ({
+        ...category,
+        id: String(category.id),
+        parent_id: null,
+        slug: category.slug || String(category.id),
+        is_active: true,
+        children: subCategories
+          .filter((subCategory: BackendMartSubCategory) => String(subCategory.category_id) === String(category.id))
+          .map((subCategory: BackendMartSubCategory) => ({
+            id: `sub-${subCategory.id}`,
+            parent_id: String(category.id),
+            name: subCategory.name,
+            name_en: null,
+            slug: `sub-${subCategory.id}`,
+            icon_url: category.icon_url || null,
+            image_url: null,
+            sort_order: 0,
+            is_active: true,
+            children: [],
+          })),
+      })) as MartCategory[];
     },
     staleTime: 5 * 60 * 1000,
   });
 }
 
-async function fetchVendorProducts(categoryIds?: string[], search?: string) {
+async function fetchVendorProducts(categoryIds?: string[], search?: string, subCategoryIds?: string[]) {
   const params = new URLSearchParams();
   params.set("status", "active");
   if (categoryIds && categoryIds.length > 0) {
     params.set("category_id", categoryIds.join(","));
+  }
+  if (subCategoryIds && subCategoryIds.length > 0) {
+    params.set("sub_category_id", subCategoryIds.join(","));
   }
 
   const response = await fetch(`${API_BASE}/api/products?${params.toString()}`);
@@ -111,8 +142,8 @@ async function fetchVendorProducts(categoryIds?: string[], search?: string) {
   return products.map((p: any) => toPublicProduct(p as any));
 }
 
-async function fetchBackendCategoryIds(categorySlug?: string) {
-  if (!categorySlug || categorySlug === "all") return undefined;
+async function fetchBackendCategoryFilter(categorySlug?: string) {
+  if (!categorySlug || categorySlug === "all") return {};
 
   const [categoriesResponse, subCategoriesResponse] = await Promise.all([
     fetch(`${API_BASE}/api/categories`),
@@ -131,6 +162,21 @@ async function fetchBackendCategoryIds(categorySlug?: string) {
   const subCategories = Array.isArray(subCategoriesJson.data) ? subCategoriesJson.data : [];
   const requested = String(categorySlug);
   const normalizedRequested = requested.toLowerCase();
+  if (normalizedRequested.startsWith("sub-")) {
+    return { subCategoryIds: [requested.replace(/^sub-/i, "")] };
+  }
+
+  const subCategoryMatch = subCategories.find((subCategory: any) => {
+    const candidates = [
+      subCategory.id,
+      subCategory.name,
+    ].filter((value) => value != null);
+
+    return candidates.some((value) => String(value).toLowerCase() === normalizedRequested);
+  });
+
+  if (subCategoryMatch) return { subCategoryIds: [String(subCategoryMatch.id)] };
+
   const match = categories.find((category: any) => {
     const candidates = [
       category.id,
@@ -142,24 +188,17 @@ async function fetchBackendCategoryIds(categorySlug?: string) {
     return candidates.some((value) => String(value).toLowerCase() === normalizedRequested);
   });
 
-  if (!match) return [requested];
+  if (!match) return { categoryIds: [requested] };
 
-  const ids = [
-    String(match.id),
-    ...subCategories
-      .filter((subCategory: any) => String(subCategory.category_id) === String(match.id))
-      .map((subCategory: any) => String(subCategory.id)),
-  ];
-
-  return ids;
+  return { categoryIds: [String(match.id)] };
 }
 
 export function useMartProducts(categorySlug?: string, search?: string, limit = 20) {
   return useQuery({
     queryKey: ["mart-products", categorySlug, search, limit],
     queryFn: async () => {
-      const categoryIds = await fetchBackendCategoryIds(categorySlug);
-      const vendorProducts = await fetchVendorProducts(categoryIds, search);
+      const { categoryIds, subCategoryIds } = await fetchBackendCategoryFilter(categorySlug);
+      const vendorProducts = await fetchVendorProducts(categoryIds, search, subCategoryIds);
 
       return vendorProducts
         .sort((a, b) => {

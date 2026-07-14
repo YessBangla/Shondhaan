@@ -26,18 +26,56 @@ router.get("/", async (req, res) => {
 
 // POST /api/notifications
 router.post("/", async (req, res) => {
-  const { user_id, title, message, type, reference_id } = req.body;
+  const {
+    user_id,
+    title,
+    message,
+    type,
+    reference_id,
+    product_id,
+    productId,
+    action_url,
+    actionUrl,
+    url,
+    metadata,
+  } = req.body;
   if (!user_id || !message) {
     return res.status(400).json({ success: false, message: "user_id and message are required" });
   }
 
   try {
+    const resolvedProductId = product_id ?? productId ?? metadata?.product_id ?? metadata?.productId ?? null;
+    const resolvedActionUrl = action_url ?? actionUrl ?? url ?? metadata?.action_url ?? metadata?.url ?? null;
+
     const [result] = await pool.query(
-      `INSERT INTO notifications (user_id, title, message, type, reference_id, is_read, created_at)
-       VALUES (?, ?, ?, ?, ?, 0, NOW())`,
-      [user_id, title || null, message, type || "general", reference_id || null]
+      `INSERT INTO notifications
+         (user_id, title, message, type, reference_id, product_id, action_url, is_read, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 0, NOW())`,
+      [
+        user_id,
+        title || null,
+        message,
+        type || "general",
+        reference_id || null,
+        resolvedProductId || null,
+        resolvedActionUrl || null,
+      ]
     );
-    res.status(201).json({ success: true, data: { id: result.insertId } });
+    res.status(201).json({
+      success: true,
+      data: {
+        id: result.insertId,
+        user_id,
+        title: title || null,
+        message,
+        type: type || "general",
+        reference_id: reference_id || null,
+        product_id: resolvedProductId || null,
+        action_url: resolvedActionUrl || null,
+        is_read: false,
+        created_at: new Date().toISOString(),
+      },
+    });
   } catch (error) {
     console.error("Create notification error:", error);
     res.status(500).json({ success: false, message: error.message });

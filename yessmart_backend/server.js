@@ -3,7 +3,7 @@ const cors = require("cors");
 const path = require("path");
 const http = require("http");
 const { Server } = require("socket.io");
-require("dotenv").config();
+require("dotenv").config({ path: path.join(__dirname, ".env") });
 
 const pool = require("./db");
 const initDatabase = require("./database/initDatabase");
@@ -43,13 +43,14 @@ const shippingAddressesRoutes = require("./routes/shipping_addresses");
 const uploadRouter = require("./routes/upload");
 const profileRoutes = require("./routes/profile");
 const wishlistRoutes = require("./routes/wishlist"); // Import the wishlist routes
+const notificationsRoutes = require("./routes/notifications");
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
 const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
 
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
-const PORT = process.env.PORT || 8081;
+const PORT = process.env.PORT;
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
@@ -132,6 +133,7 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use("/uploads", express.static(path.join(__dirname, "public", "uploads")));
 app.use("/api/delivery-requests", deliveryRequestsRouter);
 app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
+app.use("/api/notifications", notificationsRoutes);
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 server.listen(PORT, async () => {

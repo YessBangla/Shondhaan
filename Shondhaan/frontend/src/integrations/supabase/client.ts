@@ -93,10 +93,19 @@ if (SUPABASE_URL) {
     auth: {
       onAuthStateChange: (_cb: any) => ({ data: { subscription: { unsubscribe: () => {} } } }),
       getSession: async () => ({ data: { session: null } }),
+      getUser: async () => ({ data: { user: null }, error: null }),
       signOut: async () => ({ error: null }),
       signIn: async () => noopResult,
+      signInWithPassword: async () => ({
+        data: { user: null, session: null },
+        error: { message: 'Supabase login is not configured for this environment.' },
+      }),
       signUp: async () => noopResult,
+      updateUser: async () => noopResult,
+      refreshSession: async () => ({ data: { session: null }, error: null }),
+      setSession: async () => ({ data: { session: null }, error: null }),
     },
+    rpc: async () => noopResult,
     removeChannel: (_ch: any) => {},
     channel: (name: string, opts?: any) => createChannelBuilder(name, opts),
   };

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jul 04, 2026 at 03:35 PM
+-- Generation Time: Jul 11, 2026 at 05:07 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -18,8 +18,39 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8mb4 */;
 
 --
--- Database: `yservice_mart`
+-- Database: `ymart_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `banners`
+--
+
+CREATE TABLE `banners` (
+  `id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `title_en` varchar(255) DEFAULT NULL,
+  `subtitle` varchar(500) DEFAULT NULL,
+  `subtitle_en` varchar(500) DEFAULT NULL,
+  `image_url` varchar(500) NOT NULL,
+  `link_url` varchar(500) DEFAULT NULL,
+  `button_label` varchar(100) DEFAULT NULL,
+  `button_label_en` varchar(100) DEFAULT NULL,
+  `button_bg_color` varchar(20) DEFAULT '#ffffff',
+  `button_text_color` varchar(20) DEFAULT '#0f172a',
+  `is_active` tinyint(1) DEFAULT 1,
+  `sort_order` int(11) DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
+  `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `banners`
+--
+
+INSERT INTO `banners` (`id`, `title`, `title_en`, `subtitle`, `subtitle_en`, `image_url`, `link_url`, `button_label`, `button_label_en`, `button_bg_color`, `button_text_color`, `is_active`, `sort_order`, `created_at`, `updated_at`) VALUES
+(1, 'Molestiae tempore m', 'Est nihil nesciunt ', 'Ex expedita qui et n', 'Sed adipisci nisi ni', 'http://localhost:8081/uploads/banners/banner_1783507801027_218027039.png', 'Distinctio Quia ali', 'Soluta minim impedit', 'Ipsam occaecat assum', '#ffffff', '#1757ee', 1, 0, '2026-07-08 10:50:01', '2026-07-08 10:50:19');
 
 -- --------------------------------------------------------
 
@@ -73,7 +104,8 @@ INSERT INTO `categories` (`id`, `name`, `name_en`, `slug`, `image_url`, `icon_ur
 (9, 'Mens fashion', 'Mens fashion', 'mens-fashion', NULL, NULL, 0, '2026-07-02 06:05:08', '2026-07-02 06:05:08'),
 (10, 'Watches, bags & jewellery', 'Watches, bags & jewellery', 'watches-bags-jewellery', NULL, NULL, 0, '2026-07-02 06:05:08', '2026-07-02 06:05:08'),
 (11, 'Sports & outdoor', 'Sports & outdoor', 'sports-outdoor', NULL, NULL, 0, '2026-07-02 06:05:08', '2026-07-02 06:05:08'),
-(12, 'Automotive & motorbike', 'Automotive & motorbike', 'automotive-motorbike', NULL, NULL, 0, '2026-07-02 06:05:08', '2026-07-02 06:05:08');
+(12, 'Automotive & motorbike', 'Automotive & motorbike', 'automotive-motorbike', NULL, NULL, 0, '2026-07-02 06:05:08', '2026-07-02 06:05:08'),
+(253, 'Veniam voluptatem', 'Minima facilis ipsam', 'Reprehenderit volup', 'http://localhost:8081/uploads/mart-products/1783507755209-537888933.png', NULL, 0, '2026-07-08 10:49:21', '2026-07-08 10:49:21');
 
 -- --------------------------------------------------------
 
@@ -455,7 +487,7 @@ CREATE TABLE `reviews` (
   `seller_reply_at` timestamp NULL DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
-) ;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
 
@@ -517,7 +549,9 @@ CREATE TABLE `sellers` (
 
 INSERT INTO `sellers` (`id`, `user_id`, `slug`, `shop_name`, `shop_type`, `shop_popular`, `seller_name`, `seller_email`, `seller_mobile`, `seller_address`, `seller_total_products`, `seller_verified`, `banner_url`, `profile_image_url`, `store_carousel_media`, `bank_name`, `bank_account_name`, `bank_account_number`, `bank_branch`, `routing_number`, `mobile_banking_provider`, `mobile_banking_number`, `kyc_admin_message`, `nid_front_url`, `nid_back_url`, `trade_license_url`, `tin_certificate_url`, `created_at`, `updated_at`) VALUES
 (1, 8, 'tavi-8', 'tavi', NULL, 0, 'tavi', 'tanvirunislamanika@gmail.com', '01818974533', NULL, 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-07-04 05:53:33', '2026-07-04 05:53:33'),
-(2, 2, 'rabeya-shop-2', 'Rabeya Shop', 'electronics', 1, 'Rabeya Shop', 'hahajah319@asitrai.com', '01679440219', 'uttara,Dhaka', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'bKash', '01679440219', NULL, 'http://localhost:8081/uploads/kyc/kyc_1783145655498_rsje83c033e.png', 'http://localhost:8081/uploads/kyc/kyc_1783145659672_xeivqaonh9.png', NULL, NULL, '2026-07-04 06:13:45', '2026-07-04 06:45:28');
+(2, 2, 'rabeya-shop-2', 'Rabeya Shop', 'electronics', 1, 'Rabeya Shop', 'hahajah319@asitrai.com', '01679440219', 'uttara,Dhaka', 0, 1, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'bKash', '01679440219', NULL, 'http://localhost:8081/uploads/kyc/kyc_1783145655498_rsje83c033e.png', 'http://localhost:8081/uploads/kyc/kyc_1783145659672_xeivqaonh9.png', NULL, NULL, '2026-07-04 06:13:45', '2026-07-04 06:45:28'),
+(3, 6, 'sumaiya-6', 'sumaiya', 'electronics', 0, 'sumaiya', 'farjanayessbd@gmail.com', '01679440219', NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-07-07 12:02:08', '2026-07-07 12:02:08'),
+(4, 7, 'super-admin-7', 'Super Admin', NULL, 0, 'Super Admin', 'superadmin@local.test', '01700000001', NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-07-07 12:40:33', '2026-07-07 12:40:33');
 
 -- --------------------------------------------------------
 
@@ -627,6 +661,13 @@ CREATE TABLE `user_profile` (
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `banners`
+--
+ALTER TABLE `banners`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_banners_active_sort` (`is_active`,`sort_order`);
 
 --
 -- Indexes for table `bkash_settings`
@@ -814,6 +855,12 @@ ALTER TABLE `user_profile`
 --
 
 --
+-- AUTO_INCREMENT for table `banners`
+--
+ALTER TABLE `banners`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
 -- AUTO_INCREMENT for table `bkash_settings`
 --
 ALTER TABLE `bkash_settings`
@@ -823,7 +870,7 @@ ALTER TABLE `bkash_settings`
 -- AUTO_INCREMENT for table `categories`
 --
 ALTER TABLE `categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=290;
 
 --
 -- AUTO_INCREMENT for table `coupons`
@@ -919,7 +966,7 @@ ALTER TABLE `rocket_settings`
 -- AUTO_INCREMENT for table `sellers`
 --
 ALTER TABLE `sellers`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `shipping_addresses`
@@ -931,7 +978,7 @@ ALTER TABLE `shipping_addresses`
 -- AUTO_INCREMENT for table `sub_categories`
 --
 ALTER TABLE `sub_categories`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=129;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=193;
 
 --
 -- AUTO_INCREMENT for table `transaction`
@@ -956,35 +1003,15 @@ ALTER TABLE `coupons`
   ADD CONSTRAINT `fk_coupons_seller` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `deliverymen`
---
-ALTER TABLE `deliverymen`
-  ADD CONSTRAINT `fk_deliverymen_user` FOREIGN KEY (`user_id`) REFERENCES `yess-service`.`users` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `mart_messages`
 --
 ALTER TABLE `mart_messages`
   ADD CONSTRAINT `fk_msg_conversation` FOREIGN KEY (`conversation_id`) REFERENCES `mart_conversations` (`id`) ON DELETE CASCADE;
 
 --
--- Constraints for table `orders_count`
---
-ALTER TABLE `orders_count`
-  ADD CONSTRAINT `fk_orders_count_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
-
---
--- Constraints for table `order_items`
---
-ALTER TABLE `order_items`
-  ADD CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `products`
 --
 ALTER TABLE `products`
-  ADD CONSTRAINT `fk_products_category` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE SET NULL,
-  ADD CONSTRAINT `fk_products_seller` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `fk_products_sub_category` FOREIGN KEY (`sub_category_id`) REFERENCES `sub_categories` (`id`) ON DELETE SET NULL;
 
 --
@@ -995,28 +1022,10 @@ ALTER TABLE `product_questions`
   ADD CONSTRAINT `fk_product_questions_seller` FOREIGN KEY (`seller_id`) REFERENCES `sellers` (`id`) ON DELETE SET NULL;
 
 --
--- Constraints for table `product_wishlists`
---
-ALTER TABLE `product_wishlists`
-  ADD CONSTRAINT `fk_wishlist_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
-
---
 -- Constraints for table `reviews`
 --
 ALTER TABLE `reviews`
   ADD CONSTRAINT `fk_reviews_product` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `sub_categories`
---
-ALTER TABLE `sub_categories`
-  ADD CONSTRAINT `sub_categories_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `categories` (`id`) ON DELETE CASCADE;
-
---
--- Constraints for table `transaction`
---
-ALTER TABLE `transaction`
-  ADD CONSTRAINT `fk_transaction_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE SET NULL;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
