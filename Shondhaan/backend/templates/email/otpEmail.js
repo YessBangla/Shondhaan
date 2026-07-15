@@ -1,0 +1,258 @@
+export function otpEmailTemplate({ otp, expiryMinutes }) {
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shondhaan Email Verification</title>
+</head>
+
+<body style="margin:0;padding:0;background:#f4f6f9;font-family:Arial,Helvetica,sans-serif;">
+
+<table width="100%" cellpadding="0" cellspacing="0" border="0" bgcolor="#f4f6f9">
+<tr>
+<td align="center" style="padding:40px 15px;">
+
+<table width="600" cellpadding="0" cellspacing="0" border="0"
+style="
+max-width:600px;
+width:100%;
+background:#ffffff;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 8px 25px rgba(0,0,0,.08);
+">
+
+<!-- ================= HEADER ================= -->
+<tr>
+<td
+align="center"
+style="
+background:#021543;
+padding:24px 20px;
+">
+
+<img
+src="https://shondhaan.com/yess-service-logo.png"
+alt="Shondhaan"
+width="160"
+style="
+display:block;
+margin:0 auto 12px;
+max-width:160px;
+">
+
+<h1
+style="
+margin:0;
+font-size:28px;
+font-weight:bold;
+color:#ffffff;
+">
+Email Verification
+</h1>
+
+<p
+style="
+margin:10px 0 0;
+font-size:15px;
+line-height:24px;
+color:#d9e6ff;
+">
+Secure verification for your Shondhaan account
+</p>
+
+</td>
+</tr>
+
+<!-- ================= BODY ================= -->
+
+<tr>
+<td style="padding:45px 40px;">
+
+<p
+style="
+margin-top:0;
+font-size:18px;
+color:#222;
+">
+Hello,
+</p>
+
+<p
+style="
+font-size:16px;
+line-height:30px;
+color:#555;
+margin-bottom:30px;
+">
+Thank you for registering with
+<strong>Shondhaan</strong>.
+
+To complete your account verification, please enter the One-Time Password (OTP) below.
+</p>
+
+<!-- OTP BOX -->
+
+<table
+align="center"
+cellpadding="0"
+cellspacing="0"
+border="0"
+style="
+margin:0 auto;
+background:#f7fffb;
+border:2px dashed #16a34a;
+border-radius:12px;
+width:300px;
+">
+
+<tr>
+
+<td
+align="center"
+style="padding:22px;"
+>
+
+<p
+style="
+margin:0;
+font-size:14px;
+color:#666;
+">
+Your Verification Code
+</p>
+
+<div
+style="
+margin-top:16px;
+font-size:42px;
+font-weight:bold;
+letter-spacing:10px;
+color:#16a34a;
+font-family:Arial,Helvetica,sans-serif;
+">
+${otp}
+</div>
+
+</td>
+
+</tr>
+
+</table>
+
+<p
+style="
+margin-top:35px;
+font-size:15px;
+line-height:28px;
+color:#444;
+">
+This verification code will expire in
+<strong>${expiryMinutes} minutes</strong>.
+</p>
+
+<!-- SECURITY NOTICE -->
+
+<div
+style="
+margin-top:30px;
+padding:18px;
+background:#FFF8E8;
+border-left:4px solid #F4B400;
+border-radius:6px;
+">
+
+<p
+style="
+margin:0;
+font-size:16px;
+font-weight:bold;
+color:#333;
+">
+🔒 Security Notice
+</p>
+
+<p
+style="
+margin:10px 0 0;
+font-size:14px;
+line-height:24px;
+color:#555;
+">
+Never share this verification code with anyone.
+
+Shondhaan employees will never ask for your OTP via phone, email, or message.
+</p>
+
+</div>
+
+</td>
+</tr>
+
+<!-- ================= FOOTER ================= -->
+
+<tr>
+
+<td
+align="center"
+style="
+background:#f1f3f5;
+padding:30px 20px;
+border-top:1px solid #e4e4e4;
+">
+
+<img
+src="https://shondhaan.com/yess-service-logo.png"
+alt="Shondhaan"
+width="95"
+style="
+display:block;
+margin:0 auto 14px;
+">
+
+<p
+style="
+margin:0;
+font-size:15px;
+font-weight:600;
+color:#444;
+">
+Helping People Find Trusted Services
+</p>
+
+<p
+style="
+margin:12px 0 0;
+font-size:13px;
+color:#777;
+">
+© ${new Date().getFullYear()} <strong>Shondhaan</strong>. All Rights Reserved.
+</p>
+
+<p
+style="
+margin-top:18px;
+font-size:12px;
+line-height:20px;
+color:#999;
+">
+This is an automated email.<br>
+Please do not reply to this message.
+</p>
+
+</td>
+
+</tr>
+
+</table>
+
+</td>
+</tr>
+</table>
+
+</body>
+</html>
+`;
+}
