@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
-const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL || "http://localhost:8081";
+const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL;
 
 type MartSellerProfile = {
   id: number;

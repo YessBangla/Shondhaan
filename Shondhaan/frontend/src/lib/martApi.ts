@@ -1,6 +1,6 @@
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const MART_API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL || "http://localhost:8081";
+const MART_API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL;
 
 async function request<T>(path: string, options?: RequestInit): Promise<T> {
   const response = await fetch(`${MART_API_BASE_URL}${path}`, {

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import type { MartSeller } from "@/lib/martApi";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8081";
+const API_BASE = import.meta.env.VITE_API_BASE;
 
 interface Props {
   seller: MartSeller | null;

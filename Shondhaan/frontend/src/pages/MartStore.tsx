@@ -9,7 +9,7 @@ import {
 import { useMartCart } from "@/contexts/MartCartContext";
 import { toast } from "sonner";
 
-const API_BASE = "http://localhost:8081/api";
+const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
 
 type StoreMediaItem = {
   url: string;
