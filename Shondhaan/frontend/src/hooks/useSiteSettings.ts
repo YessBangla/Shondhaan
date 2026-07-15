@@ -25,14 +25,14 @@ const DEFAULTS: SiteSettings = {
   favicon_url: "/yess-service-logo.png",
   footer_tagline_bn: "আপনার বিশ্বস্ত হোম সার্ভিস পার্টনার",
   footer_tagline_en: "Your trusted home service partner",
-  footer_phone: "+৮৮০ ১৭০০-০০০০০০",
-  footer_email: "info@yessbangla.xyz",
+  footer_phone: "+880 01805464345",
+  footer_email: "info.shondhaan@gmail.com",
   footer_facebook: "#",
   footer_instagram: "#",
   footer_address_bn: "ঢাকা, বাংলাদেশ",
   footer_address_en: "Dhaka, Bangladesh",
-  footer_copyright_bn: "© ২০২৫ Yess Service। সর্বস্বত্ব সংরক্ষিত।",
-  footer_copyright_en: "© 2025 Yess Service. All rights reserved.",
+  footer_copyright_bn: "© ২০২৬ সন্ধান। সর্বস্বত্ব সংরক্ষিত।",
+  footer_copyright_en: "© 2026 Shondhaan. All rights reserved.",
 };
 
 export const useSiteSettings = () => {

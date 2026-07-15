@@ -86,7 +86,7 @@ export const translations = {
   "footer.profile": { bn: "প্রোফাইল", en: "Profile" },
   "footer.loginRegister": { bn: "লগইন / রেজিস্টার", en: "Login / Register" },
   "footer.contact": { bn: "যোগাযোগ", en: "Contact" },
-  "footer.copyright": { bn: "© ২০২৬ Yess Service। সর্বস্বত্ব সংরক্ষিত।", en: "© 2026 Yess Service. All rights reserved." },
+  "footer.copyright": { bn: "© ২০২৬ সন্ধান সর্বস্বত্ব সংরক্ষিত।", en: "© 2026 Shondhaan. All rights reserved." },
 
   // Mobile Bottom Nav
   "bottomNav.home": { bn: "হোম", en: "Home" },
