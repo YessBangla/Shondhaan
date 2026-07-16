@@ -23,7 +23,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import PlatformSwitcher from "@/components/mart/PlatformSwitcher";
 import CompanyLogo from "@/components/jobs/CompanyLogo";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSEO } from "@/hooks/useSEO";
 
 const JobHome = () => {
@@ -89,9 +89,42 @@ const JobHome = () => {
   const { data: deadlineSoonJobs = [] } = useDeadlineSoonJobs();
   const saveJob = useSaveJob();
 
-  const savedJobIds = new Set(savedJobs.map((s: any) => s.job_id));
+  // Fetch categories directly from the Express backend via React Query,
+  // so it participates in the SAME cache invalidation as the rest of the
+  // page (queryClient.invalidateQueries() in usePullToRefresh above, and
+  // any other refetch you trigger elsewhere). A plain useEffect+fetch here
+  // would only ever run once on mount and never pick up backend changes
+  // without a full page reload — this is the actual reason edits made to
+  // job_categories weren't showing up.
+  const JOB_CATEGORIES_ENDPOINT =
+    import.meta.env.VITE_JOB_CATEGORIES_URL || "http://localhost:5050/api/job-categories";
+
+  const { data: fetchedCategories } = useQuery({
+    queryKey: ["job-categories"],
+    queryFn: async () => {
+      const res = await fetch(JOB_CATEGORIES_ENDPOINT, { cache: "no-store" });
+      if (!res.ok) throw new Error(`Failed to load job categories (${res.status})`);
+      const json = await res.json();
+      const rows = json?.categories ?? [];
+      return rows.map((r: any) => ({
+        value: String(r.value),
+        labelBn: String(r.label_bn ?? r.labelBn ?? ""),
+        labelEn: String(r.label_en ?? r.labelEn ?? ""),
+      }));
+    },
+    staleTime: 30_000,           // refetch in the background after 30s if stale
+    refetchOnWindowFocus: true,  // catch backend edits when you tab back in
+  });
+
+  const categories = fetchedCategories && fetchedCategories.length > 0 ? fetchedCategories : JOB_CATEGORIES;
+
+  const savedJobIds = new Set(savedJobs.map((s: { job_id: string }) => s.job_id));
   const getTypeLabel = (val: string) => JOB_TYPES.find((j) => j.value === val)?.[bn ? "labelBn" : "labelEn"] || val;
-  const getCatLabel = (val: string) => JOB_CATEGORIES.find((j) => j.value === val)?.[bn ? "labelBn" : "labelEn"] || val;
+
+  const getCatLabel = (val: string) => {
+    return categories.find((j) => j.value === val)?.[bn ? "labelBn" : "labelEn"] || val;
+  };
+
 
   const activeFilterCount = [
     selectedType !== "all", selectedDivision !== "", selectedDistrict !== "", selectedThana !== "",
@@ -123,10 +156,11 @@ const JobHome = () => {
         setSelectedThana={setSelectedThana} clearLocation={clearLocation}
         districtList={districtList} thanaList={thanaList}
         stats={stats} topEmployers={topEmployers} featuredJobs={featuredJobs} jobs={jobs}
+        categories={categories}
       />
 
       {/* Category Grid */}
-      <JobCategoryGrid bn={bn} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} stats={stats} />
+      <JobCategoryGrid bn={bn} selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} stats={stats} categories={categories} />
 
       {/* Filter Bar */}
       <JobFilterBar
@@ -141,6 +175,7 @@ const JobHome = () => {
         setSelectedThana={setSelectedThana} clearLocation={clearLocation} clearFilters={clearFilters}
         districtList={districtList} thanaList={thanaList}
         activeFilterCount={activeFilterCount} jobCount={jobs.length}
+        categories={categories}
       />
 
       {/* Main Content */}

@@ -5,7 +5,7 @@ import {
   Building2, Briefcase, Users, Search, Star, MapPin, Calendar,
   Eye, Plus, FileText, BookmarkPlus, Clock, Video, UserCheck,
   BarChart3, Settings, Bookmark, CalendarCheck, Package, CheckCircle,
-  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown
+  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,6 +37,19 @@ function getAuthHeaders() {
     Authorization: `Bearer ${auth.token}`,
   };
 }
+
+async function fetchJobsJson(path: string, init?: RequestInit) {
+  const res = await fetch(`${YESSJOB_API_BASE}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...(init?.headers || {}) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Request failed (HTTP ${res.status})`);
+  }
+  return res.json();
+}
+
 interface EmployerProfile {
   id: string;
   user_id: string;
@@ -185,13 +198,28 @@ const EmployerPanel = () => {
   const [pipelineJob, setPipelineJob] = useState<string>("all");
   const [pipelineStage, setPipelineStage] = useState<string>("all");
   const [scoreForm, setScoreForm] = useState<any>(null);
+  const [editJobForm, setEditJobForm] = useState<any>(null);
 
+  // Jobs posted via JobPostForm.tsx go to your Express/MySQL backend
+  // (POST /api/jobs in routes/jobs.js), NOT Supabase. This now reads from
+  // GET /api/jobs/mine — the same backend, the same table those posts
+  // actually land in — so a job you post shows up here right after posting
+  // (as "pending" until an admin approves it in AdminJobListings).
   const fetchMyJobs = useCallback(async () => {
     if (!user) return;
-    const { data } = await supabase.from("jobs").select("*").eq("user_id", user.id).order("created_at", { ascending: false });
-    if (data) setMyJobs(data);
+    try {
+      const data = await fetchJobsJson(`/api/jobs/mine`);
+      setMyJobs(data || []);
+    } catch (err) {
+      console.error("Failed to load my jobs:", err);
+    }
   }, [user]);
 
+  // NOTE: applications still come from Supabase's job_portal_applications,
+  // keyed to Supabase job UUIDs — which no longer match the MySQL integer
+  // job ids myJobs now uses. Until a MySQL job_applications table + routes
+  // exist, this will return nothing for jobs posted through JobPostForm.
+  // Left as-is on purpose; say the word if you want that built next.
   const fetchApplications = useCallback(async () => {
     if (!user) return;
     const { data: jobIds } = await supabase.from("jobs").select("id").eq("user_id", user.id);
@@ -286,22 +314,72 @@ const EmployerPanel = () => {
     toast.success("স্কোর সেভ হয়েছে");
   };
 
+  // Close/reopen now call your Express/MySQL routes (PATCH /api/jobs/:id/close
+  // and /reopen in routes/jobs.js) instead of writing to Supabase's jobs
+  // table, since that's where these jobs actually live.
+  const deleteJob = async (jobId: string) => {
+  if (!window.confirm("আপনি কি নিশ্চিত এই জবটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে নেওয়া যাবে না।")) return;
+  try {
+    await fetchJobsJson(`/api/jobs/${jobId}`, { method: "DELETE" });
+    setMyJobs(prev => prev.filter(j => j.id !== jobId));
+    toast.success("জব মুছে ফেলা হয়েছে");
+  } catch (err: any) {
+    console.error(err);
+    toast.error(err.message || "জব মুছতে সমস্যা হয়েছে");
+  }
+};
   const closeJob = async (jobId: string, reason: string) => {
-    const hiredCount = applications.filter(a => a.job_id === jobId && (a as any).hiring_stage === "hired").length;
-    await supabase.from("jobs").update({
-      is_closed: true, closed_at: new Date().toISOString(),
-      closure_reason: reason, hired_count: hiredCount, status: "closed"
-    } as any).eq("id", jobId);
-    fetchMyJobs();
-    toast.success("জব ক্লোজ হয়েছে");
+    try {
+      await fetchJobsJson(`/api/jobs/${jobId}/close`, {
+        method: "PATCH",
+        body: JSON.stringify({ reason }),
+      });
+      fetchMyJobs();
+      toast.success("জব ক্লোজ হয়েছে");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "জব ক্লোজ করতে সমস্যা হয়েছে");
+    }
   };
 
   const reopenJob = async (jobId: string) => {
-    await supabase.from("jobs").update({
-      is_closed: false, closed_at: null, closure_reason: null, status: "approved"
-    } as any).eq("id", jobId);
-    fetchMyJobs();
-    toast.success("জব রিওপেন হয়েছে");
+    try {
+      await fetchJobsJson(`/api/jobs/${jobId}/reopen`, { method: "PATCH" });
+      fetchMyJobs();
+      toast.success("জব রিওপেন হয়েছে");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "জব রিওপেন করতে সমস্যা হয়েছে");
+    }
+  };
+
+  // Saves edits made in the Edit Job modal via PATCH /api/jobs/:id.
+  // NOTE: this assumes a general-purpose PATCH /api/jobs/:id route exists
+  // in routes/jobs.js (alongside the existing /close and /reopen routes),
+  // scoped to the authenticated employer's own jobs. If it doesn't exist
+  // yet, this call will fail with a 404 until that route is added.
+  const updateJob = async () => {
+    if (!editJobForm) return;
+    try {
+      await fetchJobsJson(`/api/jobs/${editJobForm.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: editJobForm.title,
+          description: editJobForm.description,
+          requirements: editJobForm.requirements,
+          salary_min: editJobForm.salary_min !== "" ? Number(editJobForm.salary_min) : null,
+          salary_max: editJobForm.salary_max !== "" ? Number(editJobForm.salary_max) : null,
+          vacancy_count: editJobForm.vacancy_count ? Number(editJobForm.vacancy_count) : 1,
+          deadline: editJobForm.deadline || null,
+        }),
+      });
+      toast.success("জব আপডেট হয়েছে");
+      setEditJobForm(null);
+      fetchMyJobs();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "আপডেট করতে সমস্যা হয়েছে");
+    }
   };
 
   if (authLoading || loading) {
@@ -634,7 +712,31 @@ const EmployerPanel = () => {
                         </Badge>
                       </div>
                     </div>
-                    <div className="flex gap-2 mt-2">
+                    <div className="flex flex-wrap gap-2 mt-2">
+                      <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => navigate(`/jobs/${job.id}`)}>
+                        <Eye className="h-3 w-3 mr-1" /> দেখুন
+                      </Button>
+                      <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => setEditJobForm({
+                        id: job.id,
+                        title: job.title || "",
+                        description: job.description || "",
+                        requirements: job.requirements || "",
+                        salary_min: job.salary_min ?? "",
+                        salary_max: job.salary_max ?? "",
+                        vacancy_count: job.vacancy_count ?? 1,
+                        deadline: job.deadline ? String(job.deadline).slice(0, 10) : "",
+                      })}>
+                        <Pencil className="h-3 w-3 mr-1" /> সম্পাদনা
+                        
+                      </Button>
+                      <Button
+  variant="outline"
+  size="sm"
+  className="text-[10px] h-7 text-destructive"
+  onClick={() => deleteJob(job.id)}
+>
+  <XCircle className="h-3 w-3 mr-1" /> মুছুন
+</Button>
                       {!isClosed && job.status === "approved" && (
                         <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => closeJob(job.id, "নিয়োগ সম্পন্ন")}>
                           <Lock className="h-3 w-3 mr-1" /> জব ক্লোজ করুন
@@ -920,8 +1022,8 @@ const EmployerPanel = () => {
   return (
     <JobsPageTransition>
       
-      <div className="pt-[44px] md:pt-[68px] bg-card" />
-      <JobsMenuBar />
+      {/* <div className="pt-[44px] md:pt-[68px] bg-card" /> */}
+      {/* <JobsMenuBar /> */}
       <PanelSidebarTabs
         panelTitle="এমপ্লয়ার প্যানেল"
         panelIcon={<Building2 />}
@@ -996,6 +1098,50 @@ const EmployerPanel = () => {
                 <textarea className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={scoreForm.notes} onChange={e => setScoreForm((p: any) => ({ ...p, notes: e.target.value }))} placeholder="প্রার্থী সম্পর্কে আপনার পর্যবেক্ষণ..." />
               </div>
               <Button onClick={updateScore} className="w-full">স্কোর সেভ করুন</Button>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Job Modal */}
+      <Dialog open={!!editJobForm} onOpenChange={() => setEditJobForm(null)}>
+        <DialogContent className="max-w-md">
+          <DialogHeader><DialogTitle>জব সম্পাদনা করুন</DialogTitle></DialogHeader>
+          {editJobForm && (
+            <div className="space-y-3">
+              <div>
+                <label className="text-xs font-medium mb-1 block">পদের নাম</label>
+                <Input value={editJobForm.title} onChange={e => setEditJobForm((p: any) => ({ ...p, title: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">বিবরণ</label>
+                <textarea className="w-full min-h-[100px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={editJobForm.description} onChange={e => setEditJobForm((p: any) => ({ ...p, description: e.target.value }))} />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">প্রয়োজনীয়তা</label>
+                <textarea className="w-full min-h-[70px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={editJobForm.requirements} onChange={e => setEditJobForm((p: any) => ({ ...p, requirements: e.target.value }))} />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1 block">সর্বনিম্ন বেতন</label>
+                  <Input type="number" value={editJobForm.salary_min} onChange={e => setEditJobForm((p: any) => ({ ...p, salary_min: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block">সর্বোচ্চ বেতন</label>
+                  <Input type="number" value={editJobForm.salary_max} onChange={e => setEditJobForm((p: any) => ({ ...p, salary_max: e.target.value }))} />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="text-xs font-medium mb-1 block">পদ সংখ্যা</label>
+                  <Input type="number" value={editJobForm.vacancy_count} onChange={e => setEditJobForm((p: any) => ({ ...p, vacancy_count: e.target.value }))} />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block">শেষ তারিখ</label>
+                  <Input type="date" value={editJobForm.deadline} onChange={e => setEditJobForm((p: any) => ({ ...p, deadline: e.target.value }))} />
+                </div>
+              </div>
+              <Button onClick={updateJob} className="w-full">আপডেট করুন</Button>
             </div>
           )}
         </DialogContent>
