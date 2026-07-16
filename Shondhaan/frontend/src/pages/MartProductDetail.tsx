@@ -243,7 +243,7 @@ const MartProductDetail = () => {
       <div className="min-h-screen bg-[#f5f5f5]">
         <Navbar />
         {/* <div className="pt-[44px] md:pt-[104px]" /> */}
-        <div className="max-w-7xl mx-auto px-3 py-4 grid md:grid-cols-[380px_1fr] gap-4">
+        <div className="app-container py-4 grid md:grid-cols-[380px_1fr] gap-4">
           <div className="bg-white rounded-sm p-4 space-y-3">
             <div className="aspect-square bg-gray-100 rounded animate-pulse" />
             <div className="flex gap-2">{[0,1,2,3].map(i => <div key={i} className="h-14 w-14 bg-gray-100 rounded animate-pulse" />)}</div>
@@ -324,7 +324,7 @@ const MartProductDetail = () => {
 
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-2 flex items-center gap-1 overflow-x-auto text-xs text-gray-500 whitespace-nowrap">
+        <div className="app-container py-2 flex items-center gap-1 overflow-x-auto text-xs text-gray-500 whitespace-nowrap">
           <button onClick={() => navigate("/mart/home")} className="hover:text-primary">
             {bn ? "ইয়েস মার্ট" : "Yess Mart"}
           </button>
@@ -343,7 +343,7 @@ const MartProductDetail = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-2 sm:px-4 py-3 space-y-3">
+      <div className="app-container py-3 space-y-3">
 
         {/* Main product block */}
         <div className="bg-white rounded-sm shadow-sm overflow-hidden">

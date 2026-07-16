@@ -99,7 +99,7 @@ const MartShopPage = () => {
       </div>
 
       {/* Shop Info */}
-      <div className="max-w-6xl mx-auto px-4 -mt-12 relative z-10 mb-6">
+      <div className="app-container -mt-12 relative z-10 mb-6">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -142,7 +142,7 @@ const MartShopPage = () => {
       </div>
 
       {/* Products */}
-      <div className="max-w-6xl mx-auto px-4 pb-20">
+      <div className="app-container pb-20">
         <h2 className="text-lg font-bold text-foreground mb-4">{bn ? "সকল পণ্য" : "All Products"}</h2>
         {productsLoading ? (
           <div className="flex items-center justify-center py-12">

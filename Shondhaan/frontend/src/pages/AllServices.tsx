@@ -385,7 +385,7 @@ const AllServices = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-5xl px-4 py-5 md:py-8">
+      <div className="app-container py-5 md:py-8">
         <div className="mb-5 flex items-center gap-3">
           <button
             type="button"

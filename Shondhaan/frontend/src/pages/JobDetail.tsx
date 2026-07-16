@@ -106,7 +106,7 @@ const JobDetail = () => {
         <Navbar />
       <div className="pt-[44px] md:pt-[68px] bg-card" />
         <JobsMenuBar />
-        <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="app-container py-12">
           <div className="h-48 rounded-xl bg-muted animate-pulse" />
           <div className="h-32 rounded-xl bg-muted animate-pulse mt-4" />
         </div>
@@ -140,7 +140,7 @@ const JobDetail = () => {
       <div className="pt-[44px] md:pt-[68px] bg-card" />
       <JobsMenuBar />
 
-      <div className="mx-auto max-w-4xl px-4 md:px-6 py-6">
+      <div className="app-container py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="flex-1 min-w-0">

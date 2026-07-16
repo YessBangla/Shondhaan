@@ -458,7 +458,7 @@ const ServiceDetail = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-5xl px-4 md:px-6 py-3">
+      <div className="app-container py-3">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -520,7 +520,7 @@ const ServiceDetail = () => {
             category?.color.overlay || "from-foreground/70 to-foreground/20"
           }`}
         />
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 mx-auto max-w-5xl">
+        <div className="app-container absolute bottom-0 left-0 right-0 py-4 md:py-8">
           <button
             onClick={() => navigate(-1)}
             className="mb-3 flex items-center gap-1 text-sm text-background/80 hover:text-background transition-colors"
@@ -547,7 +547,7 @@ const ServiceDetail = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 md:px-6 py-6 md:py-10">
+      <div className="app-container py-6 md:py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
           <div className="md:col-span-2 space-y-8">
             <motion.div
@@ -732,7 +732,7 @@ const ServiceDetail = () => {
       </div>
 
       {relatedServices.length > 0 && (
-        <div className="mx-auto max-w-5xl px-4 md:px-6 pb-8">
+        <div className="app-container pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1093,9 +1093,9 @@ const CmsServiceDetail = ({
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[16px] md:pt-[24px]" />
 
-      <div className="mx-auto max-w-5xl px-4 md:px-6 py-3">
+      <div className="app-container py-3">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -1144,7 +1144,7 @@ const CmsServiceDetail = ({
         </Breadcrumb>
       </div>
 
-      <div className="relative h-[220px] md:h-[360px] yess-wm">
+      <div className="relative h-[100px] mx-16 md:h-[240px] yess-wm">
         <img
           src={getServiceDisplayImage(service.slug, service.image_url)}
           alt={serviceTitle}
@@ -1155,7 +1155,7 @@ const CmsServiceDetail = ({
             category?.color_overlay || "from-foreground/70 to-foreground/20"
           }`}
         />
-        <div className="absolute bottom-0 left-0 right-0 p-4 md:p-8 mx-auto max-w-5xl">
+        <div className="app-container absolute bottom-0 left-0 right-0 py-4 md:py-8">
           <button
             onClick={() => navigate(-1)}
             className="mb-3 flex items-center gap-1 text-sm text-background/80 hover:text-background transition-colors"
@@ -1192,7 +1192,7 @@ const CmsServiceDetail = ({
       {["job-placement", "overseas-job", "skilled-worker", "daily-labor"].includes(
         service.slug
       ) && (
-        <div className="mx-auto max-w-5xl px-4 md:px-6 pt-4">
+        <div className="app-container pt-4">
           <Link
             to="/jobs"
             className="block rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 p-4 text-white hover:opacity-95 transition-opacity"
@@ -1217,11 +1217,12 @@ const CmsServiceDetail = ({
         </div>
       )}
 
-      <div className="mx-auto max-w-5xl px-4 md:px-6 pt-4">
+      
+      <div className="app-container pt-4">
         <ShareButtons title={serviceTitle} slug={service.slug} t={t} />
       </div>
 
-      <div className="mx-auto max-w-5xl px-4 md:px-6 py-6 md:py-10">
+      <div className="app-container py-6 md:py-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-10">
           <div className="md:col-span-2 space-y-8">
             <motion.div
@@ -1725,7 +1726,7 @@ const CmsServiceDetail = ({
       </div>
 
       {recentlyViewed.length > 0 && (
-        <div className="mx-auto max-w-5xl px-4 md:px-6 pb-6">
+        <div className="app-container pb-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -1771,7 +1772,7 @@ const CmsServiceDetail = ({
       )}
 
       {relatedServices.length > 0 && (
-        <div className="mx-auto max-w-5xl px-4 md:px-6 pb-8">
+        <div className="app-container pb-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}

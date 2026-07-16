@@ -686,7 +686,7 @@ const DealAllAds = () => {
       <div className="pt-[44px] md:pt-[68px]" />
 
       <div className="bg-background border-b border-border/50">
-        <div className="max-w-7xl mx-auto px-4 py-3">
+        <div className="app-container py-3">
           <nav className="flex items-center gap-1.5 text-xs text-muted-foreground mb-2">
             <button
               onClick={() => navigate("/")}
@@ -723,7 +723,7 @@ const DealAllAds = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4 pb-28 md:pb-10">
+      <div className="app-container py-4 pb-28 md:pb-10">
         <div className="flex gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

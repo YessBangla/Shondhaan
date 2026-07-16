@@ -21,7 +21,7 @@ const PrivacyPolicy = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-3xl px-4 md:px-6 py-8 md:py-14">
+      <div className="app-container py-8 md:py-14">
         <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground text-center">
           {bn ? "গোপনীয়তা নীতি" : "Privacy Policy"}
         </h1>

@@ -38,7 +38,7 @@ const EmployerList = () => {
 
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-8">
+        <div className="app-container py-8">
           <BackToHomeButton />
           <div className="flex items-center gap-3 mt-2 mb-4">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5">
@@ -75,7 +75,7 @@ const EmployerList = () => {
 
       {/* Stats Bar */}
       <div className="border-b bg-card">
-        <div className="mx-auto max-w-6xl px-4 md:px-6 py-3 flex items-center gap-4 overflow-x-auto scrollbar-none">
+        <div className="app-container py-3 flex items-center gap-4 overflow-x-auto scrollbar-none">
           <span className="text-xs font-medium text-muted-foreground shrink-0">{bn ? "ফলাফল:" : "Results:"} {filtered.length}</span>
           {COMPANY_TYPES.map(t => {
             const count = employers.filter(e => e.type === t.value).length;
@@ -94,7 +94,7 @@ const EmployerList = () => {
       </div>
 
       {/* Employer Grid */}
-      <div className="mx-auto max-w-6xl px-4 md:px-6 py-6">
+      <div className="app-container py-6">
         {isLoading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[1, 2, 3, 4, 5, 6].map(i => (

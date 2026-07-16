@@ -11,7 +11,7 @@ const Footer = () => {
 
   return (
     <footer className="hidden md:block glass-strong py-10">
-      <div className="mx-auto max-w-5xl lg:max-w-7xl px-4 md:px-6 lg:px-8">
+      <div className="app-container">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
           {/* Section 1: Contact & Company Info */}
           <div>

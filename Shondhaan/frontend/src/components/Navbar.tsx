@@ -601,7 +601,7 @@ const Navbar = () => {
         )}
 
         {/* Desktop header */}
-        <div className="hidden md:flex mx-auto max-w-5xl lg:max-w-7xl items-center gap-4 px-6 lg:px-8 py-2.5">
+        <div className="app-container hidden md:flex items-center gap-4 py-2.5">
           {/* Brand */}
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => navigate("/")} className="flex items-center gap-2">

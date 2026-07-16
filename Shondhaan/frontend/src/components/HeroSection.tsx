@@ -715,7 +715,7 @@ const HeroSection = () => {
           }}
         >
           <div
-            className="relative mx-auto flex max-w-5xl flex-col items-center justify-center px-4 pb-10 md:pb-32 lg:max-w-6xl"
+            className="app-container relative flex flex-col items-center justify-center pb-10 md:pb-32"
             style={{ paddingTop: "max(64px, calc(var(--app-header-h, 96px) + clamp(16px, 4vw, 72px)))" }}
           >
             {/* Headline */}

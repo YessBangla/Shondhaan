@@ -144,7 +144,7 @@ const JobHome = () => {
       />
 
       {/* Main Content */}
-      <div className="mx-auto max-w-6xl px-4 md:px-6 py-6 md:py-8">
+      <div className="app-container py-6 md:py-8">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Job List */}
           <div className="flex-1 min-w-0">

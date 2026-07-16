@@ -80,13 +80,10 @@ app.use(
 app.use(express.json());
 
 // routes
-
 app.use("/api/admin/users", userRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api", serviceCatalogRoutes);
 app.use("/api/auth", authRoutes);
-
-
 
 app.get("/", (req, res) => {
   res.send("Backend is running");

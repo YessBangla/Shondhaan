@@ -223,7 +223,7 @@ const JoinUs = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="relative mx-auto max-w-4xl px-4 md:px-6 pt-10 pb-8 md:pt-16 md:pb-10 text-center"
+          className="app-container relative pt-10 pb-8 text-center md:pt-16 md:pb-10"
         >
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
             <Sparkles className="h-3 w-3" />
@@ -240,7 +240,7 @@ const JoinUs = () => {
         </motion.div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 md:px-6 py-8 md:py-12">
+      <div className="app-container py-8 md:py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

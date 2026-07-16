@@ -60,7 +60,7 @@ const DealSellerProfile = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-      <div className="container mx-auto px-4 py-6 pb-24 max-w-5xl">
+      <div className="app-container py-6 pb-24">
         {/* Back */}
         <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-4 gap-1">
           <ChevronLeft className="h-4 w-4" />

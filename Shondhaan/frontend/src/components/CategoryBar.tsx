@@ -341,7 +341,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="relative -mt-10 z-20 mx-auto hidden max-w-5xl px-3 sm:px-4 md:-mt-12 md:block lg:max-w-6xl"
+      className="app-container relative -mt-10 z-20 hidden md:-mt-12 md:block"
     >
       <div className="rounded-2xl border border-border/40 bg-card p-3 shadow-xl sm:p-4 md:p-6">
         <div className="relative group">

@@ -100,7 +100,7 @@ const MartCategoryPage = () => {
       <div className="pt-[44px] md:pt-[104px]" />
 
       <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="app-container py-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate("/mart/home")}>
@@ -120,7 +120,7 @@ const MartCategoryPage = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-4">
+      <div className="app-container py-4">
         {/* Sub-categories */}
         {subCats.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-3 mb-4">

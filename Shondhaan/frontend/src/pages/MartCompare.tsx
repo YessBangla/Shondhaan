@@ -96,7 +96,7 @@ const MartCompare = () => {
       <div className="pt-[44px] md:pt-[104px]" />
 
       <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="app-container py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
@@ -114,7 +114,7 @@ const MartCompare = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-10">
+      <div className="app-container py-6 pb-28 md:pb-10">
         {compareList.length < 2 ? (
           <div className="text-center py-20">
             <GitCompareArrows className="h-16 w-16 mx-auto mb-4 text-muted-foreground/40" />

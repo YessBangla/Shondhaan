@@ -304,7 +304,7 @@ const DealAdDetail = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="app-container py-6">
           <Skeleton className="h-80 rounded-xl mb-4" />
           <Skeleton className="h-8 w-3/4 mb-2" />
           <Skeleton className="h-6 w-1/2" />
@@ -318,7 +318,7 @@ const DealAdDetail = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
+        <div className="app-container py-20 text-center">
           <p className="text-4xl mb-3">😔</p>
           <p className="text-muted-foreground">{bn ? "বিজ্ঞাপনটি পাওয়া যায়নি" : "Ad not found"}</p>
           <Button onClick={() => navigate("/deal")} className="mt-4">{bn ? "ফিরে যান" : "Go Back"}</Button>
@@ -334,7 +334,7 @@ const DealAdDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-10">
+      <div className="app-container py-4 pb-28 md:pb-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
           <button onClick={() => navigate("/deal")} className="hover:text-primary">{bn ? "ইয়েস ডিল" : "Yess Deal"}</button>
