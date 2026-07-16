@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,8 +7,31 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { CheckCircle2, XCircle, Eye, Building2, MapPin, FileText, Users, Search, Star, Briefcase } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
-import type { Job, JobApplication } from "@/hooks/useJobData";
-import { JOB_CATEGORIES, COMPANY_TYPES } from "@/hooks/useJobData";
+import type { Job } from "@/hooks/useJobData";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
+
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
+
+function getAuthHeaders() {
+  const auth = getMySqlAuth();
+  if (!auth?.token) {
+    console.warn("[AdminJobListings] Missing MySQL auth token in localStorage yess_mysql_auth");
+    return {};
+  }
+  return { Authorization: `Bearer ${auth.token}` };
+}
+
+async function fetchJson(path: string, init?: RequestInit) {
+  const res = await fetch(`${YESSJOB_API_BASE}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...(init?.headers || {}) },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Request failed (HTTP ${res.status})`);
+  }
+  return res.json();
+}
 
 const statusColors: Record<string, string> = {
   pending: "bg-yellow-100 text-yellow-800",
@@ -24,49 +46,56 @@ const AdminJobListings = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedJob, setSelectedJob] = useState<Job | null>(null);
 
+  // Reads from routes/jobs.js's GET /api/jobs/admin/all — this sees every
+  // status (pending/approved/rejected/closed), unlike the public GET /api/jobs
+  // which is hardcoded to status = 'approved' only. Admin-only route.
   const { data: jobs = [], isLoading } = useQuery({
     queryKey: ["admin-jobs", filter, searchTerm],
     queryFn: async () => {
-      let q = supabase.from("jobs").select("*").order("created_at", { ascending: false });
-      if (filter !== "all") q = q.eq("status", filter);
-      if (searchTerm.length > 2) q = q.or(`title.ilike.%${searchTerm}%,company_name.ilike.%${searchTerm}%`);
-      const { data, error } = await q;
-      if (error) throw error;
-      return (data || []) as Job[];
+      const params = new URLSearchParams();
+      if (filter !== "all") params.set("status", filter);
+      if (searchTerm.length > 2) params.set("search", searchTerm);
+      const qs = params.toString();
+      return (await fetchJson(`/api/jobs/admin/all${qs ? `?${qs}` : ""}`)) as Job[];
     },
   });
 
-  const { data: apps = [] } = useQuery({
-    queryKey: ["admin-job-apps", selectedJob?.id],
-    queryFn: async () => {
-      if (!selectedJob) return [];
-      const { data, error } = await supabase.from("job_portal_applications").select("*").eq("job_id", selectedJob.id).order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as JobApplication[];
-    },
-    enabled: !!selectedJob,
-  });
+  // NOTE: there is no MySQL applications table/route yet (applications
+  // still live in Supabase's job_portal_applications, tied to Supabase job
+  // ids — which no longer match these MySQL job ids). Until that's built,
+  // the "আবেদনসমূহ" section in the detail modal below will show 0 results
+  // for every job, even ones with real applicants. Say the word if you
+  // want a job_applications MySQL table + route built next.
+  const apps: any[] = [];
 
   const updateStatus = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
-      const { error } = await supabase.from("jobs").update({ status }).eq("id", id);
-      if (error) throw error;
+      return fetchJson(`/api/jobs/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+      qc.invalidateQueries({ queryKey: ["jobs"] }); // so JobHome picks up the change too
       toast.success("স্ট্যাটাস আপডেট হয়েছে");
     },
+    onError: (e: any) => toast.error(e.message || "সমস্যা হয়েছে"),
   });
 
   const toggleFeatured = useMutation({
     mutationFn: async ({ id, featured }: { id: string; featured: boolean }) => {
-      const { error } = await supabase.from("jobs").update({ is_featured: featured }).eq("id", id);
-      if (error) throw error;
+      return fetchJson(`/api/jobs/${id}/featured`, {
+        method: "PATCH",
+        body: JSON.stringify({ featured }),
+      });
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-jobs"] });
+      qc.invalidateQueries({ queryKey: ["jobs"] });
       toast.success("আপডেট হয়েছে");
     },
+    onError: (e: any) => toast.error(e.message || "সমস্যা হয়েছে"),
   });
 
   const pendingCount = jobs.filter((j) => j.status === "pending").length;
@@ -129,14 +158,14 @@ const AdminJobListings = () => {
                     <div className="flex gap-2 mt-1 text-[10px] text-muted-foreground flex-wrap">
                       {job.district && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{job.district}</span>}
                       <span>{format(new Date(job.created_at), "dd MMM yyyy")}</span>
-                      <span className="flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{job.applications_count} আবেদন</span>
+                      <span className="flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{job.applications_count ?? 0} আবেদন</span>
                       {job.category && <Badge variant="outline" className="text-[9px] h-4">{job.category}</Badge>}
                     </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-1.5 shrink-0">
-                  <Badge className={`text-[10px] ${statusColors[job.status]}`}>
-                    {job.status === "pending" ? "অপেক্ষমাণ" : job.status === "approved" ? "অনুমোদিত" : "বাতিল"}
+                  <Badge className={`text-[10px] ${statusColors[job.status] || "bg-muted"}`}>
+                    {job.status === "pending" ? "অপেক্ষমাণ" : job.status === "approved" ? "অনুমোদিত" : job.status === "closed" ? "ক্লোজড" : "বাতিল"}
                   </Badge>
                   <Button
                     variant="ghost"
@@ -182,7 +211,7 @@ const AdminJobListings = () => {
                 <div><span className="text-muted-foreground">প্রতিষ্ঠানের ধরন:</span> <span className="font-medium">{selectedJob.company_type || "—"}</span></div>
                 {selectedJob.district && <div><span className="text-muted-foreground">অবস্থান:</span> <span className="font-medium">{selectedJob.district}{selectedJob.thana ? `, ${selectedJob.thana}` : ""}</span></div>}
                 {(selectedJob.salary_min || selectedJob.salary_max) && (
-                  <div><span className="text-muted-foreground">বেতন:</span> <span className="font-medium">৳{selectedJob.salary_min.toLocaleString("bn-BD")} - ৳{selectedJob.salary_max.toLocaleString("bn-BD")}</span></div>
+                  <div><span className="text-muted-foreground">বেতন:</span> <span className="font-medium">৳{Number(selectedJob.salary_min ?? 0).toLocaleString("bn-BD")} - ৳{Number(selectedJob.salary_max ?? 0).toLocaleString("bn-BD")}</span></div>
                 )}
                 <div><span className="text-muted-foreground">পদ সংখ্যা:</span> <span className="font-medium">{selectedJob.vacancy_count}</span></div>
                 {selectedJob.education_required && <div><span className="text-muted-foreground">শিক্ষা:</span> <span className="font-medium">{selectedJob.education_required}</span></div>}
@@ -202,19 +231,13 @@ const AdminJobListings = () => {
               {selectedJob.contact_phone && <div className="text-xs"><strong>ফোন:</strong> {selectedJob.contact_phone}</div>}
               {selectedJob.contact_email && <div className="text-xs"><strong>ইমেইল:</strong> {selectedJob.contact_email}</div>}
 
-              {/* Applications */}
+              {/* Applications — see note above fetchJson calls: not wired
+                  to MySQL yet, so this always shows empty for now. */}
               <div className="border-t pt-3">
                 <h3 className="font-semibold mb-2">আবেদনসমূহ ({apps.length})</h3>
-                {apps.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">কোনো আবেদন নেই</p>
-                ) : apps.map((app) => (
-                  <div key={app.id} className="border rounded p-2 mb-2">
-                    <p className="font-medium text-xs">{app.applicant_name} — {app.applicant_phone}</p>
-                    {app.applicant_email && <p className="text-[10px] text-muted-foreground">{app.applicant_email}</p>}
-                    {app.cover_letter && <p className="text-[10px] text-muted-foreground mt-1 line-clamp-2">{app.cover_letter}</p>}
-                    {app.cv_url && <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-emerald-600 flex items-center gap-1 mt-1"><FileText className="h-3 w-3" /> CV দেখুন</a>}
-                  </div>
-                ))}
+                <p className="text-xs text-muted-foreground">
+                  আবেদন ডেটা এখনো MySQL ব্যাকএন্ডের সাথে যুক্ত করা হয়নি।
+                </p>
               </div>
             </div>
           )}

@@ -43,7 +43,38 @@ const JobDetail = () => {
   const [coverLetter, setCoverLetter] = useState("");
   const [cvFile, setCvFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+// Allowlist-based sanitizer for rich-text job fields. Strips every
+// attribute (data-*, class, style, etc.) and any tag not produced by
+// RichTextArea's toolbar, so old/junk HTML (e.g. leftover
+// data-section-id / PDq2pG_selectionAnchor spans from before AI Write
+// was removed) renders as clean text instead of literal tags.
+const ALLOWED_TAGS = new Set(["B", "STRONG", "I", "EM", "UL", "LI", "BR", "P"]);
 
+function sanitizeDescriptionHtml(html: string): string {
+  if (!html) return "";
+  const container = document.createElement("div");
+  container.innerHTML = html;
+
+  const walk = (node: Node) => {
+    Array.from(node.childNodes).forEach((child) => {
+      if (child.nodeType === Node.ELEMENT_NODE) {
+        const el = child as HTMLElement;
+        walk(el);
+        if (!ALLOWED_TAGS.has(el.tagName)) {
+          while (el.firstChild) node.insertBefore(el.firstChild, el);
+          node.removeChild(el);
+        } else {
+          Array.from(el.attributes).forEach((attr) => el.removeAttribute(attr.name));
+        }
+      } else if (child.nodeType !== Node.TEXT_NODE) {
+        node.removeChild(child);
+      }
+    });
+  };
+
+  walk(container);
+  return container.innerHTML;
+}
   // Increment views on page load
   useEffect(() => {
     if (id) incrementView.mutate(id);
@@ -286,7 +317,10 @@ const JobDetail = () => {
               <h2 className="font-semibold mb-3 flex items-center gap-2 text-blue-700">
                 <Briefcase className="h-4 w-4" /> {bn ? "চাকরির বিবরণ" : "Job Description"}
               </h2>
-              <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{job.description}</div>
+             <div
+  className="text-sm text-muted-foreground leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
+  dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(job.description) }}
+/>
             </div>
 
             {job.requirements && (

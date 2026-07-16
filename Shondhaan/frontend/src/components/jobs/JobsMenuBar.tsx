@@ -30,12 +30,20 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
   const bn = language === "bn";
   const [openMenu, setOpenMenu] = useState<string | null>(null);
 
-  const menus: { key: string; labelBn: string; labelEn: string; icon: any; children: MenuItem[] }[] = [
+  // Your backend's safeUser() (see server.js) returns the role on `type`
+  // (e.g. "employer", "user", "admin", ...), and also mirrors it on `role`
+  // for convenience. Check both so this works regardless of which field
+  // your AuthContext ends up normalizing to.
+  const userRole = String((user as any)?.type || (user as any)?.role || "").toLowerCase();
+  const isEmployer = userRole === "employer";
+
+  const allMenus: { key: string; labelBn: string; labelEn: string; icon: any; children: MenuItem[]; employerOnly?: boolean; hideForEmployer?: boolean }[] = [
     {
       key: "jobs",
       labelBn: "চাকরি খুঁজুন",
       labelEn: "Find Jobs",
       icon: Search,
+      hideForEmployer: true,
       children: [
         { labelBn: "সকল চাকরি", labelEn: "All Jobs", href: "/jobs", icon: Briefcase },
         { labelBn: "নতুন চাকরি", labelEn: "New / Latest Jobs", href: "/jobs?type=new", icon: Star },
@@ -54,6 +62,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
       labelBn: "আমার প্রোফাইল",
       labelEn: "My Profile",
       icon: UserCircle,
+      hideForEmployer: true,
       children: [
         { labelBn: "চাকরিপ্রার্থী প্রোফাইল", labelEn: "Job Seeker Profile", href: "/jobs/profile", icon: UserCircle },
         { labelBn: "আমার আবেদনসমূহ", labelEn: "My Applications", href: "/jobs/my", icon: Send },
@@ -69,6 +78,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
       labelBn: "ক্যারিয়ার রিসোর্স",
       labelEn: "Career Resources",
       icon: BookOpen,
+      hideForEmployer: true,
       children: [
         { labelBn: "কোম্পানি তালিকা", labelEn: "Employer Directory", href: "/jobs/employers", icon: Building2 },
         { labelBn: "ক্যাটেগরি অনুযায়ী চাকরি", labelEn: "Jobs by Category", href: "/jobs#categories", icon: Filter },
@@ -84,6 +94,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
       labelBn: "নিয়োগদাতা",
       labelEn: "For Employers",
       icon: Building2,
+      employerOnly: true,
       children: [
         { labelBn: "চাকরি পোস্ট করুন", labelEn: "Post a Job", href: "/jobs/post", icon: PlusCircle },
         { labelBn: "নিয়োগদাতা প্যানেল", labelEn: "Employer Dashboard", href: "/employer", icon: LayoutDashboard },
@@ -97,6 +108,15 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
       ],
     },
   ];
+
+  // Exclusive split: employer accounts see ONLY "For Employers" — the job
+  // seeker menus (Find Jobs / My Profile / Career Resources) are hidden for
+  // them via hideForEmployer. Everyone else sees those three, but never
+  // "For Employers" (employerOnly).
+  const menus = allMenus.filter((menu) => {
+    if (isEmployer) return !menu.hideForEmployer;
+    return !menu.employerOnly;
+  });
 
   const isJobsPage = location.pathname.startsWith("/jobs") || location.pathname === "/employer";
 
@@ -163,7 +183,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
                 </button>
               </>
             )}
-            {user && (
+            {user && isEmployer && (
               <button
                 onClick={() => navigate("/jobs/post")}
                 className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90"

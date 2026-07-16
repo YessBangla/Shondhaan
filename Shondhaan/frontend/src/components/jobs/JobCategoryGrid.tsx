@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TrendingUp, ChevronDown, X } from "lucide-react";
-import { JOB_CATEGORIES } from "@/hooks/useJobData";
+import { JOB_CATEGORIES, JobCategory } from "@/hooks/useJobData";
+
 
 const CATEGORY_ICONS: Record<string, string> = {
   it: "💻", marketing: "📢", sales: "📊", accounting: "🧮", engineering: "⚙️",
@@ -15,11 +16,18 @@ interface JobCategoryGridProps {
   selectedCategory: string;
   setSelectedCategory: (v: string) => void;
   stats: any;
+  // Live categories fetched from the backend (job_categories table), passed
+  // down from JobHome. Falls back to the static JOB_CATEGORIES list only
+  // if the parent hasn't fetched yet or the fetch failed — so this grid
+  // shows whatever an admin has actually added/edited/reordered, not a
+  // hardcoded list.
+  categories?: JobCategory[];
 }
 
-export default function JobCategoryGrid({ bn, selectedCategory, setSelectedCategory, stats }: JobCategoryGridProps) {
+export default function JobCategoryGrid({ bn, selectedCategory, setSelectedCategory, stats, categories }: JobCategoryGridProps) {
   const [showAll, setShowAll] = useState(false);
-  const visible = showAll ? JOB_CATEGORIES : JOB_CATEGORIES.slice(0, 16);
+  const categoryList = categories && categories.length > 0 ? categories : JOB_CATEGORIES;
+  const visible = showAll ? categoryList : categoryList.slice(0, 16);
 
   return (
     <div className="bg-card border-b">
@@ -47,7 +55,7 @@ export default function JobCategoryGrid({ bn, selectedCategory, setSelectedCateg
           })}
         </div>
         <div className="flex items-center gap-3 mt-2">
-          {!showAll && JOB_CATEGORIES.length > 16 && (
+          {!showAll && categoryList.length > 16 && (
             <button onClick={() => setShowAll(true)} className="text-xs text-blue-600 hover:underline flex items-center gap-1">
               <ChevronDown className="h-3 w-3" /> {bn ? "সব ক্যাটেগরি দেখুন" : "Show All Categories"}
             </button>
