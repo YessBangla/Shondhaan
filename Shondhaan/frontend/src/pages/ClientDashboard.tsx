@@ -25,6 +25,7 @@ import AIWeeklySummaryCard from "@/components/client/AIWeeklySummaryCard";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import ServiceMessage from "./ServiceMessage";
 
 const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8081";
 const PROFILE_API_BASE = MART_API_BASE;
@@ -459,6 +460,12 @@ const ClientDashboard = () => {
     group: bn ? "সেবা" : "Services",
   },
   {
+    value: "messages",
+    label: bn ? "ম্যাসেজ" : "Messages",
+    icon: <MessageSquare className="h-5 w-5" />,
+    group: bn ? "সেবা" : "Services",
+  },
+  {
     value: "requests",
     label: bn ? "রিকোয়েস্ট" : "Requests",
     icon: <FileSearch className="h-5 w-5" />,
@@ -558,7 +565,7 @@ const ClientDashboard = () => {
                   <div className="space-y-3">
                     <h2 className="text-sm font-semibold text-foreground  flex items-center gap-2">
                       <ClipboardList className="h-4 w-4 text-primary" />
-                      {bn ? "à¦¸à§‡à¦¬à¦¾ à¦¬à§à¦•à¦¿à¦‚ à¦¹à¦¿à¦¸à§à¦Ÿà§à¦°à¦¿" : "Service Booking History"}
+                      {bn ? "সার্ভিস বুকিং হিস্টোরি" : "Service Booking History"}
                       <span className="text-xs text-muted-foreground font-normal">({bookings.length})</span>
                     </h2>
                     {bookings.map((b, i) => (
@@ -592,12 +599,12 @@ const ClientDashboard = () => {
               {activeTab === "dashboard" && (
                 <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
                   {[
-                    { value: bookings.length, label: bn ? "à¦¬à§à¦•à¦¿à¦‚" : "Bookings", color: "text-primary", tab: "bookings" },
-                    { value: bookings.filter(b => b.status === "completed").length, label: bn ? "à¦¸à¦®à§à¦ªà¦¨à§à¦¨" : "Done", color: "text-green-600", tab: "bookings" },
-                    { value: martOrders.length, label: bn ? "à¦®à¦¾à¦°à§à¦Ÿ à¦…à¦°à§à¦¡à¦¾à¦°" : "Mart Orders", color: "text-indigo-600", tab: "mart-orders" },
-                    { value: dealAdsCount, label: bn ? "à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "Ads", color: "text-orange-600", tab: "deal-my-ads" },
-                    { value: martWishlistCount, label: bn ? "à¦«à§‡à¦­à¦¾à¦°à¦¿à¦Ÿ" : "Favorites", color: "text-pink-600", tab: "deal-favorites" },
-                    { value: unreadCount, label: bn ? "à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨" : "Alerts", color: "text-primary", tab: "notifications" },
+                    { value: bookings.length, label: bn ? "বুকিং" : "Bookings", color: "text-primary", tab: "bookings" },
+                    { value: bookings.filter(b => b.status === "completed").length, label: bn ? "সম্পূর্ণ" : "Done", color: "text-green-600", tab: "bookings" },
+                    { value: martOrders.length, label: bn ? "মার্ট ওর্ডার" : "Mart Orders", color: "text-indigo-600", tab: "mart-orders" },
+                    { value: dealAdsCount, label: bn ? "বিজ্ঞাপন" : "Ads", color: "text-orange-600", tab: "deal-my-ads" },
+                    { value: martWishlistCount, label: bn ? "ফেভারিট" : "Favorites", color: "text-pink-600", tab: "deal-favorites" },
+                    { value: unreadCount, label: bn ? "এলার্ট" : "Alerts", color: "text-primary", tab: "notifications" },
                   ].map((stat, i) => (
                     <motion.div
                       key={i}
@@ -618,6 +625,11 @@ const ClientDashboard = () => {
               {activeTab === "bookings" && (
                 <div>
                   <AIWeeklySummaryCard />
+                </div>
+              )}
+                 {activeTab === "messages" && (
+                <div>
+                  <ServiceMessage />
                 </div>
               )}
 

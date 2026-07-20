@@ -10,9 +10,9 @@ const Footer = () => {
   const bn = language === "bn";
 
   return (
-    <footer className="hidden md:block glass-strong py-10">
-      <div className="app-container">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-4">
+    <footer className="hidden md:block glass-strong  py-10">
+      <div className="app-container ">
+        <div className="grid grid-cols-1 gap-18 md:grid-cols-2 lg:grid-cols-3">
           {/* Section 1: Contact & Company Info */}
           <div>
             <button onClick={() => navigate("/")} className="flex items-center gap-2 mb-4">
@@ -75,7 +75,7 @@ const Footer = () => {
           </div>
 
           {/* Section 4: Apps & Social Media */}
-          <div>
+          {/* <div>
             <h4 className="mb-3 font-heading text-sm font-semibold uppercase tracking-wider text-muted-foreground">
               {bn ? "অ্যাপ ডাউনলোড" : "Download App"}
             </h4>
@@ -105,7 +105,7 @@ const Footer = () => {
                 </a>
               )}
             </div>
-          </div>
+          </div> */}
         </div>
 
         <div className="mt-8 border-t border-border pt-6 text-center text-xs text-muted-foreground">

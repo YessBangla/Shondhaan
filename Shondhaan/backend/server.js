@@ -5,21 +5,29 @@ import { promisify } from "node:util";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import jwt from "jsonwebtoken";
 import mysql from "mysql2/promise";
 import nodemailer from "nodemailer";
 import { getBackendBaseUrl } from "./utils/baseUrl.js";
+import cookieParser from "cookie-parser";
+import multer from "multer";
 
+
+dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-dotenv.config({ path: path.join(__dirname, ".env") });
-dotenv.config({ path: path.join(__dirname, "../Frontend/.env") });
-dotenv.config();
+
+
+const JWT_SECRET = process.env.JWT_SECRET;
+if (!JWT_SECRET) {
+  throw new Error("JWT_SECRET is missing in .env");
+}
 
 const app = express();
 const PORT = Number(process.env.PORT || 5000);
 const DB_NAME = process.env.DB_NAME;
-const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "change-this-secret-in-env";
+
 
 const scrypt = promisify(crypto.scrypt);
 
@@ -149,6 +157,9 @@ const CMS_TABLES = {
   },
 };
 
+app.use(cookieParser());
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 const defaultCorsOrigins = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
@@ -169,13 +180,16 @@ const corsOrigins = [
 ];
 
 const isAllowedCorsOrigin = (origin) => {
+  // Allow requests without an Origin header (Postman, curl, server-to-server)
   if (!origin) return true;
 
-  const normalizedOrigin = origin.trim();
-  if (corsOrigins.includes(normalizedOrigin)) return true;
+  if (corsOrigins.includes(origin)) {
+    return true;
+  }
 
   try {
-    const { hostname, protocol } = new URL(normalizedOrigin);
+    const { protocol, hostname } = new URL(origin);
+
     return (
       protocol === "https:" &&
       (
@@ -188,40 +202,29 @@ const isAllowedCorsOrigin = (origin) => {
   }
 };
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-
-  if (isAllowedCorsOrigin(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      req.headers["access-control-request-headers"] || "Content-Type,Authorization"
-    );
-    res.setHeader("Vary", "Origin");
-  }
-
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+// Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 app.use(
   cors({
     origin(origin, callback) {
-      callback(null, isAllowedCorsOrigin(origin));
+      if (!origin || isAllowedCorsOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error(`CORS blocked for origin: ${origin}`));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+    ],
     optionsSuccessStatus: 204,
-  }),
+  })
 );
-app.use(express.json());
 
 let pool;
 let martPool;
@@ -252,7 +255,6 @@ async function verifyPassword(password, storedHash) {
   if (storedBuffer.length !== derivedKey.length) return false;
   return crypto.timingSafeEqual(storedBuffer, derivedKey);
 }
-
 const passwordPolicyMessage =
   "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
 
@@ -267,45 +269,25 @@ function validatePasswordPolicy(password) {
   );
 }
 
+
+// Create JWT
 function createToken(user) {
-  const payload = Buffer.from(
-    JSON.stringify({
+  return jwt.sign(
+    {
       id: user.id,
       email: user.email,
       type: user.type,
-      exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-    }),
-  ).toString("base64url");
-  const signature = crypto
-    .createHmac("sha256", TOKEN_SECRET)
-    .update(payload)
-    .digest("base64url");
-  return `${payload}.${signature}`;
+    },
+    JWT_SECRET,
+    { expiresIn: "7d" } 
+  );
 }
 
 function verifyToken(token = "") {
-  const [payload, signature] = String(token).split(".");
-  if (!payload || !signature) return null;
-
-  const expected = crypto
-    .createHmac("sha256", TOKEN_SECRET)
-    .update(payload)
-    .digest("base64url");
-
-  const signatureBuffer = Buffer.from(signature);
-  const expectedBuffer = Buffer.from(expected);
-  if (
-    signatureBuffer.length !== expectedBuffer.length ||
-    !crypto.timingSafeEqual(signatureBuffer, expectedBuffer)
-  ) {
-    return null;
-  }
-
   try {
-    const data = JSON.parse(Buffer.from(payload, "base64url").toString("utf8"));
-    if (!data.exp || data.exp < Date.now()) return null;
-    return data;
-  } catch {
+    return jwt.verify(token, JWT_SECRET);
+  } catch (err) {
+    console.error("JWT Error:", err.message); 
     return null;
   }
 }
@@ -535,38 +517,59 @@ function getCmsConfig(table) {
 }
 
 function requireSuperAdmin(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
   const auth = verifyToken(token);
+
   if (!auth || auth.type !== "super_admin") {
     return res.status(403).json({ message: "Super admin access is required" });
   }
+
   req.auth = auth;
   next();
 }
 
 function requireCmsAdmin(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = req.cookies?.token;
+
+  if (!token) {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
   const auth = verifyToken(token);
+
   if (!auth || !["admin", "super_admin"].includes(auth.type)) {
     return res.status(403).json({ message: "Admin access is required" });
   }
+
   req.auth = auth;
   next();
 }
 
-function requireLoggedIn(req, res, next) {
-  const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
-  const auth = verifyToken(token);
-  if (!auth || !auth.id) {
-    return res.status(401).json({ message: "Login is required" });
+const requireLoggedIn = (req, res, next) => {
+  try {
+    const token = req.cookies?.token;
+
+    console.log("COOKIE TOKEN:", token); // debug
+
+    if (!token) {
+      return res.status(401).json({ message: "No token provided" });
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET);
+
+    req.auth = decoded;
+
+    next();
+  } catch (err) {
+    console.error("JWT Error:", err.message);
+    return res.status(401).json({ message: "Invalid token" });
   }
-  req.auth = auth;
-  next();
-}
-
+};
 async function seedDefaultSuperAdmin() {
   const email = normalizeEmail(process.env.SUPER_ADMIN_EMAIL || "");
   const password = String(process.env.SUPER_ADMIN_PASSWORD || "").trim();
@@ -1071,193 +1074,25 @@ await pool.query(`
 
 }
 
+
+
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/user-profiles/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueName = Date.now() + "-" + file.originalname;
+    cb(null, uniqueName);
+  },
+});
+
+const upload = multer({ storage });
+
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
-app.get("/api/test", (req, res) => {
-  res.json({ message: "API working" });
-});
-
-app.get("/api/reviews", async (req, res) => {
-  try {
-    const productId = Number(req.query.product_id);
-    if (!Number.isInteger(productId) || productId <= 0) {
-      return res.status(400).json({ success: false, message: "Valid product_id is required" });
-    }
-
-    const [rows] = await martPool.execute(
-      `
-        SELECT
-          r.id,
-          r.product_id,
-          r.user_id,
-          CONCAT('User ', r.user_id) AS reviewer_name,
-          r.star_review AS rating,
-          r.text_review AS comment,
-          r.seller_reply,
-          r.seller_reply_by,
-          r.seller_reply_at,
-          r.created_at,
-          r.updated_at
-        FROM reviews r
-        WHERE r.product_id = ?
-        ORDER BY r.created_at DESC
-      `,
-      [productId],
-    );
-
-    res.json({ success: true, data: rows });
-  } catch (error) {
-    console.error("List mart reviews error:", error);
-    res.status(500).json({ success: false, message: "Failed to load reviews" });
-  }
-});
-
-app.post("/api/reviews", async (req, res) => {
-  try {
-    const userId = Number(req.body.user_id);
-    const productId = Number(req.body.product_id);
-    const rating = Number(req.body.star_review ?? req.body.rating ?? 5);
-    const comment = String(req.body.text_review ?? req.body.comment ?? "").trim() || null;
-
-    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(productId) || productId <= 0) {
-      return res.status(400).json({ success: false, message: "Valid user_id and product_id are required" });
-    }
-    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-      return res.status(400).json({ success: false, message: "Rating must be between 1 and 5" });
-    }
-
-    await martPool.execute(
-      `
-        INSERT INTO reviews (product_id, user_id, text_review, star_review)
-        VALUES (?, ?, ?, ?)
-        ON DUPLICATE KEY UPDATE
-          text_review = VALUES(text_review),
-          star_review = VALUES(star_review),
-          updated_at = CURRENT_TIMESTAMP
-      `,
-      [productId, userId, comment, rating],
-    );
-
-    const [rows] = await martPool.execute(
-      `
-        SELECT
-          r.id,
-          r.product_id,
-          r.user_id,
-          CONCAT('User ', r.user_id) AS reviewer_name,
-          r.star_review AS rating,
-          r.text_review AS comment,
-          r.seller_reply,
-          r.seller_reply_by,
-          r.seller_reply_at,
-          r.created_at,
-          r.updated_at
-        FROM reviews r
-        WHERE r.product_id = ? AND r.user_id = ?
-        LIMIT 1
-      `,
-      [productId, userId],
-    );
-
-    res.status(201).json({ success: true, data: rows[0] });
-  } catch (error) {
-    console.error("Save mart review error:", error);
-    res.status(500).json({ success: false, message: "Failed to save review" });
-  }
-});
-
-app.put("/api/reviews/:id/reply", async (req, res) => {
-  try {
-    const reviewId = Number(req.params.id);
-    const userId = Number(req.body.user_id);
-    const reply = String(req.body.seller_reply ?? req.body.reply ?? "").trim();
-
-    if (!Number.isInteger(reviewId) || reviewId <= 0 || !Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ success: false, message: "Valid review id and user_id are required" });
-    }
-    if (!reply) {
-      return res.status(400).json({ success: false, message: "Seller reply is required" });
-    }
-
-    const [reviewRows] = await martPool.execute(
-      `
-        SELECT r.id, r.product_id, p.seller_id, s.user_id AS seller_user_id
-        FROM reviews r
-        JOIN products p ON p.id = r.product_id
-        JOIN sellers s ON s.id = p.seller_id
-        WHERE r.id = ?
-        LIMIT 1
-      `,
-      [reviewId],
-    );
-
-    const review = reviewRows[0];
-    if (!review) {
-      return res.status(404).json({ success: false, message: "Review not found" });
-    }
-    if (Number(review.seller_user_id) !== userId) {
-      return res.status(403).json({ success: false, message: "Only the product seller can reply to this review" });
-    }
-
-    await martPool.execute(
-      `
-        UPDATE reviews
-        SET seller_reply = ?, seller_reply_by = ?, seller_reply_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `,
-      [reply, userId, reviewId],
-    );
-
-    const [rows] = await martPool.execute(
-      `
-        SELECT
-          r.id,
-          r.product_id,
-          r.user_id,
-          CONCAT('User ', r.user_id) AS reviewer_name,
-          r.star_review AS rating,
-          r.text_review AS comment,
-          r.seller_reply,
-          r.seller_reply_by,
-          r.seller_reply_at,
-          r.created_at,
-          r.updated_at
-        FROM reviews r
-        WHERE r.id = ?
-        LIMIT 1
-      `,
-      [reviewId],
-    );
-
-    res.json({ success: true, data: rows[0] });
-  } catch (error) {
-    console.error("Save seller review reply error:", error);
-    res.status(500).json({ success: false, message: "Failed to save seller reply" });
-  }
-});
-
-app.delete("/api/reviews/:id", async (req, res) => {
-  try {
-    const reviewId = Number(req.params.id);
-    const userId = Number(req.body.user_id);
-
-    if (!Number.isInteger(reviewId) || reviewId <= 0 || !Number.isInteger(userId) || userId <= 0) {
-      return res.status(400).json({ success: false, message: "Valid review id and user_id are required" });
-    }
-
-    const [result] = await martPool.execute("DELETE FROM reviews WHERE id = ? AND user_id = ?", [reviewId, userId]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ success: false, message: "Review not found" });
-    }
-
-    res.json({ success: true, message: "Review deleted" });
-  } catch (error) {
-    console.error("Delete mart review error:", error);
-    res.status(500).json({ success: false, message: "Failed to delete review" });
-  }
-});
 
 app.post("/api/admin/sync-legacy-categories", requireSuperAdmin, async (req, res) => {
   try {
@@ -1269,173 +1104,6 @@ app.post("/api/admin/sync-legacy-categories", requireSuperAdmin, async (req, res
   }
 });
 
-app.get("/api/cms/:table", async (req, res) => {
-  try {
-    const table = req.params.table;
-    const config = getCmsConfig(table);
-    const orderBy = config.columns.includes(req.query.orderBy) ? req.query.orderBy : config.orderBy;
-    const direction = String(req.query.direction || "asc").toLowerCase() === "desc" ? "DESC" : "ASC";
-    const where = [];
-    const values = [];
-
-    if (table === "cms_service_packages" && req.query.service_id) {
-      where.push("service_id = ?");
-      values.push(String(req.query.service_id));
-    }
-
-    const sql = `
-      SELECT * FROM \`${table}\`
-      ${where.length ? `WHERE ${where.join(" AND ")}` : ""}
-      ORDER BY \`${orderBy}\` ${direction}
-    `;
-    const [rows] = await pool.execute(sql, values);
-    res.json({ data: rows.map((row) => normalizeCmsRow(table, row)) });
-  } catch (error) {
-    console.error("List CMS data error:", error);
-    res.status(error.status || 500).json({ message: error.message || "Could not load CMS data" });
-  }
-});
-
-app.post("/api/cms/:table", requireCmsAdmin, async (req, res) => {
-  try {
-    const table = req.params.table;
-    const config = getCmsConfig(table);
-    const payload = req.body && typeof req.body === "object" ? req.body : {};
-    const id = String(payload.id || crypto.randomUUID());
-    const columns = config.columns.filter((column) => column === "id" || payload[column] !== undefined);
-
-    if (!columns.includes("id")) {
-      columns.unshift("id");
-    }
-
-    const values = columns.map((column) => (
-      column === "id" ? id : serializeCmsValue(table, column, payload[column])
-    ));
-    const updateColumns = columns.filter((column) => column !== "id");
-    const placeholders = columns.map(() => "?").join(", ");
-    const updateSql = updateColumns.map((column) => `\`${column}\` = VALUES(\`${column}\`)`).join(", ");
-
-    await pool.execute(
-      `
-        INSERT INTO \`${table}\` (${columns.map((column) => `\`${column}\``).join(", ")})
-        VALUES (${placeholders})
-        ${updateSql ? `ON DUPLICATE KEY UPDATE ${updateSql}` : ""}
-      `,
-      values,
-    );
-
-    const [rows] = await pool.execute(`SELECT * FROM \`${table}\` WHERE id = ? LIMIT 1`, [id]);
-    res.status(payload.id ? 200 : 201).json({ data: normalizeCmsRow(table, rows[0]) });
-  } catch (error) {
-    console.error("Upsert CMS data error:", error);
-    res.status(error.status || 500).json({ message: error.message || "Could not save CMS data" });
-  }
-});
-
-app.delete("/api/cms/:table/:id", requireCmsAdmin, async (req, res) => {
-  try {
-    const table = req.params.table;
-    getCmsConfig(table);
-    const [result] = await pool.execute(`DELETE FROM \`${table}\` WHERE id = ?`, [req.params.id]);
-    if (result.affectedRows === 0) {
-      return res.status(404).json({ message: "CMS item not found" });
-    }
-    res.json({ message: "CMS item deleted" });
-  } catch (error) {
-    console.error("Delete CMS data error:", error);
-    res.status(error.status || 500).json({ message: error.message || "Could not delete CMS data" });
-  }
-});
-
-app.post("/api/admin/bootstrap-super-admin", async (req, res) => {
-  try {
-    const bootstrapKey = String(req.body.bootstrap_key || "").trim();
-    const expectedKey = String(process.env.SUPER_ADMIN_BOOTSTRAP_KEY || "").trim();
-    if (!expectedKey || bootstrapKey !== expectedKey) {
-      return res.status(403).json({ message: "Bootstrap authorization failed" });
-    }
-
-    const email = normalizeEmail(req.body.email || "");
-    const password = String(req.body.password || "");
-    const name = String(req.body.name || process.env.SUPER_ADMIN_NAME || "Super Admin").trim() || "Super Admin";
-    const mobile = normalizeMobile(req.body.mobile || process.env.SUPER_ADMIN_MOBILE || "").trim();
-
-    if (!email || !password || password.length < 6) {
-      return res.status(400).json({ message: "Email and 6+ character password are required" });
-    }
-
-    const [existingSuperAdmins] = await pool.execute(
-      "SELECT id FROM users WHERE type = 'super_admin' LIMIT 1",
-    );
-    if (existingSuperAdmins.length) {
-      return res.status(409).json({ message: "A super_admin already exists" });
-    }
-
-    const [existingUsers] = await pool.execute(
-      "SELECT * FROM users WHERE email = ? OR mobile = ? LIMIT 1",
-      [email, mobile || email],
-    );
-
-    const passwordHash = await hashPassword(password);
-    if (existingUsers.length) {
-      const user = existingUsers[0];
-      await pool.execute(
-        "UPDATE users SET name = ?, mobile = ?, type = 'super_admin', email_verified = 1, password = ? WHERE id = ?",
-        [name, mobile || user.mobile || email, passwordHash, user.id],
-      );
-      return res.status(200).json({ message: "Existing user promoted to super_admin" });
-    }
-
-    await pool.execute(
-      "INSERT INTO users (name, mobile, address, email, password, type, email_verified) VALUES (?, ?, NULL, ?, ?, 'super_admin', 1)",
-      [name, mobile || email, email, passwordHash],
-    );
-
-    res.status(201).json({ message: "Bootstrap super_admin created" });
-  } catch (error) {
-    console.error("Bootstrap super_admin error:", error);
-    res.status(500).json({ message: "Could not bootstrap super_admin" });
-  }
-});
-
-app.post("/api/admin/promote-super-admin", async (req, res) => {
-  try {
-    const bootstrapKey = String(req.body.bootstrap_key || "").trim();
-    const expectedKey = String(process.env.SUPER_ADMIN_BOOTSTRAP_KEY || "").trim();
-    if (!expectedKey || bootstrapKey !== expectedKey) {
-      return res.status(403).json({ message: "Bootstrap authorization failed" });
-    }
-
-    const email = normalizeEmail(req.body.email || "");
-    const mobile = normalizeMobile(req.body.mobile || "");
-    if (!email && !mobile) {
-      return res.status(400).json({ message: "Email or mobile is required" });
-    }
-
-    const identifier = email || mobile;
-    const [rows] = await pool.execute(
-      "SELECT id, type FROM users WHERE email = ? OR mobile = ? LIMIT 1",
-      [identifier, identifier],
-    );
-    if (!rows.length) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    const user = rows[0];
-    if (user.type === "super_admin") {
-      return res.status(200).json({ message: "User is already super_admin" });
-    }
-
-    await pool.execute(
-      "UPDATE users SET type = 'super_admin', email_verified = 1 WHERE id = ?",
-      [user.id],
-    );
-    res.status(200).json({ message: "User promoted to super_admin" });
-  } catch (error) {
-    console.error("Promote super_admin error:", error);
-    res.status(500).json({ message: "Could not promote user to super_admin" });
-  }
-});
 
 app.post("/api/admin/users", requireSuperAdmin, async (req, res) => {
   try {
@@ -1499,7 +1167,27 @@ app.get("/api/admin/types", requireSuperAdmin, (req, res) => {
 app.get("/api/users/me/profile", requireLoggedIn, async (req, res) => {
   try {
     const [rows] = await pool.execute(
-      "SELECT id, name, mobile, address, email, type, shop_name, shop_type FROM users WHERE id = ? LIMIT 1",
+      `SELECT
+        u.id,
+        u.name,
+        u.mobile,
+        u.address,
+        u.email,
+        u.type,
+        u.shop_name,
+        u.shop_type,
+        u.created_at,
+        u.updated_at,
+        up.profile_image,
+        up.bio,
+        up.gender,
+        up.date_of_birth,
+        up.nid_front,
+        up.nid_back
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ?
+       LIMIT 1`,
       [req.auth.id],
     );
 
@@ -1507,12 +1195,141 @@ app.get("/api/users/me/profile", requireLoggedIn, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.json(safeUser(rows[0]));
+    const user = safeUser(rows[0]);
+    res.json({
+      ...user,
+      created_at: rows[0].created_at,
+      updated_at: rows[0].updated_at,
+      profile_image: rows[0].profile_image || null,
+      avatar_url: rows[0].profile_image || null,
+      bio: rows[0].bio || null,
+      gender: rows[0].gender || null,
+      date_of_birth: rows[0].date_of_birth || null,
+      nid_front: rows[0].nid_front || null,
+      nid_back: rows[0].nid_back || null,
+      phone: user.mobile || "",
+    });
   } catch (error) {
     console.error("Get current user profile error:", error);
     res.status(500).json({ message: "Could not load user profile" });
   }
 });
+
+app.patch(
+  "/api/users/me/profile",
+  requireLoggedIn,
+  upload.single("profile_image"), // ✅ this handles file upload
+  async (req, res) => {
+    try {
+      const userId = req.auth.id;
+
+      const name = String(req.body.name ?? "").trim();
+      const mobile = normalizeMobile(req.body.mobile ?? req.body.phone ?? "");
+      const address = String(req.body.address ?? "").trim();
+
+      // Validation
+      if (Object.prototype.hasOwnProperty.call(req.body, "name") && !name) {
+        return res.status(400).json({ message: "Name is required" });
+      }
+
+      if (mobile && !/^01[3-9]\d{8}$/.test(mobile)) {
+        return res.status(400).json({ message: "Valid BD number required" });
+      }
+
+      // ✅ UPDATE USERS TABLE
+      const userFields = [];
+      const userValues = [];
+
+      if ("name" in req.body) {
+        userFields.push("name = ?");
+        userValues.push(name);
+      }
+
+      if ("mobile" in req.body || "phone" in req.body) {
+        userFields.push("mobile = ?");
+        userValues.push(mobile);
+      }
+
+      if ("address" in req.body) {
+        userFields.push("address = ?");
+        userValues.push(address || null);
+      }
+
+      if (userFields.length) {
+        const [result] = await pool.execute(
+          `UPDATE users SET ${userFields.join(", ")} WHERE id = ?`,
+          [...userValues, userId]
+        );
+
+        if (result.affectedRows === 0) {
+          return res.status(404).json({ message: "User not found" });
+        }
+      }
+
+      // ✅ HANDLE IMAGE FILE
+      let profileImagePath = null;
+      if (req.file) {
+        profileImagePath = "/uploads/user-profiles/" + req.file.filename;
+      }
+
+      // ✅ PROFILE DATA
+      const profilePayload = {
+        profile_image: profileImagePath || req.body.profile_image,
+        bio: req.body.bio,
+        gender: req.body.gender,
+        date_of_birth: req.body.date_of_birth,
+        nid_front: req.body.nid_front,
+        nid_back: req.body.nid_back,
+      };
+
+      const profileEntries = Object.entries(profilePayload).filter(
+        ([, value]) => value !== undefined
+      );
+
+      if (profileEntries.length) {
+        const values = profileEntries.map(([, value]) =>
+          value === null ? null : String(value).trim() || null
+        );
+
+        const [profiles] = await pool.execute(
+          "SELECT id FROM user_profiles WHERE user_id = ? LIMIT 1",
+          [userId]
+        );
+
+        if (profiles.length) {
+          await pool.execute(
+            `UPDATE user_profiles SET ${profileEntries
+              .map(([key]) => `${key} = ?`)
+              .join(", ")} WHERE id = ?`,
+            [...values, profiles[0].id]
+          );
+        } else {
+          const columns = ["user_id", ...profileEntries.map(([key]) => key)];
+
+          await pool.execute(
+            `INSERT INTO user_profiles (${columns.join(", ")})
+             VALUES (${columns.map(() => "?").join(", ")})`,
+            [userId, ...values]
+          );
+        }
+      }
+
+      // ✅ RETURN UPDATED USER
+      const [rows] = await pool.execute(
+        `SELECT u.*, up.*
+         FROM users u
+         LEFT JOIN user_profiles up ON up.user_id = u.id
+         WHERE u.id = ? LIMIT 1`,
+        [userId]
+      );
+
+      res.json(rows[0]);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: "Profile update failed" });
+    }
+  }
+);
 
 app.patch("/api/admin/users/:id/type", requireSuperAdmin, async (req, res) => {
   try {
@@ -1711,13 +1528,26 @@ app.post("/api/auth/login", async (req, res) => {
     }
 
     const authUser = safeUser(user);
-    res.json({ message: "Login successful", user: authUser, token: createToken(authUser) });
+
+    // ✅ create token (keep your existing function)
+    const token = createToken(authUser);
+
+    // ✅ ADD THIS: set cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: false, // change to true in production (HTTPS)
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    //  keep your original response (unchanged)
+    res.json({ message: "Login successful", user: authUser, token });
+
   } catch (error) {
     console.error("Login error:", error);
     res.status(500).json({ message: "Login failed" });
   }
 });
-
 initDatabase()
   .then(() => {
     app.listen(PORT, () => {

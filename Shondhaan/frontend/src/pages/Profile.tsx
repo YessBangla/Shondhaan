@@ -1,17 +1,46 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, User, Phone, MapPin, Save, Loader2, Camera, Mail, Calendar, Lock, LogOut, Shield, Banknote, FileText, Upload, Store } from "lucide-react";
+import { 
+  ChevronLeft, User, Phone, MapPin, Save, Loader2, Camera, Mail, Calendar, Lock, 
+  LogOut, Shield, Banknote, FileText, Upload, Store, Briefcase,
+  Info, Edit2, X, CheckCircle
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { getRoleConfig } from "@/config/roles";
-import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
+import { getMySqlAuth, saveMySqlAuth, clearMySqlAuth } from "@/lib/mysqlAuth";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 
 const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL;
+const CENTRAL_PROFILE_API = `${CENTRAL_API_BASE_URL.replace(/\/+$/, "")}/api/users/me/profile`;
+
+
+type CentralProfile = {
+  id: number;
+  name: string | null;
+  mobile?: string | null;
+  phone?: string | null;
+  address: string | null;
+  email: string | null;
+  type?: string | null;
+  role?: string | null;
+  shop_name?: string | null;
+  shop_type?: string | null;
+  profile_image?: string | null;
+  avatar_url?: string | null;
+  bio?: string | null;
+  gender?: string | null;
+  date_of_birth?: string | null;
+  nid_front?: string | null;
+  nid_back?: string | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
 
 type MartSellerProfile = {
   id: number;
@@ -40,14 +69,24 @@ const Profile = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const bn = language === "bn";
+
+  // Profile fields
   const [displayName, setDisplayName] = useState("");
-  const [sellerEmail, setSellerEmail] = useState("");
+  const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [address, setAddress] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
-  const [userRoles, setUserRoles] = useState<string[]>([]);
+  const [bio, setBio] = useState("");
+  const [gender, setGender] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [nidFront, setNidFront] = useState<string | null>(null);
+  const [nidBack, setNidBack] = useState<string | null>(null);
+
+  // Seller fields
+  const [sellerEmail, setSellerEmail] = useState("");
   const [shopName, setShopName] = useState("");
   const [shopType, setShopType] = useState("");
+  const [userRoles, setUserRoles] = useState<string[]>([]);
   const [sellerProfile, setSellerProfile] = useState<MartSellerProfile | null>(null);
   const [sellerLoading, setSellerLoading] = useState(false);
   const [sellerSaving, setSellerSaving] = useState(false);
@@ -60,10 +99,15 @@ const Profile = () => {
   const [mobileBankingNumber, setMobileBankingNumber] = useState("");
   const [documentUrls, setDocumentUrls] = useState<Record<string, string>>({});
   const [uploadingDoc, setUploadingDoc] = useState<string | null>(null);
+
+  // State management
   const [mysqlAuth, setMysqlAuth] = useState(() => getMySqlAuth());
   const [loading, setLoading] = useState(true);
+  const [accountCreatedAt, setAccountCreatedAt] = useState<string | null>(null);
+  const [accountUpdatedAt, setAccountUpdatedAt] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [editMode, setEditMode] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Password change
@@ -81,6 +125,97 @@ const Profile = () => {
       window.removeEventListener("storage", syncMysqlAuth);
     };
   }, []);
+
+  const fileToDataUrl = (file: File): Promise<string> =>
+    new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result || ""));
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+
+
+const getFullImageUrl = (path: string | null) => {
+  if (!path) return null;
+
+  if (path.startsWith("http")) return path;
+
+  // ✅ encode spaces & special characters
+  return `http://localhost:5000${encodeURI(path)}`;
+};
+
+  const applyCentralProfile = (profile: CentralProfile) => {
+    const role = (profile.type || profile.role || "user") as any;
+    setDisplayName(profile.name || "");
+    setEmail(profile.email || "");
+    setSellerEmail(profile.email || "");
+    setPhone(profile.mobile || profile.phone || "");
+    setAddress(profile.address || "");
+    setAvatarUrl(
+  getFullImageUrl(profile.profile_image || profile.avatar_url || null)
+);
+    setBio(profile.bio || "");
+    setGender(profile.gender || "");
+    setDateOfBirth(profile.date_of_birth ? profile.date_of_birth.split("T")[0] : "");
+    setNidFront(profile.nid_front || null);
+    setNidBack(profile.nid_back || null);
+    setShopName(profile.shop_name || "");
+    setShopType(profile.shop_type || "");
+    setUserRoles([role]);
+    setAccountCreatedAt(profile.created_at || null);
+    setAccountUpdatedAt(profile.updated_at || null);
+  };
+
+  const fetchCentralProfile = async () => {
+    try {
+      const response = await fetch(CENTRAL_PROFILE_API, {
+        method: "GET",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (response.status === 401) {
+        throw new Error("Unauthorized");
+      }
+      if (!response.ok) {
+        throw new Error(`Error: ${response.status}`);
+      }
+      return await response.json();
+    } catch (error) {
+      console.error("Profile fetch failed:", error);
+      throw error;
+    }
+  };
+      
+
+  const saveCentralProfile = async (payload: Record<string, unknown>) => {
+    const response = await fetch(CENTRAL_PROFILE_API, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(data.message || "Could not update profile");
+    }
+    return data as CentralProfile;
+  };
+
+  const fetchSellerProfile = async (userId: string | number) => {
+    setSellerLoading(true);
+    try {
+      const res = await fetch(`${MART_API_BASE}/api/sellers?user_id=${encodeURIComponent(String(userId))}`);
+      const json = await res.json();
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Could not load seller profile");
+      }
+      applySellerProfile(json.data?.[0] || null);
+    } catch (error: any) {
+      toast.error(error.message || (bn ? "সেলার প্রোফাইল লোড হয়নি" : "Seller profile could not be loaded"));
+    } finally {
+      setSellerLoading(false);
+    }
+  };
 
   const applySellerProfile = (seller: MartSellerProfile | null) => {
     setSellerProfile(seller);
@@ -105,30 +240,6 @@ const Profile = () => {
     });
   };
 
-  const fetchSellerProfile = async (userId: string | number) => {
-    setSellerLoading(true);
-    try {
-      const res = await fetch(`${MART_API_BASE}/api/sellers?user_id=${encodeURIComponent(String(userId))}`);
-      const json = await res.json();
-      if (!res.ok || json.success === false) {
-        throw new Error(json.message || "Could not load seller profile");
-      }
-      applySellerProfile(json.data?.[0] || null);
-    } catch (error: any) {
-      toast.error(error.message || (bn ? "সেলার প্রোফাইল লোড হয়নি" : "Seller profile could not be loaded"));
-    } finally {
-      setSellerLoading(false);
-    }
-  };
-
-  const fileToDataUrl = (file: File): Promise<string> =>
-    new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(String(reader.result || ""));
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-
   useEffect(() => {
     if (!authLoading && !user && !mysqlAuth?.user) {
       navigate("/auth", { replace: true });
@@ -136,22 +247,39 @@ const Profile = () => {
   }, [user, mysqlAuth, authLoading, navigate]);
 
   useEffect(() => {
-    if (mysqlAuth?.user && !user) {
-      setDisplayName(mysqlAuth.user.name || "");
-      setSellerEmail(mysqlAuth.user.email || "");
-      setPhone(mysqlAuth.user.mobile || "");
-      setAddress(mysqlAuth.user.address || "");
-      setShopName(mysqlAuth.user.shop_name || "");
-      setShopType(mysqlAuth.user.shop_type || "");
-      setUserRoles([mysqlAuth.user.type || mysqlAuth.user.role || "user"]);
-      setLoading(false);
-      if ((mysqlAuth.user.type || mysqlAuth.user.role) === "mart_vendor") {
-        fetchSellerProfile(mysqlAuth.user.id);
-      }
-      return;
+    if (mysqlAuth?.user) {
+      let cancelled = false;
+      setLoading(true);
+
+      fetchCentralProfile()
+        .then(async (profile) => {
+          if (cancelled) return;
+          applyCentralProfile(profile);
+          const role = profile.type || profile.role || mysqlAuth.user.type || mysqlAuth.user.role;
+          if (role === "mart_vendor") {
+            await fetchSellerProfile(profile.id || mysqlAuth.user.id);
+          }
+        })
+        .catch((error: any) => {
+          if (cancelled) return;
+          applyCentralProfile(mysqlAuth.user as unknown as CentralProfile);
+          const role = mysqlAuth.user.type || mysqlAuth.user.role;
+          if (role === "mart_vendor") {
+            fetchSellerProfile(mysqlAuth.user.id).catch(() => {});
+          }
+          toast.error(error.message || (bn ? "প্রোফাইল লোড করতে ব্যর্থ" : "Failed to load profile"));
+        })
+        .finally(() => {
+          if (!cancelled) setLoading(false);
+        });
+
+      return () => {
+        cancelled = true;
+      };
     }
 
     if (!user) return;
+
     const fetchProfile = async () => {
       const { data, error } = await supabase
         .from("profiles")
@@ -161,10 +289,11 @@ const Profile = () => {
 
       if (!error && data) {
         setDisplayName(data.display_name || "");
-        setSellerEmail(user.email || "");
+        setEmail(user.email || "");
         setPhone(data.phone || "");
         setAddress(data.address || "");
         setAvatarUrl(data.avatar_url || null);
+        setAccountCreatedAt(user.created_at || null);
       }
 
       const { data: roles } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
@@ -179,181 +308,98 @@ const Profile = () => {
     fetchProfile();
   }, [user, mysqlAuth]);
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+const handleAvatarUpload = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast.error(bn ? "ফাইল সাইজ ২MB এর বেশি হতে পারবে না" : "File size must be under 2MB");
-      return;
-    }
-
-    if (!file.type.startsWith("image/")) {
-      toast.error(bn ? "শুধুমাত্র ছবি ফাইল আপলোড করুন" : "Please upload an image file");
-      return;
-    }
-
+  try {
     setUploadingAvatar(true);
-    const ext = file.name.split(".").pop();
-    const filePath = `avatars/${user.id}.${ext}`;
 
-    const { error: uploadError } = await supabase.storage
-      .from("cms-images")
-      .upload(filePath, file, { upsert: true });
+    const formData = new FormData();
+    formData.append("profile_image", file); // ✅ MUST MATCH BACKEND FIELD
 
-    if (uploadError) {
-      toast.error(bn ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed");
-      setUploadingAvatar(false);
-      return;
-    }
-
-    const { data: urlData } = supabase.storage.from("cms-images").getPublicUrl(filePath);
-    const publicUrl = urlData.publicUrl + "?t=" + Date.now();
-
-    await supabase.from("profiles").update({ avatar_url: publicUrl }).eq("user_id", user.id);
-    setAvatarUrl(publicUrl);
-    setUploadingAvatar(false);
-    toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile photo updated");
-  };
-
-  const saveSellerProfile = async (overrides: Record<string, any> = {}) => {
-    if (!sellerProfile?.id) {
-      toast.error(bn ? "সেলার প্রোফাইল পাওয়া যায়নি" : "Seller profile was not found");
-      return null;
-    }
-
-    const payload = {
-      shop_name: shopName.trim() || null,
-      seller_name: displayName.trim() || null,
-      seller_email: (isMartVendor ? sellerEmail : accountEmail) || null,
-      seller_mobile: phone.trim() || null,
-      seller_address: address.trim() || null,
-      bank_name: bankName.trim() || null,
-      bank_account_name: bankAccountName.trim() || null,
-      bank_account_number: bankAccountNumber.trim() || null,
-      bank_branch: bankBranch.trim() || null,
-      routing_number: routingNumber.trim() || null,
-      mobile_banking_provider: mobileBankingProvider.trim() || null,
-      mobile_banking_number: mobileBankingNumber.trim() || null,
-      nid_front_url: documentUrls.nid_front_url || null,
-      nid_back_url: documentUrls.nid_back_url || null,
-      trade_license_url: documentUrls.trade_license_url || null,
-      tin_certificate_url: documentUrls.tin_certificate_url || null,
-      ...overrides,
-    };
-
-    const res = await fetch(`${MART_API_BASE}/api/sellers/${sellerProfile.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const json = await res.json();
-    if (!res.ok || json.success === false) {
-      throw new Error(json.message || "Failed to save seller profile");
-    }
-    applySellerProfile(json.data);
-    return json.data as MartSellerProfile;
-  };
-
-  const handleSellerProfileSave = async () => {
-    setSellerSaving(true);
-    try {
-      await saveSellerProfile();
-      toast.success(bn ? "মার্ট ভেন্ডর প্রোফাইল সেভ হয়েছে" : "Mart vendor profile saved");
-    } catch (error: any) {
-      toast.error(error.message || (bn ? "সেভ ব্যর্থ হয়েছে" : "Save failed"));
-    } finally {
-      setSellerSaving(false);
-    }
-  };
-
-  const handleSellerDocumentUpload = async (field: string, file?: File) => {
-    if (!file) return;
-    if (!sellerProfile?.id) {
-      toast.error(bn ? "সেলার প্রোফাইল পাওয়া যায়নি" : "Seller profile was not found");
-      return;
-    }
-
-    setUploadingDoc(field);
-    try {
-      const image = await fileToDataUrl(file);
-      const res = await fetch(`${MART_API_BASE}/api/upload`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, folder: "seller-documents" }),
-      });
-      const json = await res.json();
-      if (!res.ok || json.success === false) {
-        throw new Error(json.message || "Document upload failed");
+    const res = await fetch(
+      "http://localhost:5000/api/users/me/profile",
+      {
+        method: "PATCH", // ✅ IMPORTANT
+        credentials: "include",
+        body: formData,
       }
-      const nextDocs = { ...documentUrls, [field]: json.url };
-      setDocumentUrls(nextDocs);
-      await saveSellerProfile({ [field]: json.url });
-      toast.success(bn ? "ডকুমেন্ট আপলোড হয়েছে" : "Document uploaded");
-    } catch (error: any) {
-      toast.error(error.message || (bn ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed"));
-    } finally {
-      setUploadingDoc(null);
-    }
-  };
+    );
 
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.message || "Upload failed");
+    }
+
+    // ✅ update image instantly
+    setAvatarUrl(getFullImageUrl(data.profile_image));
+
+    console.log("Updated profile:", data);
+  } catch (err: any) {
+    console.error(err);
+  } finally {
+    setUploadingAvatar(false);
+  }
+};
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!user && !mysqlAuth?.user) return;
 
-    if (!displayName.trim()) {
-      toast.error(t("profile.enterName"));
+    if (!mysqlAuth?.user) {
+      toast.error("Please login first");
+      navigate("/auth");
       return;
     }
+
+    if (!displayName.trim()) {
+      toast.error(bn ? "নাম অবশ্যই দিতে হবে" : "Name is required");
+      return;
+    }
+
     if (phone.trim() && !/^01[3-9]\d{8}$/.test(phone.trim())) {
-      toast.error(t("profile.validPhone"));
+      toast.error(bn ? "ফোন নম্বর বৈধ নয়" : "Invalid phone number");
       return;
     }
 
     setSaving(true);
-    if (mysqlAuth?.user && !user) {
-      try {
-        saveMySqlAuth({
-          ...mysqlAuth,
-          user: {
-            ...mysqlAuth.user,
-            name: displayName.trim(),
-            mobile: phone.trim(),
-            address: address.trim() || null,
-          },
-        });
-        if (sellerProfile) {
-          await saveSellerProfile({
-            seller_name: displayName.trim(),
-            seller_mobile: phone.trim(),
-            seller_address: address.trim() || null,
-          });
-        }
-        toast.success(t("profile.updated"));
-      } catch (error: any) {
-        toast.error(error.message || t("profile.updateError"));
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
 
-    const { error } = await supabase
-      .from("profiles")
-      .update({
-        display_name: displayName.trim(),
-        phone: phone.trim() || null,
+    try {
+      const updatedProfile = await saveCentralProfile({
+        name: displayName.trim(),
+        mobile: phone.trim(),
         address: address.trim() || null,
-      })
-      .eq("user_id", user.id);
+        bio: bio.trim() || null,
+        gender: gender || null,
+        date_of_birth: dateOfBirth || null,
+      });
 
-    setSaving(false);
+      applyCentralProfile(updatedProfile);
 
-    if (error) {
-      toast.error(t("profile.updateError"));
-      return;
+      saveMySqlAuth({
+        message: "Profile updated",
+        user: {
+          ...mysqlAuth.user,
+          name: updatedProfile.name || displayName.trim(),
+          mobile: updatedProfile.mobile || updatedProfile.phone || phone.trim(),
+          address: updatedProfile.address || null,
+          email: updatedProfile.email || mysqlAuth.user.email,
+        },
+      });
+
+      setEditMode(false);
+      toast.success(bn ? "প্রোফাইল আপডেট হয়েছে" : "Profile updated successfully");
+    } catch (error: any) {
+      if (error.message.includes("401")) {
+        clearMySqlAuth?.();
+        navigate("/auth");
+      }
+      toast.error(error.message || (bn ? "আপডেট ব্যর্থ হয়েছে" : "Failed to update profile"));
+    } finally {
+      setSaving(false);
     }
-    toast.success(t("profile.updated"));
   };
 
   const handlePasswordChange = async () => {
@@ -397,431 +443,477 @@ const Profile = () => {
     );
   }
 
-  const memberSince = user?.created_at
-    ? new Date(user.created_at).toLocaleDateString("bn-BD", { year: "numeric", month: "long", day: "numeric" })
+  const memberSinceDate = accountCreatedAt || user?.created_at || "";
+  const memberSince = memberSinceDate
+    ? new Date(memberSinceDate).toLocaleDateString(bn ? "bn-BD" : "en-US", { year: "numeric", month: "long", day: "numeric" })
     : "";
-  const accountEmail = mysqlAuth?.user?.email || user?.email || "";
-  const effectiveRoles = userRoles.length
-    ? userRoles
-    : mysqlAuth?.user
-    ? [mysqlAuth.user.type || mysqlAuth.user.role || "user"]
-    : [];
+
+  const usesCentralProfile = Boolean(mysqlAuth?.user);
+  const effectiveRoles = userRoles.length ? userRoles : mysqlAuth?.user ? [mysqlAuth.user.type || mysqlAuth.user.role || "user"] : [];
   const isMartVendor = effectiveRoles.includes("mart_vendor");
-  const displayedEmail = isMartVendor ? (sellerEmail || accountEmail) : accountEmail;
   const roleLabels = effectiveRoles.map((role) => getRoleConfig(role)?.[bn ? "labelBn" : "labelEn"] || role);
-  const shopTypeLabels: Record<string, string> = {
-    grocery: bn ? "গ্রোসারি" : "Grocery",
-    electronics: bn ? "ইলেকট্রনিক্স" : "Electronics",
-    fashion: bn ? "ফ্যাশন" : "Fashion",
-    pharmacy: bn ? "ফার্মেসি" : "Pharmacy",
-    others: bn ? "অন্যান্য" : "Others",
+
+  const genderLabels = {
+    male: bn ? "পুরুষ" : "Male",
+    female: bn ? "মহিলা" : "Female",
+    other: bn ? "অন্যান্য" : "Other",
   };
-  const sellerDocumentFields = [
-    { key: "nid_front_url", label: bn ? "NID Front" : "NID Front" },
-    { key: "nid_back_url", label: bn ? "NID Back" : "NID Back" },
-    { key: "trade_license_url", label: bn ? "ট্রেড লাইসেন্স" : "Trade License" },
-    { key: "tin_certificate_url", label: bn ? "TIN সার্টিফিকেট" : "TIN Certificate" },
-  ];
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className={`mx-auto px-4 py-6 md:py-10 ${isMartVendor ? "max-w-3xl" : "max-w-lg"}`}>
-        <button
-          onClick={() => navigate(-1)}
-          className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-        >
-          <ChevronLeft className="h-4 w-4" /> {t("profile.goBack")}
-        </button>
-
-        <h1 className="font-heading text-xl md:text-2xl font-bold text-foreground mb-6">
-          {isMartVendor ? (bn ? "মার্ট ভেন্ডর প্রোফাইল" : "Mart Vendor Profile") : t("profile.title")}
-        </h1>
-
-        {/* Avatar & Account Info Card */}
+      <div className="mx-auto px-4 py-6 md:py-10 max-w-4xl">
+        {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 15 }}
+          initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4"
+          className="flex items-center justify-between mb-6"
         >
-          <div className="flex items-center gap-4">
-            {/* Avatar with upload */}
-            <div className="relative group">
-              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-secondary text-primary overflow-hidden border-2 border-primary/20">
-                {avatarUrl ? (
-                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
-                ) : (
-                  isMartVendor ? <Store className="h-8 w-8" /> : <User className="h-8 w-8" />
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploadingAvatar || !user}
-                className="absolute -bottom-1 -right-1 flex h-7 w-7 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-colors"
-                title={!user ? (bn ? "স্টাফ প্রোফাইলে ছবি আপলোড এখন উপলব্ধ নয়" : "Photo upload is not available for staff profile yet") : undefined}
-              >
-                {uploadingAvatar ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Camera className="h-3.5 w-3.5" />
-                )}
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                className="hidden"
-              />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <p className="text-base font-semibold text-foreground truncate">{displayName || t("profile.user")}</p>
-              <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                <Mail className="h-3 w-3 shrink-0" />
-                <span className="truncate">{displayedEmail}</span>
-              </div>
-              {memberSince && (
-                <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                  <Calendar className="h-3 w-3 shrink-0" />
-                  <span>{bn ? "সদস্য হয়েছেন:" : "Member since:"} {memberSince}</span>
-                </div>
-              )}
-            </div>
+          <div>
+            <button
+              onClick={() => navigate(-1)}
+              className="mb-3 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition"
+            >
+              <ChevronLeft className="h-4 w-4" /> {bn ? "ফিরে যান" : "Go Back"}
+            </button>
+            <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+              {bn ? "আমার প্রোফাইল" : "My Profile"}
+            </h1>
           </div>
-        </motion.div>
-
-        {/* Role-specific account info */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.03 }}
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-primary" />
-            {bn ? "অ্যাকাউন্ট রোল" : "Account Role"}
-          </h2>
-          <div className="flex flex-wrap gap-2">
-            {(roleLabels.length ? roleLabels : [bn ? "ইউজার" : "User"]).map((label) => (
-              <span key={label} className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
-                {label}
-              </span>
-            ))}
-          </div>
-          {isMartVendor && (
-            <div className="mt-4 grid gap-3 rounded-xl border border-border bg-background p-3 text-sm">
-              <div>
-                <p className="text-xs text-muted-foreground">{bn ? "শপ নাম" : "Shop Name"}</p>
-                <p className="font-semibold text-foreground">{shopName || (bn ? "এখনো দেওয়া হয়নি" : "Not provided yet")}</p>
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">{bn ? "শপ টাইপ" : "Shop Type"}</p>
-                <p className="font-semibold text-foreground">{shopTypeLabels[shopType] || shopType || (bn ? "এখনো দেওয়া হয়নি" : "Not provided yet")}</p>
-              </div>
-            </div>
+          {!editMode && !isMartVendor && (
+            <button
+              onClick={() => setEditMode(true)}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition"
+            >
+              <Edit2 className="h-4 w-4" />
+              {bn ? "সম্পাদনা" : "Edit"}
+            </button>
           )}
         </motion.div>
 
-        {isMartVendor && (
+        {/* Avatar & Basic Info Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4"
+        >
+          <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
+            {/* Avatar Section */}
+            <div className="relative group flex-shrink-0">
+              <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary overflow-hidden border-3 border-primary/30">
+                {avatarUrl ? (
+                 <img
+  src={avatarUrl || "/default-avatar.png"}
+  alt="avatar"
+  className="w-24 h-24 rounded-full object-cover"
+/>
+                ) : (
+                  <User className="h-12 w-12 text-primary" />
+                )}
+              </div>
+              {!editMode && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingAvatar || !user}
+                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                >
+                  {uploadingAvatar ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Camera className="h-4 w-4" />
+                  )}
+                </button>
+              )}
+      <input
+  type="file"
+  accept="image/*"
+  ref={fileInputRef}
+  onChange={handleAvatarUpload}
+  hidden
+/>
+            </div>
+
+            {/* Info Section */}
+            <div className="flex-1 min-w-0">
+              <h2 className="text-2xl font-bold text-foreground mb-1">{displayName || (bn ? "ব্যবহারকারী" : "User")}</h2>
+              
+              <div className="space-y-2 text-sm">
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <Mail className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{email}</span>
+                </div>
+                
+                {phone && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Phone className="h-4 w-4 shrink-0" />
+                    <span>{phone}</span>
+                  </div>
+                )}
+
+                {memberSince && (
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    <span>{bn ? "সদস্য হয়েছেন:" : "Member since:"} {memberSince}</span>
+                  </div>
+                )}
+
+                {accountUpdatedAt && (
+                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                    <CheckCircle className="h-4 w-4 shrink-0" />
+                    <span>{bn ? "সর্বশেষ আপডেট:" : "Last updated:"} {new Date(accountUpdatedAt).toLocaleDateString(bn ? "bn-BD" : "en-US")}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Role Badges */}
+              <div className="flex flex-wrap gap-2 mt-4">
+                {roleLabels.map((label) => (
+                  <span key={label} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/30">
+                    <Shield className="h-3 w-3" />
+                    {label}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Personal Information */}
+        {editMode ? (
+          <motion.form
+            onSubmit={handleSave}
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4 space-y-5"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <User className="h-5 w-5 text-primary" />
+                {bn ? "ব্যক্তিগত তথ্য" : "Personal Information"}
+              </h2>
+              <button
+                type="button"
+                onClick={() => setEditMode(false)}
+                className="p-1 hover:bg-secondary rounded-lg transition"
+              >
+                <X className="h-5 w-5 text-muted-foreground" />
+              </button>
+            </div>
+
+            {/* Basic Fields */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  {bn ? "পূর্ণ নাম" : "Full Name"} *
+                </label>
+                <input
+                  type="text"
+                  value={displayName}
+                  onChange={(e) => setDisplayName(e.target.value)}
+                  placeholder={bn ? "আপনার নাম" : "Your name"}
+                  maxLength={100}
+                  className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  {bn ? "ফোন নম্বর" : "Phone Number"}
+                </label>
+                <input
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                  placeholder="01XXXXXXXXX"
+                  maxLength={11}
+                  className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            {/* Address */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                {bn ? "ঠিকানা" : "Address"}
+              </label>
+              <textarea
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder={bn ? "আপনার ঠিকানা" : "Your address"}
+                maxLength={300}
+                rows={2}
+                className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+            </div>
+
+            {/* Bio */}
+            <div>
+              <label className="block text-sm font-medium text-foreground mb-2">
+                {bn ? "পরিচয়" : "Bio"}
+              </label>
+              <textarea
+                value={bio}
+                onChange={(e) => setBio(e.target.value)}
+                placeholder={bn ? "নিজের সম্পর্কে বলুন" : "Tell us about yourself"}
+                maxLength={500}
+                rows={3}
+                className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring resize-none"
+              />
+              <p className="text-xs text-muted-foreground mt-1">{bio.length}/500</p>
+            </div>
+
+            {/* Gender & DOB */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  {bn ? "লিঙ্গ" : "Gender"}
+                </label>
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">{bn ? "নির্বাচন করুন" : "Select"}</option>
+                  <option value="male">{genderLabels.male}</option>
+                  <option value="female">{genderLabels.female}</option>
+                  <option value="other">{genderLabels.other}</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-foreground mb-2">
+                  {bn ? "জন্মতারিখ" : "Date of Birth"}
+                </label>
+                <input
+                  type="date"
+                  value={dateOfBirth}
+                  onChange={(e) => setDateOfBirth(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                />
+              </div>
+            </div>
+
+            {/* Buttons */}
+            <div className="flex gap-3 pt-4">
+              <button
+                type="submit"
+                disabled={saving}
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition disabled:opacity-50"
+              >
+                {saving ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {bn ? "সংরক্ষণ করছি..." : "Saving..."}
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    {bn ? "পরিবর্তন সংরক্ষণ করুন" : "Save Changes"}
+                  </>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setEditMode(false)}
+                className="flex-1 px-4 py-3 rounded-lg border border-input text-foreground font-semibold hover:bg-secondary transition"
+              >
+                {bn ? "বাতিল" : "Cancel"}
+              </button>
+            </div>
+          </motion.form>
+        ) : (
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.04 }}
-            className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4"
+            transition={{ delay: 0.05 }}
+            className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4"
           >
-            <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <Store className="h-4 w-4 text-primary" />
-              {bn ? "মার্ট ভেন্ডর প্রোফাইল" : "Mart Vendor Profile"}
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Info className="h-5 w-5 text-primary" />
+              {bn ? "বিস্তারিত তথ্য" : "Detailed Information"}
             </h2>
 
-            {sellerLoading ? (
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                {bn ? "সেলার ডাটা লোড হচ্ছে..." : "Loading seller data..."}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Left Column */}
+              <div className="space-y-4">
+                <div className="rounded-lg bg-secondary/30 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">{bn ? "ঠিকানা" : "Address"}</p>
+                  <p className="text-foreground font-medium">{address || (bn ? "দেওয়া হয়নি" : "Not provided")}</p>
+                </div>
+
+                <div className="rounded-lg bg-secondary/30 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">{bn ? "লিঙ্গ" : "Gender"}</p>
+                  <p className="text-foreground font-medium">{gender ? genderLabels[gender as keyof typeof genderLabels] : (bn ? "দেওয়া হয়নি" : "Not provided")}</p>
+                </div>
+
+                <div className="rounded-lg bg-secondary/30 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">{bn ? "জন্মতারিখ" : "Date of Birth"}</p>
+                  <p className="text-foreground font-medium">
+                    {dateOfBirth
+                      ? new Date(dateOfBirth).toLocaleDateString(bn ? "bn-BD" : "en-US", {
+                          year: "numeric",
+                          month: "long",
+                          day: "numeric",
+                        })
+                      : (bn ? "দেওয়া হয়নি" : "Not provided")}
+                  </p>
+                </div>
               </div>
-            ) : !sellerProfile ? (
-              <p className="rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
-                {bn ? "এই অ্যাকাউন্টের জন্য সেলার প্রোফাইল পাওয়া যায়নি।" : "No seller profile was found for this account."}
-              </p>
+
+              {/* Right Column */}
+              <div className="space-y-4">
+                <div className="rounded-lg bg-secondary/30 p-4">
+                  <p className="text-xs text-muted-foreground mb-1">{bn ? "পরিচয়" : "Bio"}</p>
+                  <p className="text-foreground font-medium">{bio || (bn ? "দেওয়া হয়নি" : "Not provided")}</p>
+                </div>
+
+                {nidFront && (
+                  <div className="rounded-lg bg-secondary/30 p-4">
+                    <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> {bn ? "NID (সামনের দিক)" : "NID Front"}
+                    </p>
+                    <a href={nidFront} target="_blank" rel="noreferrer" className="text-primary hover:underline text-sm font-medium">
+                      {bn ? "দেখুন" : "View"}
+                    </a>
+                  </div>
+                )}
+
+                {nidBack && (
+                  <div className="rounded-lg bg-secondary/30 p-4">
+                    <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
+                      <FileText className="h-3 w-3" /> {bn ? "NID (পিছনের দিক)" : "NID Back"}
+                    </p>
+                    <a href={nidBack} target="_blank" rel="noreferrer" className="text-primary hover:underline text-sm font-medium">
+                      {bn ? "দেখুন" : "View"}
+                    </a>
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Account Security */}
+        {!isMartVendor && !usesCentralProfile && (
+          <motion.div
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4"
+          >
+            <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+              <Lock className="h-5 w-5 text-primary" />
+              {bn ? "পাসওয়ার্ড পরিবর্তন" : "Change Password"}
+            </h2>
+
+            {!showPasswordChange ? (
+              <button
+                onClick={() => setShowPasswordChange(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-primary/30 bg-primary/5 text-primary hover:bg-primary/10 transition font-medium"
+              >
+                <Lock className="h-4 w-4" />
+                {bn ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}
+              </button>
             ) : (
-              <div className="space-y-5">
-                <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <User className="h-4 w-4 text-primary" />
-                    {bn ? "সেলার তথ্য" : "Seller Information"}
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder={bn ? "সেলার নাম" : "Seller name"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={sellerEmail} onChange={(e) => setSellerEmail(e.target.value)} placeholder={bn ? "সেলার ইমেইল" : "Seller email"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={phone} onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} placeholder={bn ? "মোবাইল নম্বর" : "Mobile number"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder={bn ? "সেলার ঠিকানা" : "Seller address"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                  </div>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {bn ? "নতুন পাসওয়ার্ড" : "New Password"}
+                  </label>
+                  <input
+                    type="password"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    placeholder="••••••••"
+                    minLength={6}
+                    className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </div>
-
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      {bn ? "স্টোর নাম" : "Store Name"}
-                    </label>
-                    <input
-                      value={shopName}
-                      onChange={(e) => setShopName(e.target.value)}
-                      className="w-full rounded-lg border border-input bg-background px-3 py-3 text-base md:text-sm outline-none focus:ring-2 focus:ring-ring"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      {bn ? "স্টোর টাইপ" : "Store Type"}
-                    </label>
-                    <input
-                      value={shopTypeLabels[shopType] || shopType || ""}
-                      readOnly
-                      className="w-full rounded-lg border border-input bg-secondary/40 px-3 py-3 text-base md:text-sm outline-none"
-                    />
-                  </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">
+                    {bn ? "পাসওয়ার্ড নিশ্চিত করুন" : "Confirm Password"}
+                  </label>
+                  <input
+                    type="password"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder="••••••••"
+                    className="w-full px-4 py-2 rounded-lg border border-input bg-background text-foreground outline-none focus:ring-2 focus:ring-ring"
+                  />
                 </div>
-
-                <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <Banknote className="h-4 w-4 text-primary" />
-                    {bn ? "ব্যাংকিং ইনফরমেশন" : "Banking Information"}
-                  </h3>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <input value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder={bn ? "ব্যাংকের নাম" : "Bank name"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={bankAccountName} onChange={(e) => setBankAccountName(e.target.value)} placeholder={bn ? "অ্যাকাউন্টের নাম" : "Account name"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={bankAccountNumber} onChange={(e) => setBankAccountNumber(e.target.value)} placeholder={bn ? "অ্যাকাউন্ট নম্বর" : "Account number"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={bankBranch} onChange={(e) => setBankBranch(e.target.value)} placeholder={bn ? "ব্রাঞ্চ" : "Branch"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <input value={routingNumber} onChange={(e) => setRoutingNumber(e.target.value)} placeholder={bn ? "রাউটিং নম্বর" : "Routing number"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring" />
-                    <select value={mobileBankingProvider} onChange={(e) => setMobileBankingProvider(e.target.value)} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring">
-                      <option value="">{bn ? "মোবাইল ব্যাংকিং" : "Mobile banking"}</option>
-                      <option value="bkash">bKash</option>
-                      <option value="nagad">Nagad</option>
-                      <option value="rocket">Rocket</option>
-                    </select>
-                    <input value={mobileBankingNumber} onChange={(e) => setMobileBankingNumber(e.target.value.replace(/\D/g, "").slice(0, 11))} placeholder={bn ? "মোবাইল ব্যাংকিং নম্বর" : "Mobile banking number"} className="rounded-lg border border-input bg-card px-3 py-3 text-sm outline-none focus:ring-2 focus:ring-ring md:col-span-2" />
-                  </div>
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowPasswordChange(false);
+                      setNewPassword("");
+                      setConfirmPassword("");
+                    }}
+                    className="flex-1 px-4 py-2 rounded-lg border border-input hover:bg-secondary transition font-medium"
+                  >
+                    {bn ? "বাতিল" : "Cancel"}
+                  </button>
+                  <button
+                    onClick={handlePasswordChange}
+                    disabled={changingPassword}
+                    className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition font-medium disabled:opacity-50"
+                  >
+                    {changingPassword ? (
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                    ) : (
+                      bn ? "আপডেট করুন" : "Update"
+                    )}
+                  </button>
                 </div>
-
-                <div className="rounded-xl border border-border bg-background p-4">
-                  <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold text-foreground">
-                    <FileText className="h-4 w-4 text-primary" />
-                    {bn ? "ডকুমেন্ট আপলোড" : "Documents Upload"}
-                  </h3>
-                  <div className="grid gap-3">
-                    {sellerDocumentFields.map((doc) => (
-                      <label key={doc.key} className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">{doc.label}</p>
-                          {documentUrls[doc.key] ? (
-                            <a href={documentUrls[doc.key]} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary hover:underline">
-                              {bn ? "আপলোড করা ফাইল দেখুন" : "View uploaded file"}
-                            </a>
-                          ) : (
-                            <p className="text-xs text-muted-foreground">{bn ? "এখনো আপলোড করা হয়নি" : "Not uploaded yet"}</p>
-                          )}
-                        </div>
-                        <span className="inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-xs font-semibold text-primary">
-                          {uploadingDoc === doc.key ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
-                          {uploadingDoc === doc.key ? (bn ? "আপলোড হচ্ছে" : "Uploading") : (bn ? "আপলোড" : "Upload")}
-                          <input
-                            type="file"
-                            accept="image/*,.pdf"
-                            disabled={uploadingDoc === doc.key}
-                            onChange={(e) => handleSellerDocumentUpload(doc.key, e.target.files?.[0])}
-                            className="hidden"
-                          />
-                        </span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleSellerProfileSave}
-                  disabled={sellerSaving}
-                  className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
-                >
-                  {sellerSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                  {bn ? "ভেন্ডর প্রোফাইল সেভ করুন" : "Save Vendor Profile"}
-                </button>
               </div>
             )}
           </motion.div>
         )}
 
-        {/* Edit Profile Form */}
-        {!isMartVendor && (
+        {/* Account Stats */}
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4"
+          transition={{ delay: 0.12 }}
+          className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4"
         >
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <User className="h-4 w-4 text-primary" />
-            {bn ? "ব্যক্তিগত তথ্য" : "Personal Information"}
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Briefcase className="h-5 w-5 text-primary" />
+            {bn ? "অ্যাকাউন্ট তথ্য" : "Account Information"}
           </h2>
 
-          <form onSubmit={handleSave} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("profile.name")}</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="text"
-                  autoComplete="name"
-                  autoCapitalize="words"
-                  autoCorrect="off"
-                  enterKeyHint="next"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  placeholder={t("profile.namePlaceholder")}
-                  maxLength={100}
-                  className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="rounded-lg bg-secondary/30 p-4">
+              <p className="text-xs text-muted-foreground mb-1">{bn ? "অ্যাকাউন্ট আইডি" : "Account ID"}</p>
+              <p className="text-lg font-bold text-foreground">#{mysqlAuth?.user?.id || user?.id || "—"}</p>
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("profile.phone")}</label>
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="01[3-9][0-9]{8}"
-                  autoComplete="tel"
-                  enterKeyHint="next"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                  placeholder="01XXXXXXXXX"
-                  maxLength={11}
-                  className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
+            <div className="rounded-lg bg-secondary/30 p-4">
+              <p className="text-xs text-muted-foreground mb-1">{bn ? "একাউন্ট ধরন" : "Account Type"}</p>
+              <p className="text-lg font-bold text-foreground capitalize">{mysqlAuth?.user?.type || "user"}</p>
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-muted-foreground">{t("profile.address")}</label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  placeholder={t("profile.addressPlaceholder")}
-                  maxLength={300}
-                  rows={2}
-                  autoComplete="street-address"
-                  autoCapitalize="sentences"
-                  enterKeyHint="done"
-                  className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition resize-none"
-                />
-              </div>
+            <div className="rounded-lg bg-secondary/30 p-4">
+              <p className="text-xs text-muted-foreground mb-1">{bn ? "সদস্যতা" : "Member Since"}</p>
+              <p className="text-sm font-medium text-foreground">{memberSince || "—"}</p>
             </div>
-
-            <button type="submit" disabled={saving}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
-              {saving ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> {t("profile.saving")}</>
-              ) : (
-                <><Save className="h-4 w-4" /> {t("profile.save")}</>
-              )}
-            </button>
-          </form>
+          </div>
         </motion.div>
-        )}
 
-        {/* Security Section */}
-        {!isMartVendor && (
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="rounded-2xl border border-border bg-card p-5 shadow-sm mb-4"
-        >
-          <h2 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Shield className="h-4 w-4 text-primary" />
-            {bn ? "নিরাপত্তা" : "Security"}
-          </h2>
-
-          {!showPasswordChange ? (
-            <button
-              onClick={() => setShowPasswordChange(true)}
-              className="w-full flex items-center gap-3 rounded-lg border border-border p-3 text-sm text-foreground hover:bg-secondary transition-colors"
-            >
-              <Lock className="h-4 w-4 text-muted-foreground" />
-              <span>{bn ? "পাসওয়ার্ড পরিবর্তন করুন" : "Change Password"}</span>
-            </button>
-          ) : (
-            <div className="space-y-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                  {bn ? "নতুন পাসওয়ার্ড" : "New Password"}
-                </label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  enterKeyHint="next"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  minLength={6}
-                  className="w-full rounded-lg border border-input bg-background px-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                  {bn ? "পাসওয়ার্ড নিশ্চিত করুন" : "Confirm Password"}
-                </label>
-                <input
-                  type="password"
-                  autoComplete="new-password"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  enterKeyHint="done"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full rounded-lg border border-input bg-background px-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { setShowPasswordChange(false); setNewPassword(""); setConfirmPassword(""); }}
-                  className="flex-1 rounded-lg border border-border py-2.5 text-sm font-medium text-foreground hover:bg-secondary transition-colors">
-                  {bn ? "বাতিল" : "Cancel"}
-                </button>
-                <button onClick={handlePasswordChange} disabled={changingPassword}
-                  className="flex-1 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-                  {changingPassword ? <Loader2 className="h-4 w-4 animate-spin mx-auto" /> : (bn ? "পরিবর্তন করুন" : "Update")}
-                </button>
-              </div>
-            </div>
-          )}
-        </motion.div>
-        )}
-
-        {/* Logout */}
-        <motion.div
+        {/* Logout Button */}
+        <motion.button
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
+          onClick={handleLogout}
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg border border-destructive/30 text-destructive hover:bg-destructive/5 transition font-medium"
         >
-          <button
-            onClick={handleLogout}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-destructive/30 py-3 text-sm font-medium text-destructive hover:bg-destructive/5 transition-colors"
-          >
-            <LogOut className="h-4 w-4" />
-            {t("nav.logout")}
-          </button>
-        </motion.div>
+          <LogOut className="h-4 w-4" />
+          {bn ? "লগ আউট করুন" : "Logout"}
+        </motion.button>
       </div>
 
       <Footer />

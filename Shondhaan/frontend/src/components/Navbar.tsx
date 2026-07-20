@@ -792,7 +792,7 @@ const Navbar = () => {
                       </button>
 
                       <button
-                        onClick={() => navigate("/dashboard?tab=profile")}
+                        onClick={() => navigate("/profile")}
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         {isMartVendor ? (

@@ -4,8 +4,20 @@ import {
   listUsers,
   normalizeUserType,
   safeUser,
+  updateCurrentUserProfile,
   updateUserTypeById,
 } from "../services/user.service.js";
+
+const toProfileResponse = (user) => {
+  const safe = safeUser(user);
+  if (!safe) return null;
+
+  return {
+    ...safe,
+    phone: safe.mobile || "",
+    avatar_url: safe.profile_image || null,
+  };
+};
 
 // ✅ GET ALL USERS
 export const getAllUsers = async (req, res) => {
@@ -66,10 +78,45 @@ export const getCurrentUser = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(safeUser(user));
+    res.status(200).json(toProfileResponse(user));
   } catch (err) {
     console.error("Get current user error:", err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+export const updateCurrentUser = async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const name = String(req.body.name ?? "").trim();
+    const mobile = String(req.body.mobile ?? req.body.phone ?? "").trim();
+
+    if (Object.prototype.hasOwnProperty.call(req.body, "name") && !name) {
+      return res.status(400).json({ message: "Name is required" });
+    }
+
+    if (mobile && !/^01[3-9]\d{8}$/.test(mobile)) {
+      return res.status(400).json({ message: "A valid Bangladesh mobile number is required" });
+    }
+
+    const updated = await updateCurrentUserProfile(req.user.id, {
+      ...req.body,
+      ...(Object.prototype.hasOwnProperty.call(req.body, "phone") ? { mobile } : {}),
+      ...(Object.prototype.hasOwnProperty.call(req.body, "mobile") ? { mobile } : {}),
+      ...(Object.prototype.hasOwnProperty.call(req.body, "name") ? { name } : {}),
+    });
+
+    if (!updated) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.status(200).json(toProfileResponse(updated));
+  } catch (err) {
+    console.error("Update current user profile error:", err);
+    res.status(500).json({ message: err.message || "Could not update user profile" });
   }
 };
 
@@ -118,7 +165,7 @@ export const getUserProfile = async (req, res) => {
     }
 
     // Ensure the requesting user owns this profile
-    if (user.id !== userId) {
+    if (String(user.id) !== String(userId)) {
       return res.status(403).json({
         message: "Forbidden - You cannot access other users' profiles",
         code: "ACCESS_DENIED",
@@ -129,11 +176,19 @@ export const getUserProfile = async (req, res) => {
       id: user.id,
       name: user.name || "User",
       email: user.email || "",
-      phone: user.phone || "",
+      mobile: user.mobile || "",
+      phone: user.mobile || "",
       address: user.address || "",
-      avatar_url: user.avatar_url || null,
+      avatar_url: user.profile_image || null,
+      profile_image: user.profile_image || null,
+      bio: user.bio || null,
+      gender: user.gender || null,
+      date_of_birth: user.date_of_birth || null,
+      nid_front: user.nid_front || null,
+      nid_back: user.nid_back || null,
       created_at: user.created_at || new Date().toISOString(),
-      role: user.role || "user",
+      role: user.type || "user",
+      type: user.type || "user",
     };
 
     res.status(200).json(profile);

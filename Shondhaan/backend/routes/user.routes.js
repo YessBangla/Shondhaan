@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllUsers, getCurrentUser, getUserById, updateUserType, getUserProfile, getUserStats } from "../controllers/user.controller.js";
+import { getAllUsers, getCurrentUser, getUserById, updateCurrentUser, updateUserType, getUserProfile, getUserStats } from "../controllers/user.controller.js";
 import { authMiddleware } from "../middleware/auth.middleware.js";
 import { authorizeOwnData, preventUserRolePanelAccess } from "../middleware/authorization.middleware.js";
 import { requireSuperAdmin } from "../middleware/tokenBlacklist.middleware.js";
@@ -8,6 +8,7 @@ const router = express.Router();
 
 // Own data endpoints - user can only access their own profile/stats
 router.get("/me/profile", authMiddleware, getCurrentUser);
+router.patch("/me/profile", authMiddleware, updateCurrentUser);
 router.get("/profile", authMiddleware, authorizeOwnData, getUserProfile);
 router.get("/stats", authMiddleware, authorizeOwnData, getUserStats);
 

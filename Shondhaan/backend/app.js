@@ -1,15 +1,19 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import cookieParser from "cookie-parser";
+
 import userRoutes from "./routes/user.routes.js";
 import serviceCatalogRoutes from "./routes/serviceCatalog.routes.js";
-
 import authRoutes from "./routes/auth.routes.js";
 
 dotenv.config();
 
 const app = express();
 
+/**
+ * Default allowed origins
+ */
 const defaultCorsOrigins = [
   "http://localhost:8080",
   "http://127.0.0.1:8080",
@@ -19,7 +23,13 @@ const defaultCorsOrigins = [
   "https://www.shondhaan.com",
 ];
 
-const corsOrigin = [
+/**
+ * Merge .env origins with defaults
+ *
+ * Example:
+ * CORS_ORIGIN=https://admin.shondhaan.com,https://dashboard.shondhaan.com
+ */
+const allowedOrigins = [
   ...new Set([
     ...defaultCorsOrigins,
     ...(process.env.CORS_ORIGIN || "")
@@ -29,64 +39,94 @@ const corsOrigin = [
   ]),
 ];
 
+/**
+ * Check if origin is allowed
+ */
 const isAllowedCorsOrigin = (origin) => {
+  // Allow requests without Origin (Postman, curl, server-to-server)
   if (!origin) return true;
 
-  const normalizedOrigin = origin.trim();
-  if (corsOrigin.includes(normalizedOrigin)) return true;
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
 
   try {
-    const { hostname, protocol } = new URL(normalizedOrigin);
-    return protocol === "https:" && hostname.endsWith(".shondhaan.com");
+    const url = new URL(origin);
+
+    // Allow any HTTPS subdomain of shondhaan.com
+    return (
+      url.protocol === "https:" &&
+      url.hostname.endsWith(".shondhaan.com")
+    );
   } catch {
     return false;
   }
 };
 
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
+// =========================
+// Middlewares
+// =========================
 
-  if (isAllowedCorsOrigin(origin)) {
-    res.setHeader("Access-Control-Allow-Origin", origin || "*");
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
-    res.setHeader(
-      "Access-Control-Allow-Headers",
-      req.headers["access-control-request-headers"] ||
-        "Content-Type,Authorization"
-    );
-    res.setHeader("Vary", "Origin");
-  }
+app.use(cookieParser());
 
-  if (req.method === "OPTIONS") {
-    return res.sendStatus(204);
-  }
-
-  next();
-});
+app.use(express.json());
 
 app.use(
   cors({
     origin(origin, callback) {
-      callback(null, isAllowedCorsOrigin(origin));
+      if (isAllowedCorsOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error("Not allowed by CORS"));
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
     optionsSuccessStatus: 204,
   })
 );
-app.use(express.json());
 
-// routes
+// =========================
+// Routes
+// =========================
+
 app.use("/api/admin/users", userRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api", serviceCatalogRoutes);
 app.use("/api/auth", authRoutes);
 
+// Health Check
 app.get("/", (req, res) => {
-  res.send("Backend is running");
+  res.status(200).json({
+    success: true,
+    message: "Backend is running 🚀",
+  });
+});
+
+// 404 Handler
+app.use((req, res) => {
+  res.status(404).json({
+    success: false,
+    message: "Route not found",
+  });
+});
+
+// Global Error Handler
+app.use((err, req, res, next) => {
+  console.error(err);
+
+  if (err.message === "Not allowed by CORS") {
+    return res.status(403).json({
+      success: false,
+      message: err.message,
+    });
+  }
+
+  res.status(err.status || 500).json({
+    success: false,
+    message: err.message || "Internal Server Error",
+  });
 });
 
 export default app;
