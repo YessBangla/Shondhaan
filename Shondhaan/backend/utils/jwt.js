@@ -4,7 +4,6 @@ import crypto from "crypto";
 const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
 
 export const createToken = (user) => {
-  // `jti` is used for server-side logout via token blacklist.
   const jti = crypto.randomBytes(16).toString("hex");
 
   return jwt.sign(
