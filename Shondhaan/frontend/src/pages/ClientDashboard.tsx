@@ -27,7 +27,7 @@ import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import ServiceMessage from "./ServiceMessage";
 
-const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8081";
+const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 const PROFILE_API_BASE = MART_API_BASE;
 const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
 
@@ -321,7 +321,7 @@ const ClientDashboard = () => {
         throw new Error("MySQL login is required to save profile");
       }
 
-      const res = await fetch(`${PROFILE_API_BASE}/api/profile/${userId}`, {
+      const res = await fetch(`${PROFILE_API_BASE}/api/users/profile`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${mysqlAuth.token}`,

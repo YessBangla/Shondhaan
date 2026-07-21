@@ -18,7 +18,11 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
+<<<<<<< HEAD
     "multer": "^2.2.0",
+=======
+    "morgan": "^1.11.0",
+>>>>>>> 28c934cae27421b91c09242475c61f50e5dc95c2
     "mysql2": "^3.22.3",
     "nodemailer": "^8.0.7"
   },
