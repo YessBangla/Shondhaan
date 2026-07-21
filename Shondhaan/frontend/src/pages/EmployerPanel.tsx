@@ -7,7 +7,6 @@ import {
   BarChart3, Settings, Bookmark, CalendarCheck, Package, CheckCircle,
   XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
 import JobsMenuBar from "@/components/jobs/JobsMenuBar";
@@ -20,22 +19,16 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+
 const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
   if (!auth?.token) {
-    // Helps debugging 401s
     console.warn("[EmployerPanel] Missing MySQL auth token in localStorage yess_mysql_auth");
     return {};
   }
-
-  return {
-    // yessjob_backend expects Authorization header in Express as:
-    // req.headers.authorization === "Bearer <jwt>"
-    // and then forwards it to Shondhaan.
-    Authorization: `Bearer ${auth.token}`,
-  };
+  return { Authorization: `Bearer ${auth.token}` };
 }
 
 async function fetchJobsJson(path: string, init?: RequestInit) {
@@ -47,7 +40,9 @@ async function fetchJobsJson(path: string, init?: RequestInit) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Request failed (HTTP ${res.status})`);
   }
-  return res.json();
+  // DELETE routes and similar may return no body
+  const text = await res.text();
+  return text ? JSON.parse(text) : null;
 }
 
 interface EmployerProfile {
@@ -138,53 +133,51 @@ const EmployerPanel = () => {
     const canAccess = await hasStaffRoleAccess(user.id, ["employer"]);
     if (canAccess) {
       setIsEmployer(true);
-  try {
-  const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile/me`, {
-    headers: getAuthHeaders(),
-  });
-  if (res.ok) {
-    const ep = await res.json();
-    setProfile(ep as EmployerProfile);
-  } else {
-    setShowSetup(true);
-  }
-} catch (err) {
-  console.error("Failed to load employer profile:", err);
-  setShowSetup(true);
-}
+      try {
+        const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile/me`, {
+          headers: getAuthHeaders(),
+        });
+        if (res.ok) {
+          const ep = await res.json();
+          setProfile(ep as EmployerProfile);
+        } else {
+          setShowSetup(true);
+        }
+      } catch (err) {
+        console.error("Failed to load employer profile:", err);
+        setShowSetup(true);
+      }
     }
     setLoading(false);
   }, [user]);
 
   useEffect(() => { checkEmployer(); }, [checkEmployer]);
 
- const saveProfile = async () => {
-  if (!user || !formData.company_name) {
-    toast.error("কোম্পানির নাম আবশ্যক");
-    return;
-  }
-  try {
-    const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", ...getAuthHeaders() },
-      body: JSON.stringify(formData), // user_id is derived server-side from the token
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      toast.error(
-        err.message || `সেভ করতে সমস্যা হয়েছে (HTTP ${res.status})`
-      );
+  const saveProfile = async () => {
+    if (!user || !formData.company_name) {
+      toast.error("কোম্পানির নাম আবশ্যক");
       return;
     }
-    const data = await res.json();
-    setProfile(data as EmployerProfile);
-    setShowSetup(false);
-    toast.success("প্রোফাইল সেভ হয়েছে");
-  } catch (err) {
-    console.error(err);
-    toast.error("সেভ করতে সমস্যা হয়েছে");
-  }
-};
+    try {
+      const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...getAuthHeaders() },
+        body: JSON.stringify(formData), // user_id is derived server-side from the token
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.message || `সেভ করতে সমস্যা হয়েছে (HTTP ${res.status})`);
+        return;
+      }
+      const data = await res.json();
+      setProfile(data as EmployerProfile);
+      setShowSetup(false);
+      toast.success("প্রোফাইল সেভ হয়েছে");
+    } catch (err) {
+      console.error(err);
+      toast.error("সেভ করতে সমস্যা হয়েছে");
+    }
+  };
 
   // Data states
   const [myJobs, setMyJobs] = useState<any[]>([]);
@@ -200,11 +193,9 @@ const EmployerPanel = () => {
   const [scoreForm, setScoreForm] = useState<any>(null);
   const [editJobForm, setEditJobForm] = useState<any>(null);
 
-  // Jobs posted via JobPostForm.tsx go to your Express/MySQL backend
-  // (POST /api/jobs in routes/jobs.js), NOT Supabase. This now reads from
-  // GET /api/jobs/mine — the same backend, the same table those posts
-  // actually land in — so a job you post shows up here right after posting
-  // (as "pending" until an admin approves it in AdminJobListings).
+  // Jobs posted via JobPostForm.tsx -> Express/MySQL backend (POST /api/jobs).
+  // GET /api/jobs/mine reads from the same table (shows as "pending" until
+  // an admin approves it in AdminJobListings).
   const fetchMyJobs = useCallback(async () => {
     if (!user) return;
     try {
@@ -215,43 +206,57 @@ const EmployerPanel = () => {
     }
   }, [user]);
 
-  // NOTE: applications still come from Supabase's job_portal_applications,
-  // keyed to Supabase job UUIDs — which no longer match the MySQL integer
-  // job ids myJobs now uses. Until a MySQL job_applications table + routes
-  // exist, this will return nothing for jobs posted through JobPostForm.
-  // Left as-is on purpose; say the word if you want that built next.
- // Applications now come from MySQL job_applications (routes/applications.js),
-// scoped server-side to jobs.user_id = the logged-in employer.
-const fetchApplications = useCallback(async () => {
-  if (!user) return;
-  try {
-    const data = await fetchJobsJson(`/api/jobseeker/applications/employer/mine`);
-    setApplications(data || []);
-  } catch (err) {
-    console.error("Failed to load applications:", err);
-  }
-}, [user]);
+  // Applications now come entirely from MySQL job_applications, joined
+  // against jobs/jobseeker_profiles server-side. The backend scopes this
+  // to jobs.user_id = the logged-in employer, so ownership is enforced
+  // in the query itself, not just in the UI.
+  const fetchApplications = useCallback(async () => {
+    if (!user) return;
+    try {
+      const data = await fetchJobsJson(`/api/jobseeker/applications/employer/mine`);
+      setApplications(data || []);
+    } catch (err) {
+      console.error("Failed to load applications:", err);
+    }
+  }, [user]);
 
   const fetchSeekers = useCallback(async () => {
-    const { data } = await supabase.from("job_seeker_profiles").select("*").eq("is_available", true).limit(50);
-    if (data) setSeekers(data);
-  }, []);
+    if (!user) return;
+    try {
+      const data = await fetchJobsJson(`/api/talent/seekers${seekerSearch ? `?search=${encodeURIComponent(seekerSearch)}` : ""}`);
+      setSeekers(data || []);
+    } catch (err) {
+      console.error("Failed to load seekers:", err);
+    }
+  }, [user, seekerSearch]);
 
   const fetchBookmarks = useCallback(async () => {
     if (!profile) return;
-    const { data } = await supabase.from("employer_talent_bookmarks").select("*, job_seeker_profiles(*)").eq("employer_id", profile.id);
-    if (data) setBookmarks(data);
+    try {
+      const data = await fetchJobsJson(`/api/talent/bookmarks`);
+      setBookmarks(data || []);
+    } catch (err) {
+      console.error("Failed to load bookmarks:", err);
+    }
   }, [profile]);
 
   const fetchInterviews = useCallback(async () => {
     if (!profile) return;
-    const { data } = await supabase.from("interview_schedules").select("*, jobs(title), job_portal_applications(applicant_name, applicant_phone)").eq("employer_id", profile.id).order("scheduled_at", { ascending: true });
-    if (data) setInterviews(data);
+    try {
+      const data = await fetchJobsJson(`/api/interviews/mine`);
+      setInterviews(data || []);
+    } catch (err) {
+      console.error("Failed to load interviews:", err);
+    }
   }, [profile]);
 
   const fetchPackages = useCallback(async () => {
-    const { data } = await supabase.from("job_packages").select("*").eq("is_active", true).order("sort_order");
-    if (data) setPackages(data);
+    try {
+      const data = await fetchJobsJson(`/api/packages`);
+      setPackages(data || []);
+    } catch (err) {
+      console.error("Failed to load packages:", err);
+    }
   }, []);
 
   useEffect(() => {
@@ -261,77 +266,103 @@ const fetchApplications = useCallback(async () => {
     }
   }, [isEmployer, profile, fetchMyJobs, fetchApplications, fetchSeekers, fetchBookmarks, fetchInterviews, fetchPackages]);
 
+  // Debounced-ish re-search when the talent search box changes
+  useEffect(() => {
+    if (!isEmployer || !profile) return;
+    const t = setTimeout(() => { fetchSeekers(); }, 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seekerSearch]);
+
   const addBookmark = async (seekerId: string) => {
     if (!profile) return;
-    const { error } = await supabase.from("employer_talent_bookmarks").insert({ employer_id: profile.id, seeker_profile_id: seekerId } as any);
-    if (error) {
-      if (error.code === "23505") toast.info("ইতিমধ্যে সংরক্ষিত");
-      else toast.error("সমস্যা হয়েছে");
-      return;
+    try {
+      await fetchJobsJson(`/api/talent/bookmarks`, {
+        method: "POST",
+        body: JSON.stringify({ seeker_id: seekerId }),
+      });
+      toast.success("প্রার্থী সংরক্ষিত হয়েছে");
+      fetchBookmarks();
+    } catch (err: any) {
+      if (String(err.message || "").includes("সংরক্ষিত")) {
+        toast.info(err.message);
+      } else {
+        toast.error(err.message || "সমস্যা হয়েছে");
+      }
     }
-    toast.success("প্রার্থী সংরক্ষিত হয়েছে");
-    fetchBookmarks();
   };
 
   const removeBookmark = async (id: string) => {
-    await supabase.from("employer_talent_bookmarks").delete().eq("id", id);
-    fetchBookmarks();
-    toast.success("মুছে ফেলা হয়েছে");
+    try {
+      await fetchJobsJson(`/api/talent/bookmarks/${id}`, { method: "DELETE" });
+      fetchBookmarks();
+      toast.success("মুছে ফেলা হয়েছে");
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
   };
 
   const scheduleInterview = async () => {
     if (!interviewForm || !profile) return;
-    const { error } = await supabase.from("interview_schedules").insert({
-      ...interviewForm, employer_id: profile.id,
-    } as any);
-    if (error) { toast.error("সমস্যা হয়েছে"); return; }
-    // Update application hiring_stage
-    if (interviewForm.application_id) {
-      await supabase.from("job_portal_applications").update({ hiring_stage: "interview_scheduled", status: "shortlisted" } as any).eq("id", interviewForm.application_id);
+    try {
+      await fetchJobsJson(`/api/interviews`, {
+        method: "POST",
+        body: JSON.stringify(interviewForm),
+      });
+      toast.success("ইন্টারভিউ শিডিউল হয়েছে");
+      setInterviewForm(null);
+      fetchInterviews();
+      fetchApplications();
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
     }
-    toast.success("ইন্টারভিউ শিডিউল হয়েছে");
-    setInterviewForm(null);
-    fetchInterviews();
-    fetchApplications();
   };
 
   const updateHiringStage = async (id: string, stage: string) => {
-    const statusMap: Record<string, string> = {
-      applied: "pending", shortlisted: "shortlisted", interview_scheduled: "shortlisted",
-      interviewed: "interviewed", scored: "interviewed", hired: "selected", rejected: "rejected"
-    };
-    await supabase.from("job_portal_applications").update({
-      hiring_stage: stage, status: statusMap[stage] || "pending"
-    } as any).eq("id", id);
-    fetchApplications();
-    toast.success("স্ট্যাটাস আপডেট হয়েছে");
+    try {
+      await fetchJobsJson(`/api/jobseeker/applications/${id}/stage`, {
+        method: "PATCH",
+        body: JSON.stringify({ hiring_stage: stage }),
+      });
+      fetchApplications();
+      toast.success("স্ট্যাটাস আপডেট হয়েছে");
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
   };
 
   const updateScore = async () => {
     if (!scoreForm) return;
-    await supabase.from("job_portal_applications").update({
-      score: scoreForm.score, interviewer_notes: scoreForm.notes,
-      hiring_stage: "scored", attendance: "present"
-    } as any).eq("id", scoreForm.id);
-    setScoreForm(null);
-    fetchApplications();
-    toast.success("স্কোর সেভ হয়েছে");
+    try {
+      await fetchJobsJson(`/api/jobseeker/applications/${scoreForm.id}/stage`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          score: scoreForm.score,
+          interviewer_notes: scoreForm.notes,
+          hiring_stage: "scored",
+          attendance: "present",
+        }),
+      });
+      setScoreForm(null);
+      fetchApplications();
+      toast.success("স্কোর সেভ হয়েছে");
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
   };
 
-  // Close/reopen now call your Express/MySQL routes (PATCH /api/jobs/:id/close
-  // and /reopen in routes/jobs.js) instead of writing to Supabase's jobs
-  // table, since that's where these jobs actually live.
   const deleteJob = async (jobId: string) => {
-  if (!window.confirm("আপনি কি নিশ্চিত এই জবটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে নেওয়া যাবে না।")) return;
-  try {
-    await fetchJobsJson(`/api/jobs/${jobId}`, { method: "DELETE" });
-    setMyJobs(prev => prev.filter(j => j.id !== jobId));
-    toast.success("জব মুছে ফেলা হয়েছে");
-  } catch (err: any) {
-    console.error(err);
-    toast.error(err.message || "জব মুছতে সমস্যা হয়েছে");
-  }
-};
+    if (!window.confirm("আপনি কি নিশ্চিত এই জবটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে নেওয়া যাবে না।")) return;
+    try {
+      await fetchJobsJson(`/api/jobs/${jobId}`, { method: "DELETE" });
+      setMyJobs(prev => prev.filter(j => j.id !== jobId));
+      toast.success("জব মুছে ফেলা হয়েছে");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "জব মুছতে সমস্যা হয়েছে");
+    }
+  };
+
   const closeJob = async (jobId: string, reason: string) => {
     try {
       await fetchJobsJson(`/api/jobs/${jobId}/close`, {
@@ -357,11 +388,6 @@ const fetchApplications = useCallback(async () => {
     }
   };
 
-  // Saves edits made in the Edit Job modal via PATCH /api/jobs/:id.
-  // NOTE: this assumes a general-purpose PATCH /api/jobs/:id route exists
-  // in routes/jobs.js (alongside the existing /close and /reopen routes),
-  // scoped to the authenticated employer's own jobs. If it doesn't exist
-  // yet, this call will fail with a 404 until that route is added.
   const updateJob = async () => {
     if (!editJobForm) return;
     try {
@@ -393,9 +419,8 @@ const fetchApplications = useCallback(async () => {
   if (!isEmployer) {
     return (
       <JobsPageTransition>
-        
         <div className="pt-[44px] md:pt-[68px] bg-card" />
-      <JobsMenuBar />
+        <JobsMenuBar />
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
           <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold mb-2">এমপ্লয়ার অ্যাক্সেস নেই</h1>
@@ -411,11 +436,9 @@ const fetchApplications = useCallback(async () => {
   if (showSetup || !profile) {
     return (
       <JobsPageTransition>
-        
         <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" />
-      <JobsMenuBar />
+        <JobsMenuBar />
         <div className="pt-[16px]">
-          {/* bdjobs-style header */}
           <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white py-8">
             <div className="max-w-3xl mx-auto px-4 text-center">
               <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 inline-block mb-3">
@@ -426,7 +449,6 @@ const fetchApplications = useCallback(async () => {
             </div>
           </div>
           <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-            {/* User Information */}
             <div className="border rounded-xl p-5 bg-card">
               <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
                 <Users className="h-4 w-4" /> Tell Us About Your Company
@@ -458,7 +480,6 @@ const fetchApplications = useCallback(async () => {
               </div>
             </div>
 
-            {/* Company Address */}
             <div className="border rounded-xl p-5 bg-card">
               <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
                 <MapPin className="h-4 w-4" /> Company Address *
@@ -483,7 +504,6 @@ const fetchApplications = useCallback(async () => {
               </div>
             </div>
 
-            {/* Industry Type */}
             <div className="border rounded-xl p-5 bg-card">
               <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
                 <Briefcase className="h-4 w-4" /> Industry Type *
@@ -507,7 +527,6 @@ const fetchApplications = useCallback(async () => {
               </div>
             </div>
 
-            {/* Contact Information */}
             <div className="border rounded-xl p-5 bg-card">
               <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
                 <Users className="h-4 w-4" /> Contact Information
@@ -541,16 +560,12 @@ const fetchApplications = useCallback(async () => {
             </Button>
           </div>
         </div>
-        
       </JobsPageTransition>
     );
   }
 
-  const filteredSeekers = seekerSearch.length > 1
-    ? seekers.filter(s => s.full_name?.toLowerCase().includes(seekerSearch.toLowerCase()) || (s.skills as any[])?.some((sk: any) => typeof sk === "string" && sk.toLowerCase().includes(seekerSearch.toLowerCase())))
-    : seekers;
+  const filteredSeekers = seekers; // filtering now happens server-side via seekerSearch
 
-  // Pipeline filtered apps
   const pipelineApps = applications.filter(a => {
     const matchJob = pipelineJob === "all" || a.job_id === pipelineJob;
     const matchStage = pipelineStage === "all" || (a as any).hiring_stage === pipelineStage;
@@ -600,7 +615,6 @@ const fetchApplications = useCallback(async () => {
               ))}
             </div>
 
-            {/* Hiring Pipeline Summary */}
             <div className="border rounded-xl p-4 bg-card">
               <h3 className="font-semibold text-sm mb-3 flex items-center gap-2"><TrendingUp className="h-4 w-4 text-primary" /> হায়ারিং পাইপলাইন সামারি</h3>
               <div className="flex gap-1 overflow-x-auto pb-2">
@@ -616,14 +630,13 @@ const fetchApplications = useCallback(async () => {
               </div>
             </div>
 
-            {/* Recent applications */}
             <div className="border rounded-xl p-4 bg-card">
               <h3 className="font-semibold text-sm mb-3">সাম্প্রতিক আবেদন</h3>
               {applications.slice(0, 5).map(app => (
                 <div key={app.id} className="flex items-center justify-between py-2 border-b last:border-0 text-xs">
                   <div>
-                    <p className="font-medium">{app.applicant_name}</p>
-                    <p className="text-muted-foreground">{app.applicant_phone}</p>
+                    <p className="font-medium">{app.jobseeker_name}</p>
+                    <p className="text-muted-foreground">{app.jobseeker_phone}</p>
                   </div>
                   <Badge className={HIRING_STAGES.find(s => s.key === ((app as any).hiring_stage || "applied"))?.color || "bg-muted"}>
                     {HIRING_STAGES.find(s => s.key === ((app as any).hiring_stage || "applied"))?.label || "আবেদন"}
@@ -731,16 +744,10 @@ const fetchApplications = useCallback(async () => {
                         deadline: job.deadline ? String(job.deadline).slice(0, 10) : "",
                       })}>
                         <Pencil className="h-3 w-3 mr-1" /> সম্পাদনা
-                        
                       </Button>
-                      <Button
-  variant="outline"
-  size="sm"
-  className="text-[10px] h-7 text-destructive"
-  onClick={() => deleteJob(job.id)}
->
-  <XCircle className="h-3 w-3 mr-1" /> মুছুন
-</Button>
+                      <Button variant="outline" size="sm" className="text-[10px] h-7 text-destructive" onClick={() => deleteJob(job.id)}>
+                        <XCircle className="h-3 w-3 mr-1" /> মুছুন
+                      </Button>
                       {!isClosed && job.status === "approved" && (
                         <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => closeJob(job.id, "নিয়োগ সম্পন্ন")}>
                           <Lock className="h-3 w-3 mr-1" /> জব ক্লোজ করুন
@@ -758,14 +765,12 @@ const fetchApplications = useCallback(async () => {
           </div>
         );
 
-      // BDJobs-style Hiring Pipeline
       case "hiring-pipeline":
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> হায়ারিং পাইপলাইন</h2>
             <p className="text-xs text-muted-foreground">BDJobs-স্টাইল: আবেদন → শর্টলিস্ট → ইন্টারভিউ → স্কোর → নিয়োগ → জব ক্লোজ</p>
 
-            {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-2">
               <select className="h-9 rounded-md border border-input bg-background px-3 text-xs flex-1" value={pipelineJob} onChange={e => setPipelineJob(e.target.value)}>
                 <option value="all">সকল চাকরি</option>
@@ -777,7 +782,6 @@ const fetchApplications = useCallback(async () => {
               </select>
             </div>
 
-            {/* Stage Summary Bar */}
             <div className="flex gap-1 overflow-x-auto pb-1">
               {HIRING_STAGES.map(stage => (
                 <button key={stage.key} onClick={() => setPipelineStage(pipelineStage === stage.key ? "all" : stage.key)}
@@ -787,7 +791,6 @@ const fetchApplications = useCallback(async () => {
               ))}
             </div>
 
-            {/* Applicant Cards */}
             {pipelineApps.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground text-sm">এই স্টেজে কোনো আবেদনকারী নেই</p>
             ) : (
@@ -795,13 +798,13 @@ const fetchApplications = useCallback(async () => {
                 {pipelineApps.map(app => {
                   const currentStage = (app as any).hiring_stage || "applied";
                   const stageInfo = HIRING_STAGES.find(s => s.key === currentStage);
-                  const jobTitle = myJobs.find(j => j.id === app.job_id)?.title;
+                  const jobTitle = myJobs.find(j => j.id === app.job_id)?.title || app.job_title;
                   return (
                     <div key={app.id} className="border rounded-lg p-3 bg-card">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1 min-w-0">
-                          <p className="font-semibold text-sm">{app.applicant_name}</p>
-                          <p className="text-[10px] text-muted-foreground">{app.applicant_phone} {app.applicant_email && `• ${app.applicant_email}`}</p>
+                          <p className="font-semibold text-sm">{app.jobseeker_name}</p>
+                          <p className="text-[10px] text-muted-foreground">{app.jobseeker_phone} {app.jobseeker_email && `• ${app.jobseeker_email}`}</p>
                           {jobTitle && <p className="text-[10px] text-primary mt-0.5">{jobTitle}</p>}
                           {(app as any).video_cv_url && (
                             <a href={(app as any).video_cv_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[10px] text-blue-600 hover:underline mt-0.5">
@@ -817,7 +820,6 @@ const fetchApplications = useCallback(async () => {
                         </div>
                         <Badge className={stageInfo?.color || "bg-muted"}>{stageInfo?.label || "আবেদন"}</Badge>
                       </div>
-                      {/* Action Buttons */}
                       <div className="flex flex-wrap gap-1.5 mt-2">
                         {currentStage === "applied" && (
                           <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => updateHiringStage(app.id, "shortlisted")}>
@@ -826,7 +828,7 @@ const fetchApplications = useCallback(async () => {
                         )}
                         {currentStage === "shortlisted" && (
                           <Button size="sm" variant="outline" className="h-6 text-[10px]" onClick={() => setInterviewForm({
-                            job_id: app.job_id, application_id: app.id,
+                            application_id: app.id,
                             interview_type: "in-person", scheduled_at: "", duration_minutes: 30,
                             location: "", meeting_link: "", notes: ""
                           })}>
@@ -862,34 +864,38 @@ const fetchApplications = useCallback(async () => {
           </div>
         );
 
-    case "applications":
-  return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> সকল আবেদন ({applications.length})</h2>
-      {applications.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো আবেদন নেই</p> :
-        applications.map((app: any) => (
-          <div key={app.id} className="border rounded-lg p-3 bg-card space-y-2">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="font-semibold text-sm">{app.jobseeker_name}</p>
-                <p className="text-xs text-muted-foreground">
-                  {app.jobseeker_phone} {app.jobseeker_email && `• ${app.jobseeker_email}`}
-                </p>
-                <p className="text-[10px] text-primary mt-0.5">{app.job_title}</p>
-              </div>
-              <Badge className="bg-blue-100 text-blue-800">
-                {app.status === "pending" ? "আবেদন" : app.status === "shortlisted" ? "শর্টলিস্ট" : app.status === "hired" ? "নিয়োগ" : "বাতিল"}
-              </Badge>
-            </div>
-            {app.cover_letter && <p className="text-xs text-muted-foreground line-clamp-2">{app.cover_letter}</p>}
-            <div className="flex gap-3 text-[10px] text-muted-foreground">
-              {app.expected_salary != null && <span>প্রত্যাশিত বেতন: ৳{Number(app.expected_salary).toLocaleString("bn-BD")}</span>}
-              {app.age_at_application != null && <span>বয়স: {app.age_at_application}</span>}
-            </div>
+      case "applications":
+        return (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> সকল আবেদন ({applications.length})</h2>
+            {applications.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো আবেদন নেই</p> :
+              applications.map((app: any) => {
+                const stageInfo = HIRING_STAGES.find(s => s.key === (app.hiring_stage || "applied"));
+                return (
+                  <div key={app.id} className="border rounded-lg p-3 bg-card space-y-2">
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="font-semibold text-sm">{app.jobseeker_name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {app.jobseeker_phone} {app.jobseeker_email && `• ${app.jobseeker_email}`}
+                        </p>
+                        <p className="text-[10px] text-primary mt-0.5">{app.job_title}</p>
+                      </div>
+                      <Badge className={stageInfo?.color || "bg-muted"}>{stageInfo?.label || "আবেদন"}</Badge>
+                    </div>
+                    {app.cover_letter && <p className="text-xs text-muted-foreground line-clamp-2">{app.cover_letter}</p>}
+                    <div className="flex gap-3 text-[10px] text-muted-foreground">
+                      {app.expected_salary != null && <span>প্রত্যাশিত বেতন: ৳{Number(app.expected_salary).toLocaleString("bn-BD")}</span>}
+                      {app.age_at_application != null && <span>বয়স: {app.age_at_application}</span>}
+                    </div>
+                    <div className="flex gap-2">
+                      {app.cv_url && <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-0.5"><FileText className="h-3 w-3" /> CV দেখুন</a>}
+                    </div>
+                  </div>
+                );
+              })}
           </div>
-        ))}
-    </div>
-  );
+        );
 
       case "talent-search":
         return (
@@ -901,22 +907,22 @@ const fetchApplications = useCallback(async () => {
             </div>
             <div className="space-y-2">
               {filteredSeekers.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো প্রার্থী পাওয়া যায়নি</p> :
-                filteredSeekers.map(s => (
+                filteredSeekers.map((s: any) => (
                   <div key={s.id} className="border rounded-lg p-3 bg-card">
                     <div className="flex items-start justify-between">
                       <div>
                         <p className="font-semibold text-sm">{s.full_name}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
-                          {(s.skills as string[])?.slice(0, 4).map((sk: string, i: number) => (
+                          {(typeof s.skills === "string" ? JSON.parse(s.skills || "[]") : (s.skills || [])).slice(0, 4).map((sk: string, i: number) => (
                             <Badge key={i} variant="outline" className="text-[9px]">{sk}</Badge>
                           ))}
                         </div>
                         <div className="flex gap-2 mt-1 text-[10px] text-muted-foreground">
                           {s.address && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{s.address}</span>}
-                          {s.expected_salary && <span>প্রত্যাশিত: ৳{s.expected_salary.toLocaleString("bn-BD")}</span>}
+                          {s.expected_salary && <span>প্রত্যাশিত: ৳{Number(s.expected_salary).toLocaleString("bn-BD")}</span>}
                         </div>
                       </div>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => addBookmark(s.id)}>
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => addBookmark(s.user_id)}>
                         <BookmarkPlus className="h-4 w-4 text-amber-600" />
                       </Button>
                     </div>
@@ -934,9 +940,9 @@ const fetchApplications = useCallback(async () => {
               bookmarks.map((b: any) => (
                 <div key={b.id} className="border rounded-lg p-3 bg-card flex items-center justify-between">
                   <div>
-                    <p className="font-semibold text-sm">{b.job_seeker_profiles?.full_name}</p>
+                    <p className="font-semibold text-sm">{b.full_name}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
-                      {(b.job_seeker_profiles?.skills as string[])?.slice(0, 3).map((sk: string, i: number) => (
+                      {(typeof b.skills === "string" ? JSON.parse(b.skills || "[]") : (b.skills || [])).slice(0, 3).map((sk: string, i: number) => (
                         <Badge key={i} variant="outline" className="text-[9px]">{sk}</Badge>
                       ))}
                     </div>
@@ -956,8 +962,8 @@ const fetchApplications = useCallback(async () => {
                 <div key={iv.id} className="border rounded-lg p-3 bg-card space-y-1">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="font-semibold text-sm">{iv.job_portal_applications?.applicant_name}</p>
-                      <p className="text-xs text-muted-foreground">{iv.jobs?.title}</p>
+                      <p className="font-semibold text-sm">{iv.applicant_name}</p>
+                      <p className="text-xs text-muted-foreground">{iv.job_title}</p>
                     </div>
                     <Badge className={iv.status === "scheduled" ? "bg-blue-100 text-blue-800" : iv.status === "completed" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
                       {iv.status === "scheduled" ? "আসন্ন" : iv.status === "completed" ? "সম্পন্ন" : "বাতিল"}
@@ -981,11 +987,11 @@ const fetchApplications = useCallback(async () => {
             <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> জব পোস্টিং প্যাকেজ</h2>
             <p className="text-xs text-muted-foreground">আপনার প্রয়োজন অনুযায়ী সঠিক প্ল্যান নির্বাচন করুন</p>
 
-            {/* Tabs: Prepaid / Pay as you go / Free */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {packages.map((pkg: any) => {
                 const isRecommended = pkg.is_featured;
                 const visLevel = pkg.visibility_level;
+                const features = typeof pkg.features === "string" ? JSON.parse(pkg.features || "[]") : (pkg.features || []);
                 return (
                   <div key={pkg.id} className={`border rounded-xl p-5 bg-card relative transition-all hover:shadow-lg ${isRecommended ? "border-primary ring-2 ring-primary/20" : ""} ${visLevel === "hot" ? "border-red-400 bg-gradient-to-b from-red-50/50 to-card dark:from-red-950/20" : ""}`}>
                     {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] px-3">জনপ্রিয়</Badge>}
@@ -995,14 +1001,14 @@ const fetchApplications = useCallback(async () => {
                       <h3 className="font-bold text-base">{pkg.name}</h3>
                     </div>
                     <p className="text-3xl font-extrabold text-primary">
-                      ৳{pkg.price.toLocaleString("bn-BD")}
+                      ৳{Number(pkg.price).toLocaleString("bn-BD")}
                       {pkg.price > 0 && <span className="text-xs font-normal text-muted-foreground">+ভ্যাট/প্রতি জব</span>}
                     </p>
                     <div className="border-t my-3" />
                     <p className="text-xs text-muted-foreground mb-1">{pkg.duration_days} দিন ভিজিবিলিটি</p>
                     <p className="text-xs text-muted-foreground mb-3">{pkg.max_applications ? `সর্বোচ্চ ${pkg.max_applications} আবেদন` : "আনলিমিটেড আবেদন"}</p>
                     <ul className="space-y-1.5 mb-4">
-                      {(pkg.features as string[])?.map((f: string, i: number) => (
+                      {features.map((f: string, i: number) => (
                         <li key={i} className="text-xs text-muted-foreground flex items-start gap-1.5">
                           <CheckCircle className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />{f}
                         </li>
@@ -1028,9 +1034,6 @@ const fetchApplications = useCallback(async () => {
 
   return (
     <JobsPageTransition>
-      
-      {/* <div className="pt-[44px] md:pt-[68px] bg-card" /> */}
-      {/* <JobsMenuBar /> */}
       <PanelSidebarTabs
         panelTitle="এমপ্লয়ার প্যানেল"
         panelIcon={<Building2 />}
