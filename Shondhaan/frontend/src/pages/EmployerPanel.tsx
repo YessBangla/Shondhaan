@@ -220,13 +220,17 @@ const EmployerPanel = () => {
   // job ids myJobs now uses. Until a MySQL job_applications table + routes
   // exist, this will return nothing for jobs posted through JobPostForm.
   // Left as-is on purpose; say the word if you want that built next.
-  const fetchApplications = useCallback(async () => {
-    if (!user) return;
-    const { data: jobIds } = await supabase.from("jobs").select("id").eq("user_id", user.id);
-    if (!jobIds || jobIds.length === 0) return;
-    const { data } = await supabase.from("job_portal_applications").select("*").in("job_id", jobIds.map(j => j.id)).order("created_at", { ascending: false });
-    if (data) setApplications(data);
-  }, [user]);
+ // Applications now come from MySQL job_applications (routes/applications.js),
+// scoped server-side to jobs.user_id = the logged-in employer.
+const fetchApplications = useCallback(async () => {
+  if (!user) return;
+  try {
+    const data = await fetchJobsJson(`/api/jobseeker/applications/employer/mine`);
+    setApplications(data || []);
+  } catch (err) {
+    console.error("Failed to load applications:", err);
+  }
+}, [user]);
 
   const fetchSeekers = useCallback(async () => {
     const { data } = await supabase.from("job_seeker_profiles").select("*").eq("is_available", true).limit(50);
@@ -858,31 +862,34 @@ const EmployerPanel = () => {
           </div>
         );
 
-      case "applications":
-        return (
-          <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> সকল আবেদন ({applications.length})</h2>
-            {applications.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো আবেদন নেই</p> :
-              applications.map(app => {
-                const stageInfo = HIRING_STAGES.find(s => s.key === ((app as any).hiring_stage || "applied"));
-                return (
-                  <div key={app.id} className="border rounded-lg p-3 bg-card space-y-2">
-                    <div className="flex items-start justify-between">
-                      <div>
-                        <p className="font-semibold text-sm">{app.applicant_name}</p>
-                        <p className="text-xs text-muted-foreground">{app.applicant_phone} {app.applicant_email && `• ${app.applicant_email}`}</p>
-                      </div>
-                      <Badge className={stageInfo?.color || "bg-muted"}>{stageInfo?.label || "আবেদন"}</Badge>
-                    </div>
-                    {app.cover_letter && <p className="text-xs text-muted-foreground line-clamp-2">{app.cover_letter}</p>}
-                    <div className="flex gap-2">
-                      {app.cv_url && <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-0.5"><FileText className="h-3 w-3" /> CV দেখুন</a>}
-                    </div>
-                  </div>
-                );
-              })}
+    case "applications":
+  return (
+    <div className="space-y-4">
+      <h2 className="text-lg font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-primary" /> সকল আবেদন ({applications.length})</h2>
+      {applications.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো আবেদন নেই</p> :
+        applications.map((app: any) => (
+          <div key={app.id} className="border rounded-lg p-3 bg-card space-y-2">
+            <div className="flex items-start justify-between">
+              <div>
+                <p className="font-semibold text-sm">{app.jobseeker_name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {app.jobseeker_phone} {app.jobseeker_email && `• ${app.jobseeker_email}`}
+                </p>
+                <p className="text-[10px] text-primary mt-0.5">{app.job_title}</p>
+              </div>
+              <Badge className="bg-blue-100 text-blue-800">
+                {app.status === "pending" ? "আবেদন" : app.status === "shortlisted" ? "শর্টলিস্ট" : app.status === "hired" ? "নিয়োগ" : "বাতিল"}
+              </Badge>
+            </div>
+            {app.cover_letter && <p className="text-xs text-muted-foreground line-clamp-2">{app.cover_letter}</p>}
+            <div className="flex gap-3 text-[10px] text-muted-foreground">
+              {app.expected_salary != null && <span>প্রত্যাশিত বেতন: ৳{Number(app.expected_salary).toLocaleString("bn-BD")}</span>}
+              {app.age_at_application != null && <span>বয়স: {app.age_at_application}</span>}
+            </div>
           </div>
-        );
+        ))}
+    </div>
+  );
 
       case "talent-search":
         return (
