@@ -2,6 +2,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 const pool = mysql.createPool({
@@ -16,6 +17,7 @@ const pool = mysql.createPool({
 
 const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'http://localhost:5000';
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-should-be-in-env';
 
 // ── Auth ─────────────────────────────────────────────────────────────
 
@@ -71,16 +73,42 @@ function verifyLocalAuthToken(token = '') {
   }
 }
 
+/**
+ * Try to verify the JWT directly using jsonwebtoken.
+ * This is the primary method since the frontend sends a JWT from the central backend.
+ */
+function verifyJwtToken(token = '') {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.id) return null;
+    return decoded;
+  } catch (err) {
+    console.log('[auth] Direct JWT verify failed:', err.message);
+    return null;
+  }
+}
+
 async function verifyShondhaanUser(authHeader) {
   if (!authHeader) return null;
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+  // 1. Try direct JWT verification
+  const jwtUser = verifyJwtToken(token);
+  if (jwtUser) return jwtUser;
+
+  // 2. Try local HMAC token
   const localUser = verifyLocalAuthToken(token);
   if (localUser) return localUser;
 
+  // 3. Fallback: forward to central backend
   try {
     const response = await fetch(`${SHONDHAAN_API_URL}/api/users/me/profile`, {
-      headers: { Authorization: authHeader },
+      headers: {
+        Authorization: authHeader,
+        Cookie: `token=${token}`,
+      },
     });
     if (!response.ok) return null;
     const user = await response.json();

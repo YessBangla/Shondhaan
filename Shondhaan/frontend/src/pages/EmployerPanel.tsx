@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
@@ -34,6 +34,7 @@ function getAuthHeaders() {
 async function fetchJobsJson(path: string, init?: RequestInit) {
   const res = await fetch(`${YESSJOB_API_BASE}${path}`, {
     ...init,
+    credentials: "include",
     headers: { "Content-Type": "application/json", ...getAuthHeaders(), ...(init?.headers || {}) },
   });
   if (!res.ok) {
@@ -135,6 +136,7 @@ const EmployerPanel = () => {
       setIsEmployer(true);
       try {
         const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile/me`, {
+          credentials: "include",
           headers: getAuthHeaders(),
         });
         if (res.ok) {
@@ -161,6 +163,7 @@ const EmployerPanel = () => {
     try {
       const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile`, {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json", ...getAuthHeaders() },
         body: JSON.stringify(formData), // user_id is derived server-side from the token
       });

@@ -4,6 +4,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
@@ -17,7 +18,11 @@ const createJobMatchingCriteriaTable = require('./database/Createjobmatchingcrit
 const createJobBillingContactsTable = require('./database/Createjobbillingcontactstable');
 const createJobseekerProfilesTable = require('./database/createJobseekerProfilesTable');
 const createApplicationsTable = require('./database/Createapplicationstable');
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:5000', 'http://127.0.0.1:8080', 'http://127.0.0.1:5000'],
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
