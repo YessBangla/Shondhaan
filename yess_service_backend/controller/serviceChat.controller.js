@@ -2,12 +2,19 @@ import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../config/db.js";
 
-const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
+// Read the secret directly from the environment variables
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_dev_secret";
+
+if (JWT_SECRET === "fallback_dev_secret") {
+  console.warn("[ChatController] WARNING: JWT_SECRET is not found in .env! Falling back to insecure default.");
+}
+
 const STAFF_ROLES = new Set(["call_center", "admin", "super_admin"]);
 
 const clean = (value, fallback = "") => String(value ?? fallback).trim();
 
 export const ensureServiceChatSchema = async () => {
+  console.log("[Schema] Ensuring service chat schema exists...");
   await pool.query(`
     CREATE TABLE IF NOT EXISTS service_chat_conversations (
       id CHAR(36) PRIMARY KEY,
@@ -46,20 +53,64 @@ export const ensureServiceChatSchema = async () => {
         ON DELETE CASCADE
     )
   `);
+  console.log("[Schema] Schema check complete.");
 };
 
 export const getBearerUser = (req) => {
-  const header = req.headers.authorization || "";
-  if (!header.startsWith("Bearer ")) return null;
+  console.log("--- getBearerUser Initiated ---");
+  
+  // 1. Try to get token from req.cookies (requires cookie-parser middleware)
+  let cookieToken = req.cookies?.token;
 
+  // 2. Fallback: Manually parse the cookie header if cookie-parser isn't installed
+  if (!cookieToken && req.headers.cookie) {
+    const rawCookies = req.headers.cookie.split('; ').reduce((acc, c) => {
+      const [key, val] = c.split('=');
+      acc[key] = val;
+      return acc;
+    }, {});
+    cookieToken = rawCookies.token;
+  }
+
+  if (cookieToken) {
+    console.log("Token found in cookie. Attempting to verify...");
+    try {
+      const decoded = jwt.verify(cookieToken, JWT_SECRET);
+      console.log("Cookie token SUCCESSFULLY verified:", decoded);
+      return decoded;
+    } catch (err) {
+      console.error("Cookie token verification FAILED:", err.message);
+      return null;
+    }
+  } else {
+    console.log("No token found in cookies.");
+  }
+
+  // 3. Fallback to Authorization header for API clients/Postman
+  const header = req.headers.authorization || "";
+  if (!header.startsWith("Bearer ")) {
+    console.log("No valid Bearer header found.");
+    return null;
+  }
+
+  console.log("Bearer token found in headers. Attempting to verify...");
   try {
-    return jwt.verify(header.slice(7), JWT_SECRET);
-  } catch {
+    const token = header.split(" ")[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    console.log("Bearer token SUCCESSFULLY verified:", decoded);
+    return decoded;
+  } catch (err) {
+    console.error("Bearer token verification FAILED:", err.message);
     return null;
   }
 };
 
-export const isStaffUser = (user) => STAFF_ROLES.has(String(user?.type || user?.role || ""));
+export const isStaffUser = (user) => {
+  const role = String(user?.type || user?.role || "");
+  const isStaff = STAFF_ROLES.has(role);
+  console.log(`[isStaffUser] Checking role: "${role}". Is Staff? ${isStaff}`);
+  return isStaff;
+};
 
 export const normalizeConversation = (row) => ({
   ...row,
@@ -74,6 +125,7 @@ export const normalizeMessage = (row) => ({
 });
 
 export const getConversationById = async (id) => {
+  console.log(`[DB] Fetching conversation by ID: ${id}`);
   const [rows] = await pool.execute(
     `SELECT * FROM service_chat_conversations WHERE id = ? LIMIT 1`,
     [id]
@@ -83,25 +135,36 @@ export const getConversationById = async (id) => {
 };
 
 const ensureParticipantCanRead = (req, conversation) => {
+  console.log("[Auth] Ensuring participant can read...");
   const user = getBearerUser(req);
-  if (isStaffUser(user)) return { ok: true, user, staff: true };
+  if (isStaffUser(user)) {
+    console.log("[Auth] Access granted: Staff.");
+    return { ok: true, user, staff: true };
+  }
 
   const visitorId = clean(req.query.visitor_id || req.body?.visitor_id);
   if (user?.id && String(conversation.user_id || "") === String(user.id)) {
+    console.log("[Auth] Access granted: Matches user ID.");
     return { ok: true, user, staff: false };
   }
 
   if (visitorId && conversation.visitor_id && visitorId === conversation.visitor_id) {
+    console.log("[Auth] Access granted: Matches visitor ID.");
     return { ok: true, user, staff: false };
   }
 
+  console.warn("[Auth] Access DENIED.");
   return { ok: false, user, staff: false };
 };
 
 const emitChatUpdate = (req, payload) => {
   const io = req.app.get("io");
-  if (!io) return;
+  if (!io) {
+    console.log("[Socket] No IO instance found on app.");
+    return;
+  }
 
+  console.log("[Socket] Emitting chat update for conversation:", payload.conversation.id);
   io.to(`service-chat:${payload.conversation.id}`).emit("service-chat:message:new", payload);
   io.to("service-chat:staff").emit("service-chat:conversation:updated", payload);
 };
@@ -115,6 +178,7 @@ export const createConversationRecord = async ({
   user_phone,
   subject,
 }) => {
+  console.log("[Service] Creating conversation record...");
   const body = clean(message);
   if (!body) {
     const error = new Error("Message is required");
@@ -164,6 +228,7 @@ export const createConversationRecord = async ({
     [messageId]
   );
 
+  console.log("[Service] Conversation record created successfully.");
   return {
     conversation: normalizeConversation(conversation),
     message: normalizeMessage(messages[0]),
@@ -171,6 +236,7 @@ export const createConversationRecord = async ({
 };
 
 export const addMessageRecord = async ({ conversationId, message, visitor_id, user, staffName }) => {
+  console.log(`[Service] Adding message record to conversation: ${conversationId}`);
   const conversation = await getConversationById(conversationId);
   if (!conversation) {
     const error = new Error("Conversation not found");
@@ -240,6 +306,7 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
     [messageId]
   );
 
+  console.log("[Service] Message record added successfully.");
   return {
     conversation: normalizeConversation(updatedConversation),
     message: normalizeMessage(messages[0]),
@@ -247,8 +314,8 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
 };
 
 export const createConversation = async (req, res) => {
+  console.log("=== POST /conversations Request Received ===");
   try {
-    await ensureServiceChatSchema();
     const payload = await createConversationRecord({
       ...req.body,
       user: getBearerUser(req),
@@ -257,6 +324,7 @@ export const createConversation = async (req, res) => {
     emitChatUpdate(req, payload);
     return res.status(201).json({ data: payload });
   } catch (error) {
+    console.error("[Controller] Create Conversation Error:", error.message);
     return res.status(error.status || 500).json({
       message: error.message || "Could not create chat conversation",
     });
@@ -264,13 +332,16 @@ export const createConversation = async (req, res) => {
 };
 
 export const listConversations = async (req, res) => {
+  console.log("=== GET /conversations Request Received ===");
   try {
-    await ensureServiceChatSchema();
     const user = getBearerUser(req);
+    
     if (!isStaffUser(user)) {
+      console.warn("[Controller] Access denied to listConversations. User is not staff.");
       return res.status(403).json({ message: "Staff access required" });
     }
 
+    console.log("[Controller] Fetching conversations from DB...");
     const [rows] = await pool.execute(`
       SELECT
         c.*,
@@ -281,27 +352,37 @@ export const listConversations = async (req, res) => {
       ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
     `);
 
+    console.log(`[Controller] Found ${rows.length} conversations.`);
     return res.json({ data: rows.map(normalizeConversation) });
   } catch (error) {
+    console.error("[Controller] List Conversations Error:", error);
     return res.status(500).json({ message: "Could not load conversations" });
   }
 };
 
 export const listMessages = async (req, res) => {
+  console.log(`=== GET /conversations/${req.params.id}/messages Request Received ===`);
   try {
-    await ensureServiceChatSchema();
     const conversation = await getConversationById(req.params.id);
-    if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+    if (!conversation) {
+      console.warn("[Controller] Conversation not found.");
+      return res.status(404).json({ message: "Conversation not found" });
+    }
 
     const access = ensureParticipantCanRead(req, conversation);
-    if (!access.ok) return res.status(403).json({ message: "Not allowed for this conversation" });
+    if (!access.ok) {
+      console.warn("[Controller] Participant access denied.");
+      return res.status(403).json({ message: "Not allowed for this conversation" });
+    }
 
     if (access.staff) {
+      console.log("[Controller] Marking messages as read by staff...");
       await pool.execute(
         `UPDATE service_chat_messages SET read_by_staff = 1 WHERE conversation_id = ? AND sender_role = 'customer'`,
         [conversation.id]
       );
     } else {
+      console.log("[Controller] Marking messages as read by customer...");
       await pool.execute(
         `UPDATE service_chat_messages SET read_by_customer = 1 WHERE conversation_id = ? AND sender_role = 'staff'`,
         [conversation.id]
@@ -318,6 +399,7 @@ export const listMessages = async (req, res) => {
       [conversation.id]
     );
 
+    console.log(`[Controller] Found ${messages.length} messages.`);
     return res.json({
       data: {
         conversation: normalizeConversation(conversation),
@@ -325,13 +407,14 @@ export const listMessages = async (req, res) => {
       },
     });
   } catch (error) {
+    console.error("[Controller] List Messages Error:", error);
     return res.status(500).json({ message: "Could not load messages" });
   }
 };
 
 export const sendConversationMessage = async (req, res) => {
+  console.log(`=== POST /conversations/${req.params.id}/messages Request Received ===`);
   try {
-    await ensureServiceChatSchema();
     const payload = await addMessageRecord({
       conversationId: req.params.id,
       message: req.body.message,
@@ -343,6 +426,7 @@ export const sendConversationMessage = async (req, res) => {
     emitChatUpdate(req, payload);
     return res.status(201).json({ data: payload });
   } catch (error) {
+    console.error("[Controller] Send Message Error:", error.message);
     return res.status(error.status || 500).json({
       message: error.message || "Could not send chat message",
     });
