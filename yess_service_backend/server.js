@@ -32,7 +32,7 @@ const corsOrigin = [
         .filter(Boolean),
       process.env.FRONTEND_BASE_URL,
       "http://localhost:5173",
-      "https://shondhaan.yessbd.top",
+      "https://shondhaan.com",
       "https://www.shondhaan.com",
     ].filter(Boolean)
   ),
