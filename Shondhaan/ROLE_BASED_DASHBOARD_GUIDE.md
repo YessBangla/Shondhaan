@@ -201,7 +201,7 @@ curl -X POST /api/auth/login -d "email=userA@example.com"
 
 # Try to access User B's profile
 curl -H "Authorization: Bearer tokenA" \
-  http://localhost:5000/api/user/profile?userId=userB_id
+  https://backend-central.shondhaan.com/api/user/profile?userId=userB_id
 # Expected: 403 Forbidden - ACCESS_DENIED
 ```
 
@@ -217,7 +217,7 @@ curl -X GET -H "Authorization: Bearer tokenUser" \
 ```bash
 # Login as Admin
 curl -H "Authorization: Bearer tokenAdmin" \
-  http://localhost:5000/api/user/profile
+  https://backend-central.shondhaan.com/api/user/profile
 # Expected: 200 OK with admin's profile data
 ```
 
@@ -226,7 +226,7 @@ curl -H "Authorization: Bearer tokenAdmin" \
 # Login as Admin A
 # Try to view Admin B's profile
 curl -H "Authorization: Bearer tokenAdminA" \
-  http://localhost:5000/api/user/profile?userId=adminB_id
+  https://backend-central.shondhaan.com/api/user/profile?userId=adminB_id
 # Expected: 403 Forbidden - ACCESS_DENIED
 ```
 

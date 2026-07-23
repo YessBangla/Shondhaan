@@ -20,7 +20,7 @@ import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();

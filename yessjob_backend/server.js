@@ -7,14 +7,14 @@ const path = require('path');
 
 const app = express();
 
-const { createJobCategoriesTable } = require("./database/createJobCategoriesTable");
-const jobCategoriesRoutes = require("./routes/jobCategories");
+const { createJobCategoriesTable } = require("./database/Createjobcategoriestable");
+
 
 const createEmployerProfilesTable = require('./database/createEmployerProfilesTable');
 const createJobsTable = require('./database/createJobsTable');
-const createJobCandidateRequirementsTable = require('./database/createJobCandidateRequirementsTable');
+const createJobCandidateRequirementsTable = require('./database/Createjobcandidaterequirementstable');
 const createJobMatchingCriteriaTable = require('./database/Createjobmatchingcriteriatable');
-const createJobBillingContactsTable = require('./database/createJobBillingContactsTable');
+const createJobBillingContactsTable = require('./database/Createjobbillingcontactstable');
 const createJobseekerProfilesTable = require('./database/createJobseekerProfilesTable');
 const createApplicationsTable = require('./database/Createapplicationstable');
 app.use(cors());
@@ -30,7 +30,7 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/api/employer-profile', require('./routes/employerProfile'));
 app.use('/api/jobs', require('./routes/jobs'));
-app.use("/api/job-categories", jobCategoriesRoutes);
+app.use("/api/job-categories", require('./routes/Jobcategories'));
 app.use('/api/jobseeker/profile', require('./routes/jobSeekerProfile'));
 app.use('/api/jobseeker/applications', require('./routes/applications'));
 app.get('/', (req, res) => {

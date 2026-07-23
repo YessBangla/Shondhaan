@@ -8,7 +8,7 @@ import { toast } from "sonner";
 // "Login required" kept firing even while logged in: this app's real
 // session lives in localStorage under "yess_mysql_auth", not in Supabase's
 // own auth, so Supabase never saw a logged-in user.
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
 
 function getAuthHeaders() {
   const authRaw = localStorage.getItem("yess_mysql_auth");
@@ -167,7 +167,7 @@ const FALLBACK_JOB_CATEGORIES: JobCategory[] = [
 ];
 
 const JOB_CATEGORIES_ENDPOINT =
-  import.meta.env.VITE_JOB_CATEGORIES_URL || "http://localhost:5000/api/job-categories";
+  import.meta.env.VITE_JOB_CATEGORIES_URL || "https://backend-central.shondhaan.com/api/job-categories";
 
 const JOB_TYPES = [
   { value: "full-time", labelBn: "ফুল-টাইম", labelEn: "Full-time" },

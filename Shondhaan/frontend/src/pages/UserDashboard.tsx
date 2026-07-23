@@ -74,7 +74,7 @@ const UserDashboard = () => {
       setError(null);
 
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/user/profile`,
+        `${import.meta.env.VITE_API_BASE || "https://backend-central.shondhaan.com"}/api/user/profile`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -116,7 +116,7 @@ const UserDashboard = () => {
   const fetchUserStats = async (token: string) => {
     try {
       const response = await fetch(
-        `${import.meta.env.VITE_API_BASE || "http://localhost:5000"}/api/user/stats`,
+        `${import.meta.env.VITE_API_BASE || "https://backend-central.shondhaan.com"}/api/user/stats`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

@@ -17,9 +17,9 @@ import { toast } from "sonner";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { Briefcase, ArrowLeft, ArrowRight, CheckCircle2, Sparkles, Building2, UserCheck, SlidersHorizontal, Phone, Plus, MapPin, GraduationCap, Wallet, Award, Circle, Users, Bold, Italic, List } from "lucide-react";
 const JOB_CATEGORIES_ENDPOINT =
-  import.meta.env.VITE_JOB_CATEGORIES_URL || "http://localhost:5050/api/job-categories";
+  import.meta.env.VITE_JOB_CATEGORIES_URL || "https://backend-yjob.shondhaan.com/api/job-categories";
 
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
