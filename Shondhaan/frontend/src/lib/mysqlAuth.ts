@@ -15,6 +15,7 @@ export interface MySqlAuthUser {
 interface AuthResponse {
   message: string;
   user: MySqlAuthUser;
+  token?: string;
 }
 
 const API_BASE_URL = (
@@ -467,7 +468,8 @@ export function saveMySqlAuth(
  localStorage.setItem(
   STORAGE_KEY,
   JSON.stringify({
-   user:data.user
+   user:data.user,
+   token:data.token
   })
  );
 

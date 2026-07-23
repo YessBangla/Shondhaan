@@ -190,8 +190,8 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
             aria-label={bn ? "অবস্থান নির্বাচন করুন" : "Choose location"}
             className="press flex h-9 min-w-0 max-w-full flex-1 items-center gap-1 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/90 backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary active:scale-[0.97]"
           >
-            <MapPin className="h-[14px] w-[14px] shrink-0 text-primary" strokeWidth={2.2} />
-            <span className="min-w-0 flex-1 truncate text-left text-[11.5px] font-semibold leading-none tracking-tight">
+            <MapPin className="h-[14px] w-[14px] shrink-0 text-white" strokeWidth={2.2} />
+            <span className="min-w-0 flex-1 text-white truncate text-left text-[11.5px] font-semibold leading-none tracking-tight">
               {displayText}
             </span>
             <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -211,7 +211,7 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 border-r border-border px-3 py-3.5 text-sm text-foreground transition-colors hover:bg-secondary md:px-4 whitespace-nowrap"
+          className="flex items-center gap-1.5 border-r border-border px-3 py-3.5 text-sm text-foreground transition-colors hover:bg-orange-400/40 md:px-4 whitespace-nowrap"
         >
           <MapPin className="h-4 w-4 text-primary shrink-0" />
           <span className="max-w-[100px] md:max-w-[160px] truncate text-xs md:text-sm">{displayText}</span>

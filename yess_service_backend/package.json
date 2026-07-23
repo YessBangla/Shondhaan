@@ -17,6 +17,7 @@
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.10.1",
+    "socket.io": "^4.8.3",
     "uuid": "^14.0.1"
   }
 }

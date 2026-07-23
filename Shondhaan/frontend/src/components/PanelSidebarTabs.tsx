@@ -1,17 +1,15 @@
 import { useState, useEffect, useMemo, useCallback, ReactNode, useRef } from "react";
 import { cn } from "@/lib/utils";
 import {
-  ChevronLeft, ChevronRight, Menu, X, Search, Sun, Moon, Monitor, Bell,
+  ChevronLeft, ChevronRight, Menu, Search, Sun, Moon, Monitor,
   Languages, Pin, PinOff, Command as CommandIcon, Sparkles, ChevronDown,
-  Home, RotateCcw, LogOut, Clock, Zap, User as UserIcon, Package as PackageIcon,
-  Calendar as CalendarIcon, ShoppingBag, FileText as FileTextIcon, ArrowRight,
+  Home, RotateCcw, LogOut,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
 import NotificationBell from "@/components/NotificationBell";
 import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
@@ -66,16 +64,17 @@ const PanelSidebarTabs = ({
   const { mode, cycle } = useTheme();
   const { language, setLanguage } = useLanguage();
 
+
   const [activeTab, setActiveTabState] = useState(defaultValue);
-  const requestedTab = searchParams.get("tab");
+const requestedTab = searchParams.get("tab");
 
-  useEffect(() => {
-    if (!requestedTab) return;
-    if (items.some((item) => item.value === requestedTab)) {
-      setActiveTabState(requestedTab);
-    }
-  }, [items, requestedTab]);
+useEffect(() => {
+  if (!requestedTab) return;
 
+  if (items.some((item) => item.value === requestedTab)) {
+    setActiveTabState(requestedTab);
+  }
+}, [requestedTab, items]);
   const collapseKey = `panel_collapsed_${panelTitle || "default"}`;
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(collapseKey) === "1"; } catch { return false; }
@@ -166,15 +165,14 @@ const PanelSidebarTabs = ({
 
   const pinnedItems = useMemo(() => items.filter((i) => pinned.includes(i.value)), [items, pinned]);
 
-  // ── KEY FIX: handleSelect only updates state, NO navigate() calls ──
   const handleSelect = useCallback((value: string) => {
     setActiveTabState(value);
-    setMobileOpen(false);
-    // Update recent MRU list
     setRecent((prev) => {
-      const next = [value, ...prev.filter((v) => v !== value)].slice(0, 6);
-      return next;
+      const next = prev.filter((v) => v !== value);
+      next.unshift(value);
+      return next.slice(0, 10);
     });
+    setMobileOpen(false);
   }, []);
 
   const activeItem = items.find((i) => i.value === activeTab);
@@ -636,6 +634,7 @@ const PanelSidebarTabs = ({
   );
 };
 
+
 // ── NavBtn ──────────────────────────────────────────────────────────────────
 const NavBtn = ({
   item, active, onClick, onPin, pinned, collapsed,
@@ -773,7 +772,6 @@ const CommandPalette = ({
           />
           <kbd className="rounded-md border border-border bg-card px-1.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
         </div>
-
         <div className="max-h-[58vh] overflow-y-auto p-2 space-y-1">
           {rows.length === 0 ? (
             <p className="text-center py-8 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>

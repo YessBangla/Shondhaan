@@ -87,6 +87,7 @@ import {
   AdminPermissionsPage, AdminSettingsPage,
 } from "./pages/admin/AdminPages";
 import MartStore from "./pages/MartStore";
+import ServiceMessage from "./pages/ServiceMessage";
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -162,8 +163,8 @@ const queryClient = new QueryClient({
     queries: {
       staleTime: 2 * 60 * 1000,      // 2 min — reduces refetches
       gcTime: 10 * 60 * 1000,         // 10 min cache
-      refetchOnWindowFocus: false,     // prevent refetch on tab switch
-      retry: 1,                        // single retry on failure
+      refetchOnWindowFocus: false,     
+      retry: 1,                       
     },
   },
 });
@@ -271,6 +272,7 @@ const App = () => {
             <Route path="/" element={<Index />} />
             <Route path="/service/:slug" element={<ServiceDetail />} />
             <Route path="/all-services" element={<AllServices />} />
+            <Route path="/service-message" element={<ServiceMessage />} />
             <Route path="/compare" element={<Compare />} />
             <Route path="/auth" element={<Auth />} />
             <Route path="/auth/callback" element={<AuthCallback />} />

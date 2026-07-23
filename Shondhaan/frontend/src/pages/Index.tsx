@@ -14,6 +14,7 @@ import RequestService from "@/components/RequestService";
 import TrackingSearch from "@/components/TrackingSearch";
 import Footer from "@/components/Footer";
 import ScrollButtons from "@/components/ScrollButtons";
+import ServiceChatFloatingButton from "@/components/ServiceChatFloatingButton";
 import { useLocation } from "@/contexts/LocationContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import MobileServiceSkeleton from "@/components/MobileServiceSkeleton";
@@ -499,6 +500,7 @@ const Index = () => {
 
       <Footer />
       <ScrollButtons />
+      <ServiceChatFloatingButton />
 
       <div
         className="md:hidden"

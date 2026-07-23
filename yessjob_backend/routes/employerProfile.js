@@ -15,7 +15,7 @@ const pool = mysql.createPool({
   queueLimit: 0
 }).promise();
 
-const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'http://localhost:5000';
+const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'https://backend-central.shondhaan.com';
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
 
 const WRITABLE_FIELDS = [

@@ -11,6 +11,7 @@ import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import { toast } from "sonner";
 import AccountsSection from "@/components/AccountsSection";
 import NotificationBell from "@/components/NotificationBell";
+import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 import CategoryFilterDropdown, { useServiceCategoryMap } from "@/components/CategoryFilterDropdown";
 import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import {
@@ -412,6 +413,7 @@ const CallCenterPanel = () => {
               { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
               { value: "bookings", label: "বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "অপারেশন" },
               { value: "requests", label: "সেবা রিকোয়েস্ট", icon: <FileText className="h-4 w-4" /> },
+              { value: "service-messages", label: "Service messages", icon: <MessageSquare className="h-4 w-4" /> },
               { value: "lab-tests", label: "ল্যাব টেস্ট", icon: <FlaskConical className="h-4 w-4" /> },
               { value: "mart-orders", label: "মার্ট অর্ডার", icon: <ShoppingCart className="h-4 w-4" />, group: "ইয়েস মার্ট" },
               { value: "accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" />, group: "ফিনান্স" },
@@ -673,6 +675,7 @@ const CallCenterPanel = () => {
                   })()}
                 </div>
               );
+              if (activeTab === "service-messages") return <div className="p-4"><ServiceStaffChatInbox /></div>;
               if (activeTab === "lab-tests") return (
                 <div className="p-4 space-y-3">
                   <p className="text-xs text-muted-foreground mb-2">মোট ল্যাব টেস্ট: {labTests.length}</p>

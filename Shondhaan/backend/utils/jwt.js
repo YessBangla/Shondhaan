@@ -6,7 +6,7 @@ export function createToken(user) {
     {
       id: user.id,
       email: user.email,
-      type: user.type,
+      role: user.role,
     },
     JWT_SECRET,
     { expiresIn: "7d" }

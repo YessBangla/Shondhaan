@@ -5,7 +5,8 @@ import {
   Users, Settings, Package, Grid3X3, Percent, Image, LayoutList,
   FileText, MessageSquare, Briefcase, Star, Bot, MapPinCheck,
   Bell, Tag, Banknote, ImagePlus, Handshake, ShoppingCart, Calendar,
-  Receipt, Crown, Key, Activity, CreditCard, Store, RefreshCw, Truck
+  Receipt, Crown, Key, Activity, CreditCard, Store, RefreshCw, Truck,
+  Headphones
   , UserPlus, UserCog,
   UserCheck
 } from "lucide-react";
@@ -53,6 +54,7 @@ import AdminMartKyc from "@/components/mart/AdminMartKyc";
 import AdminDeliveryKyc from "@/components/mart/AdminDeliveryKyc";
 import AdminMartCategories from "@/components/admin/Adminmartcategories";
 import AdminMartBanners from "@/components/mart/Adminmartbanners";
+import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 const sidebarItems = [
   // ড্যাশবোর্ড
   { value: "overview", label: "ওভারভিউ", icon: <LayoutDashboard />, group: "ড্যাশবোর্ড" },
@@ -93,6 +95,7 @@ const sidebarItems = [
 
   // কমিউনিকেশন
   { value: "contacts", label: "মেসেজ", icon: <MessageSquare />, group: "কমিউনিকেশন" },
+  { value: "service-messages", label: "Service messages", icon: <Headphones />, group: "কমিউনিকেশন" },
   { value: "chat-history", label: "চ্যাট হিস্ট্রি", icon: <Bot />, group: "কমিউনিকেশন" },
   { value: "notifications", label: "নোটিফিকেশন", icon: <Bell />, group: "কমিউনিকেশন" },
 
@@ -211,6 +214,7 @@ const SuperAdminPanel = () => {
       case "requests": return <div className="p-4"><AdminServiceRequests /></div>;
       case "bookings": return <div className="p-4"><AdminServiceRequests /></div>;
       case "contacts": return <div className="p-4"><AdminContactMessages /></div>;
+      case "service-messages": return <div className="p-4"><ServiceStaffChatInbox /></div>;
       case "jobs": return <div className="p-4"><AdminJobApplications /></div>;
       case "reviews": return <div className="p-4"><AdminReviews /></div>;
       case "users": return <div className="p-4"><AdminUserRoles /></div>;

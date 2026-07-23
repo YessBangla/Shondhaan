@@ -152,7 +152,7 @@ const FALLBACK_JOB_CATEGORIES: JobCategory[] = [
 ];
 
 const JOB_CATEGORIES_ENDPOINT =
-  import.meta.env.VITE_JOB_CATEGORIES_URL || "http://localhost:5000/api/job-categories";
+  import.meta.env.VITE_JOB_CATEGORIES_URL || "https://backend-central.shondhaan.com/api/job-categories";
 
 const JOB_TYPES = [
   { value: "full-time", labelBn: "ফুল-টাইম", labelEn: "Full-time" },

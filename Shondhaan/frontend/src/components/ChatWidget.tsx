@@ -15,7 +15,7 @@ import { getMobileFloatingBottom } from "@/lib/mobileBottomOffsets";
 import { socket } from "@/lib/socket";
 
 // Same REST convention as the Deal admin components
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = "https://backend-central.shondhaan.com/api";
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

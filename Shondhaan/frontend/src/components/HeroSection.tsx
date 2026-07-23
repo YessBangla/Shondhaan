@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingBag, Tag, Briefcase, ArrowRight, MapPin, ChevronDown } from "lucide-react";
+import { Search, ShoppingBag, Tag, Briefcase, ArrowRight, MapPin, ChevronDown, LucideWorkflow } from "lucide-react";
 import { haptic } from "@/lib/haptics";
 import { useNavigate } from "react-router-dom";
 import { useLocation } from "@/contexts/LocationContext";
@@ -31,7 +31,6 @@ type HeroBanner = {
   is_active?: boolean | number | string | null;
   sort_order?: number | string | null;
 };
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -111,10 +110,8 @@ const isActiveBanner = (banner: HeroBanner) => {
 
 const getAuthHeaders = () => {
   const auth = getMySqlAuth();
-
   return {
     "Content-Type": "application/json",
-    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
   };
 };
 
@@ -145,43 +142,48 @@ const normalizeHeroBanner = (banner: any): HeroBanner => ({
   sort_order: Number(banner.sort_order ?? 0),
 });
 
+// ─── Platform shortcuts with refined metadata & background imagery ───────────
 
-// ─── Shortcut card data ───────────────────────────────────────────────────────
-
-const SHORTCUTS = [
+const PLATFORM_CARDS = [
   {
     to: "/mart/home",
-    labelBn: "ইয়েস মার্ট", labelEn: "Yess Mart",
-    subBn: "শপিং", subEn: "Shop",
+    labelBn: "মার্টপ্লেস", labelEn: "Marketplace",
+    descBn: "প্রিমিয়াম পণ্য ও সেবা", descEn: "Premium products",
     Icon: ShoppingBag,
-    gradient: "from-orange-500 via-rose-500 to-pink-600",
-    iconGradient: "from-orange-500 to-rose-500",
-    shadow: "shadow-orange-500/30",
-    ring: "ring-orange-400/30",
+    accentColor: "#d4a574",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 0%, rgba(212, 165, 116, 0.08), transparent 50%)",
   },
   {
     to: "/deal",
-    labelBn: "ইয়েস ডিল", labelEn: "Yess Deal",
-    subBn: "কেনা-বেচা", subEn: "Classifieds",
+    labelBn: "লোকাল ডিলস", labelEn: "Local Deals",
+    descBn: "নির্ভরযোগ্য লেনদেন", descEn: "Verified exchanges",
     Icon: Tag,
-    gradient: "from-emerald-500 via-teal-500 to-cyan-600",
-    iconGradient: "from-emerald-500 to-teal-500",
-    shadow: "shadow-emerald-500/30",
-    ring: "ring-emerald-400/30",
+    accentColor: "#9ca89a",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 0% 100%, rgba(156, 168, 154, 0.08), transparent 50%)",
   },
   {
     to: "/jobs",
-    labelBn: "ইয়েস জবস", labelEn: "Yess Jobs",
-    subBn: "চাকরি", subEn: "Careers",
+    labelBn: "সুযোগ", labelEn: "Opportunities",
+    descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
     Icon: Briefcase,
-    gradient: "from-indigo-500 via-blue-600 to-violet-600",
-    iconGradient: "from-indigo-500 to-violet-500",
-    shadow: "shadow-indigo-500/30",
-    ring: "ring-indigo-400/30",
+    accentColor: "#a89a9c",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
+  },
+    {
+    to: "/services",
+    labelBn: "সেবা", labelEn: "Services",
+    descBn: "সেরা সেবাসমূহ", descEn: "Best Services",
+    Icon: LucideWorkflow,
+    accentColor: "#a89a9c",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
   },
 ] as const;
 
-// ─── Demo guard ───────────────────────────────────────────────────────────────
+// ─── Demo guard ───────────────────────────────────────────────────────────
 
 const DEMO_EMAILS = new Set([
   "representative@yessservice.com", "admin@yessservice.com",
@@ -191,7 +193,7 @@ const DEMO_EMAILS = new Set([
   "superadmin@yessservice.com", "vendor@yessservice.com", "dealer@yessservice.com",
 ]);
 
-// ─── SearchDropdown ───────────────────────────────────────────────────────────
+// ─── Elegant Search Dropdown ──────────────────────────────────────────────────
 
 function SearchDropdown({
   show,
@@ -211,66 +213,66 @@ function SearchDropdown({
   bn: boolean;
 }) {
   if (!show) return null;
+  
   return (
     <AnimatePresence>
       <motion.div
         key={show}
-        initial={{ opacity: 0, y: -6, scale: 0.98 }}
-        animate={{ opacity: 1, y: 0, scale: 1 }}
-        exit={{ opacity: 0, y: -4, scale: 0.98 }}
-        transition={{ duration: 0.15, ease: "easeOut" }}
-        className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl"
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-amber-900/25 bg-slate-950/98 shadow-xl shadow-black/40 backdrop-blur-md"
       >
         {show === "results" ? (
           filtered.length > 0 ? (
-            <ul className="max-h-72 overflow-y-auto py-1">
+            <ul className="max-h-64 overflow-y-auto divide-y divide-amber-900/10">
               {filtered.map((s, i) => (
                 <li key={s.slug}>
                   <button
                     onClick={() => onSelect(s.slug)}
                     onMouseEnter={() => setActiveIndex(i)}
-                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                      i === activeIndex ? "bg-secondary" : "hover:bg-secondary"
+                    className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-all duration-150 ${
+                      i === activeIndex ? "bg-amber-900/15" : "hover:bg-amber-900/8"
                     }`}
                   >
                     {s.image ? (
-                      <img src={s.image} alt={s.title} className="h-10 w-10 rounded-xl object-cover" />
+                      <img src={s.image} alt={s.title} className="h-10 w-10 rounded-sm object-cover" />
                     ) : (
-                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
-                        <Search className="h-4 w-4" />
-                      </span>
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-sm bg-amber-900/10">
+                        <Search className="h-4 w-4 text-amber-700/60" />
+                      </div>
                     )}
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-medium text-foreground">{s.title}</p>
-                      <p className="text-xs text-muted-foreground">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-medium text-amber-50">{s.title}</p>
+                      <p className="text-[10px] text-amber-200/50 mt-0.5">
                         ৳{s.price} {bn ? "থেকে" : "from"}
                       </p>
                     </div>
-                    <ArrowRight className="ml-auto h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-amber-700/40" />
                   </button>
                 </li>
               ))}
             </ul>
           ) : (
-            <div className="flex flex-col items-center gap-1 px-4 py-8 text-center">
-              <Search className="h-8 w-8 text-muted-foreground/30" />
-              <p className="text-sm text-muted-foreground">
-                {bn ? "কোনো সেবা পাওয়া যায়নি" : "No service found"}
+            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+              <Search className="h-6 w-6 text-amber-700/30" />
+              <p className="text-xs text-amber-200/40">
+                {bn ? "সেবা পাওয়া যায়নি" : "No service found"}
               </p>
             </div>
           )
         ) : (
-          <div className="p-3">
-            <p className="mb-2 px-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {bn ? "জনপ্রিয় সেবা" : "Popular services"}
+          <div className="p-3 space-y-2">
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-amber-700/50">
+              {bn ? "জনপ্রিয়" : "Suggestions"}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {quickSuggestions.map((s) => (
                 <button
                   key={s.slug}
-                  type="button"
                   onClick={() => onSelect(s.slug)}
-                  className="rounded-full border border-border bg-secondary/60 px-3 py-1.5 text-xs font-medium text-foreground transition-colors active:bg-secondary hover:bg-secondary"
+                  className="rounded-sm border border-amber-700/25 bg-amber-900/10 px-2.5 py-1 text-[10px] font-medium text-amber-100 transition-colors hover:bg-amber-900/20 hover:border-amber-700/40"
                 >
                   {s.title}
                 </button>
@@ -283,13 +285,13 @@ function SearchDropdown({
   );
 }
 
-// ─── HeroSection ──────────────────────────────────────────────────────────────
+// ─── Premium HeroSection ──────────────────────────────────────────────────────
 
 const HeroSection = () => {
   const [query, setQuery] = useState("");
   const [focused, setFocused] = useState(false);
   const [activeIndex, setActiveIndex] = useState(-1);
-  const [pressedShortcut, setPressedShortcut] = useState<string | null>(null);
+  const [pressedCard, setPressedCard] = useState<string | null>(null);
 
   const { selectedCity, selectedCityEn } = useLocation();
   const { language } = useLanguage();
@@ -298,46 +300,29 @@ const HeroSection = () => {
   const { services, categories } = useHomeServices();
 
   const [heroBanners, setHeroBanners] = useState<HeroBanner[]>([]);
+  
   useEffect(() => {
     let cancelled = false;
-
     const fetchHeroBanners = async () => {
       try {
         const response = await fetch(
           `${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/hero-banners?active=1`,
           { headers: getAuthHeaders() }
         );
-
         const payload = await response.json().catch(() => ({}));
-
-        if (!response.ok) {
-          throw new Error(payload?.message || "Hero banners load failed");
-        }
-
+        if (!response.ok) throw new Error(payload?.message || "Failed");
         const rows = extractBanners(payload)
           .map(normalizeHeroBanner)
           .filter(isActiveBanner)
-          .sort(
-            (a, b) =>
-              Number(a.sort_order || 0) - Number(b.sort_order || 0)
-          );
-
-        if (!cancelled) {
-          setHeroBanners(rows);
-        }
+          .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+        if (!cancelled) setHeroBanners(rows);
       } catch (error) {
-        console.error("Hero banners load error:", error);
-        if (!cancelled) {
-          setHeroBanners([]);
-        }
+        console.error("Hero banners error:", error);
+        if (!cancelled) setHeroBanners([]);
       }
     };
-
     fetchHeroBanners();
-
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
   const authUser = getMySqlAuth()?.user;
@@ -348,40 +333,22 @@ const HeroSection = () => {
     !isDemo && !isDemoName
       ? rawName || (authUser?.email ? authUser.email.split("@")[0] : null)
       : null;
-  const greetName = userName || (bn ? "অতিথি" : "Guest");
+  const greetName = userName || (bn ? "আপনার" : "Visitor");
 
   const activeHeroBanner = heroBanners[0];
 
   const heroTitle =
-    (bn
-      ? activeHeroBanner?.title_bn
-      : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) ||
-    (bn ? "আপনার ব্যক্তিগত সহকারী" : "Your Personal Assistant");
+    (bn ? activeHeroBanner?.title_bn : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) ||
+    (bn ? "আপনার সেবার অংশীদার" : "Your Service Partner");
 
   const heroSubtitle =
-    (bn
-      ? activeHeroBanner?.subtitle_bn
-      : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
-    (bn
-      ? "আপনার সকল সেবার এক ছাদের নীচে সমাধান। যেকোনো সময়, যেকোনো সেবা অর্ডার করুন।"
-      : "One-stop solution for your services. Order any service, anytime.");
+    (bn ? activeHeroBanner?.subtitle_bn : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
+    (bn ? "প্রিমিয়াম সেবা প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
-  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
-
-  const mobileBannerTitle =
-    (bn
-      ? activeHeroBanner?.title_bn
-      : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) || "";
-
-  const mobileBannerSubtitle =
-    (bn
-      ? activeHeroBanner?.subtitle_bn
-      : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) || "";
+  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
-
-  // ── Service list filtered by city ─────────────────────────────────────────
 
   const cityServices: SearchService[] = useMemo(() => {
     const categoryById = new Map(
@@ -432,23 +399,17 @@ const HeroSection = () => {
       .sort((a, b) => a.sortOrder - b.sortOrder || a.title.localeCompare(b.title));
   }, [bn, categories, selectedCity, selectedCityEn, services]);
 
-  // ── Search results ────────────────────────────────────────────────────────
-
   const filtered = useMemo(() => {
     const terms = normalizeSearch(query).split(" ").filter(Boolean);
     if (terms.length === 0) return [];
     const exact = cityServices.filter((s) => terms.every((t) => s.searchText.includes(t)));
     const loose = cityServices.filter((s) => terms.some((t) => s.searchText.includes(t)));
-    return (exact.length > 0 ? exact : loose).slice(0, 6);
+    return (exact.length > 0 ? exact : loose).slice(0, 8);
   }, [cityServices, query]);
 
-  const quickSuggestions = cityServices.slice(0, 8);
-  const popularServices = cityServices.slice(0, 5);
-
+  const quickSuggestions = cityServices.slice(0, 6);
+  const featuredServices = cityServices.slice(0, 4);
   const showDropdown = focused && query.trim().length > 0 ? "results" : focused && query.trim().length === 0 ? "quick" : false;
-  const suggestionsOpen = !!showDropdown;
-
-  // ── Event handlers ────────────────────────────────────────────────────────
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -478,7 +439,7 @@ const HeroSection = () => {
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!showDropdown || filtered.length === 0) {
-      if (e.key === "Escape") { setFocused(false); (e.target as HTMLInputElement).blur(); }
+      if (e.key === "Escape") { setFocused(false); }
       return;
     }
     if (e.key === "ArrowDown") { e.preventDefault(); setActiveIndex((p) => (p + 1) % filtered.length); }
@@ -486,119 +447,93 @@ const HeroSection = () => {
     else if (e.key === "Escape") { e.preventDefault(); setFocused(false); setActiveIndex(-1); }
   };
 
-  const handleShortcutClick = (to: string) => {
-    if (pressedShortcut) return;
+  const handleCardClick = (to: string) => {
+    if (pressedCard) return;
     haptic("medium");
-    setPressedShortcut(to);
+    setPressedCard(to);
     try { sessionStorage.setItem("yess:nav-transition", to); } catch {}
-    try { window.scrollTo({ top: 0, behavior: "smooth" }); } catch { window.scrollTo(0, 0); }
-    window.setTimeout(() => { navigate(to); setPressedShortcut(null); }, 220);
+    window.setTimeout(() => { navigate(to); setPressedCard(null); }, 200);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <section className="relative -mt-px" data-hero-section>
-
-      {/* Nav progress bar */}
-      <AnimatePresence>
-        {pressedShortcut && (
-          <motion.div
-            key="nav-progress"
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="fixed inset-x-0 top-0 z-[100] h-0.5 overflow-hidden md:hidden"
-          >
-            <motion.div
-              initial={{ width: "0%" }} animate={{ width: "85%" }}
-              transition={{ duration: 0.22, ease: "easeOut" }}
-              className="h-full bg-gradient-to-r from-orange-500 via-rose-500 to-pink-600"
-            />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
+    <section className="relative -mt-px bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950" data-hero-section>
+      
       {/* ══════════════════════ MOBILE HERO ══════════════════════ */}
-      <div
-        className="md:hidden relative pb-6"
-        style={{ paddingTop: "max(72px, calc(var(--app-header-h, 96px) + 4px))" }}
+      <div 
+        className="md:hidden relative min-h-fit flex flex-col bg-slate-950 bg-cover bg-center" 
+        style={{ 
+          paddingTop: "max(72px, calc(var(--app-header-h, 96px) + 4px))",
+          backgroundImage: heroImage 
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.85)), url('${heroImage}')`
+            : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
+        }}
       >
-        {/* Ambient blobs */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
-          <div className="absolute -top-12 left-[-20%] h-64 w-64 rounded-full bg-orange-400/20 blur-3xl" />
-          <div className="absolute -top-4 right-[-25%] h-72 w-72 rounded-full bg-emerald-400/18 blur-3xl" />
-          <div className="absolute top-36 left-1/3 h-56 w-56 rounded-full bg-violet-400/15 blur-3xl" />
+        {/* Subtle gradient accents */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-900/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-32 left-0 w-80 h-80 bg-amber-900/3 rounded-full blur-3xl" />
+          
+          {/* Decorative mesh pattern */}
+          <svg className="absolute inset-0 w-full h-full opacity-5" preserveAspectRatio="none">
+            <defs>
+              <pattern id="mesh" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+                <path d="M0 0L80 80M80 0L0 80" stroke="currentColor" strokeWidth="0.5" fill="none" />
+                <circle cx="40" cy="40" r="2" fill="currentColor" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#mesh)" className="text-amber-600" />
+          </svg>
         </div>
 
-        <div className="px-4 xs:px-5">
-
-          {/* Welcome pill */}
+        <div className="flex-1 flex flex-col items-center px-4 py-3 text-center">
+          
+          {/* Greeting */}
           <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.35 }}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+            className="w-full text-center"
           >
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500 to-rose-500 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-white shadow-lg shadow-orange-500/30">
-              <span className="relative flex h-1.5 w-1.5" aria-hidden>
-                <span className="absolute inline-flex h-full w-full rounded-full bg-white/70 animate-ping" />
-                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-white" />
-              </span>
-              {bn ? "স্বাগতম" : "Welcome"}
-            </span>
+            <p className="text-[10px] font-medium tracking-widest uppercase text-amber-700/60 mb-1">
+              {bn ? "স্বাগতম" : "Welcome back"}
+            </p>
+            <h1 className="font-serif text-lg font-light text-amber-50 leading-tight">
+              {bn ? "হ্যালো, " : "Hello, "}<span className="font-medium">{greetName}</span> 👋
+            </h1>
           </motion.div>
 
-          {/* Greeting row */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05 }}
-            className="mt-3 flex items-center gap-3"
-          >
-            {/* Avatar */}
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-rose-500 text-base font-bold text-white shadow-lg shadow-orange-500/40">
-              {greetName[0]?.toUpperCase() ?? "G"}
-            </div>
-            <div className="min-w-0">
-              <h1 className="truncate font-heading text-[20px] font-bold leading-tight tracking-tight text-foreground">
-                {bn ? "হ্যালো," : "Hello,"}{" "}
-                <span className="inline-block">{greetName} 👋</span>
-              </h1>
-              <p className="mt-0.5 text-[12px] leading-snug text-muted-foreground">
-                {bn ? "আজ কোন সেবা নেবেন?" : "What service do you need today?"}
-              </p>
-            </div>
-          </motion.div>
-
-          {/* Search bar */}
+          {/* Search box - PRIORITY */}
           <motion.div
             ref={mobileSearchRef}
-            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-            className="relative z-30 mt-4"
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.08 }}
+            className="relative z-30 w-full max-w-md mt-3 mb-4"
           >
-            <form
-              onSubmit={handleSubmit}
-              className="flex items-center gap-2 rounded-2xl border border-border/70 bg-card/90 px-3.5 py-2 shadow-[0_6px_24px_-8px_hsl(var(--foreground)/0.18)] backdrop-blur-xl"
-            >
-              <Search className="h-[18px] w-[18px] shrink-0 text-muted-foreground" strokeWidth={2.2} />
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onKeyDown={handleKeyDown}
-                role="combobox"
-                aria-expanded={showDropdown === "results"}
-                placeholder={bn ? "আপনি কোন সার্ভিস খুঁজছেন?" : "What service are you looking for?"}
-                className="flex-1 min-w-0 bg-transparent py-2.5 text-[15px] text-foreground outline-none placeholder:text-muted-foreground/70"
-              />
-              <button
-                type="submit"
-                aria-label="Search"
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-orange-500 to-rose-500 text-white shadow-md shadow-orange-500/40 transition-transform active:scale-90"
-              >
-                <Search className="h-[17px] w-[17px]" strokeWidth={2.4} />
-              </button>
+            <form onSubmit={handleSubmit} className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-amber-900/20 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
+              <div className="relative flex items-center gap-2 rounded-lg border border-amber-900/30 bg-slate-900/60 px-3 py-2 backdrop-blur-sm">
+                <Search className="h-4 w-4 text-amber-700/50 shrink-0" />
+                <input
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  onFocus={() => setFocused(true)}
+                  onKeyDown={handleKeyDown}
+                  placeholder={bn ? "সেবা খুঁজুন" : "Search services"}
+                  className="flex-1 min-w-0 bg-transparent text-xs text-amber-50 outline-none placeholder:text-amber-700/40 text-center"
+                />
+                <button
+                  type="submit"
+                  className="flex items-center justify-center h-8 w-8 rounded-md bg-amber-700/80 text-amber-50 hover:bg-amber-700 transition-colors flex-shrink-0"
+                >
+                  <ArrowRight className="h-3.5 w-3.5" />
+                </button>
+              </div>
             </form>
-
+            
             <SearchDropdown
               show={showDropdown}
               filtered={filtered}
@@ -610,89 +545,76 @@ const HeroSection = () => {
             />
           </motion.div>
 
-          {activeHeroBanner && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.35, delay: 0.14 }}
-              className="relative z-10 mt-4 overflow-hidden rounded-3xl border border-white/20 bg-card shadow-xl"
-            >
-              <div
-                className="absolute inset-0 bg-cover bg-center"
-                style={{
-                  backgroundImage: `linear-gradient(90deg, hsl(210 11% 12% / 0.82), hsl(210 11% 12% / 0.35)), url(${heroImage})`,
-                }}
-              />
-              <div className="relative p-4">
-                <p className="line-clamp-1 text-[10px] font-bold uppercase tracking-[0.18em] text-white/75">
-                  {bn ? "আজকের হাইলাইট" : "Today’s highlight"}
-                </p>
-                <h2 className="mt-1 line-clamp-2 text-base font-bold leading-tight text-white">
-                  {mobileBannerTitle || heroTitle}
-                </h2>
-                {mobileBannerSubtitle && (
-                  <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-white/80">
-                    {mobileBannerSubtitle}
-                  </p>
-                )}
-              </div>
-            </motion.div>
-          )}
-
-          {/* Platform shortcuts */}
-          <AnimatePresence initial={false}>
-            {!suggestionsOpen && (
+          {/* Cards & Popular Grid - Below Search */}
+          <AnimatePresence>
+            {!showDropdown && (
               <motion.div
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -4 }}
-                transition={{ duration: 0.25 }}
-                className="mt-4 grid grid-cols-3 gap-2.5"
+                exit={{ opacity: 0, y: 8 }}
+                transition={{ duration: 0.4, delay: 0.16 }}
+                className="w-full max-w-md space-y-3"
               >
-                {SHORTCUTS.map(({ to, labelBn, labelEn, subBn, subEn, Icon, gradient, iconGradient, shadow, ring }) => {
-                  const isPressed = pressedShortcut === to;
-                  return (
-                    <motion.button
-                      key={to}
-                      whileTap={{ scale: 0.95 }}
-                      animate={isPressed ? { scale: 0.93, y: 1 } : { scale: 1, y: 0 }}
-                      transition={{ type: "spring", stiffness: 380, damping: 22 }}
-                      onClick={() => handleShortcutClick(to)}
-                      aria-busy={isPressed}
-                      aria-label={`${bn ? labelBn : labelEn} — ${bn ? subBn : subEn}`}
-                      className={`group relative overflow-hidden rounded-2xl bg-gradient-to-br ${gradient} p-[1.5px] ring-1 ${ring} shadow-lg ${shadow} min-h-[92px]`}
-                    >
-                      <div className={`relative flex h-full flex-col items-start justify-between gap-2 rounded-[14.5px] bg-card/95 px-3 py-3 backdrop-blur-sm`}>
-                        {/* Icon pill */}
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br ${iconGradient} text-white shadow-sm`}>
-                          <Icon className="h-[17px] w-[17px]" strokeWidth={2.4} />
-                        </div>
-                        {/* Label */}
-                        <div className="min-w-0">
-                          <p className="line-clamp-1 text-[12.5px] font-bold leading-tight text-foreground">
+                {/* Platform Cards - 2x2 Grid */}
+                <div className="grid grid-cols-2 gap-2">
+                  {PLATFORM_CARDS.map(({ to, labelBn, labelEn, Icon, accentColor, bgPattern }, idx) => {
+                    const isPressed = pressedCard === to;
+                    return (
+                      <motion.button
+                        key={to}
+                        initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        onClick={() => handleCardClick(to)}
+                        className="group relative overflow-hidden rounded-lg border border-amber-900/20 p-2.5 text-center hover:border-amber-900/40 transition-all duration-300"
+                        style={{ background: `linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(15, 23, 42) 100%), ${bgPattern}` }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative flex flex-col items-center gap-2">
+                          <div 
+                            className="flex items-center justify-center h-7 w-7 rounded-lg flex-shrink-0"
+                            style={{ backgroundColor: `${accentColor}15` }}
+                          >
+                            <Icon className="h-3.5 w-3.5" style={{ color: accentColor }} />
+                          </div>
+                          <h3 className="font-serif text-sm font-light text-amber-50 leading-tight">
                             {bn ? labelBn : labelEn}
-                          </p>
-                          <p className="line-clamp-1 text-[10.5px] text-muted-foreground">
-                            {bn ? subBn : subEn}
-                          </p>
+                          </h3>
                         </div>
-                        {/* Arrow */}
-                        <ArrowRight
-                          className={`absolute right-2 top-2.5 h-3.5 w-3.5 text-muted-foreground/50 transition-transform duration-150 ${isPressed ? "translate-x-1" : "group-active:translate-x-0.5"}`}
-                        />
-                        {/* Gloss */}
-                        <span className="pointer-events-none absolute -top-8 -right-8 h-16 w-16 rounded-full bg-white/25 blur-2xl" />
-                        {/* Press shimmer */}
                         {isPressed && (
-                          <motion.span
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }}
-                            className="pointer-events-none absolute inset-0 rounded-[14.5px] bg-gradient-to-tr from-white/0 via-white/35 to-white/0"
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/10 to-transparent pointer-events-none"
                           />
                         )}
-                      </div>
-                    </motion.button>
-                  );
-                })}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
+                {/* Popular Searches - Grid */}
+                {featuredServices.length > 0 && (
+                  <div>
+                    <p className="text-[8px] uppercase tracking-widest text-amber-700/40 font-medium mb-1.5 text-center">
+                      {bn ? "জনপ্রিয় খোঁজা" : "Popular searches"}
+                    </p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {featuredServices.slice(0, 4).map((service, idx) => (
+                        <motion.button
+                          key={service.slug}
+                          initial={{ opacity: 0, scale: 0.9 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          transition={{ duration: 0.3, delay: 0.24 + idx * 0.04 }}
+                          onClick={() => handleSelect(service.slug)}
+                          className="px-2 py-1.5 rounded-lg border border-amber-900/20 bg-amber-900/8 text-[11px] text-amber-100 hover:bg-amber-900/15 hover:border-amber-900/40 transition-all duration-200 font-light line-clamp-2 text-center"
+                        >
+                          {service.title}
+                        </motion.button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>
@@ -700,147 +622,190 @@ const HeroSection = () => {
       </div>
 
       {/* ══════════════════════ DESKTOP HERO ══════════════════════ */}
-      <div className="hidden md:block">
-        <div
-          className="relative min-h-[220px] md:min-h-[320px] lg:min-h-[400px] bg-cover bg-center"
-          style={{
-            backgroundImage: `
-              linear-gradient(180deg,
-                hsl(210 11% 12% / 0.6) 0%,
-                hsl(210 11% 12% / 0.35) 50%,
-                hsl(210 11% 12% / 0.72) 100%
-              ),
-              url(${heroImage})
-            `,
-          }}
-        >
-          <div
-            className="app-container relative flex flex-col items-center justify-center pb-10 md:pb-32"
-            style={{ paddingTop: "max(64px, calc(var(--app-header-h, 96px) + clamp(16px, 4vw, 72px)))" }}
+      <div 
+        className="hidden md:flex relative min-h-fit items-center justify-center bg-cover bg-center py-12"
+        style={{
+          backgroundImage: heroImage 
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.28), rgba(15, 23, 42, 0.92)), url('${heroImage}')`
+            : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
+        }}
+      >
+        {/* Background treatment */}
+        <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
+          <div className="absolute -top-40 right-20 w-[600px] h-[600px] bg-amber-900/8 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 -left-40 w-[500px] h-[500px] bg-amber-900/5 rounded-full blur-3xl" />
+          
+          {/* Decorative grid pattern */}
+          <svg className="absolute inset-0 w-full h-full opacity-[0.02]" preserveAspectRatio="none">
+            <defs>
+              <pattern id="grid-desktop" x="0" y="0" width="120" height="120" patternUnits="userSpaceOnUse">
+                <path d="M0 0L120 120M120 0L0 120" stroke="white" strokeWidth="0.5" fill="none" />
+                <circle cx="60" cy="60" r="1.5" fill="white" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#grid-desktop)" />
+          </svg>
+        </div>
+
+        <div className="w-full max-w-2xl mx-auto px-4" style={{ paddingTop: "max(32px, calc(var(--app-header-h, 96px) + 16px))", paddingBottom: "32px" }}>
+          
+          {/* Greeting & Headline - Centered */}
+          <motion.div
+            initial={{ opacity: 0, y: -16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="mb-6 text-center"
           >
-            {/* Headline */}
-            <motion.div
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-              className="text-center"
-            >
-              <h1 className="font-heading text-2xl font-bold leading-tight text-white drop-shadow-lg md:text-3xl lg:text-5xl">
-                {heroTitle}
-              </h1>
-              <p className="mx-auto mt-3 max-w-2xl text-sm text-white/85 drop-shadow md:mt-5 md:text-lg leading-relaxed">
-                {heroSubtitle}
-              </p>
-            </motion.div>
+            {/* <p className="text-[10px] font-medium uppercase tracking-widest text-white mb-1"> */}
+              {/* {bn ? "স্বাগতম" : "Welcome back"}
+            </p> */}
+            <h1 className="font-serif text-3xl font-light text-amber-50 mb-1">
+              {heroTitle}
+            </h1>
+            <p className="text-sm text-amber-200/50 font-light">
+              {heroSubtitle}
+            </p>
+          </motion.div>
 
-            {/* Search bar */}
-            <motion.div
-              ref={desktopSearchRef}
-              initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.65, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-              className="relative z-30 mt-8 w-full max-w-2xl md:mt-1"
-            >
-              <form
-                onSubmit={handleSubmit}
-                className="flex items-stretch gap-2 rounded-2xl bg-white p-2 shadow-2xl shadow-black/30"
-              >
-                {/* Location pill */}
-                <div className="hidden md:flex items-center gap-2 rounded-xl border border-border bg-card px-4 min-w-[170px] text-sm text-muted-foreground cursor-pointer hover:bg-secondary transition-colors">
-                  <MapPin className="h-4 w-4 shrink-0 opacity-60" />
-                  <LocationSelector />
-                  <ChevronDown className="h-3.5 w-3.5 ml-auto opacity-50" />
+          {/* Search - Centered with max-width */}
+          <motion.div
+            ref={desktopSearchRef}
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, delay: 0.1 }}
+            className="relative z-30 mx-auto mb-6"
+            style={{ maxWidth: "640px" }}
+          >
+              <form onSubmit={handleSubmit} className="relative group">
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-900/40 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
+                <div className="relative flex items-stretch gap-2 rounded-lg border border-amber-900/30 bg-orange-400/40 backdrop-blur-sm p-1.5 shadow-lg shadow-amber-900/20">
+                  {/* Location */}
+                  <div className="hidden lg:flex items-center gap-1.5 rounded-md border border-amber-900/20 bg-amber-900/5 px-3.5 text-xs text-white">
+                    {/* <MapPin className="h-3.5 w-3.5 opacity-60" /> */}
+                    <LocationSelector />
+                    <ChevronDown className="h-3 w-3 ml-auto opacity-40" />
+                  </div>
+
+                  {/* Input */}
+                  <div className="flex flex-1 items-center gap-2 px-3">
+                    <Search className="h-4 w-4 text-white shrink-0" />
+                    <input
+                      type="text"
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      onFocus={() => setFocused(true)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={bn ? "আপনি কী সেবা খুঁজছেন?" : "What service are you looking for?"}
+                      className="flex-1 bg-transparent text-amber-50 outline-none placeholder:text-white font-light text-sm py-2.5 text-center"
+                    />
+                  </div>
+
+                  {/* Button */}
+                  <button
+                    type="submit"
+                    className="flex items-center justify-center gap-1.5 px-6 rounded-md bg-amber-700/90 text-amber-50 hover:bg-amber-700 transition-all duration-200 font-medium text-sm shadow-md shadow-amber-900/30"
+                  >
+                    <Search className="h-4 w-4" />
+                    <span>{bn ? "খুঁজুন" : "Search"}</span>
+                  </button>
                 </div>
-
-                {/* Input */}
-                <div className="flex flex-1 items-center gap-2 px-3">
-                  <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <input
-                    type="text"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                    onFocus={() => setFocused(true)}
-                    onKeyDown={handleKeyDown}
-                    role="combobox"
-                    aria-expanded={showDropdown === "results"}
-                    aria-controls="hero-search-listbox"
-                    aria-activedescendant={activeIndex >= 0 ? `hero-search-opt-${activeIndex}` : undefined}
-                    placeholder={bn ? "সেবা খুঁজুন (এসি, ক্লিনিং...)" : "Find a service (AC, Cleaning...)"}
-                    className="w-full min-w-0 bg-transparent py-2 text-sm text-foreground outline-none placeholder:text-muted-foreground md:text-base"
-                  />
-                </div>
-
-                {/* Search button */}
-                <button
-                  type="submit"
-                  aria-label="Search"
-                  className="flex shrink-0 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-orange-500 to-rose-500 px-5 text-sm font-semibold text-white shadow-lg shadow-orange-500/40 transition-all hover:from-orange-600 hover:to-rose-600 active:scale-95 md:px-7"
-                >
-                  <Search className="h-4 w-4" />
-                  <span className="hidden sm:inline">{bn ? "খুঁজুন" : "Search"}</span>
-                </button>
               </form>
 
               {/* Desktop dropdown */}
-              <AnimatePresence>
-                {showDropdown === "results" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
-                    className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-2xl border border-border bg-popover shadow-2xl"
-                  >
-                    {filtered.length > 0 ? (
-                      <ul id="hero-search-listbox" role="listbox" className="max-h-72 overflow-y-auto py-1">
-                        {filtered.map((s, i) => (
-                          <li key={s.slug} id={`hero-search-opt-${i}`} role="option" aria-selected={i === activeIndex}>
-                            <button
-                              onClick={() => handleSelect(s.slug)}
-                              onMouseEnter={() => setActiveIndex(i)}
-                              className={`flex w-full items-center gap-3 px-4 py-3 text-left transition-colors ${i === activeIndex ? "bg-secondary" : "hover:bg-secondary"}`}
-                            >
-                              {s.image ? (
-                                <img src={s.image} alt={s.title} className="h-10 w-10 rounded-xl object-cover" />
-                              ) : (
-                                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
-                                  <Search className="h-4 w-4" />
-                                </span>
-                              )}
-                              <div>
-                                <p className="text-sm font-medium text-foreground">{s.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  ৳{s.price} {bn ? "থেকে" : "from"}
-                                </p>
-                              </div>
-                              <ArrowRight className="ml-auto h-3.5 w-3.5 text-muted-foreground/40" />
-                            </button>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="px-4 py-8 text-center text-sm text-muted-foreground">
-                        {bn ? "কোনো সেবা পাওয়া যায়নি" : "No service found"}
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <SearchDropdown
+                show={showDropdown}
+                filtered={filtered}
+                quickSuggestions={quickSuggestions}
+                activeIndex={activeIndex}
+                setActiveIndex={setActiveIndex}
+                onSelect={handleSelect}
+                bn={bn}
+              />
             </motion.div>
 
-            {/* Popular service chips */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="mt-5 flex w-full max-w-3xl flex-wrap items-center justify-center gap-2 md:mt-7"
-            >
-              {popularServices.map((chip) => (
-                <button
-                  key={chip.slug}
-                  onClick={() => navigate(`/service/${chip.slug}`)}
-                  className="rounded-full border border-white/30 bg-white/15 px-3.5 py-2 text-xs font-medium text-white backdrop-blur-md transition-all hover:bg-white/28 active:scale-95 md:text-sm"
-                >
-                  {chip.title}
-                </button>
-              ))}
-            </motion.div>
-          </div>
+          {/* Cards & Popular Services Grid */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="max-w-4xl mx-auto"
+          >
+            {/* Platform Cards - 4 column */}
+            <div className="grid grid-cols-4 gap-3 mb-4">
+              {PLATFORM_CARDS.map(({ to, labelBn, labelEn, descBn, descEn, Icon, accentColor, bgPattern }, idx) => {
+                const isPressed = pressedCard === to;
+                return (
+                  <motion.button
+                    key={to}
+                    initial={{ opacity: 0, scale: 0.9, y: 12 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    transition={{ duration: 0.35, delay: 0.22 + idx * 0.06 }}
+                    onClick={() => handleCardClick(to)}
+                    whileHover={{ y: -8 }}
+                    className="group relative overflow-hidden rounded-lg border border-amber-900/20 backdrop-blur-sm p-1 text-center hover:border-amber-900/40 transition-all duration-300 flex flex-col items-center"
+                    style={{ background: `linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(15, 23, 42, 0.6)), ${bgPattern}` }}
+                  >
+                    <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 via-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    
+                    <div className="relative flex flex-col items-center h-full gap-2">
+                      <div 
+                        className="flex items-center justify-center h-5 w-6 rounded-lg flex-shrink-0"
+                        style={{ backgroundColor: `${accentColor}20` }}
+                      >
+                        <Icon className="h-3 w-3" style={{ color: accentColor }} />
+                      </div>
+                      
+                      <div className="flex-1">
+                        <p className="text-[8px] uppercase tracking-widest font-medium mb-0.5" style={{ color: `${accentColor}80` }}>
+                          {bn ? descBn : descEn}
+                        </p>
+                        <h3 className="font-serif text-sm font-light text-amber-50 leading-tight">
+                          {bn ? labelBn : labelEn}
+                        </h3>
+                      </div>
+
+                      <ArrowRight className="h-3 w-3.5 text-amber-700/40 group-hover:text-amber-700/60 transition-colors mt-auto" />
+                    </div>
+
+                    {isPressed && (
+                      <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/10 via-transparent to-transparent pointer-events-none"
+                      />
+                    )}
+                  </motion.button>
+                );
+              })}
+            </div>
+
+            {/* Popular Searches Section */}
+            {/* {featuredServices.length > 0 && (
+              <motion.div
+                initial={{ opacity: 0, y: 16 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: 0.4 }}
+              >
+                <p className="text-[9px] uppercase tracking-widest text-amber-700/50 font-medium mb-2 text-center">
+                  {bn ? "জনপ্রিয় খোঁজা" : "Popular searches"}
+                </p>
+                <div className="grid grid-cols-6 gap-2">
+                  {featuredServices.slice(0, 6).map((service, idx) => (
+                    <motion.button
+                      key={service.slug}
+                      initial={{ opacity: 0, scale: 0.92 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      transition={{ duration: 0.3, delay: 0.45 + idx * 0.04 }}
+                      onClick={() => handleSelect(service.slug)}
+                      className="px-2.5 py-1.5 rounded-lg border border-amber-900/20 bg-amber-900/8 text-[11px] text-amber-100 hover:bg-amber-900/15 hover:border-amber-900/40 transition-all duration-200 font-light line-clamp-2 text-center"
+                    >
+                      {service.title}
+                    </motion.button>
+                  ))}
+                </div>
+              </motion.div>
+            )} */}
+          </motion.div>
         </div>
       </div>
     </section>
