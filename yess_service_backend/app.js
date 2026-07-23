@@ -13,8 +13,8 @@ const corsOrigin = [
         .filter(Boolean),
       process.env.FRONTEND_BASE_URL,
       "http://localhost:8080",
-      "https://shondhaan.yessbd.top",
-      "https://www.shondhaan.yessbd.top",
+      "https://shondhaan.com",
+      "https://www.shondhaan.com",
     ].filter(Boolean),
   ),
 ];

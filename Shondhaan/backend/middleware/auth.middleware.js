@@ -40,19 +40,26 @@ export const requireLoggedIn = (req, res, next) => {
   try {
     const token = req.cookies?.token;
 
-    console.log("COOKIE TOKEN:", token); // debug
-
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }
 
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    req.auth = decoded;
+    req.user = decoded; // ✅ ONLY USE THIS
 
     next();
   } catch (err) {
-    console.error("JWT Error:", err.message);
     return res.status(401).json({ message: "Invalid token" });
   }
+};
+
+
+export const requireStaff = (req, res, next) => {
+  if (!isStaffUser(req.user)) {
+    return res.status(403).json({
+      message: "Staff access required",
+    });
+  }
+  next();
 };

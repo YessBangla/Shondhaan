@@ -2,6 +2,8 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import { createServer } from "http";
+import { Server as SocketIOServer } from "socket.io";
 
 import providerRoutes from "./routes/provider.route.js";
 import packageRoutes from "./routes/package.route.js";
@@ -12,9 +14,12 @@ import reviewRoutes from "./routes/review.route.js";
 import heroBannerRoutes from "./routes/heroBanner.route.js";
 import homepageSectionRoutes from "./routes/homepageSection.route.js";
 import uploadRoutes from "./routes/upload.route.js";
+import serviceChatRoutes from "./routes/serviceChat.route.js";
 
 import { reconcilePendingShurjopayPayments } from "./controller/shurjopay.controller.js";
 import { ensurePlatformFeeSchema } from "./config/db.js";
+import { ensureServiceChatSchema } from "./controller/serviceChat.controller.js";
+import { initServiceChatSocket } from "./sockets/serviceChat.js";
 
 const app = express();
 
@@ -27,13 +32,24 @@ const corsOrigin = [
         .filter(Boolean),
       process.env.FRONTEND_BASE_URL,
       "http://localhost:5173",
-      "https://shondhaan.yessbd.top",
-      "https://www.shondhaan.yessbd.top",
+      "https://shondhaan.com",
+      "https://www.shondhaan.com",
     ].filter(Boolean)
   ),
 ];
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
+
+const httpServer = createServer(app);
+const io = new SocketIOServer(httpServer, {
+  cors: {
+    origin: corsOrigin,
+    credentials: true,
+  },
+});
+
+app.set("io", io);
+initServiceChatSocket(io);
 
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
@@ -51,6 +67,12 @@ app.use("/api/reviews", reviewRoutes);
 app.use("/api/hero-banners", heroBannerRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
 app.use("/api/uploads", uploadRoutes);
+app.use("/api/service-chat", serviceChatRoutes);
+
+app.get("/", (req, res) => {
+  res.type("html");
+  res.send("Service backend is running ✅");
+});
 
 const PORT = process.env.PORT || 3000;
 
@@ -60,8 +82,9 @@ const SERVICE_BACKEND_BASE_URL =
 async function startServer() {
   try {
     await ensurePlatformFeeSchema();
+    await ensureServiceChatSchema();
 
-    app.listen(PORT, () => {
+    httpServer.listen(PORT, () => {
       console.log(`Service backend running on ${SERVICE_BACKEND_BASE_URL}`);
     });
   } catch (error) {

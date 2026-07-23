@@ -7,7 +7,7 @@ import {
   Users, CheckCircle, Package, Grid3X3, Percent, Image, LayoutList,
   Settings, FileText, Briefcase, Star, ShieldCheck, Bot, MapPinCheck,
   BarChart3, Bell, Tag, Banknote, ImagePlus, Handshake, ShoppingCart,
-  Store, Truck, Flag, Eye, Trophy
+  Store, Truck, Flag, Eye, Trophy, Headphones
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -40,6 +40,7 @@ import ServiceImageManager from "@/components/admin/ServiceImageManager";
 import AdminDealManagement from "@/components/admin/AdminDealManagement";
 import AdminMartOverview from "@/components/admin/AdminMartOverview";
 import AdminDealOverview from "@/components/admin/AdminDealOverview";
+import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 import RepLeaderboard from "@/components/RepLeaderboard";
 import AdminJobListings from "@/components/admin/AdminJobListings";
 import AdminEmployerManagement from "@/components/admin/AdminEmployerManagement";
@@ -102,6 +103,7 @@ const sidebarItems = [
 
   // কমিউনিকেশন
   { value: "contacts", label: "মেসেজ", icon: <MessageSquare />, group: "কমিউনিকেশন" },
+  { value: "service-messages", label: "Service messages", icon: <Headphones />, group: "কমিউনিকেশন" },
   { value: "chat-history", label: "চ্যাট হিস্ট্রি", icon: <Bot />, group: "কমিউনিকেশন" },
   { value: "notifications", label: "নোটিফিকেশন", icon: <Bell />, group: "কমিউনিকেশন" },
 
@@ -346,6 +348,7 @@ const AdminDashboard = () => {
       case "sections": return <div className="p-4"><AdminHomepageSections /></div>;
       case "requests": return <div className="p-4"><AdminServiceRequests /></div>;
       case "contacts": return <div className="p-4"><AdminContactMessages /></div>;
+      case "service-messages": return <div className="p-4"><ServiceStaffChatInbox /></div>;
       case "jobs": return <div className="p-4"><AdminJobApplications /></div>;
       case "job-listings": return <div className="p-4"><AdminJobListings /></div>;
       case "employers": return <div className="p-4"><AdminEmployerManagement /></div>;

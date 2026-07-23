@@ -5,7 +5,8 @@ import {
   ChevronLeft, User, Phone, MapPin, Save, Loader2,
   Package, Star, Bell, ClipboardList, CheckCircle2,
   FileSearch, Wallet, LogOut, Settings, Store,
-  Home, Camera
+  Home, Camera,
+  MessageSquare, CheckCircle, XCircle, Info
 } from "lucide-react";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import { useAuth } from "@/contexts/AuthContext";
@@ -18,14 +19,13 @@ import RebookModal from "@/components/client/RebookModal";
 import ServiceRequestsTab from "@/components/client/ServiceRequestsTab";
 import PaymentHistoryTab from "@/components/client/PaymentHistoryTab";
 import BookingChatModal from "@/components/client/BookingChatModal";
-import { ShoppingBag, Megaphone, Heart, MessageSquare } from "lucide-react";
+import { ShoppingBag, Megaphone, Heart } from "lucide-react";
 import DealSection from "@/components/client/DealSection";
 import MartOrdersTab from "@/components/client/MartOrdersTab";
 import AIWeeklySummaryCard from "@/components/client/AIWeeklySummaryCard";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
-import ServiceMessage from "./ServiceMessage";
 
 const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 const PROFILE_API_BASE = MART_API_BASE;
@@ -72,26 +72,19 @@ type MartOrderRecord = Record<string, unknown> & {
   mart_order_items?: unknown[];
 };
 
-
 const extractApiArray = <T,>(payload: any): T[] => {
-  const data =
+  return (
     payload?.data ??
     payload?.bookings ??
-    payload?.items ??
-    payload?.rows ??
-    payload?.result ??
-    payload;
-
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.rows)) return data.rows;
-  if (Array.isArray(data?.items)) return data.items;
-
-  return [];
+    payload?.orders ??
+    payload?.results ??
+    []
+  );
 };
 
-const normalizeMartOrders = (orders: unknown[]): MartOrderRecord[] =>
+const normalizeMartOrders = (orders: unknown[]): any[] =>
   orders.map((order) => {
-    const source = order as MartOrderRecord;
+    const source = order as Record<string, any>;
     const items = Array.isArray(source.items)
       ? source.items
       : Array.isArray(source.order_items)
@@ -111,6 +104,14 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+// Helper component to handle redirect cleanly without React errors
+const MessagesRedirect = ({ navigate }: { navigate: (path: string) => void }) => {
+  useEffect(() => {
+    navigate("/service-message");
+  }, [navigate]);
+  return null;
+};
+
 const ClientDashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -121,7 +122,7 @@ const ClientDashboard = () => {
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [notifications, setNotifications] = useState<Notification[]>([]);
-  const [martOrders, setMartOrders] = useState<unknown[]>([]);
+  const [martOrders, setMartOrders] = useState<any[]>([]);
   const [dealAdsCount, setDealAdsCount] = useState(0);
 
   const fetchMartOrders = useCallback(async () => {
@@ -135,11 +136,10 @@ const ClientDashboard = () => {
       setMartOrders(normalizeMartOrders(Array.isArray(data.orders) ? data.orders : []));
     } catch (err) {
       console.error("fetchMartOrders error:", err);
-      toast.error(bn ? "à¦®à¦¾à¦°à§à¦Ÿ à¦…à¦°à§à¦¡à¦¾à¦° à¦²à§‹à¦¡ à¦¬à§à¦¯à¦°à§à¦¥" : "Failed to load mart orders");
+      toast.error(bn ? "মার্ট অর্ডার লোড ব্যর্থ" : "Failed to load mart orders");
       setMartOrders([]);
     }
   }, [user, bn]);
-
 
   const [profile, setProfile] = useState({ display_name: "", phone: "", address: "", profile_image_url: "" });
   const [loading, setLoading] = useState(true);
@@ -206,7 +206,6 @@ const ClientDashboard = () => {
     const mysqlAuth = getMySqlAuth();
     const userId = Number(mysqlAuth?.user?.id ?? localUser.id);
 
-    // MySQL service bookings by logged-in user's numeric ID
     if (Number.isInteger(userId) && userId > 0) {
       try {
         const bookingRes = await fetch(
@@ -269,7 +268,7 @@ const ClientDashboard = () => {
   // Realtime booking updates
   useEffect(() => {
     if (!user) return;
-    const channel = { channel: (..._args: unknown[]) => ({ on: (..._args: unknown[]) => ({ subscribe: () => null }) }) }
+    const channel = supabase
       .channel('client-bookings')
       .on('postgres_changes', {
         event: 'UPDATE', schema: 'public', table: 'bookings',
@@ -278,24 +277,24 @@ const ClientDashboard = () => {
         const updated = payload.new as Booking;
         setBookings(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b));
         const labels: Record<string, string> = {
-          confirmed: bn ? "à¦†à¦ªà¦¨à¦¾à¦° à¦¬à§à¦•à¦¿à¦‚ à¦¨à¦¿à¦¶à§à¦šà¦¿à¦¤ à¦¹à¦¯à¦¼à§‡à¦›à§‡!" : "Booking confirmed!",
-          in_progress: bn ? "à¦†à¦ªà¦¨à¦¾à¦° à¦¸à§‡à¦¬à¦¾ à¦šà¦²à¦›à§‡!" : "Service in progress!",
-          completed: bn ? "à¦†à¦ªà¦¨à¦¾à¦° à¦¸à§‡à¦¬à¦¾ à¦¸à¦®à§à¦ªà¦¨à§à¦¨!" : "Service completed!",
-          cancelled: bn ? "à¦¬à§à¦•à¦¿à¦‚ à¦¬à¦¾à¦¤à¦¿à¦² à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "Booking cancelled",
+          confirmed: bn ? "আপনার বুকিং নিশ্চিত হয়েছে!" : "Booking confirmed!",
+          in_progress: bn ? "আপনার সেবা চলছে!" : "Service in progress!",
+          completed: bn ? "আপনার সেবা সম্পন্ন!" : "Service completed!",
+          cancelled: bn ? "বুকিং বাতিল হয়েছে" : "Booking cancelled",
         };
         if (labels[updated.status]) toast.info(labels[updated.status]);
       })
       .subscribe();
-    return () => { void channel; };
+    return () => { supabase.removeChannel(channel); };
   }, [user, bn]);
 
   // Realtime notifications
   useEffect(() => {
     if (!user) return;
-    const channel = { channel: (..._args: unknown[]) => ({ on: (..._args: unknown[]) => ({ subscribe: () => null }) }) }
+    const channel = supabase
       .channel('client-notifications')
       .on('postgres_changes', {
-        event: 'INSERT', schema: 'public', table: 'notifications',
+        event: 'INSERT', schema: 'public', table: 'app_notifications',
         filter: `user_id=eq.${user.id}`,
       }, (payload: { new: Notification }) => {
         const n = payload.new as Notification;
@@ -303,15 +302,15 @@ const ClientDashboard = () => {
         toast.info(n.title);
       })
       .subscribe();
-    return () => { void channel; };
+    return () => { supabase.removeChannel(channel); };
   }, [user]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    if (!profile.display_name.trim()) { toast.error(bn ? "à¦¨à¦¾à¦® à¦¦à¦¿à¦¨" : "Enter name"); return; }
+    if (!profile.display_name.trim()) { toast.error(bn ? "নাম দিন" : "Enter name"); return; }
     if (profile.phone.trim() && !/^01[3-9]\d{8}$/.test(profile.phone.trim())) {
-      toast.error(bn ? "à¦¸à¦ à¦¿à¦• à¦«à§‹à¦¨ à¦¨à¦®à§à¦¬à¦° à¦¦à¦¿à¦¨" : "Enter valid phone"); return;
+      toast.error(bn ? "সঠিক ফোন নম্বর দিন" : "Enter valid phone"); return;
     }
     setSaving(true);
     try {
@@ -352,9 +351,9 @@ const ClientDashboard = () => {
           address: data.profile?.address || null,
         },
       });
-      toast.success(bn ? "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "Profile updated");
+      toast.success(bn ? "প্রোফাইল আপডেট হয়েছে" : "Profile updated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (bn ? "à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¬à§à¦¯à¦°à§à¦¥" : "Update failed"));
+      toast.error(err instanceof Error ? err.message : (bn ? "আপডেট ব্যর্থ" : "Update failed"));
     } finally {
       setSaving(false);
     }
@@ -365,18 +364,18 @@ const ClientDashboard = () => {
     e.target.value = "";
     if (!file || !user) return;
     if (!file.type.startsWith("image/")) {
-      toast.error(bn ? "à¦¶à§à¦§à§à¦®à¦¾à¦¤à§à¦° à¦›à¦¬à¦¿ à¦«à¦¾à¦‡à¦² à¦†à¦ªà¦²à§‹à¦¡ à¦•à¦°à§à¦¨" : "Please upload an image file");
+      toast.error(bn ? "শুধুমাত্র ছবি ফাইল আপলোড করুন" : "Please upload an image file");
       return;
     }
     if (file.size > 2 * 1024 * 1024) {
-      toast.error(bn ? "à¦«à¦¾à¦‡à¦² à¦¸à¦¾à¦‡à¦œ à§¨MB à¦à¦° à¦¬à§‡à¦¶à¦¿ à¦¹à¦¤à§‡ à¦ªà¦¾à¦°à¦¬à§‡ à¦¨à¦¾" : "File size must be under 2MB");
+      toast.error(bn ? "ফাইল সাইজ ২MB এর বেশি হতে পারবে না" : "File size must be under 2MB");
       return;
     }
 
     const mysqlAuth = getMySqlAuth();
     const userId = Number((user as unknown as { id?: string | number }).id);
     if (!mysqlAuth?.token || !Number.isInteger(userId) || userId <= 0) {
-      toast.error(bn ? "à¦›à¦¬à¦¿ à¦¸à§‡à¦­ à¦•à¦°à¦¤à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨" : "Login is required to save profile photo");
+      toast.error(bn ? "ছবি সেভ করতে লগইন করুন" : "Login is required to save profile photo");
       return;
     }
 
@@ -396,9 +395,9 @@ const ClientDashboard = () => {
 
       const nextUrl = data.profile_image_url || "";
       setProfile(prev => ({ ...prev, profile_image_url: nextUrl }));
-      toast.success(bn ? "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦›à¦¬à¦¿ à¦†à¦ªà¦¡à§‡à¦Ÿ à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "Profile photo updated");
+      toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile photo updated");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : (bn ? "à¦†à¦ªà¦²à§‹à¦¡ à¦¬à§à¦¯à¦°à§à¦¥" : "Upload failed"));
+      toast.error(err instanceof Error ? err.message : (bn ? "আপলোড ব্যর্থ" : "Upload failed"));
     } finally {
       setUploadingProfileImage(false);
     }
@@ -412,13 +411,13 @@ const ClientDashboard = () => {
     const unread = notifications.filter(n => !n.is_read);
     if (unread.length === 0) return;
     setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
-    toast.success(bn ? "à¦¸à¦¬ à¦ªà¦ à¦¿à¦¤ à¦¹à¦¿à¦¸à§‡à¦¬à§‡ à¦šà¦¿à¦¹à§à¦¨à¦¿à¦¤" : "All marked as read");
+    toast.success(bn ? "সব পঠিত হিসেবে চিহ্নিত" : "All marked as read");
   };
 
   const deleteReview = async (id: string) => {
-    if (!confirm(bn ? "à¦°à¦¿à¦­à¦¿à¦‰ à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¬à§‡à¦¨?" : "Delete review?")) return;
+    if (!confirm(bn ? "রিভিউ মুছে ফেলবেন?" : "Delete review?")) return;
     const error = null;
-    if (!error) { setReviews(prev => prev.filter(r => r.id !== id)); toast.success(bn ? "à¦®à§à¦›à§‡ à¦«à§‡à¦²à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "Deleted"); }
+    if (!error) { setReviews(prev => prev.filter(r => r.id !== id)); toast.success(bn ? "মুছে ফেলা হয়েছে" : "Deleted"); }
   };
 
   const handleSignOut = async () => {
@@ -517,7 +516,7 @@ const ClientDashboard = () => {
   },
 ]}
           defaultValue="dashboard"
-          panelTitle={profile.display_name || (bn ? "à¦•à§à¦²à¦¾à¦¯à¦¼à§‡à¦¨à§à¦Ÿ à¦¡à§à¦¯à¦¾à¦¶à¦¬à§‹à¦°à§à¦¡" : "Client Dashboard")}
+          panelTitle={profile.display_name || (bn ? "ক্লায়েন্ট ড্যাশবোর্ড" : "Client Dashboard")}
           panelIcon={<Store className="h-5 w-5" />}
           profileImageUrl={profile.profile_image_url || undefined}
           offsetForDesktopMegaMenu
@@ -536,7 +535,7 @@ const ClientDashboard = () => {
                     </div>
                     <div className="flex-1 min-w-0">
                       <h1 className="font-heading  text-xl font-bold text-foreground truncate">
-                        {profile.display_name || (bn ? "à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à¦•à¦¾à¦°à§€" : "User")}
+                        {profile.display_name || (bn ? "ব্যবহারকারী" : "User")}
                       </h1>
                       <p className="text-sm text-muted-foreground truncate">{user?.email}</p>
                       {profile.phone && (
@@ -546,7 +545,7 @@ const ClientDashboard = () => {
                       )}
                     </div>
                     <button onClick={handleSignOut} className="flex items-center gap-1.5 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-500 transition-colors hover:border-rose-200 hover:bg-rose-50 hover:text-rose-600">
-                      <LogOut className="h-4 w-4" /> {bn ? "à¦²à¦—à¦†à¦‰à¦Ÿ" : "Logout"}
+                      <LogOut className="h-4 w-4" /> {bn ? "লগআউট" : "Logout"}
                     </button>
                   </div>
                   
@@ -556,7 +555,7 @@ const ClientDashboard = () => {
                 bookings.length === 0 ? (
                   <div className="text-center py-12">
                     <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                    <p className="text-base text-muted-foreground">{bn ? "à¦•à§‹à¦¨à§‹ à¦¬à§à¦•à¦¿à¦‚ à¦¨à§‡à¦‡" : "No bookings yet"}</p>
+                    <p className="text-base text-muted-foreground">{bn ? "কোনো বুকিং নেই" : "No bookings yet"}</p>
                     <button onClick={() => navigate("/")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
                       {bn ? "সেবা দেখুন" : "Browse Services"}
                     </button>
@@ -627,10 +626,10 @@ const ClientDashboard = () => {
                   <AIWeeklySummaryCard />
                 </div>
               )}
-                 {activeTab === "messages" && (
-                <div>
-                  <ServiceMessage />
-                </div>
+              
+              {/* Messages Redirect - Triggers when tab is clicked */}
+              {activeTab === "messages" && (
+                <MessagesRedirect navigate={navigate} />
               )}
 
               {/* Quick Actions */}
@@ -642,8 +641,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-indigo-500/10 to-blue-500/5 p-4 text-left hover:border-indigo-400/40 hover:shadow-sm transition-all group"
                   >
                     <ShoppingBag className="h-6 w-6 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "à¦‡à¦¯à¦¼à§‡à¦¸ à¦®à¦¾à¦°à§à¦Ÿ" : "Yess Mart"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "à¦ªà¦£à§à¦¯ à¦•à¦¿à¦¨à§à¦¨" : "Shop products"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "ইয়েস মার্ট" : "Yess Mart"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "পণ্য কিনুন" : "Shop products"}</p>
                   </motion.button>
                   <motion.button
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
@@ -651,8 +650,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-orange-500/10 to-amber-500/5 p-4 text-left hover:border-orange-400/40 hover:shadow-sm transition-all group"
                   >
                     <Megaphone className="h-6 w-6 text-orange-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "à¦‡à¦¯à¦¼à§‡à¦¸ à¦¡à¦¿à¦²" : "Yess Deal"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "à¦•à¦¿à¦¨à§à¦¨ à¦“ à¦¬à¦¿à¦•à§à¦°à¦¿ à¦•à¦°à§à¦¨" : "Buy & sell"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "ইয়েস ডিল" : "Yess Deal"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell"}</p>
                   </motion.button>
                   <motion.button
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
@@ -660,8 +659,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-green-500/10 to-emerald-500/5 p-4 text-left hover:border-green-400/40 hover:shadow-sm transition-all group"
                   >
                     <Megaphone className="h-6 w-6 text-green-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦¦à¦¿à¦¨" : "Post Ad"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "à¦«à§à¦°à¦¿ à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "Free listing"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "বিজ্ঞাপন দিন" : "Post Ad"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "ফ্রি বিজ্ঞাপন" : "Free listing"}</p>
                   </motion.button>
                   <motion.button
                     initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
@@ -669,8 +668,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-primary/10 to-primary/5 p-4 text-left hover:border-primary/40 hover:shadow-sm transition-all group"
                   >
                     <ClipboardList className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "à¦¸à§‡à¦¬à¦¾ à¦¨à¦¿à¦¨" : "Get Service"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "à§§à§®à§¬+ à¦¸à§‡à¦¬à¦¾" : "186+ services"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "সেবা নিন" : "Get Service"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "১৮৬+ সেবা" : "186+ services"}</p>
                   </motion.button>
                 </div>
               )}
@@ -679,7 +678,7 @@ const ClientDashboard = () => {
 
               {/* Mart Orders - Enhanced Daraz-style */}
               {activeTab === "mart-orders" && (
-                <MartOrdersTab orders={martOrders as unknown[] as never[]} onRefresh={fetchMartOrders} apiBase={`${MART_API_BASE}/api`} />
+                <MartOrdersTab orders={martOrders as any} onRefresh={fetchMartOrders} apiBase={`${MART_API_BASE}/api`} />
               )}
 
 
@@ -696,7 +695,7 @@ const ClientDashboard = () => {
                 reviews.length === 0 ? (
                   <div className="text-center py-12">
                     <Star className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                    <p className="text-base text-muted-foreground">{bn ? "à¦•à§‹à¦¨à§‹ à¦°à¦¿à¦­à¦¿à¦‰ à¦¦à§‡à¦¨à¦¨à¦¿" : "No reviews yet"}</p>
+                    <p className="text-base text-muted-foreground">{bn ? "কোনো রিভিউ দেননি" : "No reviews yet"}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -711,7 +710,7 @@ const ClientDashboard = () => {
                               ))}
                             </div>
                           </div>
-                          <button onClick={() => deleteReview(r.id)} className="text-xs text-destructive hover:underline">{bn ? "à¦®à§à¦›à§à¦¨" : "Delete"}</button>
+                          <button onClick={() => deleteReview(r.id)} className="text-xs text-destructive hover:underline">{bn ? "মুছুন" : "Delete"}</button>
                         </div>
                         {r.comment && <p className="text-sm text-foreground bg-secondary/50 rounded-lg p-2.5">{r.comment}</p>}
                         <p className="text-xs text-muted-foreground">{new Date(r.created_at).toLocaleDateString("bn-BD")}</p>
@@ -726,13 +725,13 @@ const ClientDashboard = () => {
                 notifications.length === 0 ? (
                   <div className="text-center py-12">
                     <Bell className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
-                    <p className="text-base text-muted-foreground">{bn ? "à¦•à§‹à¦¨à§‹ à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨ à¦¨à§‡à¦‡" : "No notifications"}</p>
+                    <p className="text-base text-muted-foreground">{bn ? "কোনো নোটিফিকেশন নেই" : "No notifications"}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
                     {unreadCount > 0 && (
                       <button onClick={markAllRead} className="text-sm text-primary hover:underline mb-1">
-                        {bn ? "à¦¸à¦¬ à¦ªà¦ à¦¿à¦¤ à¦•à¦°à§à¦¨" : "Mark all as read"}
+                        {bn ? "সব পঠিত করুন" : "Mark all as read"}
                       </button>
                     )}
                     {notifications.map(n => (
@@ -776,22 +775,22 @@ const ClientDashboard = () => {
                       />
                     </label>
                     <div>
-                      <p className="text-base font-semibold text-foreground">{profile.display_name || (bn ? "à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à¦•à¦¾à¦°à§€" : "User")}</p>
+                      <p className="text-base font-semibold text-foreground">{profile.display_name || (bn ? "ব্যবহারকারী" : "User")}</p>
                       <p className="text-sm text-muted-foreground">{user?.email}</p>
                     </div>
                   </div>
                   <form onSubmit={handleSaveProfile} className="space-y-4">
                     <div>
-                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "à¦¨à¦¾à¦®" : "Name"}</label>
+                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "নাম" : "Name"}</label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input type="text" value={profile.display_name} onChange={e => setProfile({ ...profile, display_name: e.target.value })}
-                          placeholder={bn ? "à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¾à¦®" : "Your name"} maxLength={100}
+                          placeholder={bn ? "আপনার নাম" : "Your name"} maxLength={100}
                           className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base outline-none focus:ring-1 focus:ring-ring" />
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "à¦«à§‹à¦¨" : "Phone"}</label>
+                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "ফোন" : "Phone"}</label>
                       <div className="relative">
                         <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         <input type="tel" value={profile.phone} onChange={e => setProfile({ ...profile, phone: e.target.value })}
@@ -800,17 +799,17 @@ const ClientDashboard = () => {
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "à¦ à¦¿à¦•à¦¾à¦¨à¦¾" : "Address"}</label>
+                      <label className="mb-1.5 block text-sm font-medium text-muted-foreground">{bn ? "ঠিকানা" : "Address"}</label>
                       <div className="relative">
                         <MapPin className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <textarea value={profile.address} onChange={e => setProfile({ ...profile, address: e.target.value })}
-                          placeholder={bn ? "à¦†à¦ªà¦¨à¦¾à¦° à¦ à¦¿à¦•à¦¾à¦¨à¦¾" : "Your address"} maxLength={300} rows={2}
+                          placeholder={bn ? "আপনার ঠিকানা" : "Your address"} maxLength={300} rows={2}
                           className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base outline-none focus:ring-1 focus:ring-ring resize-none" />
                       </div>
                     </div>
                     <button type="submit" disabled={saving}
                       className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-base font-semibold text-primary-foreground disabled:opacity-50">
-                      {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "à¦¸à§‡à¦­ à¦¹à¦šà§à¦›à§‡..." : "Saving..."}</> : <><Save className="h-4 w-4" /> {bn ? "à¦¸à§‡à¦­ à¦•à¦°à§à¦¨" : "Save"}</>}
+                      {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "সেভ হচ্ছে..." : "Saving..."}</> : <><Save className="h-4 w-4" /> {bn ? "সেভ করুন" : "Save"}</>}
                     </button>
                   </form>
                 </motion.div>

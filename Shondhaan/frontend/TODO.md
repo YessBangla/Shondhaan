@@ -1,5 +1,7 @@
-- [ ] Remove address state + input field from registration UI in src/pages/Auth.tsx
-- [ ] Stop sending `address` in requestSignupOtp payload and resend payload
-- [ ] Remove unused MapPin import and address-related code in src/pages/Auth.tsx
-- [ ] Run typecheck/build/tests (if configured)
+# ServiceMessage → Service Inbox Plan
+
+## Steps
+- [x] Step 1: Create `hooks/useServiceInbox.ts` - Hook to fetch booking conversations from Supabase
+- [x] Step 2: Rewrite `pages/ServiceMessage.tsx` - Full inbox page with search, conversation list, BookingChatModal
+- [ ] Step 3: Update `pages/ClientDashboard.tsx` - Replace toast-style ServiceMessage usage with inline cards
 

@@ -26,7 +26,7 @@ export const getMyProfile = async (req, res) => {
        LEFT JOIN user_profiles up ON up.user_id = u.id
        WHERE u.id = ?
        LIMIT 1`,
-      [req.auth.id],
+      [req.user.id],
     );
 
     if (!rows.length) {
@@ -55,7 +55,7 @@ export const getMyProfile = async (req, res) => {
 
 export const updateMyProfile = async (req, res) => {
   try {
-    const userId = req.auth.id;
+    const userId = req.user.id;
 
     const name = String(req.body.name ?? "").trim();
     const mobile = normalizeMobile(req.body.mobile ?? req.body.phone ?? "");

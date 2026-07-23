@@ -141,7 +141,7 @@ const getFullImageUrl = (path: string | null) => {
   if (path.startsWith("http")) return path;
 
   // ✅ encode spaces & special characters
-  return `http://localhost:5000${encodeURI(path)}`;
+  return `https://backend-central.shondhaan.com${encodeURI(path)}`;
 };
 
   const applyCentralProfile = (profile: CentralProfile) => {
@@ -321,7 +321,7 @@ const handleAvatarUpload = async (
     formData.append("profile_image", file); // ✅ MUST MATCH BACKEND FIELD
 
     const res = await fetch(
-      "http://localhost:5000/api/users/me/profile",
+      "https://backend-central.shondhaan.com/api/users/me/profile",
       {
         method: "PATCH", // ✅ IMPORTANT
         credentials: "include",
