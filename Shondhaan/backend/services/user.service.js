@@ -1,59 +1,58 @@
 import { pool } from "../config/db.js";
 
+// Keep user.type values consistent across backend
 export const ALLOWED_USER_TYPES = new Set([
-  "super_admin",
-  "admin",
-  "moderator",
-  "supervisor",
-  "finance",
-  "call_center",
-  "provider",
-  "representative",
-  "mart_vendor",
-  "mart_delivery",
-  "mart_cs",
-  "yessdeal_seller",
-  "employer",
   "user",
+  "provider",
+  "mart_vendor",
+  "admin",
+  "super_admin",
 ]);
 
-export function normalizeEmail(email = "") {
-  return String(email).trim().toLowerCase();
-}
+export const normalizeUserType = (type) => {
+  if (!type) return "";
+  return String(type).trim();
+};
 
-export function normalizeMobile(mobile = "") {
-  return String(mobile).trim();
-}
+export const safeUser = (user) => {
+  if (!user) return null;
 
-export function normalizeUserType(type = "user") {
-  const value = String(type || "user").trim().toLowerCase().replace(/[\s-]+/g, "_");
-  return value;
-}
+  // Remove sensitive fields if present
+  const { password, refresh_token, reset_token, ...rest } = user;
+  return rest;
+};
 
-export function safeUser(row = {}) {
-  const normalizedType = normalizeUserType(row.type);
-  const type = ALLOWED_USER_TYPES.has(normalizedType) ? normalizedType : "user";
+export const findUserById = async (id) => {
+  if (!id) return null;
 
-  return {
-    id: row.id,
-    name: row.name,
-    mobile: row.mobile,
-    address: row.address ?? null,
-    email: row.email,
-    type,
-    role: type,
-    shop_name: row.shop_name ?? null,
-    shop_type: row.shop_type ?? null,
-    email_verified: Boolean(row.email_verified),
-    created_at: row.created_at,
-    updated_at: row.updated_at,
-  };
-}
+  const [rows] = await pool.query(
+    "SELECT id, name, email, phone, address, avatar_url, created_at, role, type FROM users WHERE id = ? LIMIT 1",
+    [id]
+  );
 
-export async function findUserByEmail(email) {
-  const [rows] = await pool.execute("SELECT * FROM users WHERE email = ? LIMIT 1", [
-    normalizeEmail(email),
-  ]);
+  return rows?.[0] || null;
+};
+
+export const listUsers = async () => {
+  const [rows] = await pool.query(
+    "SELECT id, name, email, phone, address, avatar_url, created_at, role, type FROM users ORDER BY created_at DESC"
+  );
+  return rows;
+};
+
+export const updateUserTypeById = async (id, normalizedType) => {
+  if (!id) return null;
+
+  const mappedRole = normalizedType === "super_admin" ? "super_admin" : normalizedType;
+
+  const [result] = await pool.query(
+    "UPDATE users SET type = ?, role = ? WHERE id = ?",
+    [normalizedType, mappedRole, id]
+  );
+
+  const affected = result?.affectedRows ?? 0;
+  if (affected === 0) return null;
+
   return rows[0] || null;
 }
 

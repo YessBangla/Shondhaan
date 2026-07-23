@@ -419,7 +419,7 @@ const Index = () => {
 
       <MobilePromoBanner />
 
-      <div className="mx-auto max-w-6xl px-4">
+      <div className="app-container">
         <ForYouSection />
 
         {loading ? (

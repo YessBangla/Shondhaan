@@ -44,8 +44,7 @@ import { toPublicProduct } from "@/lib/martApi";
 
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  import.meta.env.VITE_API_BASE;
 
 interface ActiveCoupon {
   id: number;
@@ -579,7 +578,7 @@ const MartHome = () => {
 
       <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-9">
         <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
-          <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="app-container py-3">
             <div className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
               {[
                 {
@@ -632,7 +631,7 @@ const MartHome = () => {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-1 md:py-2">
+      <div className="app-container py-1 md:py-2">
 
         {/* Hero Banner Carousel */}
         <section className="mb-7">

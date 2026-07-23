@@ -210,7 +210,7 @@ const DealHome = () => {
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
 
       <div className="bg-gradient-to-b from-primary/10 to-background pt-[44px] pb-5 md:pt-[68px] md:pb-10">
-        <div className="max-w-3xl mx-auto px-4 text-center">
+        <div className="app-container text-center">
           <h1 className="mb-2 flex items-center justify-center">
             <img
               src={yessDealLogo}
@@ -251,7 +251,7 @@ const DealHome = () => {
         </div>
       </div>
 
-      <div className="max-w-6xl mx-auto px-4 py-6 pb-28 md:pb-10">
+      <div className="app-container py-6 pb-28 md:pb-10">
         <h2 className="text-lg font-bold text-foreground mb-4">
           {bn ? "ক্যাটাগরি অনুযায়ী ব্রাউজ করুন" : "Browse by Category"}
         </h2>

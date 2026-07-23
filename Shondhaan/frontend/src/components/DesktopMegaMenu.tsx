@@ -176,7 +176,7 @@ const hasSidebar =
       icon: UserCircle,
       children: [
         { labelBn: dashboardLabelBn, labelEn: dashboardLabelEn, href: "/dashboard", icon: LayoutDashboard },
-        { labelBn: profileLabelBn, labelEn: profileLabelEn, href: "/dashboard?tab=profile", icon: isMartVendor ? Store : UserCircle },
+        { labelBn: profileLabelBn, labelEn: profileLabelEn, href: "/profile", icon: isMartVendor ? Store : UserCircle },
         { labelBn: "বুকিং ইতিহাস", labelEn: "Booking History", href: "/dashboard?tab=bookings", icon: History },
         { labelBn: "Service Requests", labelEn: "Service Requests", href: "/dashboard?tab=requests", icon: FileSearch },
         { labelBn: "Mart Orders", labelEn: "Mart Orders", href: "/dashboard?tab=mart-orders", icon: Package },

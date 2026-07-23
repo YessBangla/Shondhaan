@@ -23,6 +23,8 @@ import {
   Bell,
   ShoppingCart,
   Heart,
+  Sun,
+  Moon,
   type LucideIcon,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
@@ -43,6 +45,8 @@ import LongPressTooltip from "@/components/LongPressTooltip";
 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
+import { useTheme } from "@/hooks/useTheme";
+
 
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -66,6 +70,9 @@ const Navbar = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
+
+  const { mode, cycle } = useTheme();
+
 
   const bn = language === "bn";
 
@@ -594,7 +601,7 @@ const Navbar = () => {
         )}
 
         {/* Desktop header */}
-        <div className="hidden md:flex mx-auto max-w-5xl lg:max-w-7xl items-center gap-4 px-6 lg:px-8 py-2.5">
+        <div className="app-container hidden md:flex items-center gap-4 py-2.5">
           {/* Brand */}
           <div className="flex items-center gap-2 shrink-0">
             <button onClick={() => navigate("/")} className="flex items-center gap-2">
@@ -688,6 +695,23 @@ const Navbar = () => {
               )}
             </button>
 
+            {/* Theme toggle (dark/light) */}
+            <button
+              onClick={() => cycle()}
+              aria-label={bn ? "থিম পরিবর্তন করুন" : "Toggle theme"}
+              title={bn ? "থিম পরিবর্তন করুন" : "Toggle theme"}
+              className="group flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+            >
+              {mode === "dark" ? (
+                <Moon className="h-4 w-4 text-primary/80" />
+              ) : (
+                <Sun className="h-4 w-4 text-primary/80" />
+              )}
+              <span className="text-[11px] font-bold leading-none tracking-wide">
+                {bn ? (mode === "dark" ? "ডার্ক" : "লাইট") : mode === "dark" ? "Dark" : "Light"}
+              </span>
+            </button>
+
             {/* Language */}
             <button
               onClick={toggleLang}
@@ -768,7 +792,7 @@ const Navbar = () => {
                       </button>
 
                       <button
-                        onClick={() => navigate("/dashboard?tab=profile")}
+                        onClick={() => navigate("/profile")}
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         {isMartVendor ? (

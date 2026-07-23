@@ -195,7 +195,7 @@ const JobDetail = () => {
       <JobsPageTransition>
         <Navbar />
         <JobsMenuBar />
-        <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="app-container py-12">
           <div className="h-48 rounded-xl bg-muted animate-pulse" />
           <div className="h-32 rounded-xl bg-muted animate-pulse mt-4" />
         </div>

@@ -58,7 +58,7 @@ const EmployerProfile = () => {
       <JobsPageTransition>
         <Navbar />
       <div className="pt-[44px] md:pt-[68px] bg-card" /><JobsMenuBar />
-        <div className="mx-auto max-w-4xl px-4 py-12"><div className="h-48 rounded-xl bg-muted animate-pulse" /></div>
+        <div className="app-container py-12"><div className="h-48 rounded-xl bg-muted animate-pulse" /></div>
       </JobsPageTransition>
     );
   }
@@ -68,7 +68,7 @@ const EmployerProfile = () => {
       <JobsPageTransition>
         <Navbar />
       <div className="pt-[44px] md:pt-[68px] bg-card" /><JobsMenuBar />
-        <div className="mx-auto max-w-4xl px-4 py-12 text-center">
+        <div className="app-container py-12 text-center">
           <Building2 className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
           <h2 className="text-lg font-bold">{bn ? "কোম্পানি পাওয়া যায়নি" : "Company not found"}</h2>
         </div>
@@ -84,7 +84,7 @@ const EmployerProfile = () => {
 
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white">
-        <div className="mx-auto max-w-4xl px-4 md:px-6 py-8">
+        <div className="app-container py-8">
           <BackToHomeButton />
           <div className="flex items-start gap-4 mt-3">
             {employer.company_logo_url && !logoErr ? (
@@ -117,7 +117,7 @@ const EmployerProfile = () => {
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-4 md:px-6 py-6">
+      <div className="app-container py-6">
         <div className="grid md:grid-cols-3 gap-4">
           {/* Company Info Card */}
           <div className="md:col-span-1 space-y-4">

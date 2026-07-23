@@ -99,7 +99,7 @@ const DealCategoryPage = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-      <div className="max-w-6xl mx-auto px-4 py-4 pb-28 md:pb-10">
+      <div className="app-container py-4 pb-28 md:pb-10">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/deal")}><ChevronLeft className="h-5 w-5" /></Button>

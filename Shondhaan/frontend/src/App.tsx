@@ -18,6 +18,9 @@ import CompareBar from "@/components/CompareBar";
 import MartCompareBar from "@/components/mart/MartCompareBar";
 import SplashScreen from "@/components/SplashScreen";
 import ChatWidget from "@/components/ChatWidget";
+import { useEffect } from "react";
+import { socket, setSocketUser } from "@/lib/socket";
+import { useAuth } from "@/contexts/AuthContext";
 
 import PageLoader from "@/components/PageLoader";
 import DesktopMegaMenu from "@/components/DesktopMegaMenu";
@@ -165,6 +168,30 @@ const queryClient = new QueryClient({
   },
 });
 
+
+
+
+function SocketInitializer() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (!user?.id) return;
+
+    // ✅ connect once
+    socket.connect();
+
+    // ✅ tell backend who this user is
+    setSocketUser(user.id);
+
+    console.log("🔥 Socket initialized for user:", user.id);
+
+    return () => {
+      socket.disconnect();
+    };
+  }, [user]);
+
+  return null;
+}
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashFinish = useCallback(() => setSplashDone(true), []);
@@ -194,6 +221,7 @@ const App = () => {
       <BrowserRouter>
         <LanguageProvider>
         <AuthProvider>
+            <SocketInitializer /> 
           <CartProvider>
           <CompareProvider>
           <MartCartProvider>

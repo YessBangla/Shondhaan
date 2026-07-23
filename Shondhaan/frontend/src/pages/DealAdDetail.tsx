@@ -2,7 +2,7 @@
 import ListingImage from "@/components/deal/ListingImage";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, MapPin, Clock, Eye, Phone, MessageCircle, Heart, Share2, Shield, ChevronRight, AlertTriangle, Tag, Pencil, User, Star, CalendarDays, Package, Facebook, Link2, CheckCircle2, BadgeCheck } from "lucide-react";
+import { ChevronLeft, MapPin, Clock, Eye, Phone, MessageCircle, Heart, Share2, Shield, ChevronRight, AlertTriangle, Tag, Pencil, User, Star, CalendarDays, Package, Facebook, Link2, CheckCircle2, BadgeCheck, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +19,7 @@ import Footer from "@/components/Footer";
 import { Skeleton } from "@/components/ui/skeleton";
 import DealChatModal from "@/components/deal/DealChatModal";
 import DealReportModal from "@/components/deal/DealReportModal";
+import { useStartDealConversation } from "@/hooks/useDealChatSocket";
 import { useSEO } from "@/hooks/useSEO";
 import {
   addDealFavorite,
@@ -30,11 +31,11 @@ import {
 function timeAgo(dateStr: string, bn = true) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 60) return bn ? `${mins} à¦®à¦¿à¦¨à¦¿à¦Ÿ à¦†à¦—à§‡` : `${mins}m ago`;
+  if (mins < 60) return bn ? `${mins} মিনিট আগে` : `${mins}m ago`;
   const hours = Math.floor(mins / 60);
-  if (hours < 24) return bn ? `${hours} à¦˜à¦£à§à¦Ÿà¦¾ à¦†à¦—à§‡` : `${hours}h ago`;
+  if (hours < 24) return bn ? `${hours} ঘণ্টা আগে` : `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return bn ? `${days} à¦¦à¦¿à¦¨ à¦†à¦—à§‡` : `${days}d ago`;
+  return bn ? `${days} দিন আগে` : `${days}d ago`;
 }
 
 const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) => {
@@ -49,7 +50,7 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
         supabase.from("deal_listings").select("id", { count: "exact", head: true }).eq("user_id", sellerId).eq("status", "active"),
       ]);
       return {
-        name: profileRes.data?.display_name || (bn ? "à¦¬à§à¦¯à¦¬à¦¹à¦¾à¦°à¦•à¦¾à¦°à§€" : "User"),
+        name: profileRes.data?.display_name || (bn ? "ব্যবহারকারী" : "User"),
         avatar: profileRes.data?.avatar_url,
         memberSince: profileRes.data?.created_at,
         totalAds: adsRes.count || 0,
@@ -82,7 +83,7 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
             <p className="font-bold text-foreground truncate text-sm">{sellerData?.name}</p>
             <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
               <CalendarDays className="h-3 w-3" />
-              {bn ? "à¦¸à¦¦à¦¸à§à¦¯" : "Member since"} {memberDate}
+              {bn ? "সদস্য" : "Member since"} {memberDate}
             </div>
           </div>
         </div>
@@ -91,16 +92,16 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
         <div className="flex flex-wrap gap-1.5 mb-3">
           <Badge variant="outline" className={`text-[10px] gap-1 ${sellerData?.hasPhone ? "border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800" : "border-border text-muted-foreground"}`}>
             {sellerData?.hasPhone ? <CheckCircle2 className="h-3 w-3" /> : <Phone className="h-3 w-3" />}
-            {bn ? "à¦«à§‹à¦¨" : "Phone"} {sellerData?.hasPhone ? "âœ“" : "âœ—"}
+            {bn ? "ফোন" : "Phone"} {sellerData?.hasPhone ? "✓" : "✗"}
           </Badge>
           <Badge variant="outline" className="text-[10px] gap-1 border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
             <CheckCircle2 className="h-3 w-3" />
-            {bn ? "à¦‡à¦®à§‡à¦‡à¦² à¦­à§‡à¦°à¦¿à¦«à¦¾à¦‡à¦¡" : "Email Verified"}
+            {bn ? "ইমেইল ভেরিফাইড" : "Email Verified"}
           </Badge>
           {sellerData?.hasName && (
             <Badge variant="outline" className="text-[10px] gap-1 border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800">
               <BadgeCheck className="h-3 w-3" />
-              {bn ? "à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦¸à¦®à§à¦ªà¦¨à§à¦¨" : "Profile Complete"}
+              {bn ? "প্রোফাইল সম্পন্ন" : "Profile Complete"}
             </Badge>
           )}
         </div>
@@ -108,18 +109,18 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
         <div className="grid grid-cols-2 gap-2">
           <div className="rounded-lg bg-muted/50 p-2 text-center">
             <p className="text-lg font-bold text-primary">{sellerData?.totalAds}</p>
-            <p className="text-[10px] text-muted-foreground">{bn ? "à¦¸à¦•à§à¦°à¦¿à¦¯à¦¼ à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "Active Ads"}</p>
+            <p className="text-[10px] text-muted-foreground">{bn ? "সক্রিয় বিজ্ঞাপন" : "Active Ads"}</p>
           </div>
           <div className="rounded-lg bg-muted/50 p-2 text-center">
             <div className="flex items-center justify-center gap-0.5">
               <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-              <span className="text-lg font-bold text-foreground">â€”</span>
+              <span className="text-lg font-bold text-foreground">—</span>
             </div>
-            <p className="text-[10px] text-muted-foreground">{bn ? "à¦°à§‡à¦Ÿà¦¿à¦‚" : "Rating"}</p>
+            <p className="text-[10px] text-muted-foreground">{bn ? "রেটিং" : "Rating"}</p>
           </div>
         </div>
         <Button variant="outline" size="sm" className="w-full mt-3 text-xs" onClick={() => navigate(`/deal/seller/${sellerId}`)}>
-          {bn ? "à¦¸à§‡à¦²à¦¾à¦°à§‡à¦° à¦ªà§à¦°à§‹à¦«à¦¾à¦‡à¦² à¦¦à§‡à¦–à§à¦¨" : "View Seller Profile"}
+          {bn ? "সেলারের প্রোফাইল দেখুন" : "View Seller Profile"}
         </Button>
       </CardContent>
     </Card>
@@ -149,7 +150,7 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
 
   return (
     <div className="mt-8">
-      <h2 className="text-lg font-bold text-foreground mb-4">{bn ? "à¦¸à¦®à§à¦ªà¦°à§à¦•à¦¿à¦¤ à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "Related Ads"}</h2>
+      <h2 className="text-lg font-bold text-foreground mb-4">{bn ? "সম্পর্কিত বিজ্ঞাপন" : "Related Ads"}</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
         {relatedAds.map((ad: any) => {
           const img = ad.images?.[0];
@@ -160,7 +161,7 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
                   <ListingImage src={img} alt={ad.title} fallbackSize="md" />
                 </div>
                 <CardContent className="p-2.5">
-                  <p className="text-sm font-bold text-primary">à§³{ad.price > 0 ? ad.price.toLocaleString("bn-BD") : (bn ? "à¦†à¦²à§‹à¦šà¦¨à¦¾" : "Negotiable")}</p>
+                  <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? ad.price.toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
                   <h3 className="text-xs text-foreground line-clamp-2 mt-0.5">{ad.title}</h3>
                   {ad.location_district && <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{ad.location_district}</p>}
                 </CardContent>
@@ -182,22 +183,24 @@ const DealAdDetail = () => {
   const [showPhone, setShowPhone] = useState(false);
   const [selectedImg, setSelectedImg] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
+  const [activeConversationId, setActiveConversationId] = useState<string | null>(null);
   const [reportOpen, setReportOpen] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favoriteLoading, setFavoriteLoading] = useState(false);
   const { data: listing, isLoading } = useDealListing(id || "");
+  const startConversation = useStartDealConversation();
 
   const adImage = listing?.images?.[0];
   const adDesc = listing
     ? bn
-      ? `${listing.title} â€” à§³${listing.price.toLocaleString("bn-BD")}à¥¤ à¦‡à¦¯à¦¼à§‡à¦¸ à¦¡à¦¿à¦²à§‡ à¦¦à§‡à¦–à§à¦¨à¥¤ à¦¨à¦¿à¦°à¦¾à¦ªà¦¦ à¦•à§‡à¦¨à¦¾à¦¬à§‡à¦šà¦¾à¥¤`
-      : `${listing.title} â€” à§³${listing.price.toLocaleString()}. View on Yess Deal. Safe trading.`
+      ? `${listing.title} — ৳${listing.price.toLocaleString("bn-BD")}। ইয়েস ডিলে দেখুন। নিরাপদ কেনাবেচা।`
+      : `${listing.title} — ৳${listing.price.toLocaleString()}. View on Yess Deal. Safe trading.`
     : "";
   useSEO({
     title: listing
-      ? `${listing.title} â€” à§³${listing.price.toLocaleString(bn ? "bn-BD" : "en-US")}`
+      ? `${listing.title} — ৳${listing.price.toLocaleString(bn ? "bn-BD" : "en-US")}`
       : bn
-        ? "à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦¬à¦¿à¦¬à¦°à¦£"
+        ? "বিজ্ঞাপন বিবরণ"
         : "Ad details",
     description: adDesc,
     canonical: id ? `/deal/ad/${id}` : undefined,
@@ -238,14 +241,14 @@ const DealAdDetail = () => {
 
     if (!userId) {
       navigate("/auth");
-      toast.info(bn ? "à¦ªà¦›à¦¨à§à¦¦à§‡ à¦¯à§‹à¦— à¦•à¦°à¦¤à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨" : "Please login to save this ad");
+      toast.info(bn ? "পছন্দে যোগ করতে লগইন করুন" : "Please login to save this ad");
       return;
     }
 
     if (!listing) return;
 
     if (String(listing.user_id) === String(userId)) {
-      toast.info(bn ? "à¦¨à¦¿à¦œà§‡à¦° à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦ªà¦›à¦¨à§à¦¦à§‡ à¦¯à§‹à¦— à¦•à¦°à¦¾ à¦¯à¦¾à¦¯à¦¼ à¦¨à¦¾" : "You cannot save your own ad");
+      toast.info(bn ? "নিজের বিজ্ঞাপন পছন্দে যোগ করা যায় না" : "You cannot save your own ad");
       return;
     }
 
@@ -268,12 +271,40 @@ const DealAdDetail = () => {
     }
   };
 
+  // Resolve-or-create the conversation for (this listing, me, the seller)
+  // before opening the chat modal — the modal itself needs a real
+  // conversation_id, it no longer creates one on the fly.
+  const handleChatClick = async () => {
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
+    if (!listing) return;
+    if (user.id === listing.user_id) {
+      toast.info(bn ? "এটি আপনার নিজের বিজ্ঞাপন" : "This is your own ad");
+      return;
+    }
+
+    try {
+      const conv = await startConversation.mutateAsync({
+        listingId: listing.id,
+        otherUserId: listing.user_id,
+      });
+      const conversationId = conv?.id || conv?.conversation_id;
+      if (!conversationId) throw new Error("No conversation id returned");
+      setActiveConversationId(String(conversationId));
+      setChatOpen(true);
+    } catch (err: any) {
+      toast.error(err?.message || (bn ? "চ্যাট শুরু করা যায়নি" : "Could not start chat"));
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-        <div className="max-w-4xl mx-auto px-4 py-6">
+        <div className="app-container py-6">
           <Skeleton className="h-80 rounded-xl mb-4" />
           <Skeleton className="h-8 w-3/4 mb-2" />
           <Skeleton className="h-6 w-1/2" />
@@ -287,10 +318,10 @@ const DealAdDetail = () => {
       <div className="min-h-screen bg-background">
         <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-        <div className="max-w-4xl mx-auto px-4 py-20 text-center">
-          <p className="text-4xl mb-3">ðŸ˜”</p>
-          <p className="text-muted-foreground">{bn ? "à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨à¦Ÿà¦¿ à¦ªà¦¾à¦“à¦¯à¦¼à¦¾ à¦¯à¦¾à¦¯à¦¼à¦¨à¦¿" : "Ad not found"}</p>
-          <Button onClick={() => navigate("/deal")} className="mt-4">{bn ? "à¦«à¦¿à¦°à§‡ à¦¯à¦¾à¦¨" : "Go Back"}</Button>
+        <div className="app-container py-20 text-center">
+          <p className="text-4xl mb-3">😔</p>
+          <p className="text-muted-foreground">{bn ? "বিজ্ঞাপনটি পাওয়া যায়নি" : "Ad not found"}</p>
+          <Button onClick={() => navigate("/deal")} className="mt-4">{bn ? "ফিরে যান" : "Go Back"}</Button>
         </div>
       </div>
     );
@@ -303,10 +334,10 @@ const DealAdDetail = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-      <div className="max-w-5xl mx-auto px-4 py-4 pb-28 md:pb-10">
+      <div className="app-container py-4 pb-28 md:pb-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-          <button onClick={() => navigate("/deal")} className="hover:text-primary">{bn ? "à¦‡à¦¯à¦¼à§‡à¦¸ à¦¡à¦¿à¦²" : "Yess Deal"}</button>
+          <button onClick={() => navigate("/deal")} className="hover:text-primary">{bn ? "ইয়েস ডিল" : "Yess Deal"}</button>
           <ChevronRight className="h-3 w-3" />
           {cat && (
             <>
@@ -345,28 +376,28 @@ const DealAdDetail = () => {
               <h1 className="text-xl md:text-2xl font-bold text-foreground">{bn ? listing.title : (listing.title_en || listing.title)}</h1>
               {user && user.id === listing.user_id && (
                 <Button variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={() => navigate(`/deal/edit/${listing.id}`)}>
-                  <Pencil className="h-3.5 w-3.5" /> {bn ? "à¦¸à¦®à§à¦ªà¦¾à¦¦à¦¨à¦¾" : "Edit"}
+                  <Pencil className="h-3.5 w-3.5" /> {bn ? "সম্পাদনা" : "Edit"}
                 </Button>
               )}
             </div>
             <p className="text-2xl md:text-3xl font-bold text-primary mt-2">
-              à§³{listing.price > 0 ? listing.price.toLocaleString("bn-BD") : "à¦†à¦²à§‹à¦šà¦¨à¦¾ à¦¸à¦¾à¦ªà§‡à¦•à§à¦·"}
-              {listing.is_negotiable && <Badge variant="outline" className="ml-2 text-xs">{bn ? "à¦¦à¦°à¦¦à¦¾à¦® à¦¯à§‹à¦—à§à¦¯" : "Negotiable"}</Badge>}
+              ৳{listing.price > 0 ? listing.price.toLocaleString("bn-BD") : "আলোচনা সাপেক্ষ"}
+              {listing.is_negotiable && <Badge variant="outline" className="ml-2 text-xs">{bn ? "দরদাম যোগ্য" : "Negotiable"}</Badge>}
             </p>
 
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-3 mt-3 text-sm text-muted-foreground">
               <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{[listing.location_area, listing.location_district, listing.location_division].filter(Boolean).join(", ")}</span>
               <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{timeAgo(listing.created_at, bn)}</span>
-              <span className="flex items-center gap-1"><Eye className="h-4 w-4" />{listing.views_count} {bn ? "à¦¬à¦¾à¦° à¦¦à§‡à¦–à¦¾ à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "views"}</span>
-              <span className="flex items-center gap-1"><Tag className="h-4 w-4" />{listing.condition === "à¦¨à¦¤à§à¦¨" ? (bn ? "à¦¨à¦¤à§à¦¨" : "New") : listing.condition === "à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤" ? (bn ? "à¦¬à§à¦¯à¦¬à¦¹à§ƒà¦¤" : "Used") : listing.condition}</span>
+              <span className="flex items-center gap-1"><Eye className="h-4 w-4" />{listing.views_count} {bn ? "বার দেখা হয়েছে" : "views"}</span>
+              <span className="flex items-center gap-1"><Tag className="h-4 w-4" />{listing.condition === "নতুন" ? (bn ? "নতুন" : "New") : listing.condition === "ব্যবহৃত" ? (bn ? "ব্যবহৃত" : "Used") : listing.condition}</span>
             </div>
 
             <Separator className="my-4" />
 
             {/* Description */}
-            <h2 className="font-bold text-foreground mb-2">{bn ? "à¦¬à¦¿à¦¬à¦°à¦£" : "Description"}</h2>
-            <p className="text-muted-foreground text-sm whitespace-pre-line leading-relaxed">{listing.description || (bn ? "à¦•à§‹à¦¨à§‹ à¦¬à¦¿à¦¬à¦°à¦£ à¦¦à§‡à¦“à¦¯à¦¼à¦¾ à¦¹à¦¯à¦¼à¦¨à¦¿" : "No description provided")}</p>
+            <h2 className="font-bold text-foreground mb-2">{bn ? "বিবরণ" : "Description"}</h2>
+            <p className="text-muted-foreground text-sm whitespace-pre-line leading-relaxed">{listing.description || (bn ? "কোনো বিবরণ দেওয়া হয়নি" : "No description provided")}</p>
 
             <Separator className="my-4" />
 
@@ -374,13 +405,13 @@ const DealAdDetail = () => {
             <Card className="border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-800">
               <CardContent className="p-4">
                 <h3 className="font-bold text-foreground flex items-center gap-2 text-sm mb-2">
-                  <Shield className="h-4 w-4 text-amber-600" />{bn ? "à¦¨à¦¿à¦°à¦¾à¦ªà¦¤à§à¦¤à¦¾ à¦Ÿà¦¿à¦ªà¦¸" : "Safety Tips"}
+                  <Shield className="h-4 w-4 text-amber-600" />{bn ? "নিরাপত্তা টিপস" : "Safety Tips"}
                 </h3>
                 <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>â€¢ {bn ? "à¦ªà¦£à§à¦¯ à¦¹à¦¾à¦¤à§‡ à¦ªà§‡à¦¯à¦¼à§‡ à¦¦à¦¾à¦® à¦ªà¦°à¦¿à¦¶à§‹à¦§ à¦•à¦°à§à¦¨" : "Pay only after inspecting the product"}</li>
-                  <li>â€¢ {bn ? "à¦…à¦¨à¦²à¦¾à¦‡à¦¨à§‡ à¦†à¦—à¦¾à¦® à¦Ÿà¦¾à¦•à¦¾ à¦ªà¦¾à¦ à¦¾à¦¬à§‡à¦¨ à¦¨à¦¾" : "Never send money in advance online"}</li>
-                  <li>â€¢ {bn ? "à¦¨à¦¿à¦°à¦¾à¦ªà¦¦ à¦œà¦¾à¦¯à¦¼à¦—à¦¾à¦¯à¦¼ à¦¦à§‡à¦–à¦¾ à¦•à¦°à§à¦¨" : "Meet in a safe, public place"}</li>
-                  <li>â€¢ {bn ? "à¦¸à¦¨à§à¦¦à§‡à¦¹à¦œà¦¨à¦• à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ à¦•à¦°à§à¦¨" : "Report suspicious ads"}</li>
+                  <li>• {bn ? "পণ্য হাতে পেয়ে দাম পরিশোধ করুন" : "Pay only after inspecting the product"}</li>
+                  <li>• {bn ? "অনলাইনে আগাম টাকা পাঠাবেন না" : "Never send money in advance online"}</li>
+                  <li>• {bn ? "নিরাপদ জায়গায় দেখা করুন" : "Meet in a safe, public place"}</li>
+                  <li>• {bn ? "সন্দেহজনক বিজ্ঞাপন রিপোর্ট করুন" : "Report suspicious ads"}</li>
                 </ul>
               </CardContent>
             </Card>
@@ -394,15 +425,15 @@ const DealAdDetail = () => {
             {/* Contact */}
             <Card className="border-border/50">
               <CardContent className="p-4 space-y-3">
-                <h3 className="font-bold text-foreground">{bn ? "à¦¬à¦¿à¦•à§à¦°à§‡à¦¤à¦¾à¦° à¦¸à¦¾à¦¥à§‡ à¦¯à§‹à¦—à¦¾à¦¯à§‹à¦—" : "Contact Seller"}</h3>
+                <h3 className="font-bold text-foreground">{bn ? "বিক্রেতার সাথে যোগাযোগ" : "Contact Seller"}</h3>
 
                 {!showPhone ? (
                   <Button className="w-full gap-2" onClick={() => {
-                    if (!user) { navigate("/auth"); toast.info(bn ? "à¦«à§‹à¦¨ à¦¨à¦®à§à¦¬à¦° à¦¦à§‡à¦–à¦¤à§‡ à¦²à¦—à¦‡à¦¨ à¦•à¦°à§à¦¨" : "Please login to see phone number"); return; }
+                    if (!user) { navigate("/auth"); toast.info(bn ? "ফোন নম্বর দেখতে লগইন করুন" : "Please login to see phone number"); return; }
                     if (!listing.hide_phone) setShowPhone(true);
-                    else toast.info(bn ? "à¦¬à¦¿à¦•à§à¦°à§‡à¦¤à¦¾ à¦«à§‹à¦¨ à¦¨à¦®à§à¦¬à¦° à¦²à§à¦•à¦¿à¦¯à¦¼à§‡ à¦°à§‡à¦–à§‡à¦›à§‡à¦¨" : "Seller has hidden phone number");
+                    else toast.info(bn ? "বিক্রেতা ফোন নম্বর লুকিয়ে রেখেছেন" : "Seller has hidden phone number");
                   }}>
-                    <Phone className="h-4 w-4" />{bn ? "à¦«à§‹à¦¨ à¦¨à¦®à§à¦¬à¦° à¦¦à§‡à¦–à§à¦¨" : "Show Phone Number"}
+                    <Phone className="h-4 w-4" />{bn ? "ফোন নম্বর দেখুন" : "Show Phone Number"}
                   </Button>
                 ) : (
                   <a href={`tel:${listing.phone}`} className="block w-full">
@@ -412,12 +443,18 @@ const DealAdDetail = () => {
                   </a>
                 )}
 
-                <Button variant="outline" className="w-full gap-2" onClick={() => {
-                  if (!user) { navigate("/auth"); return; }
-                  if (user.id === listing.user_id) { toast.info(bn ? "à¦à¦Ÿà¦¿ à¦†à¦ªà¦¨à¦¾à¦° à¦¨à¦¿à¦œà§‡à¦° à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "This is your own ad"); return; }
-                  setChatOpen(true);
-                }}>
-                  <MessageCircle className="h-4 w-4" />{bn ? "à¦šà§à¦¯à¦¾à¦Ÿ à¦•à¦°à§à¦¨" : "Chat"}
+                <Button
+                  variant="outline"
+                  className="w-full gap-2"
+                  disabled={startConversation.isPending}
+                  onClick={handleChatClick}
+                >
+                  {startConversation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4" />
+                  )}
+                  {bn ? "চ্যাট করুন" : "Chat"}
                 </Button>
               </CardContent>
             </Card>
@@ -436,7 +473,7 @@ const DealAdDetail = () => {
               <Popover>
                 <PopoverTrigger asChild>
                   <Button variant="outline" className="flex-1 gap-1 text-xs">
-                    <Share2 className="h-4 w-4" />{bn ? "à¦¶à§‡à¦¯à¦¼à¦¾à¦°" : "Share"}
+                    <Share2 className="h-4 w-4" />{bn ? "শেয়ার" : "Share"}
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-48 p-2" align="end">
@@ -444,11 +481,11 @@ const DealAdDetail = () => {
                     <button onClick={() => { window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, "_blank"); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors">
                       <Facebook className="h-4 w-4 text-blue-600" /> Facebook
                     </button>
-                    <button onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(listing.title + " - à§³" + listing.price.toLocaleString("bn-BD") + " " + window.location.href)}`, "_blank"); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors">
+                    <button onClick={() => { window.open(`https://wa.me/?text=${encodeURIComponent(listing.title + " - ৳" + listing.price.toLocaleString("bn-BD") + " " + window.location.href)}`, "_blank"); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors">
                       <MessageCircle className="h-4 w-4 text-green-600" /> WhatsApp
                     </button>
-                    <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success(bn ? "à¦²à¦¿à¦‚à¦• à¦•à¦ªà¦¿ à¦¹à¦¯à¦¼à§‡à¦›à§‡" : "Link copied"); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors">
-                      <Link2 className="h-4 w-4 text-muted-foreground" /> {bn ? "à¦²à¦¿à¦‚à¦• à¦•à¦ªà¦¿" : "Copy Link"}
+                    <button onClick={() => { navigator.clipboard.writeText(window.location.href); toast.success(bn ? "লিংক কপি হয়েছে" : "Link copied"); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm rounded-md hover:bg-muted transition-colors">
+                      <Link2 className="h-4 w-4 text-muted-foreground" /> {bn ? "লিংক কপি" : "Copy Link"}
                     </button>
                   </div>
                 </PopoverContent>
@@ -458,10 +495,10 @@ const DealAdDetail = () => {
             {/* Report */}
             <Button variant="ghost" className="w-full text-xs text-muted-foreground gap-1" onClick={() => {
               if (!user) { navigate("/auth"); return; }
-              if (user.id === listing.user_id) { toast.info(bn ? "à¦¨à¦¿à¦œà§‡à¦° à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ à¦•à¦°à¦¾ à¦¯à¦¾à¦¯à¦¼ à¦¨à¦¾" : "Cannot report own ad"); return; }
+              if (user.id === listing.user_id) { toast.info(bn ? "নিজের বিজ্ঞাপন রিপোর্ট করা যায় না" : "Cannot report own ad"); return; }
               setReportOpen(true);
             }}>
-              <AlertTriangle className="h-3 w-3" />{bn ? "à¦à¦‡ à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨ à¦°à¦¿à¦ªà§‹à¦°à§à¦Ÿ à¦•à¦°à§à¦¨" : "Report this ad"}
+              <AlertTriangle className="h-3 w-3" />{bn ? "এই বিজ্ঞাপন রিপোর্ট করুন" : "Report this ad"}
             </Button>
           </div>
         </div>
@@ -470,13 +507,15 @@ const DealAdDetail = () => {
         <RelatedAds categoryId={(listing.deal_categories as any)?.id} currentId={listing.id} bn={bn} />
       </div>
 
-      <DealChatModal
-        open={chatOpen}
-        onOpenChange={setChatOpen}
-        listingId={listing.id}
-        listingTitle={listing.title}
-        sellerId={listing.user_id}
-      />
+      {activeConversationId && (
+        <DealChatModal
+          open={chatOpen}
+          onOpenChange={setChatOpen}
+          conversation_id={activeConversationId}
+          listingTitle={listing.title}
+          sellerId={listing.user_id}
+        />
+      )}
       <DealReportModal
         open={reportOpen}
         onOpenChange={setReportOpen}
@@ -491,5 +530,3 @@ const DealAdDetail = () => {
 };
 
 export default DealAdDetail;
-
-

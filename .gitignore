@@ -2,8 +2,11 @@
 /Shondhaan/frontend/dist
 /Shondhaan/frontend/build
 /Shondhaan/backend/node_modules
+/Shondhaan/backend/uploads
 /yess_service_backend/node_modules
+/yess_service_backend/uploads
 /yess_deal_backend/node_modules
 /yessmart_backend/node_modules
+/yessmart_backend/uploads
 /yessjob_backend/node_modules
 

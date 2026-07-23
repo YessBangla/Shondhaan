@@ -1,4 +1,4 @@
-import { pool } from "../config/db.js";
+import { pool } from "../db/pool.js";
 import { verifyToken } from "../utils/jwt.js";
 
 export async function logout(req, res) {

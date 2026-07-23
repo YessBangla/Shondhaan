@@ -35,7 +35,7 @@ const MartWishlist = () => {
 
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
-        <div className="max-w-7xl mx-auto px-4 py-5">
+        <div className="app-container py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/mart/home")}>
@@ -59,7 +59,7 @@ const MartWishlist = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 py-5 pb-28 md:pb-8">
+      <div className="app-container py-5 pb-28 md:pb-8">
         {items.length > 0 ? (
           <AnimatePresence mode="popLayout">
             <div className="space-y-3">

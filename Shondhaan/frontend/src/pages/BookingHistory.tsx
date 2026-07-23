@@ -90,7 +90,7 @@ const BookingHistory = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-3xl px-4 py-6 md:py-10">
+      <div className="app-container py-6 md:py-10">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> {t("bh.goBack")}
         </button>

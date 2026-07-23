@@ -164,6 +164,10 @@
 }
 
 @layer utilities {
+  .app-container {
+    @apply mx-auto w-full max-w-5xl px-4 md:px-6 lg:max-w-7xl lg:px-8;
+  }
+
   .text-gradient-green {
     background: linear-gradient(135deg, hsl(152 60% 38%), hsl(152 55% 48%));
     -webkit-background-clip: text;

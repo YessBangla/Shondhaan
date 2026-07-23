@@ -9,7 +9,7 @@ import {
 import { useMartCart } from "@/contexts/MartCartContext";
 import { toast } from "sonner";
 
-const API_BASE = "http://localhost:8081/api";
+const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
 
 type StoreMediaItem = {
   url: string;
@@ -275,7 +275,7 @@ const MartStore = () => {
           }
         />
 
-        <div className="max-w-6xl mx-auto px-4">
+        <div className="app-container">
           <div className="relative">
 
             {/* Avatar */}
@@ -396,7 +396,7 @@ const MartStore = () => {
 
       {/* ════ Body ════ */}
       {carouselMedia.length > 0 && (
-        <section className="mx-auto max-w-6xl px-4 pt-6">
+        <section className="app-container pt-6">
           <div className="relative overflow-hidden rounded-2xl border bg-background shadow-sm">
             <div className="h-[120px] md:h-[160px] bg-muted relative overflow-hidden">
               {carouselMedia[activeSlide]?.type === "video" ? (
@@ -462,7 +462,7 @@ const MartStore = () => {
         </section>
       )}
 
-      <div className="max-w-6xl mx-auto px-4 py-6 flex gap-6">
+      <div className="app-container py-6 flex gap-6">
 
         {/* ── Sidebar ── */}
         <aside className="hidden lg:block w-72 shrink-0">

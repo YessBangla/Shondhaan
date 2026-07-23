@@ -1,234 +1,165 @@
-import {
-  ALLOWED_USER_TYPES,
-  findUserById,
-  listUsers,
-  normalizeUserType,
-  safeUser,
-  updateUserTypeById,
-} from "../services/user.service.js";
+import { pool } from "../db/pool.js";
+import { safeUser } from "../utils/users.js";
+import { normalizeMobile } from "../utils/normalize.js";
 
-// ✅ GET ALL USERS
-export const getAllUsers = async (req, res) => {
+export const getMyProfile = async (req, res) => {
   try {
-    const users = await listUsers();
+    const [rows] = await pool.execute(
+      `SELECT
+        u.id,
+        u.name,
+        u.mobile,
+        u.address,
+        u.email,
+        u.type,
+        u.shop_name,
+        u.shop_type,
+        u.created_at,
+        u.updated_at,
+        up.profile_image,
+        up.bio,
+        up.gender,
+        up.date_of_birth,
+        up.nid_front,
+        up.nid_back
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ?
+       LIMIT 1`,
+      [req.auth.id],
+    );
 
-    res.status(200).json({
-      success: true,
-      users,
-    });
-  } catch (error) {
-    console.error("Get all users error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
-
-// ✅ GET SINGLE USER
-export const getUserById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const user = await findUserById(id);
-
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: "User not found",
-      });
-    }
-
-    res.status(200).json({
-      success: true,
-      user: safeUser(user),
-    });
-  } catch (error) {
-    console.error("Get user error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error",
-    });
-  }
-};
-
-export const getCurrentUser = async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const userId = req.user.id;
-
-    const user = await findUserById(userId);
-
-    if (!user) {
+    if (!rows.length) {
       return res.status(404).json({ message: "User not found" });
     }
 
-    res.status(200).json(safeUser(user));
-  } catch (err) {
-    console.error("Get current user error:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const updateUserType = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { type } = req.body;
-    const normalizedType = normalizeUserType(type);
-
-    if (!ALLOWED_USER_TYPES.has(normalizedType)) {
-      return res.status(400).json({ message: "Invalid user type" });
-    }
-
-    const user = await updateUserTypeById(id, normalizedType);
-
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    res.status(200).json({ user: safeUser(user) });
+    const user = safeUser(rows[0]);
+    res.json({
+      ...user,
+      created_at: rows[0].created_at,
+      updated_at: rows[0].updated_at,
+      profile_image: rows[0].profile_image || null,
+      avatar_url: rows[0].profile_image || null,
+      bio: rows[0].bio || null,
+      gender: rows[0].gender || null,
+      date_of_birth: rows[0].date_of_birth || null,
+      nid_front: rows[0].nid_front || null,
+      nid_back: rows[0].nid_back || null,
+      phone: user.mobile || "",
+    });
   } catch (error) {
-    console.error("Update user type error:", error);
-    res.status(500).json({ message: "Server error" });
+    console.error("Get current user profile error:", error);
+    res.status(500).json({ message: "Could not load user profile" });
   }
 };
 
-// ✅ GET USER PROFILE (for dashboard) - with data isolation
-export const getUserProfile = async (req, res) => {
+export const updateMyProfile = async (req, res) => {
   try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
+    const userId = req.auth.id;
+
+    const name = String(req.body.name ?? "").trim();
+    const mobile = normalizeMobile(req.body.mobile ?? req.body.phone ?? "");
+    const address = String(req.body.address ?? "").trim();
+
+    // Validation
+    if (Object.prototype.hasOwnProperty.call(req.body, "name") && !name) {
+      return res.status(400).json({ message: "Name is required" });
     }
 
-    const userId = req.user.id;
-    
-    // Ensure user can only fetch their own profile
-    // This is checked by authorizeOwnData middleware, but double-check here
-    if (!userId) {
-      return res.status(401).json({ message: "Invalid user ID" });
+    if (mobile && !/^01[3-9]\d{8}$/.test(mobile)) {
+      return res.status(400).json({ message: "Valid BD number required" });
     }
 
-    const user = await findUserById(userId);
+    // UPDATE USERS TABLE
+    const userFields = [];
+    const userValues = [];
 
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    if ("name" in req.body) {
+      userFields.push("name = ?");
+      userValues.push(name);
     }
 
-    // Ensure the requesting user owns this profile
-    if (user.id !== userId) {
-      return res.status(403).json({
-        message: "Forbidden - You cannot access other users' profiles",
-        code: "ACCESS_DENIED",
-      });
+    if ("mobile" in req.body || "phone" in req.body) {
+      userFields.push("mobile = ?");
+      userValues.push(mobile);
     }
 
-    const profile = {
-      id: user.id,
-      name: user.name || "User",
-      email: user.email || "",
-      phone: user.phone || "",
-      address: user.address || "",
-      avatar_url: user.avatar_url || null,
-      created_at: user.created_at || new Date().toISOString(),
-      role: user.role || "user",
+    if ("address" in req.body) {
+      userFields.push("address = ?");
+      userValues.push(address || null);
+    }
+
+    if (userFields.length) {
+      const [result] = await pool.execute(
+        `UPDATE users SET ${userFields.join(", ")} WHERE id = ?`,
+        [...userValues, userId]
+      );
+
+      if (result.affectedRows === 0) {
+        return res.status(404).json({ message: "User not found" });
+      }
+    }
+
+    // HANDLE IMAGE FILE
+    let profileImagePath = null;
+    if (req.file) {
+      profileImagePath = "/uploads/user-profiles/" + req.file.filename;
+    }
+
+    // PROFILE DATA
+    const profilePayload = {
+      profile_image: profileImagePath || req.body.profile_image,
+      bio: req.body.bio,
+      gender: req.body.gender,
+      date_of_birth: req.body.date_of_birth,
+      nid_front: req.body.nid_front,
+      nid_back: req.body.nid_back,
     };
 
-    res.status(200).json(profile);
-  } catch (err) {
-    console.error("Get user profile error:", err);
-    res.status(500).json({ message: err.message });
-  }
-};
+    const profileEntries = Object.entries(profilePayload).filter(
+      ([, value]) => value !== undefined
+    );
 
-// ✅ GET USER STATS (for dashboard) - with data isolation
-export const getUserStats = async (req, res) => {
-  try {
-    if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const userId = req.user.id;
-    const userRole = req.user.role || "user";
-
-    if (!userId) {
-      return res.status(401).json({ message: "Invalid user ID" });
-    }
-
-    // Initialize stats
-    let stats = {
-      bookings: 0,
-      orders: 0,
-      pendingRequests: 0,
-      reviews: 0,
-    };
-
-    // For standard users, fetch their bookings
-    if (userRole === "user") {
-      try {
-        const bookings = await req.app.locals.db.query(
-          "SELECT COUNT(*) as count FROM bookings WHERE customer_id = ?",
-          [userId]
-        );
-        stats.bookings = bookings[0]?.[0]?.count || 0;
-      } catch (err) {
-        console.error("Error fetching bookings:", err);
-      }
-    }
-
-    // For providers, fetch their assigned bookings
-    if (userRole === "provider") {
-      try {
-        const bookings = await req.app.locals.db.query(
-          "SELECT COUNT(*) as count FROM bookings WHERE provider_id = ?",
-          [userId]
-        );
-        stats.bookings = bookings[0]?.[0]?.count || 0;
-      } catch (err) {
-        console.error("Error fetching provider bookings:", err);
-      }
-    }
-
-    // For vendors, fetch their orders
-    if (userRole === "mart_vendor") {
-      try {
-        const orders = await req.app.locals.db.query(
-          "SELECT COUNT(*) as count FROM orders WHERE vendor_id = ?",
-          [userId]
-        );
-        stats.orders = orders[0]?.[0]?.count || 0;
-      } catch (err) {
-        console.error("Error fetching vendor orders:", err);
-      }
-    }
-
-    // Generic pending requests (only for current user)
-    try {
-      const pending = await req.app.locals.db.query(
-        "SELECT COUNT(*) as count FROM bookings WHERE (customer_id = ? OR provider_id = ?) AND status IN ('pending', 'assigned')",
-        [userId, userId]
+    if (profileEntries.length) {
+      const values = profileEntries.map(([, value]) =>
+        value === null ? null : String(value).trim() || null
       );
-      stats.pendingRequests = pending[0]?.[0]?.count || 0;
-    } catch (err) {
-      console.error("Error fetching pending requests:", err);
-    }
 
-    // Get reviews count (only for current user)
-    try {
-      const reviews = await req.app.locals.db.query(
-        "SELECT COUNT(*) as count FROM reviews WHERE reviewer_id = ? OR provider_id = ?",
-        [userId, userId]
+      const [profiles] = await pool.execute(
+        "SELECT id FROM user_profiles WHERE user_id = ? LIMIT 1",
+        [userId]
       );
-      stats.reviews = reviews[0]?.[0]?.count || 0;
-    } catch (err) {
-      console.error("Error fetching reviews:", err);
+
+      if (profiles.length) {
+        await pool.execute(
+          `UPDATE user_profiles SET ${profileEntries
+            .map(([key]) => `${key} = ?`)
+            .join(", ")} WHERE id = ?`,
+          [...values, profiles[0].id]
+        );
+      } else {
+        const columns = ["user_id", ...profileEntries.map(([key]) => key)];
+
+        await pool.execute(
+          `INSERT INTO user_profiles (${columns.join(", ")})
+           VALUES (${columns.map(() => "?").join(", ")})`,
+          [userId, ...values]
+        );
+      }
     }
 
-    res.status(200).json(stats);
+    // RETURN UPDATED USER
+    const [rows] = await pool.execute(
+      `SELECT u.*, up.*
+       FROM users u
+       LEFT JOIN user_profiles up ON up.user_id = u.id
+       WHERE u.id = ? LIMIT 1`,
+      [userId]
+    );
+
+    res.json(rows[0]);
   } catch (err) {
-    console.error("Get user stats error:", err);
-    res.status(500).json({ message: err.message });
+    console.error(err);
+    res.status(500).json({ message: "Profile update failed" });
   }
 };

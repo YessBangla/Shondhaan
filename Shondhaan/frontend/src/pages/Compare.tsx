@@ -260,7 +260,7 @@ const Compare = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="mx-auto max-w-5xl px-4 py-5 md:py-8">
+      <div className="app-container py-5 md:py-8">
         <div className="flex items-center gap-3 mb-5">
           <button onClick={() => navigate(-1)} className="text-muted-foreground hover:text-foreground">
             <ChevronLeft className="h-5 w-5" />

@@ -200,30 +200,30 @@ const Auth = () => {
       toast.error(passwordPolicyMessage);
       return;
     }
-if (role === "mart_vendor" && !shopName.trim()) {
-  toast.error(
-    language === "bn"
-      ? "দোকানের নাম লিখুন"
-      : "Please enter shop name"
-  );
-  return;
-}
-if (role === "mart_vendor" && !shopType) {
-  toast.error(language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Please select shop type");
-  return;
-}
-    setLoading(true);
-    try {
-    await requestSignupOtp({
-  name: name.trim(),
-  mobile: phone.trim(),
-  address: address.trim(),
-  email: email.trim(),
-  password,
-  type: role,
-  shop_name: role === "mart_vendor" ? shopName.trim() : "",
-  shop_type: role === "mart_vendor" ? shopType : "",
-});
+    if (role === "mart_vendor" && !shopName.trim()) {
+      toast.error(
+        language === "bn"
+          ? "দোকানের নাম লিখুন"
+          : "Please enter shop name"
+      );
+      return;
+    }
+    if (role === "mart_vendor" && !shopType) {
+      toast.error(language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Please select shop type");
+      return;
+    }
+        setLoading(true);
+        try {
+        await requestSignupOtp({
+      name: name.trim(),
+      mobile: phone.trim(),
+      address: address.trim(),
+      email: email.trim(),
+      password,
+      type: role,
+      shop_name: role === "mart_vendor" ? shopName.trim() : "",
+      shop_type: role === "mart_vendor" ? shopType : "",
+    });
       setOtpEmail(email.trim());
       setStep("otp");
       toast.success(t("auth.otpSent"));
@@ -255,16 +255,16 @@ if (role === "mart_vendor" && !shopType) {
   const handleResendOtp = async () => {
     setLoading(true);
     try {
-   await requestSignupOtp({
-  name: name.trim(),
-  mobile: phone.trim(),
-  address: address.trim(),
-  email: otpEmail,
-  password,
-  type: role,
-  shop_name: role === "mart_vendor" ? shopName.trim() : "",
-  shop_type: role === "mart_vendor" ? shopType : "",
-});
+      await requestSignupOtp({
+          name: name.trim(),
+          mobile: phone.trim(),
+          address: address.trim(),
+          email: otpEmail,
+          password,
+          type: role,
+          shop_name: role === "mart_vendor" ? shopName.trim() : "",
+          shop_type: role === "mart_vendor" ? shopType : "",
+        });
       toast.success(t("auth.otpSent"));
     } catch (error: any) {
       toast.error(error.message || t("auth.error"));
@@ -409,63 +409,63 @@ if (role === "mart_vendor" && !shopType) {
                   />
                 </div>
                 {/* Role Selection */}
-<div className="relative">
-  <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
-  <select
-    value={role}
-    onChange={(e) => {
-      setRole(e.target.value);
+                    <select
+                      value={role}
+                      onChange={(e) => {
+                        setRole(e.target.value);
 
-      if (e.target.value !== "mart_vendor") {
-        setShopName("");
-        setShopType("");
-      }
-    }}
-    className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
-  >
-    {ROLE_OPTIONS.map((item) => (
-      <option key={item.value} value={item.value}>
-        {item.label}
-      </option>
-    ))}
-  </select>
-</div>
+                        if (e.target.value !== "mart_vendor") {
+                          setShopName("");
+                          setShopType("");
+                        }
+                      }}
+                      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
+                    >
+                      {ROLE_OPTIONS.map((item) => (
+                        <option key={item.value} value={item.value}>
+                          {item.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-{/* Shop Name (Only Mart Vendor) */}
-{role === "mart_vendor" && (
-  <div className="relative">
-    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  {/* Shop Name (Only Mart Vendor) */}
+                  {role === "mart_vendor" && (
+                    <div className="relative">
+                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
 
-    <input
-      type="text"
-      value={shopName}
-      onChange={(e) => setShopName(e.target.value)}
-      placeholder={
-        language === "bn"
-          ? "দোকানের নাম লিখুন"
-          : "Enter Shop Name"
-      }
-      maxLength={150}
-      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-    />
-  </div>
-)}
-{role === "mart_vendor" && (
-  <div className="relative">
-    <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-    <select
-      value={shopType}
-      onChange={(e) => setShopType(e.target.value)}
-      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
-    >
-      <option value="">{language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Select shop type"}</option>
-      {SHOP_TYPE_OPTIONS.map((item) => (
-        <option key={item.value} value={item.value}>{item.label}</option>
-      ))}
-    </select>
-  </div>
-)}
+                      <input
+                        type="text"
+                        value={shopName}
+                        onChange={(e) => setShopName(e.target.value)}
+                        placeholder={
+                          language === "bn"
+                            ? "দোকানের নাম লিখুন"
+                            : "Enter Shop Name"
+                        }
+                        maxLength={150}
+                        className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                      />
+                    </div>
+                  )}
+                  {role === "mart_vendor" && (
+                    <div className="relative">
+                      <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <select
+                        value={shopType}
+                        onChange={(e) => setShopType(e.target.value)}
+                        className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
+                      >
+                        <option value="">{language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Select shop type"}</option>
+                        {SHOP_TYPE_OPTIONS.map((item) => (
+                          <option key={item.value} value={item.value}>{item.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input

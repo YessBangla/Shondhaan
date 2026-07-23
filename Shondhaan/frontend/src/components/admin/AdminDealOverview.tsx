@@ -1,7 +1,19 @@
 import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Handshake, AlertTriangle, Eye, CheckCircle, Ban, Search, RefreshCw, Flag } from "lucide-react";
 import { motion } from "framer-motion";
+
+// Same base URL / helper convention as AdminDealManagement.tsx
+const API_BASE = "http://localhost:4000/api";
+
+async function apiFetch(path: string, options?: RequestInit) {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: { "Content-Type": "application/json" },
+    ...options,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data?.message || `Request failed (${res.status})`);
+  return data;
+}
 
 const AdminDealOverview = () => {
   const [listings, setListings] = useState<any[]>([]);
@@ -14,36 +26,63 @@ const AdminDealOverview = () => {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    const [listRes, reportRes] = await Promise.all([
-      supabase.from("deal_listings").select("*").order("created_at", { ascending: false }),
-      supabase.from("deal_reports").select("*, deal_listings(title)").order("created_at", { ascending: false }),
-    ]);
+    try {
+      const [listData, reportData] = await Promise.all([
+        apiFetch(`/deal/listings`),
+        apiFetch(`/deal/reports`),
+      ]);
 
-    const all = listRes.data || [];
-    const allReports = reportRes.data || [];
-    setListings(all);
-    setReports(allReports);
-    setStats({
-      total: all.length,
-      active: all.filter(l => l.status === "active").length,
-      sold: all.filter(l => l.status === "sold").length,
-      pending: all.filter(l => l.status === "pending").length,
-      reported: allReports.filter(r => r.status === "pending").length,
-      totalViews: all.reduce((sum, l) => sum + (l.views_count || 0), 0),
-    });
-    setLoading(false);
+      let all: any[] = listData.data || listData;
+      all = [...all].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+      let allReports: any[] = reportData.data || reportData;
+
+      // API doesn't embed the listing title on the report the way the old
+      // Supabase `select("*, deal_listings(title)")` did, so stitch it in
+      // client-side from the listings we just fetched.
+      const listingMap = new Map(all.map((l: any) => [l.id, l]));
+      allReports = allReports.map((r: any) => ({
+        ...r,
+        deal_listings: r.deal_listings || (listingMap.has(r.listing_id) ? { title: listingMap.get(r.listing_id).title } : null),
+      }));
+
+      setListings(all);
+      setReports(allReports);
+      setStats({
+        total: all.length,
+        active: all.filter(l => l.status === "active").length,
+        sold: all.filter(l => l.status === "sold").length,
+        pending: all.filter(l => l.status === "pending").length,
+        reported: allReports.filter(r => r.status === "pending").length,
+        totalViews: all.reduce((sum, l) => sum + (l.views_count || 0), 0),
+      });
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const handleListingStatus = async (id: string, status: string) => {
-    const { error } = await supabase.from("deal_listings").update({ status }).eq("id", id);
-    if (!error) setListings(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    try {
+      await apiFetch(`/deal/listings/${id}`, { method: "PUT", body: JSON.stringify({ status }) });
+      setListings(prev => prev.map(l => l.id === id ? { ...l, status } : l));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const handleReportResolve = async (id: string, adminNote: string) => {
-    const { error } = await supabase.from("deal_reports").update({ status: "resolved", admin_note: adminNote, resolved_at: new Date().toISOString() }).eq("id", id);
-    if (!error) setReports(prev => prev.map(r => r.id === id ? { ...r, status: "resolved" } : r));
+    try {
+      await apiFetch(`/deal/reports/${id}`, {
+        method: "PUT",
+        body: JSON.stringify({ status: "resolved", admin_note: adminNote, resolved_at: new Date().toISOString() }),
+      });
+      setReports(prev => prev.map(r => r.id === id ? { ...r, status: "resolved" } : r));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   const filteredListings = listings

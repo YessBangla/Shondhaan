@@ -145,7 +145,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
       </div>
 
       {/* Header */}
-      <div className="max-w-7xl mx-auto px-4 -mt-12 relative z-10 mb-6">
+      <div className="app-container -mt-12 relative z-10 mb-6">
         <div className="rounded-2xl border border-border bg-card p-4 md:p-6 shadow-sm">
           <div className="flex items-start gap-4">
             {shop.logo_url ? (
@@ -202,7 +202,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
       </div>
 
       {/* Layout */}
-      <div className="max-w-7xl mx-auto px-4 pb-20">
+      <div className="app-container pb-20">
         <div className="flex gap-4">
           {/* Sidebar */}
           <aside className="hidden lg:block w-64 shrink-0">

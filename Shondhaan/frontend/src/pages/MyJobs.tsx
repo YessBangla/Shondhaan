@@ -61,7 +61,7 @@ const MyJobs = () => {
       <div className="pt-[44px] md:pt-[68px] bg-card" />
       <JobsMenuBar />
 
-      <div className="mx-auto max-w-4xl px-4 md:px-6 py-6">
+      <div className="app-container py-6">
         <div className="flex items-center justify-between mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="-ml-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" /> Yess Jobs
