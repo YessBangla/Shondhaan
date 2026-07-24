@@ -76,7 +76,7 @@ type FormattedService = {
   commission_percent: string;
 };
 
-const API_BASE = `${(INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(
+const API_BASE = `${(INDIVIDUAL_API_BASE_URL).replace(
   /\/+$/,
   ""
 )}/api`;

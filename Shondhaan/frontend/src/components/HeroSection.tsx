@@ -345,7 +345,7 @@ const HeroSection = () => {
     (bn ? activeHeroBanner?.subtitle_bn : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
     (bn ? "প্রিমিয়াম সেবা প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
-  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "";
+  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
