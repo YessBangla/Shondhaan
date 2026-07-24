@@ -74,11 +74,15 @@ const UserDashboard = () => {
       setLoading(true);
       setError(null);
 
-      const res = await fetch(`${API_BASE}/api/users/me`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE || "https://backend-central.shondhaan.com"}/api/user/profile`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (!res.ok) {
         if (res.status === 401) {
@@ -108,11 +112,15 @@ const UserDashboard = () => {
   // 📊 Stats
   const fetchUserStats = async (token: string) => {
     try {
-      const res = await fetch(`${API_BASE}/api/users/stats`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const response = await fetch(
+        `${import.meta.env.VITE_API_BASE || "https://backend-central.shondhaan.com"}/api/user/stats`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (res.ok) {
         const data = await res.json();

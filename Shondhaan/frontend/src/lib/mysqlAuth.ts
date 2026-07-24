@@ -463,15 +463,13 @@ export function saveMySqlAuth(
  data.user.role = type;
 
 
- // Store only user info
- // NO TOKEN
- localStorage.setItem(
-  STORAGE_KEY,
-  JSON.stringify({
-   user:data.user,
-   token:data.token
-  })
- );
+  localStorage.setItem(
+   STORAGE_KEY,
+   JSON.stringify({
+    user:data.user,
+    token: data.token || null
+   })
+  );
 
 
  window.dispatchEvent(

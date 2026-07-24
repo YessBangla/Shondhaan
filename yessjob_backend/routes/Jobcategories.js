@@ -13,7 +13,7 @@
 
 const express = require("express");
 const router = express.Router();
-const { pool } = require("../database/createJobCategoriesTable");
+const { pool } = require("../database/Createjobcategoriestable");
 
 // ── Auth placeholder ─────────────────────────────────────────────────────
 // employerProfile.js already has logic that reads `Authorization: Bearer <jwt>`

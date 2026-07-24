@@ -6,8 +6,8 @@ import JobsPageTransition from "@/components/jobs/JobsPageTransition";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useJobSeekerProfile, useUpsertJobSeekerProfile, JOB_CATEGORIES } from "@/hooks/useJobData";
-import { supabase } from "@/integrations/supabase/client";
+import { JOB_CATEGORIES } from "@/hooks/useJobData";
+import VideoRecorder from "@/components/VideoRecorder"; // ← adjust path to wherever you saved VideoRecorder.tsx
 import { ArrowLeft, Save, Plus, Trash2, User, Briefcase, GraduationCap, Award, Languages, Phone, Mail, MapPin, Calendar, FileText, Camera, Upload, Eye, Video, VideoOff, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,14 +16,28 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
+// Point this at wherever yessjob_backend's server.js is running.
+// e.g. in .env.local: VITE_JOBS_API_URL=https://backend-yjob.shondhaan.com
+const API_BASE = import.meta.env.VITE_JOBS_API_URL || "https://backend-yjob.shondhaan.com";
+
+// ⚠️  TEMPORARY, INSECURE AUTH — matches routes/jobSeekerProfile.js.
+// We just pass the logged-in user's id as a query param; the backend
+// trusts it with no signature/token verification. Fine for local dev,
+// NOT safe for production — see the warning at the top of that file.
+const JOBSEEKER_API = `${API_BASE}/api/jobseeker/profile`;
+
 const JobSeekerProfile = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
   const bn = language === "bn";
 
-  const { data: existingProfile, isLoading } = useJobSeekerProfile();
-  const upsert = useUpsertJobSeekerProfile();
+  const userId = (user as any)?.id;
+  const withUserId = (path: string) =>
+    `${path}${path.includes("?") ? "&" : "?"}user_id=${userId}`;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
   const [fullName, setFullName] = useState("");
   const [phone, setPhone] = useState("");
@@ -50,42 +64,59 @@ const JobSeekerProfile = () => {
   const [isAvailable, setIsAvailable] = useState(true);
   const [videoCvUrl, setVideoCvUrl] = useState("");
   const [videoUploading, setVideoUploading] = useState(false);
-  const [isRecording, setIsRecording] = useState(false);
-  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
-  const [showVideoPreview, setShowVideoPreview] = useState(false);
+
+  // ── Video CV: replaces the old isRecording/recordedBlob/videoRef/
+  // mediaRecorderRef/streamRef/chunksRef state — VideoRecorder owns all of
+  // that internally now. This page just needs to know:
+  //   - whether the recorder UI should be shown at all (showRecorder)
+  //   - the blob it hands back once recording stops (pendingBlob), which
+  //     we then feed into the existing uploadVideoCv() below
+  const [showRecorder, setShowRecorder] = useState(false);
+  const [pendingBlob, setPendingBlob] = useState<Blob | null>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const videoInputRef = useRef<HTMLInputElement>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
 
+  // ── Load profile on mount ──────────────────────────────────────────
   useEffect(() => {
-    if (existingProfile) {
-      setFullName(existingProfile.full_name || "");
-      setPhone(existingProfile.phone || "");
-      setEmail(existingProfile.email || "");
-      setAddress(existingProfile.address || "");
-      setDob(existingProfile.date_of_birth || "");
-      setGender(existingProfile.gender || "any");
-      setMaritalStatus(existingProfile.marital_status || "single");
-      setAboutMe(existingProfile.about_me || "");
-      setCareerObjective(existingProfile.career_objective || "");
-      setPresentSalary(existingProfile.present_salary?.toString() || "");
-      setExpectedSalary(existingProfile.expected_salary?.toString() || "");
-      setSkills(existingProfile.skills || []);
-      setEducation(existingProfile.education || []);
-      setExperience(existingProfile.experience || []);
-      setTraining(existingProfile.training || []);
-      setLanguagesList(existingProfile.languages || []);
-      setReferencePeople(existingProfile.reference_persons || []);
-      setPhotoUrl(existingProfile.photo_url || "");
-      setPreferredCategories(existingProfile.preferred_job_categories || []);
-      setPreferredDistricts(existingProfile.preferred_districts || []);
-      setIsAvailable(existingProfile.is_available !== false);
-      setVideoCvUrl((existingProfile as any).video_cv_url || "");
-    }
-  }, [existingProfile]);
+    if (!user || !userId) return;
+    (async () => {
+      setIsLoading(true);
+      try {
+        const res = await fetch(withUserId(JOBSEEKER_API));
+        if (!res.ok) throw new Error("Failed to load profile");
+        const data = await res.json();
+        if (data) {
+          setFullName(data.full_name || "");
+          setPhone(data.phone || "");
+          setEmail(data.email || "");
+          setAddress(data.address || "");
+          setDob(data.date_of_birth || "");
+          setGender(data.gender || "any");
+          setMaritalStatus(data.marital_status || "single");
+          setAboutMe(data.about_me || "");
+          setCareerObjective(data.career_objective || "");
+          setPresentSalary(data.present_salary?.toString() || "");
+          setExpectedSalary(data.expected_salary?.toString() || "");
+          setSkills(data.skills || []);
+          setEducation(data.education || []);
+          setExperience(data.experience || []);
+          setTraining(data.training || []);
+          setLanguagesList(data.languages || []);
+          setReferencePeople(data.reference_persons || []);
+          setPhotoUrl(data.photo_url || "");
+          setPreferredCategories(data.preferred_job_categories || []);
+          setPreferredDistricts(data.preferred_districts || []);
+          setIsAvailable(data.is_available !== false);
+          setVideoCvUrl(data.video_cv_url || "");
+        }
+      } catch (err: any) {
+        toast.error(err.message || "Failed to load profile");
+      } finally {
+        setIsLoading(false);
+      }
+    })();
+  }, [user, userId]);
 
   if (!user) { navigate("/auth"); return null; }
 
@@ -106,18 +137,25 @@ const JobSeekerProfile = () => {
     return Math.min(score, 100);
   };
 
+  // ── Photo upload ────────────────────────────────────────────────────
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
     if (file.size > 2 * 1024 * 1024) { toast.error(bn ? "ছবি ২MB এর ছোট হতে হবে" : "Photo must be under 2MB"); return; }
+
     setPhotoUploading(true);
     try {
-      const ext = file.name.split('.').pop();
-      const path = `job-profiles/${user.id}/photo.${ext}`;
-      const { error: upErr } = await supabase.storage.from("cms-images").upload(path, file, { upsert: true });
-      if (upErr) throw upErr;
-      const { data: { publicUrl } } = supabase.storage.from("cms-images").getPublicUrl(path);
-      setPhotoUrl(publicUrl);
+      const formData = new FormData();
+      formData.append("photo", file);
+
+      const res = await fetch(withUserId(`${JOBSEEKER_API}/photo`), {
+        method: "POST",
+        body: formData, // don't set Content-Type manually for FormData
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Upload failed");
+
+      setPhotoUrl(data.photo_url);
       toast.success(bn ? "ছবি আপলোড হয়েছে" : "Photo uploaded");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -126,34 +164,51 @@ const JobSeekerProfile = () => {
     }
   };
 
+  // ── Save profile ────────────────────────────────────────────────────
   const handleSave = async () => {
     if (!fullName.trim()) { toast.error(bn ? "নাম দিন" : "Name required"); return; }
-    const completeness = calculateCompleteness();
-    await upsert.mutateAsync({
-      full_name: fullName,
-      phone: phone || null,
-      email: email || null,
-      address: address || null,
-      date_of_birth: dob || null,
-      gender,
-      marital_status: maritalStatus,
-      about_me: aboutMe || null,
-      career_objective: careerObjective || null,
-      present_salary: presentSalary ? parseFloat(presentSalary) : null,
-      expected_salary: expectedSalary ? parseFloat(expectedSalary) : null,
-      skills,
-      education,
-      experience,
-      training,
-      languages: languagesList,
-      reference_persons: referencePeople,
-      profile_completeness: completeness,
-      photo_url: photoUrl || null,
-      preferred_job_categories: preferredCategories,
-      preferred_districts: preferredDistricts,
-      is_available: isAvailable,
-      video_cv_url: videoCvUrl || null,
-    } as any);
+
+    setIsSaving(true);
+    try {
+      const res = await fetch(withUserId(JOBSEEKER_API), {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          full_name: fullName,
+          phone: phone || null,
+          email: email || null,
+          address: address || null,
+          date_of_birth: dob || null,
+          gender,
+          marital_status: maritalStatus,
+          about_me: aboutMe || null,
+          career_objective: careerObjective || null,
+          present_salary: presentSalary ? parseFloat(presentSalary) : null,
+          expected_salary: expectedSalary ? parseFloat(expectedSalary) : null,
+          skills,
+          education,
+          experience,
+          training,
+          languages: languagesList,
+          reference_persons: referencePeople,
+          photo_url: photoUrl || null,
+          preferred_job_categories: preferredCategories,
+          preferred_districts: preferredDistricts,
+          is_available: isAvailable,
+          video_cv_url: videoCvUrl || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Save failed");
+
+      toast.success(bn ? "প্রোফাইল সংরক্ষণ হয়েছে" : "Profile saved");
+    } catch (err: any) {
+      toast.error(err.message || "Save failed");
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const addSkill = () => {
@@ -169,51 +224,37 @@ const JobSeekerProfile = () => {
   const addLanguage = () => setLanguagesList([...languagesList, { name: "", reading: "good", writing: "good", speaking: "good" }]);
   const addReference = () => setReferencePeople([...referencePeople, { name: "", designation: "", organization: "", phone: "", email: "", relation: "" }]);
 
-  // Video CV functions
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      streamRef.current = stream;
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-      }
-      const mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-      mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) chunksRef.current.push(e.data); };
-      mediaRecorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: 'video/webm' });
-        setRecordedBlob(blob);
-        if (videoRef.current) {
-          videoRef.current.srcObject = null;
-          videoRef.current.src = URL.createObjectURL(blob);
-        }
-      };
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err: any) {
-      toast.error(bn ? "ক্যামেরা অ্যাক্সেস পাওয়া যায়নি" : "Could not access camera");
-    }
-  };
-
-  const stopRecording = () => {
-    mediaRecorderRef.current?.stop();
-    streamRef.current?.getTracks().forEach(t => t.stop());
-    setIsRecording(false);
-  };
-
+  // ── Video CV: upload (recorded blob or picked file) ──────────────────
   const uploadVideoCv = async (file: Blob, ext: string = "webm") => {
     if (!user) return;
     if (file.size > 50 * 1024 * 1024) { toast.error(bn ? "ভিডিও ৫০MB এর ছোট হতে হবে" : "Video must be under 50MB"); return; }
+
     setVideoUploading(true);
     try {
-      const path = `${user.id}/video-cv.${ext}`;
-      const { error: upErr } = await supabase.storage.from("video-cvs").upload(path, file, { upsert: true, contentType: ext === 'webm' ? 'video/webm' : 'video/mp4' });
-      if (upErr) throw upErr;
-      const { data: { publicUrl } } = supabase.storage.from("video-cvs").getPublicUrl(path);
-      setVideoCvUrl(publicUrl);
-      setRecordedBlob(null);
+      // Wrap in an explicit File with a guaranteed clean video mimetype.
+      // Passing a raw Blob + filename string to FormData.append() doesn't
+      // reliably preserve the Blob's .type across browsers — it was
+      // arriving on the server as "text/plain" in testing. Constructing a
+      // real File object with an explicit type is more consistent.
+      const cleanType = file.type && file.type.startsWith("video/")
+        ? file.type.split(";")[0].trim()
+        : (ext === "mp4" ? "video/mp4" : "video/webm");
+      const filename = `video-cv.${ext}`;
+      const videoFile = new File([file], filename, { type: cleanType });
+
+      const formData = new FormData();
+      formData.append("video", videoFile);
+
+      const res = await fetch(withUserId(`${JOBSEEKER_API}/video`), {
+        method: "POST",
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || "Upload failed");
+
+      setVideoCvUrl(data.video_cv_url);
+      setPendingBlob(null);
+      setShowRecorder(false);
       toast.success(bn ? "ভিডিও সিভি আপলোড হয়েছে" : "Video CV uploaded");
     } catch (err: any) {
       toast.error(err.message || "Upload failed");
@@ -231,9 +272,29 @@ const JobSeekerProfile = () => {
 
   const deleteVideoCv = async () => {
     if (!user) return;
-    setVideoCvUrl("");
-    setRecordedBlob(null);
-    toast.success(bn ? "ভিডিও সিভি মুছে ফেলা হয়েছে" : "Video CV removed");
+    try {
+      const res = await fetch(withUserId(`${JOBSEEKER_API}/video`), {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.message || "Failed to remove video");
+      }
+      setVideoCvUrl("");
+      setPendingBlob(null);
+      toast.success(bn ? "ভিডিও সিভি মুছে ফেলা হয়েছে" : "Video CV removed");
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove video");
+    }
+  };
+
+  // Picks a sensible file extension from the blob's actual mimeType —
+  // VideoRecorder may hand back webm OR mp4 depending on the browser
+  // (Safari/iOS records mp4), so this can't be hardcoded to "webm" anymore.
+  const extensionFromBlob = (blob: Blob) => {
+    if (blob.type.includes("mp4")) return "mp4";
+    if (blob.type.includes("webm")) return "webm";
+    return "webm";
   };
 
   const completeness = calculateCompleteness();
@@ -242,7 +303,7 @@ const JobSeekerProfile = () => {
     return (
       <JobsPageTransition>
         <Navbar />
-      <div className="pt-[44px] md:pt-[68px] bg-card" /><JobsMenuBar />
+      {/* <div className="pt-[44px] md:pt-[68px] bg-card" /><JobsMenuBar /> */}
         <div className="mx-auto max-w-3xl px-4 py-12"><div className="h-48 rounded-xl bg-muted animate-pulse" /></div>
       </JobsPageTransition>
     );
@@ -251,7 +312,7 @@ const JobSeekerProfile = () => {
   return (
     <JobsPageTransition>
       <Navbar />
-      <div className="pt-[44px] md:pt-[68px] bg-card" />
+      {/* <div className="pt-[44px] md:pt-[68px] bg-card" /> */}
       <JobsMenuBar />
 
       <div className="mx-auto max-w-3xl px-4 md:px-6 py-6">
@@ -259,8 +320,8 @@ const JobSeekerProfile = () => {
           <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="-ml-2 text-muted-foreground">
             <ArrowLeft className="h-4 w-4 mr-1" /> Yess Jobs
           </Button>
-          <Button onClick={handleSave} disabled={upsert.isPending} className="bg-blue-600 hover:bg-blue-700 gap-1">
-            <Save className="h-3.5 w-3.5" /> {upsert.isPending ? "..." : bn ? "সংরক্ষণ" : "Save"}
+          <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 gap-1">
+            <Save className="h-3.5 w-3.5" /> {isSaving ? "..." : bn ? "সংরক্ষণ" : "Save"}
           </Button>
         </div>
 
@@ -286,7 +347,7 @@ const JobSeekerProfile = () => {
             <div className="relative">
               <div className="w-24 h-24 rounded-xl border-2 border-dashed border-blue-200 bg-blue-50/50 dark:bg-blue-950/20 flex items-center justify-center overflow-hidden">
                 {photoUrl ? (
-                  <img src={photoUrl} alt="Profile" className="w-full h-full object-cover rounded-xl" />
+                  <img src={photoUrl.startsWith("http") ? photoUrl : `${API_BASE}${photoUrl}`} alt="Profile" className="w-full h-full object-cover rounded-xl" />
                 ) : (
                   <Camera className="h-8 w-8 text-blue-300" />
                 )}
@@ -466,7 +527,12 @@ const JobSeekerProfile = () => {
           ))}
         </div>
 
-        {/* Video CV Section */}
+        {/* Video CV Section — now powered by <VideoRecorder /> instead of
+            inline getUserMedia/MediaRecorder logic. Three states:
+              1. Have a saved video_cv_url, not re-recording  -> show it + Preview/Remove/Re-record
+              2. showRecorder is true, no blob yet            -> show <VideoRecorder />
+              3. showRecorder is true, pendingBlob is set      -> VideoRecorder's own preview
+                 already shows the recording; we just add Upload/Cancel below it */}
         <div className="rounded-xl border bg-card p-4 mb-4 space-y-3">
           <h3 className="font-semibold text-sm text-blue-700 flex items-center gap-2">
             <Video className="h-4 w-4" /> {bn ? "ভিডিও সিভি" : "Video CV"}
@@ -475,12 +541,12 @@ const JobSeekerProfile = () => {
             {bn ? "ভিডিওতে নিজের পরিচয় দিন — নিয়োগদাতারা আপনাকে দেখতে ও শুনতে পারবেন। সর্বোচ্চ ৫০MB, ২-৩ মিনিটের ভিডিও রেকমেন্ডেড।" : "Introduce yourself on video — employers can see & hear you. Max 50MB, 2-3 min recommended."}
           </p>
 
-          {videoCvUrl && !isRecording && !recordedBlob && (
+          {videoCvUrl && !showRecorder && (
             <div className="relative rounded-lg overflow-hidden border bg-muted">
-              <video src={videoCvUrl} controls className="w-full max-h-52 rounded-lg" />
+              <video src={videoCvUrl.startsWith("http") ? videoCvUrl : `${API_BASE}${videoCvUrl}`} controls className="w-full max-h-52 rounded-lg" />
               <div className="flex gap-2 mt-2">
-                <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => setShowVideoPreview(true)}>
-                  <Play className="h-3 w-3" /> {bn ? "দেখুন" : "Preview"}
+                <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs" onClick={() => setShowRecorder(true)}>
+                  <Video className="h-3 w-3" /> {bn ? "আবার রেকর্ড করুন" : "Re-record"}
                 </Button>
                 <Button variant="outline" size="sm" className="flex-1 gap-1 text-xs text-red-600 hover:text-red-700" onClick={deleteVideoCv}>
                   <Trash2 className="h-3 w-3" /> {bn ? "মুছুন" : "Remove"}
@@ -489,32 +555,9 @@ const JobSeekerProfile = () => {
             </div>
           )}
 
-          {isRecording && (
-            <div className="relative rounded-lg overflow-hidden border bg-black">
-              <video ref={videoRef} muted className="w-full max-h-52 rounded-lg" />
-              <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-red-600 text-white text-[10px] font-semibold px-2 py-1 rounded-full animate-pulse">
-                <div className="w-2 h-2 bg-white rounded-full" /> {bn ? "রেকর্ডিং..." : "Recording..."}
-              </div>
-            </div>
-          )}
-
-          {recordedBlob && !isRecording && (
-            <div className="rounded-lg overflow-hidden border bg-muted">
-              <video ref={videoRef} controls className="w-full max-h-52 rounded-lg" />
-              <div className="flex gap-2 mt-2">
-                <Button size="sm" className="flex-1 gap-1 text-xs bg-blue-600 hover:bg-blue-700" onClick={() => uploadVideoCv(recordedBlob)} disabled={videoUploading}>
-                  <Upload className="h-3 w-3" /> {videoUploading ? "..." : bn ? "আপলোড করুন" : "Upload"}
-                </Button>
-                <Button variant="outline" size="sm" className="gap-1 text-xs" onClick={() => { setRecordedBlob(null); }}>
-                  <X className="h-3 w-3" /> {bn ? "বাতিল" : "Cancel"}
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {!isRecording && !recordedBlob && (
+          {!videoCvUrl && !showRecorder && (
             <div className="flex gap-2">
-              <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={startRecording}>
+              <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => setShowRecorder(true)}>
                 <Video className="h-3.5 w-3.5 text-red-500" /> {bn ? "রেকর্ড করুন" : "Record"}
               </Button>
               <Button variant="outline" size="sm" className="flex-1 gap-1.5 text-xs" onClick={() => videoInputRef.current?.click()} disabled={videoUploading}>
@@ -524,10 +567,44 @@ const JobSeekerProfile = () => {
             </div>
           )}
 
-          {isRecording && (
-            <Button size="sm" className="w-full gap-1.5 bg-red-600 hover:bg-red-700 text-white" onClick={stopRecording}>
-              <VideoOff className="h-3.5 w-3.5" /> {bn ? "রেকর্ডিং বন্ধ করুন" : "Stop Recording"}
-            </Button>
+          {showRecorder && (
+            <div className="space-y-2">
+              <VideoRecorder
+                bn={bn}
+                maxDurationSeconds={180}
+                onRecordingComplete={(blob) => setPendingBlob(blob)}
+              />
+
+              {pendingBlob && (
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-1 text-xs bg-blue-600 hover:bg-blue-700"
+                    onClick={() => uploadVideoCv(pendingBlob, extensionFromBlob(pendingBlob))}
+                    disabled={videoUploading}
+                  >
+                    <Upload className="h-3 w-3" /> {videoUploading ? "..." : bn ? "আপলোড করুন" : "Upload"}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1 text-xs"
+                    onClick={() => setPendingBlob(null)}
+                  >
+                    <X className="h-3 w-3" /> {bn ? "বাতিল" : "Discard"}
+                  </Button>
+                </div>
+              )}
+
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-muted-foreground"
+                onClick={() => { setShowRecorder(false); setPendingBlob(null); }}
+              >
+                {bn ? "বন্ধ করুন" : "Close recorder"}
+              </Button>
+            </div>
           )}
         </div>
 
@@ -550,8 +627,8 @@ const JobSeekerProfile = () => {
         </div>
 
         {/* Bottom Save */}
-        <Button onClick={handleSave} disabled={upsert.isPending} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2">
-          <Save className="h-5 w-5" /> {upsert.isPending ? (bn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : bn ? "প্রোফাইল সংরক্ষণ করুন" : "Save Profile"}
+        <Button onClick={handleSave} disabled={isSaving} className="w-full bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold gap-2">
+          <Save className="h-5 w-5" /> {isSaving ? (bn ? "সংরক্ষণ হচ্ছে..." : "Saving...") : bn ? "প্রোফাইল সংরক্ষণ করুন" : "Save Profile"}
         </Button>
       </div>
 

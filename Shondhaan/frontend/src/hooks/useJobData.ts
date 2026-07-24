@@ -1,14 +1,14 @@
-import { useState } from "react"; // (kept only if other files re-export from here; safe to remove if unused)
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 // ── Backend base URL ────────────────────────────────────────────────────
-// All job data now comes from your Express + MySQL backend, NOT Supabase.
-// Only applications, saved jobs, and job-seeker profiles still use
-// Supabase below (see notes near those hooks) — there's no MySQL route
-// for those yet.
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "http://localhost:5050";
+// Everything now comes from the Express + MySQL backend. Supabase has been
+// removed entirely — applications, saved jobs, and job-seeker profiles used
+// to call supabase.auth.getUser()/supabase.from(...) directly, which is why
+// "Login required" kept firing even while logged in: this app's real
+// session lives in localStorage under "yess_mysql_auth", not in Supabase's
+// own auth, so Supabase never saw a logged-in user.
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
 
 function getAuthHeaders() {
   const authRaw = localStorage.getItem("yess_mysql_auth");
@@ -22,6 +22,10 @@ function getAuthHeaders() {
   }
 }
 
+function isLoggedIn() {
+  return !!(getAuthHeaders() as any).Authorization;
+}
+
 async function fetchJson(path: string, init?: RequestInit) {
   const res = await fetch(`${YESSJOB_API_BASE}${path}`, {
     ...init,
@@ -29,8 +33,11 @@ async function fetchJson(path: string, init?: RequestInit) {
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
+    if (res.status === 401) throw new Error(err.message || "Login required");
     throw new Error(err.message || `Request failed (HTTP ${res.status})`);
   }
+  // Some endpoints (e.g. DELETE) may return 204 with no body
+  if (res.status === 204) return null;
   return res.json();
 }
 
@@ -76,14 +83,21 @@ export interface Job {
 export interface JobApplication {
   id: string;
   job_id: string;
-  user_id: string;
-  applicant_name: string;
-  applicant_phone: string;
-  applicant_email: string | null;
-  cv_url: string | null;
+  jobseeker_id: string;
+  age_at_application: number | null;
+  expected_salary: number | null;
   cover_letter: string | null;
   status: string;
   created_at: string;
+  updated_at: string;
+  // joined fields from APPLICATION_SELECT in routes/applications.js
+  job_title?: string;
+  job_company_name?: string;
+  job_owner_id?: string;
+  jobseeker_name?: string;
+  jobseeker_phone?: string;
+  jobseeker_email?: string;
+  jobseeker_photo_url?: string;
 }
 
 export interface JobSeekerProfile {
@@ -113,6 +127,7 @@ export interface JobSeekerProfile {
   is_available: boolean;
   profile_completeness: number;
   video_cv_url: string | null;
+  cv_url: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -242,7 +257,7 @@ export function useJobCategories() {
 
 export { JOB_TYPES, EDUCATION_LEVELS, GENDER_OPTIONS, COMPANY_TYPES, SALARY_RANGES, EXPERIENCE_RANGES };
 
-// ── Jobs: now backed by Express + MySQL (routes/jobs.js), not Supabase ──
+// ── Jobs ─────────────────────────────────────────────────────────────
 
 export function useApprovedJobs(filters?: {
   category?: string;
@@ -317,9 +332,7 @@ export function usePostJob() {
 }
 
 // Edit an existing job (owner-only, enforced server-side by routes/jobs.js's
-// PATCH /:id — checks jobs.user_id against the token, not just role). Used
-// by JobPostForm.tsx when opened in edit mode from EmployerPanel's "সম্পাদনা"
-// button.
+// PATCH /:id — checks jobs.user_id against the token, not just role).
 export function useUpdateJob() {
   const qc = useQueryClient();
 
@@ -458,11 +471,9 @@ export function useQuickFilterJobs(filterType: string) {
 }
 
 // ── Employers ─────────────────────────────────────────────────────────
-// This previously merged Supabase's employer_profiles table with jobs.
-// There's no MySQL employer_profiles route in what's been shared, so
-// this version only derives employer info from the jobs list itself
-// (no `isVerified`, no separate employer_profiles data). If you have a
-// MySQL employer profiles endpoint, tell me and I'll wire it back in.
+// Derived from the jobs list itself (no separate employer_profiles route
+// exists yet). If you have a MySQL employer profiles endpoint, say so and
+// I'll wire it back in.
 export function useAllEmployers() {
   return useQuery({
     queryKey: ["jobs", "all-employers"],
@@ -498,20 +509,27 @@ export function useAllEmployers() {
   });
 }
 
-// ── Everything below this line still uses Supabase ──────────────────────
-// No MySQL routes exist yet for applications, saved jobs, job-seeker
-// profiles, or view counting. Left as-is on purpose — say the word if you
-// want these moved to the Express backend too (each needs its own route).
+// ── Applications, saved jobs, job-seeker profile ────────────────────────
+// Applications now match the REAL routes/applications.js: the client only
+// ever sends { job_id, expected_salary?, cover_letter? }. Name, phone,
+// email, and age all come from jobseeker_profiles server-side — age in
+// particular is computed from date_of_birth and frozen at submit time
+// (age_at_application), never accepted from the client. Applying requires
+// a completed jobseeker profile server-side or you'll get a 400.
+//
+// Saved jobs and job-seeker profile still need their real Express routes
+// (mine were placeholders) — share those files and I'll match them the
+// same way I just matched applications.
 
 export function useApplyJob() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async (app: Partial<JobApplication>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Login required");
-      const { data, error } = await supabase.from("job_portal_applications").insert({ ...app, user_id: user.id } as any).select().single();
-      if (error) throw error;
-      return data;
+    mutationFn: async (app: { job_id: string; expected_salary?: number | null; cover_letter?: string | null }) => {
+      if (!isLoggedIn()) throw new Error("Login required");
+      return (await fetchJson(`/api/jobseeker/applications`, {
+        method: "POST",
+        body: JSON.stringify(app),
+      })) as JobApplication;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["job-applications"] });
@@ -521,14 +539,15 @@ export function useApplyJob() {
   });
 }
 
+// Employer view of applicants for one of their jobs.
+// GET /api/applications/job/:jobId — note the path shape, not a query param.
 export function useJobApplications(jobId: string | undefined) {
   return useQuery({
     queryKey: ["job-applications", jobId],
     queryFn: async () => {
       if (!jobId) return [];
-      const { data, error } = await supabase.from("job_portal_applications").select("*").eq("job_id", jobId).order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as JobApplication[];
+      const rows = await fetchJson(`/api/jobseeker/applications/job/${encodeURIComponent(jobId)}`);
+      return (rows || []) as JobApplication[];
     },
     enabled: !!jobId,
   });
@@ -538,87 +557,24 @@ export function useMyApplications() {
   return useQuery({
     queryKey: ["job-applications", "mine"],
     queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase.from("job_portal_applications").select("*, jobs(title, company_name, status)").eq("user_id", user.id).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
+      if (!isLoggedIn()) return [];
+      const rows = await fetchJson(`/api/jobseeker/applications/mine`);
+      return (rows || []) as JobApplication[];
     },
   });
 }
 
-export function useSavedJobs() {
-  return useQuery({
-    queryKey: ["saved-jobs"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return [];
-      const { data, error } = await supabase.from("saved_jobs").select("*, jobs(*)").eq("user_id", user.id).order("created_at", { ascending: false });
-      if (error) throw error;
-      return data || [];
-    },
-  });
-}
-
-export function useSaveJob() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async ({ jobId, action }: { jobId: string; action: "save" | "unsave" }) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Login required");
-      if (action === "save") {
-        const { error } = await supabase.from("saved_jobs").insert({ user_id: user.id, job_id: jobId } as any);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("saved_jobs").delete().eq("user_id", user.id).eq("job_id", jobId);
-        if (error) throw error;
-      }
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-jobs"] }),
-  });
-}
-
-export function useJobSeekerProfile() {
-  return useQuery({
-    queryKey: ["job-seeker-profile"],
-    queryFn: async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return null;
-      const { data, error } = await supabase.from("job_seeker_profiles").select("*").eq("user_id", user.id).maybeSingle();
-      if (error) throw error;
-      return data as JobSeekerProfile | null;
-    },
-  });
-}
-
-export function useUpsertJobSeekerProfile() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: async (profile: Partial<JobSeekerProfile>) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Login required");
-      const { data, error } = await supabase
-        .from("job_seeker_profiles")
-        .upsert({ ...profile, user_id: user.id } as any, { onConflict: "user_id" })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["job-seeker-profile"] });
-      toast.success("প্রোফাইল সংরক্ষিত হয়েছে!");
-    },
-    onError: (e: any) => toast.error(e.message),
-  });
-}
-
+// Employer action. PATCH /api/applications/:id/status — note the /status
+// suffix, and the allowed values: pending | shortlisted | rejected | hired
+// (no generic "reviewed" state on this schema).
 export function useUpdateApplicationStatus() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: async ({ applicationId, status }: { applicationId: string; status: string }) => {
-      const { error } = await supabase.from("job_portal_applications").update({ status } as any).eq("id", applicationId);
-      if (error) throw error;
+    mutationFn: async ({ applicationId, status }: { applicationId: string; status: "pending" | "shortlisted" | "rejected" | "hired" }) => {
+      return (await fetchJson(`/api/jobseeker/applications/${applicationId}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status }),
+      })) as JobApplication;
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["job-applications"] });
@@ -628,13 +584,92 @@ export function useUpdateApplicationStatus() {
   });
 }
 
+// Jobseeker action. DELETE /api/applications/:id
+export function useWithdrawApplication() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (applicationId: string) => {
+      return await fetchJson(`/api/jobseeker/applications/${applicationId}`, { method: "DELETE" });
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job-applications"] });
+      toast.success("আবেদন প্রত্যাহার করা হয়েছে");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// ── Everything below still needs its real Express route ────────────────
+// Kept calling my earlier placeholder endpoints. Share the real
+// routes/savedJobs.js and the fixed routes/jobSeekerProfile.js (using
+// verifyShondhaanUser like jobs.js/applications.js, not the old
+// trust-the-client-user_id version) and I'll line these up too.
+
+export function useSavedJobs() {
+  return useQuery({
+    queryKey: ["saved-jobs"],
+    queryFn: async () => {
+      if (!isLoggedIn()) return [];
+      const rows = await fetchJson(`/api/saved-jobs`);
+      return rows || [];
+    },
+  });
+}
+
+export function useSaveJob() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ jobId, action }: { jobId: string; action: "save" | "unsave" }) => {
+      if (!isLoggedIn()) throw new Error("Login required");
+      if (action === "save") {
+        await fetchJson(`/api/saved-jobs`, {
+          method: "POST",
+          body: JSON.stringify({ job_id: jobId }),
+        });
+      } else {
+        await fetchJson(`/api/saved-jobs/${jobId}`, { method: "DELETE" });
+      }
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["saved-jobs"] }),
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+export function useJobSeekerProfile() {
+  return useQuery({
+    queryKey: ["job-seeker-profile"],
+    queryFn: async () => {
+      if (!isLoggedIn()) return null;
+      const data = await fetchJson(`/api/jobseeker/profile`);
+      return (data || null) as JobSeekerProfile | null;
+    },
+  });
+}
+
+export function useUpsertJobSeekerProfile() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (profile: Partial<JobSeekerProfile>) => {
+      if (!isLoggedIn()) throw new Error("Login required");
+      return (await fetchJson(`/api/jobseeker/profile`, {
+        method: "PUT",
+        body: JSON.stringify(profile),
+      })) as JobSeekerProfile;
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["job-seeker-profile"] });
+      toast.success("প্রোফাইল সংরক্ষিত হয়েছে!");
+    },
+    onError: (e: any) => toast.error(e.message),
+  });
+}
+
+// No POST /api/jobs/:id/view route exists yet in routes/jobs.js. This will
+// 404 until that route is added (increment jobs.views_count for :id).
 export function useIncrementJobView() {
   return useMutation({
     mutationFn: async (jobId: string) => {
-      const { error } = await supabase.rpc("increment_job_views" as any, { job_id: jobId });
-      if (error) {
-        await supabase.from("jobs").update({ views_count: supabase.rpc ? undefined : 0 } as any).eq("id", jobId);
-      }
+      await fetchJson(`/api/jobs/${jobId}/view`, { method: "POST" });
     },
   });
 }

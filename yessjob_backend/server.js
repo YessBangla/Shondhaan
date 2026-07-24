@@ -4,19 +4,25 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const cookieParser = require('cookie-parser');
 
 const app = express();
 
-const { createJobCategoriesTable } = require("./database/createJobCategoriesTable");
-const jobCategoriesRoutes = require("./routes/jobCategories");
+const { createJobCategoriesTable } = require("./database/Createjobcategoriestable");
+
 
 const createEmployerProfilesTable = require('./database/createEmployerProfilesTable');
 const createJobsTable = require('./database/createJobsTable');
-const createJobCandidateRequirementsTable = require('./database/createJobCandidateRequirementsTable');
+const createJobCandidateRequirementsTable = require('./database/Createjobcandidaterequirementstable');
 const createJobMatchingCriteriaTable = require('./database/Createjobmatchingcriteriatable');
-const createJobBillingContactsTable = require('./database/createJobBillingContactsTable');
-
-app.use(cors());
+const createJobBillingContactsTable = require('./database/Createjobbillingcontactstable');
+const createJobseekerProfilesTable = require('./database/createJobseekerProfilesTable');
+const createApplicationsTable = require('./database/Createapplicationstable');
+app.use(cors({
+  origin: ['http://localhost:8080', 'http://localhost:5000', 'http://127.0.0.1:8080', 'http://127.0.0.1:5000'],
+  credentials: true,
+}));
+app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -29,7 +35,9 @@ app.use('/public', express.static(path.join(__dirname, 'public')));
 // Routes
 app.use('/api/employer-profile', require('./routes/employerProfile'));
 app.use('/api/jobs', require('./routes/jobs'));
-app.use("/api/job-categories", jobCategoriesRoutes);
+app.use("/api/job-categories", require('./routes/Jobcategories'));
+app.use('/api/jobseeker/profile', require('./routes/jobSeekerProfile'));
+app.use('/api/jobseeker/applications', require('./routes/applications'));
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });
@@ -49,7 +57,8 @@ async function initDatabaseAndStart() {
     await createJobCandidateRequirementsTable();
     await createJobMatchingCriteriaTable();
     await createJobBillingContactsTable();
-
+    await createJobseekerProfilesTable();
+    await createApplicationsTable();          // must come after jobs
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

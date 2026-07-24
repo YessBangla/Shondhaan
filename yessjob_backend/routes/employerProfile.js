@@ -2,6 +2,7 @@
 const express = require('express');
 const mysql = require('mysql2');
 const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // MySQL connection pool (inline — no separate db.js file)
@@ -17,6 +18,7 @@ const pool = mysql.createPool({
 
 const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'https://backend-central.shondhaan.com';
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
+const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-should-be-in-env';
 
 const WRITABLE_FIELDS = [
   'company_name', 'company_name_bn', 'company_logo_url', 'company_type',
@@ -37,6 +39,24 @@ function pickWritable(body) {
   return out;
 }
 
+/**
+ * Try to verify the JWT directly. This is the primary method because the
+ * frontend sends the token from the central Shondhaan backend (JWT-signed).
+ * If it fails, fall back to the old HMAC-based local token or the
+ * server-to-server forwarding to the central backend.
+ */
+function verifyJwtToken(token = '') {
+  if (!token) return null;
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (!decoded || !decoded.id) return null;
+    return decoded;
+  } catch (err) {
+    console.log('[auth] Direct JWT verify failed:', err.message);
+    return null;
+  }
+}
+
 async function verifyShondhaanUser(authHeader) {
   if (!authHeader) {
     console.log('[auth] No Authorization header received from frontend');
@@ -44,17 +64,29 @@ async function verifyShondhaanUser(authHeader) {
   }
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
+
+  // 1. Try direct JWT verification (shared secret between backends)
+  const jwtUser = verifyJwtToken(token);
+  if (jwtUser) {
+    return jwtUser;
+  }
+
+  // 2. Try local HMAC-based token
   const localUser = verifyLocalAuthToken(token);
   if (localUser) {
     return localUser;
   }
 
+  // 3. Fallback: forward to central Shondhaan backend
   const url = `${SHONDHAAN_API_URL}/api/users/me/profile`;
   console.log('[auth] Verifying token against:', url);
 
   try {
     const response = await fetch(url, {
-      headers: { Authorization: authHeader },
+      headers: {
+        Authorization: authHeader,
+        Cookie: `token=${token}`,
+      },
     });
 
     console.log('[auth] Shondhaan responded with status:', response.status);
@@ -108,7 +140,12 @@ function verifyLocalAuthToken(token = '') {
 }
 
 function requireVerifiedUser(req, res, next) {
-  verifyShondhaanUser(req.headers.authorization)
+  // Try Authorization header first, then fall back to cookie
+  const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.token;
+  const authToUse = authHeader || (cookieToken ? `Bearer ${cookieToken}` : null);
+
+  verifyShondhaanUser(authToUse)
     .then((user) => {
       if (!user) {
         return res.status(401).json({ message: 'Invalid or missing login token' });
