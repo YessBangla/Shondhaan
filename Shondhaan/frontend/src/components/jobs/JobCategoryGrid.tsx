@@ -31,7 +31,7 @@ export default function JobCategoryGrid({ bn, selectedCategory, setSelectedCateg
 
   return (
     <div className="bg-card border-b">
-      <div className="mx-auto max-w-6xl px-4 md:px-6 py-5">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 py-5">
         <h2 className="font-semibold text-sm mb-3 flex items-center gap-2">
           <TrendingUp className="h-4 w-4 text-blue-600" />
           {bn ? "ক্যাটেগরি অনুযায়ী চাকরি খুঁজুন" : "Browse Jobs by Category"}

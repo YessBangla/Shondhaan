@@ -343,7 +343,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       transition={{ duration: 0.5, delay: 0.3 }}
       className="app-container relative -mt-10 z-20 hidden md:-mt-12 md:block"
     >
-      <div className="rounded-2xl border border-border/40 bg-card p-3 shadow-xl sm:p-4 md:p-6">
+      <div className="rounded-2xl border border-border/40 bg-card p-3 shadow sm:p-4 md:p-6">
         <div className="relative group">
           {/* Scroll buttons (desktop) */}
           <button
