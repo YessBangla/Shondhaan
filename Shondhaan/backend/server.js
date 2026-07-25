@@ -1,3 +1,4 @@
+import { otpEmailTemplate } from "./templates/email/otpEmail.js";
 import { initDatabase } from "./db/init.js";
 import app from "./app.js";
 import { PORT } from "./config/env.js";

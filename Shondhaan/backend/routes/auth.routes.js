@@ -1,3 +1,4 @@
+import { sendOtpEmail } from "../utils/email.js";
 import { Router } from "express";
 import {
   signupRequestOtp,
