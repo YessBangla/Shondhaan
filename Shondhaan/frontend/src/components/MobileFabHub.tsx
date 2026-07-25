@@ -50,8 +50,8 @@ const MobileFabHub = () => {
   const digits = normalized.replace(/\D/g, "");
   const waNumber = digits.startsWith("880") ? digits : digits.startsWith("0") ? `880${digits.slice(1)}` : digits;
   const waMsg = bn
-    ? "হ্যালো, আমি Yess Service থেকে যোগাযোগ করছি। আমি জানতে চাই —"
-    : "Hello, I'm contacting from Yess Service. I'd like to know —";
+    ? "হ্যালো, আমি Shondhaan থেকে যোগাযোগ করছি। আমি জানতে চাই —"
+    : "Hello, I'm contacting from Shondhaan. I'd like to know —";
   const waHref = `https://wa.me/${waNumber}?text=${encodeURIComponent(waMsg)}`;
 
   type Action = {

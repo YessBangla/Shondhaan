@@ -147,7 +147,7 @@ const normalizeHeroBanner = (banner: any): HeroBanner => ({
 const PLATFORM_CARDS = [
   {
     to: "/mart/home",
-    labelBn: "মার্টপ্লেস", labelEn: "Marketplace",
+    labelBn: "মার্রকেটপ্লেস", labelEn: "Marketplace",
     descBn: "প্রিমিয়াম পণ্য ও সেবা", descEn: "Premium products",
     Icon: ShoppingBag,
     accentColor: "#d4a574",
@@ -677,10 +677,10 @@ const HeroSection = () => {
             style={{ maxWidth: "640px" }}
           >
               <form onSubmit={handleSubmit} className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-900/40 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
-                <div className="relative flex items-stretch gap-2 rounded-lg border border-amber-900/30 bg-orange-400/40 backdrop-blur-sm p-1.5 shadow-lg shadow-amber-900/20">
+                <div className="absolute inset-0 bg-gradient-to-r from-white-900/40 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
+                <div className="relative flex items-stretch gap-2 rounded-lg border border-white-900/30 bg-white backdrop-blur-sm p-1.5 shadow-lg shadow-amber-900/20 text-black">
                   {/* Location */}
-                  <div className="hidden lg:flex items-center gap-1.5 rounded-md border border-amber-900/20 bg-amber-900/5 px-3.5 text-xs text-white">
+                  <div className="hidden lg:flex items-center gap-1.5 rounded-md border border-white-900/20 bg-white-900 px-3.5 text-xs text-black">
                     {/* <MapPin className="h-3.5 w-3.5 opacity-60" /> */}
                     <LocationSelector />
                     <ChevronDown className="h-3 w-3 ml-auto opacity-40" />
@@ -688,7 +688,7 @@ const HeroSection = () => {
 
                   {/* Input */}
                   <div className="flex flex-1 items-center gap-2 px-3">
-                    <Search className="h-4 w-4 text-white shrink-0" />
+                    <Search className="h-4 w-4 text-black shrink-0" />
                     <input
                       type="text"
                       value={query}
@@ -696,14 +696,14 @@ const HeroSection = () => {
                       onFocus={() => setFocused(true)}
                       onKeyDown={handleKeyDown}
                       placeholder={bn ? "আপনি কী সেবা খুঁজছেন?" : "What service are you looking for?"}
-                      className="flex-1 bg-transparent text-amber-50 outline-none placeholder:text-white font-light text-sm py-2.5 text-center"
+                      className="flex-1 bg-transparent text-black outline-none placeholder:text-black font-light text-sm py-2.5 text-center"
                     />
                   </div>
 
                   {/* Button */}
                   <button
                     type="submit"
-                    className="flex items-center justify-center gap-1.5 px-6 rounded-md bg-amber-700/90 text-amber-50 hover:bg-amber-700 transition-all duration-200 font-medium text-sm shadow-md shadow-amber-900/30"
+                    className="flex items-center justify-center gap-1.5 px-6 rounded-md bg-primary text-amber-50 hover:bg-primary/90 transition-all duration-200 font-medium text-sm shadow-md shadow-amber-900/30"
                   >
                     <Search className="h-4 w-4" />
                     <span>{bn ? "খুঁজুন" : "Search"}</span>
@@ -742,24 +742,24 @@ const HeroSection = () => {
                     transition={{ duration: 0.35, delay: 0.22 + idx * 0.06 }}
                     onClick={() => handleCardClick(to)}
                     whileHover={{ y: -8 }}
-                    className="group relative overflow-hidden rounded-lg border border-amber-900/20 backdrop-blur-sm p-1 text-center hover:border-amber-900/40 transition-all duration-300 flex flex-col items-center"
+                    className="group relative overflow-hidden rounded-lg border border-white backdrop-blur-sm p-1 text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
                     style={{ background: `linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(15, 23, 42, 0.6)), ${bgPattern}` }}
                   >
-                    <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 via-transparent to-amber-900/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-white/40 group-hover:opacity-100 transition-opacity duration-300" />
                     
                     <div className="relative flex flex-col items-center h-full gap-2">
                       <div 
                         className="flex items-center justify-center h-5 w-6 rounded-lg flex-shrink-0"
                         style={{ backgroundColor: `${accentColor}20` }}
                       >
-                        <Icon className="h-3 w-3" style={{ color: accentColor }} />
+                        <Icon className="h-3 w-3 text-black group-hover:text-white" />
                       </div>
                       
                       <div className="flex-1">
-                        <p className="text-[8px] uppercase tracking-widest font-medium mb-0.5" style={{ color: `${accentColor}80` }}>
+                        <p className="text-[8px] uppercase tracking-widest font-medium mb-0.5 text-black group-hover:text-white">
                           {bn ? descBn : descEn}
                         </p>
-                        <h3 className="font-serif text-sm font-light text-amber-50 leading-tight">
+                        <h3 className="font-serif text-sm font-light text-black group-hover:text-white leading-tight">
                           {bn ? labelBn : labelEn}
                         </h3>
                       </div>

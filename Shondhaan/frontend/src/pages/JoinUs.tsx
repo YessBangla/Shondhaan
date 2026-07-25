@@ -132,8 +132,8 @@ const JoinUs = () => {
   useSEO({
     title: bn ? "আমাদের সাথে যোগ দিন" : "Join Us — Become a Provider",
     description: bn
-      ? "Yess Service টিমে যোগ দিন — সার্ভিস প্রোভাইডার হিসেবে আবেদন করুন এবং আপনার আয় বাড়ান।"
-      : "Join the Yess Service team — apply as a service provider and grow your income.",
+      ? "Shondhaan টিমে যোগ দিন — সার্ভিস প্রোভাইডার হিসেবে আবেদন করুন এবং আপনার আয় বাড়ান।"
+      : "Join the Shondhaan team — apply as a service provider and grow your income.",
     canonical: "/join",
     locale: bn ? "bn_BD" : "en_US",
   });
@@ -234,8 +234,8 @@ const JoinUs = () => {
           </h1>
           <p className="mt-3 text-sm md:text-base text-muted-foreground max-w-md mx-auto">
             {bn
-              ? "দক্ষ সার্ভিস প্রোভাইডার হিসেবে Yess Service-এ যোগ দিন। নিচের ফর্মটি পূরণ করুন।"
-              : "Join Yess Service as a skilled service provider. Fill out the form below."}
+              ? "দক্ষ সার্ভিস প্রোভাইডার হিসেবে Shondhaan-এ যোগ দিন। নিচের ফর্মটি পূরণ করুন।"
+              : "Join Shondhaan as a skilled service provider. Fill out the form below."}
           </p>
         </motion.div>
       </div>

@@ -10,8 +10,8 @@ const TermsAndConditions = () => {
   useSEO({
     title: bn ? "শর্তাবলী" : "Terms & Conditions",
     description: bn
-      ? "Yess Service ব্যবহারের শর্তাবলী — সেবা ব্যবহারের নিয়ম, দায়বদ্ধতা ও আইনি বিষয়াবলী।"
-      : "Yess Service terms of use — rules, responsibilities and legal terms governing the platform.",
+      ? "Shondhaan ব্যবহারের শর্তাবলী — সেবা ব্যবহারের নিয়ম, দায়বদ্ধতা ও আইনি বিষয়াবলী।"
+      : "Shondhaan terms of use — rules, responsibilities and legal terms governing the platform.",
     canonical: "/terms",
     locale: bn ? "bn_BD" : "en_US",
   });
@@ -33,8 +33,8 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "১. সেবা ব্যবহারের শর্ত" : "1. Terms of Use"}</h2>
             <p>{bn
-              ? "Yess Service প্ল্যাটফর্ম ব্যবহার করে আপনি এই শর্তাবলী মেনে চলতে সম্মত হচ্ছেন। আমাদের সেবা ব্যবহার করতে আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে।"
-              : "By using the Yess Service platform, you agree to comply with these terms. You must be at least 18 years old to use our services."}</p>
+              ? "Shondhaan প্ল্যাটফর্ম ব্যবহার করে আপনি এই শর্তাবলী মেনে চলতে সম্মত হচ্ছেন। আমাদের সেবা ব্যবহার করতে আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে।"
+              : "By using the Shondhaan platform, you agree to comply with these terms. You must be at least 18 years old to use our services."}</p>
           </section>
 
           <section>
@@ -54,22 +54,22 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "৪. পেমেন্ট" : "4. Payment"}</h2>
             <p>{bn
-              ? "সার্ভিস সম্পন্ন হওয়ার পর ক্যাশ অন ডেলিভারি বা অনলাইন পেমেন্ট (bKash, Nagad) এর মাধ্যমে পেমেন্ট করতে হবে। মূল্য পরিবর্তনের অধিকার Yess Service সংরক্ষণ করে।"
-              : "Payment is due after service completion via cash on delivery or online payment (bKash, Nagad). Yess Service reserves the right to change prices."}</p>
+              ? "সার্ভিস সম্পন্ন হওয়ার পর ক্যাশ অন ডেলিভারি বা অনলাইন পেমেন্ট (bKash, Nagad) এর মাধ্যমে পেমেন্ট করতে হবে। মূল্য পরিবর্তনের অধিকার Shondhaan সংরক্ষণ করে।"
+              : "Payment is due after service completion via cash on delivery or online payment (bKash, Nagad). Shondhaan reserves the right to change prices."}</p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "৫. গ্যারান্টি ও দায়বদ্ধতা" : "5. Guarantee & Liability"}</h2>
             <p>{bn
-              ? "সার্ভিসের মান সম্পর্কে কোনো অভিযোগ থাকলে ৭ দিনের মধ্যে জানাতে হবে। আমরা বিনামূল্যে পুনরায় সেবা দেব অথবা রিফান্ড প্রদান করব। তবে ক্লায়েন্টের অবহেলায় কোনো ক্ষতি হলে Yess Service দায়ী থাকবে না।"
-              : "Any complaints about service quality must be reported within 7 days. We will provide a free re-service or refund. However, Yess Service is not liable for damages caused by client negligence."}</p>
+              ? "সার্ভিসের মান সম্পর্কে কোনো অভিযোগ থাকলে ৭ দিনের মধ্যে জানাতে হবে। আমরা বিনামূল্যে পুনরায় সেবা দেব অথবা রিফান্ড প্রদান করব। তবে ক্লায়েন্টের অবহেলায় কোনো ক্ষতি হলে Shondhaan দায়ী থাকবে না।"
+              : "Any complaints about service quality must be reported within 7 days. We will provide a free re-service or refund. However, Shondhaan is not liable for damages caused by client negligence."}</p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "৬. পরিবর্তন" : "6. Changes"}</h2>
             <p>{bn
-              ? "Yess Service যেকোনো সময় এই শর্তাবলী পরিবর্তন করার অধিকার রাখে। পরিবর্তন হলে ওয়েবসাইটে আপডেট করা হবে।"
-              : "Yess Service reserves the right to modify these terms at any time. Updates will be posted on the website."}</p>
+              ? "Shondhaan যেকোনো সময় এই শর্তাবলী পরিবর্তন করার অধিকার রাখে। পরিবর্তন হলে ওয়েবসাইটে আপডেট করা হবে।"
+              : "Shondhaan reserves the right to modify these terms at any time. Updates will be posted on the website."}</p>
           </section>
 
           <section>

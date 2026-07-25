@@ -129,8 +129,8 @@ const AllServices = () => {
   useSEO({
     title: bn ? "সকল সেবা" : "All Services",
     description: bn
-      ? "ইয়েস সার্ভিসের সকল হোম সার্ভিস ব্রাউজ করুন।"
-      : "Browse all home services on Yess Service.",
+      ? "সন্ধানের সকল হোম সার্ভিস ব্রাউজ করুন।"
+      : "Browse all home services on Shondhaan.",
     canonical: "/all-services",
   });
 

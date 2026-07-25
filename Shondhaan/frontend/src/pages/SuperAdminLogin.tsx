@@ -9,7 +9,7 @@ const SuperAdminLogin = () => {
 
   useSEO({
     title: "Super Admin Login",
-    description: "Super Admin login for Yess Service.",
+    description: "Super Admin login for Shondhaan.",
     canonical: "/super-admin-login",
     noindex: true,
   });

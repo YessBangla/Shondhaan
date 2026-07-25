@@ -70,7 +70,7 @@ const requestStatusOptions = [
 ];
 
 const API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
-const CENTRAL_API_URL = (CENTRAL_API_BASE_URL || "https://backend-shondhaan.yessbd.top").replace(/\/+$/, "");
+const CENTRAL_API_URL = (CENTRAL_API_BASE_URL || "https://backend-shondhaan.com").replace(/\/+$/, "");
 
 const getAuthHeaders = () => {
   const auth = getMySqlAuth();

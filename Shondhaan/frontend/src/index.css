@@ -12,10 +12,12 @@
     --card: 0 0% 100%;
     --card-foreground: 210 11% 15%;
 
-    --popover: 0 0% 100%;
+    /* --popover: 0 0% 100%; */
+    --popover: 208, 79%, 28%;
     --popover-foreground: 210 11% 15%;
 
-    --primary: 152 60% 38%;
+    /* --primary: 152 60% 38%; */
+    --primary: 208, 79%, 28%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 150 20% 95%;
@@ -24,7 +26,8 @@
     --muted: 210 10% 96%;
     --muted-foreground: 215 14% 50%;
 
-    --accent: 152 60% 38%;
+    /* --accent: 152 60% 38%; */
+    --accent: 208, 79%, 28%;
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -73,7 +76,8 @@
     --popover: 220 14% 12%;
     --popover-foreground: 210 15% 92%;
 
-    --primary: 152 55% 48%;
+    /* --primary: 152 55% 48%; */
+    --primary: 208, 79%, 28%;
     --primary-foreground: 210 20% 8%;
 
     --secondary: 220 12% 18%;
@@ -400,7 +404,7 @@ img[loading="lazy"] {
 }
 .tappable:active { transform: scale(0.97); }
 
-/* ───────── Yess Service brand watermark on service/product imagery ─────────
+/* ───────── Shondhaan brand watermark on service/product imagery ─────────
    Add the `yess-wm` class to any *positioned* container that already wraps an
    <img> (e.g. `.relative.overflow-hidden`). It renders a small frosted-glass
    logo badge in the bottom-right corner. */

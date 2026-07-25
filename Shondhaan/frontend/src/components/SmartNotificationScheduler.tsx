@@ -47,7 +47,7 @@ const SmartNotificationScheduler = () => {
         if (Date.now() - last > 6 * 60 * 60 * 1000) {
           localStorage.setItem(PROMPTED_KEY, String(Date.now()));
           new Notification(
-            bn ? "Yess Service • আপনার জন্য নতুন অফার" : "Yess Service • Fresh offers for you",
+            bn ? "Shondhaan • আপনার জন্য নতুন অফার" : "Shondhaan • Fresh offers for you",
             {
               body: bn
                 ? "আজকের ফ্ল্যাশ ডিল মিস করবেন না — এখনই দেখুন!"

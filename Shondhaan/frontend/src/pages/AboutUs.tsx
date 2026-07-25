@@ -18,8 +18,8 @@ const AboutUs = () => {
   useSEO({
     title: bn ? "আমাদের সম্পর্কে" : "About Us",
     description: bn
-      ? "Yess Service বাংলাদেশের একটি অগ্রগামী হোম সার্ভিস প্ল্যাটফর্ম — মানসম্মত, নিরাপদ ও সাশ্রয়ী সেবা সবার জন্য।"
-      : "Yess Service is a leading home service platform in Bangladesh — quality, safe & affordable services for every household.",
+      ? "Shondhaan বাংলাদেশের একটি অগ্রগামী হোম সার্ভিস প্ল্যাটফর্ম — মানসম্মত, নিরাপদ ও সাশ্রয়ী সেবা সবার জন্য।"
+      : "Shondhaan is a leading home service platform in Bangladesh — quality, safe & affordable services for every household.",
     canonical: "/about",
     locale: bn ? "bn_BD" : "en_US",
   });
@@ -35,8 +35,8 @@ const AboutUs = () => {
         </h1>
         <p className="mt-3 text-center text-sm md:text-base text-muted-foreground leading-relaxed max-w-xl mx-auto">
           {bn
-            ? "Yess Service বাংলাদেশের একটি অগ্রগামী হোম সার্ভিস প্ল্যাটফর্ম। আমরা বিশ্বাস করি প্রতিটি পরিবারের জন্য মানসম্মত, নিরাপদ ও সাশ্রয়ী সেবা সহজলভ্য হওয়া উচিত।"
-            : "Yess Service is a leading home service platform in Bangladesh. We believe quality, safe, and affordable services should be accessible to every household."}
+            ? "Shondhaan বাংলাদেশের একটি অগ্রগামী হোম সার্ভিস প্ল্যাটফর্ম। আমরা বিশ্বাস করি প্রতিটি পরিবারের জন্য মানসম্মত, নিরাপদ ও সাশ্রয়ী সেবা সহজলভ্য হওয়া উচিত।"
+            : "Shondhaan is a leading home service platform in Bangladesh. We believe quality, safe, and affordable services should be accessible to every household."}
         </p>
 
         {/* Mission */}
@@ -74,8 +74,8 @@ const AboutUs = () => {
           </h2>
           <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
             {bn
-              ? "Yess Service শুরু হয়েছিল একটি সহজ ধারণা থেকে — ঘরের প্রতিটি সমস্যার জন্য একটি নির্ভরযোগ্য সমাধান তৈরি করা। আজ আমরা ঢাকা, চট্টগ্রাম, সিলেট সহ বাংলাদেশের প্রধান শহরগুলোতে হাজার হাজার পরিবারকে সেবা দিচ্ছি। AC সার্ভিসিং থেকে হোম ক্লিনিং, ইলেকট্রিক্যাল থেকে প্লাম্বিং — আমাদের প্রশিক্ষিত দল সবসময় আপনার পাশে আছে।"
-              : "Yess Service started with a simple idea — creating a reliable solution for every household problem. Today we serve thousands of families across major cities in Bangladesh including Dhaka, Chittagong, and Sylhet. From AC servicing to home cleaning, electrical to plumbing — our trained team is always by your side."}
+              ? "Shondhaan শুরু হয়েছিল একটি সহজ ধারণা থেকে — ঘরের প্রতিটি সমস্যার জন্য একটি নির্ভরযোগ্য সমাধান তৈরি করা। আজ আমরা ঢাকা, চট্টগ্রাম, সিলেট সহ বাংলাদেশের প্রধান শহরগুলোতে হাজার হাজার পরিবারকে সেবা দিচ্ছি। AC সার্ভিসিং থেকে হোম ক্লিনিং, ইলেকট্রিক্যাল থেকে প্লাম্বিং — আমাদের প্রশিক্ষিত দল সবসময় আপনার পাশে আছে।"
+              : "Shondhaan started with a simple idea — creating a reliable solution for every household problem. Today we serve thousands of families across major cities in Bangladesh including Dhaka, Chittagong, and Sylhet. From AC servicing to home cleaning, electrical to plumbing — our trained team is always by your side."}
           </p>
         </div>
       </div>

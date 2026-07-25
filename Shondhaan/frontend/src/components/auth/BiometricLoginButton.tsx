@@ -58,7 +58,7 @@ export const useBiometricEnrolment = () => {
       const cred = (await navigator.credentials.create({
         publicKey: {
           challenge,
-          rp: { name: "Yess Service" },
+          rp: { name: "Shondhaan" },
           user: { id: userId, name: email, displayName: email },
           pubKeyCredParams: [{ type: "public-key", alg: -7 }, { type: "public-key", alg: -257 }],
           authenticatorSelection: { userVerification: "required", authenticatorAttachment: "platform" },
