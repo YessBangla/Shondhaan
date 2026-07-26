@@ -120,9 +120,12 @@ export const createHeroBanner = async (req, res) => {
       });
     }
 
+    const id = uuidv4();
+
     const [result] = await db.query(
       `
       INSERT INTO cms_hero_banners (
+        id,
         title_bn,
         title_en,
         subtitle_bn,
@@ -131,9 +134,10 @@ export const createHeroBanner = async (req, res) => {
         is_active,
         sort_order
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
+        id,
         String(title_bn).trim(),
         String(title_en || "").trim(),
         String(subtitle_bn || "").trim(),
@@ -146,7 +150,7 @@ export const createHeroBanner = async (req, res) => {
 
     const [rows] = await db.query(
       `SELECT * FROM cms_hero_banners WHERE id = ? LIMIT 1`,
-      [result.insertId]
+      [id]
     );
 
     res.status(201).json({

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
-import { Building2, MapPin, Clock, Banknote, Users, Bookmark, BookmarkCheck, AlertCircle, Timer } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Building2, MapPin, Briefcase, Calendar } from "lucide-react";
 import { format, differenceInDays, isPast } from "date-fns";
 import CompanyLogo from "@/components/jobs/CompanyLogo";
 
@@ -16,14 +15,6 @@ interface JobCardProps {
   featured?: boolean;
 }
 
-const CATEGORY_ICONS: Record<string, string> = {
-  it: "💻", marketing: "📢", sales: "📊", accounting: "🧮", engineering: "⚙️",
-  healthcare: "🏥", education: "📚", garments: "👔", banking: "🏦", ngo: "🤝",
-  government: "🏛️", driving: "🚗", construction: "🏗️", hospitality: "🏨",
-  overseas: "✈️", parttime: "⏰", freelance: "💡", media: "📰", telecom: "📱",
-  logistics: "🚚", pharma: "💊", retail: "🛍️", realestate: "🏠", general: "📋", other: "📁",
-};
-
 function getDeadlineUrgency(deadline: string | null) {
   if (!deadline) return null;
   const d = new Date(deadline);
@@ -36,104 +27,80 @@ function getDeadlineUrgency(deadline: string | null) {
 
 export default function JobCard({ job, bn, getTypeLabel, getCatLabel, isSaved, onSave, user, navigate, featured }: JobCardProps) {
   const urgency = getDeadlineUrgency(job.deadline);
+  const location = job.district || job.thana || job.division;
 
-  const handleSave = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!user) { navigate("/auth"); return; }
-    onSave.mutate({ jobId: job.id, action: isSaved ? "unsave" : "save" });
+  // Field names unconfirmed — adjust to whatever useApprovedJobs actually
+  // returns. Tries a pre-formatted range string first, then falls back to
+  // composing one from min/max numbers.
+  const formatExperience = () => {
+    if (job.experience_range) return job.experience_range;
+    if (job.experience_min != null && job.experience_max != null) {
+      return bn
+        ? `${job.experience_min} - ${job.experience_max} বছর`
+        : `${job.experience_min} to ${job.experience_max} years`;
+    }
+    if (job.experience_min != null) {
+      return bn ? `নূন্যতম ${job.experience_min} বছর` : `${job.experience_min}+ years`;
+    }
+    return null;
   };
+  const experience = formatExperience();
 
   return (
     <Link
       to={`/jobs/${job.id}`}
-      className={`group block rounded-2xl border bg-card hover:shadow-lg transition-all duration-300 relative overflow-hidden ${
-        featured ? "border-amber-200/80 ring-1 ring-amber-100 dark:ring-amber-900/30" : "hover:border-blue-200 dark:hover:border-blue-800"
+      className={`group flex items-center justify-between gap-4 p-4 md:p-5 rounded-2xl border bg-gradient-to-br from-white to-blue-50/40 dark:from-card dark:to-blue-950/10 hover:shadow-lg transition-all duration-300 ${
+        featured ? "border-amber-200/80 ring-1 ring-amber-100 dark:ring-amber-900/30" : "border-border hover:border-blue-200 dark:hover:border-blue-800"
       } ${urgency === "expired" ? "opacity-50 grayscale" : ""}`}
     >
-      {featured && <div className="h-1 bg-gradient-to-r from-amber-400 via-orange-400 to-amber-500" />}
+      <div className="flex-1 min-w-0">
+        <h3 className="text-base font-bold text-green-700 dark:text-green-400 line-clamp-1 group-hover:underline">
+          {job.title}
+        </h3>
+        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground line-clamp-1 mt-1">
+          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          {job.company_name}
+        </p>
 
-      {urgency === "urgent" && (
-        <div className="absolute top-3 right-3 bg-red-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-semibold animate-pulse flex items-center gap-1 shadow-lg shadow-red-500/20">
-          <AlertCircle className="h-3 w-3" /> {bn ? "জরুরি!" : "Urgent!"}
-        </div>
-      )}
-      {urgency === "soon" && (
-        <div className="absolute top-3 right-3 bg-orange-500 text-white text-[10px] px-2.5 py-1 rounded-lg font-semibold flex items-center gap-1">
-          <Timer className="h-3 w-3" /> {bn ? "শীঘ্রই শেষ" : "Closing Soon"}
-        </div>
-      )}
+        {location && (
+          <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
+            <MapPin className="h-3.5 w-3.5 shrink-0" /> {location}
+          </p>
+        )}
 
-      <div className="p-4 md:p-5">
-        <div className="flex items-start gap-4">
-          <CompanyLogo
-            src={job.company_logo_url}
-            alt={job.company_name}
-            iconClass={`h-6 w-6 ${featured ? "text-amber-600" : "text-blue-600"}`}
-            fallbackBgClass={featured
-              ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
-              : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"}
-          />
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 pt-3 mt-3 border-t border-border/60">
+          {experience ? (
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Briefcase className="h-3.5 w-3.5 shrink-0" /> {experience}
+            </span>
+          ) : <span />}
 
-          <div className="flex-1 min-w-0">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0">
-                <h3 className="font-bold text-sm md:text-[15px] group-hover:text-blue-600 transition-colors line-clamp-1 leading-snug">{job.title}</h3>
-                <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5">
-                  <Building2 className="h-3 w-3 shrink-0" />
-                  <span className="truncate">{job.company_name}</span>
-                </p>
-              </div>
-              <button onClick={handleSave} className={`shrink-0 p-2 rounded-xl transition-all ${isSaved ? "bg-blue-50 dark:bg-blue-950/30" : "hover:bg-muted"}`}>
-                {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4 text-muted-foreground group-hover:text-blue-400 transition-colors" />}
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-3">
-              {(job.division || job.district) && (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-blue-50/80 dark:bg-blue-950/20 text-blue-700 dark:text-blue-300 px-2.5 py-1 rounded-lg font-medium">
-                  <MapPin className="h-3 w-3" />
-                  {[job.division, job.district, job.thana].filter(Boolean).join(" › ")}
-                </span>
-              )}
-              <span className="inline-flex items-center gap-1 text-[11px] bg-emerald-50/80 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-300 px-2.5 py-1 rounded-lg font-medium">
-                <Clock className="h-3 w-3" />
-                {getTypeLabel(job.job_type)}
+          {job.deadline && (
+            <span
+              className={`flex items-center gap-1.5 text-xs whitespace-nowrap ${
+                urgency === "urgent" ? "text-red-600" : urgency === "soon" ? "text-orange-600" : "text-muted-foreground"
+              }`}
+            >
+              {bn ? "শেষ তারিখ" : "Deadline"}:
+              <span className="inline-flex items-center gap-1 font-medium">
+                <Calendar className="h-3.5 w-3.5" /> {format(new Date(job.deadline), "dd MMM yyyy")}
               </span>
-              {job.salary_min && (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-amber-50/80 dark:bg-amber-950/20 text-amber-700 dark:text-amber-300 px-2.5 py-1 rounded-lg font-medium">
-                  <Banknote className="h-3 w-3" />
-                  ৳{(job.salary_min / 1000).toFixed(0)}k{job.salary_max ? `–${(job.salary_max / 1000).toFixed(0)}k` : "+"}
-                </span>
-              )}
-              {job.vacancy_count > 1 && (
-                <span className="inline-flex items-center gap-1 text-[11px] bg-purple-50/80 dark:bg-purple-950/20 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-lg font-medium">
-                  <Users className="h-3 w-3" />
-                  {job.vacancy_count} {bn ? "টি পদ" : "positions"}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-between mt-3">
-              <div className="flex flex-wrap gap-1.5">
-                <Badge variant="outline" className="text-[10px] h-5 font-medium rounded-md">
-                  {CATEGORY_ICONS[job.category] || "📋"} {getCatLabel(job.category)}
-                </Badge>
-                {featured && (
-                  <Badge className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[10px] h-5 border-0">
-                    ⭐ {bn ? "ফিচার্ড" : "Featured"}
-                  </Badge>
-                )}
-              </div>
-              {job.deadline && (
-                <span className={`text-[10px] font-medium ${urgency === "urgent" ? "text-red-600" : urgency === "soon" ? "text-orange-600" : "text-muted-foreground"}`}>
-                  {bn ? "শেষ:" : "Deadline:"} {format(new Date(job.deadline), "dd MMM yyyy")}
-                </span>
-              )}
-            </div>
-          </div>
+            </span>
+          )}
         </div>
       </div>
+
+      <CompanyLogo
+        src={job.company_logo_url}
+        alt={job.company_name}
+        sizeClass="w-16 h-16 shrink-0"
+        iconClass={`h-8 w-8 ${featured ? "text-amber-600" : "text-blue-600"}`}
+        fallbackBgClass={
+          featured
+            ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
+            : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
+        }
+      />
     </Link>
   );
 }

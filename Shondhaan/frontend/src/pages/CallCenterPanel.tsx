@@ -70,7 +70,7 @@ const requestStatusOptions = [
 ];
 
 const API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
-const CENTRAL_API_URL = (CENTRAL_API_BASE_URL || "https://backend-shondhaan.yessbd.top").replace(/\/+$/, "");
+const CENTRAL_API_URL = (CENTRAL_API_BASE_URL || "https://backend-shondhaan.com").replace(/\/+$/, "");
 
 const getAuthHeaders = () => {
   const auth = getMySqlAuth();
@@ -380,9 +380,9 @@ const CallCenterPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="" />
 
-      <div className="mx-auto max-w-5xl px-4 py-6 md:py-10">
+      <div className="mx-auto max-w-full px-4 py-6 md:py-10">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> পেছনে যান
         </button>
@@ -551,7 +551,7 @@ const CallCenterPanel = () => {
                 </div>
               );
               if (activeTab === "new-booking") return (
-                <div className="p-4 max-w-lg">
+                <div className="p-4 max-w-full bg-white rounded border bodrer-1 shadow">
                   <h3 className="font-heading text-lg font-bold text-foreground mb-4">কাস্টমারের জন্য বুকিং তৈরি করুন</h3>
                   <div className="mb-4 p-3 rounded-xl border border-border bg-card space-y-2">
                     <p className="text-xs font-medium text-muted-foreground">প্রথমে কাস্টমার খুঁজুন</p>

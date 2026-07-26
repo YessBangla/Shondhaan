@@ -16,8 +16,8 @@ const AuthHeroPanel = () => {
     {
       titleBn: "এক প্ল্যাটফর্মে সব সমাধান",
       titleEn: "All Solutions in One Platform",
-      subtitleBn: "ইয়েস সার্ভিস, ইয়েস মার্ট, ইয়েস ডিল ও ইয়েস জবস — সবকিছু একসাথে।",
-      subtitleEn: "Yess Service, Yess Mart, Yess Deal & Yess Jobs — all together.",
+      subtitleBn: "সন্ধান, ইয়েস মার্ট, ইয়েস ডিল ও ইয়েস জবস — সবকিছু একসাথে।",
+      subtitleEn: "Shondhaan, Yess Mart, Yess Deal & Yess Jobs — all together.",
       gradient: "from-primary/90 to-primary/60",
       image: slidePlatform,
     },

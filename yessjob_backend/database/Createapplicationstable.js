@@ -26,6 +26,15 @@
 // We deliberately don't recompute it on read — an employer reviewing
 // applications six months from now should see how old the candidate was
 // when they applied, not their current age.
+//
+// NOTE ON status vs hiring_stage: `status` is the original coarse field
+// (pending/shortlisted/rejected/hired), kept as-is so nothing that still
+// reads it breaks. `hiring_stage` is the finer-grained pipeline field the
+// employer panel actually drives (applied -> shortlisted ->
+// interview_scheduled -> interviewed -> scored -> hired/rejected), updated
+// via PATCH /api/jobseeker/applications/:id/stage in routes/applications.js.
+// If you already have this table deployed without these columns, run
+// database/migrate-add-hiring-stage.js instead of dropping/recreating it.
 
 const mysql = require('mysql2');
 
@@ -56,6 +65,15 @@ async function createApplicationsTable() {
 
         status ENUM('pending', 'shortlisted', 'rejected', 'hired') NOT NULL DEFAULT 'pending',
 
+        -- Fine-grained hiring pipeline, driven by the employer panel.
+        hiring_stage ENUM(
+          'applied', 'shortlisted', 'interview_scheduled',
+          'interviewed', 'scored', 'hired', 'rejected'
+        ) NOT NULL DEFAULT 'applied',
+        score TINYINT UNSIGNED DEFAULT NULL,
+        interviewer_notes TEXT DEFAULT NULL,
+        attendance ENUM('present', 'absent', 'no_show') DEFAULT NULL,
+
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
@@ -64,6 +82,7 @@ async function createApplicationsTable() {
         INDEX idx_job_applications_job_id (job_id),
         INDEX idx_job_applications_jobseeker_id (jobseeker_id),
         INDEX idx_job_applications_status (status),
+        INDEX idx_job_applications_hiring_stage (hiring_stage),
 
         CONSTRAINT fk_job_applications_job_id
           FOREIGN KEY (job_id) REFERENCES jobs(id)

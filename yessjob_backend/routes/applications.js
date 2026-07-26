@@ -3,6 +3,8 @@ const express = require('express');
 const mysql = require('mysql2');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+const https = require('https');
 const router = express.Router();
 
 const pool = mysql.createPool({
@@ -15,7 +17,10 @@ const pool = mysql.createPool({
   queueLimit: 0
 }).promise();
 
-const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'http://localhost:5000';
+// This service is deployed separately from the central-auth backend. Never
+// default to localhost here: on backend-yjob that points at the YessJob
+// process itself, so every forwarded login check fails in production.
+const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'https://backend-central.shondhaan.com';
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-should-be-in-env';
 
@@ -89,6 +94,39 @@ function verifyJwtToken(token = '') {
   }
 }
 
+// Node 18+ exposes fetch globally, but some production Node deployments do
+// not. Authentication must not turn into a 500 simply because that global is
+// unavailable, so use the native HTTP client as a compatible fallback.
+function getCentralProfile(url, authHeader, token) {
+  if (typeof fetch === 'function') {
+    return fetch(url, {
+      headers: { Authorization: authHeader, Cookie: `token=${token}` },
+    }).then(async (response) => {
+      if (!response.ok) return null;
+      return response.json();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const client = target.protocol === 'https:' ? https : http;
+    const request = client.request(target, {
+      method: 'GET',
+      headers: { Authorization: authHeader, Cookie: `token=${token}` },
+    }, (response) => {
+      let body = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => { body += chunk; });
+      response.on('end', () => {
+        if (response.statusCode < 200 || response.statusCode >= 300) return resolve(null);
+        try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
+      });
+    });
+    request.on('error', reject);
+    request.end();
+  });
+}
+
 async function verifyShondhaanUser(authHeader) {
   if (!authHeader) return null;
 
@@ -104,14 +142,11 @@ async function verifyShondhaanUser(authHeader) {
 
   // 3. Fallback: forward to central backend
   try {
-    const response = await fetch(`${SHONDHAAN_API_URL}/api/users/me/profile`, {
-      headers: {
-        Authorization: authHeader,
-        Cookie: `token=${token}`,
-      },
-    });
-    if (!response.ok) return null;
-    const user = await response.json();
+    const user = await getCentralProfile(
+      `${SHONDHAAN_API_URL}/api/users/me/profile`,
+      authHeader,
+      token
+    );
     return user && user.id ? user : null;
   } catch (err) {
     console.error('[auth] Fetch to Shondhaan failed:', err.message);
@@ -310,6 +345,72 @@ router.patch('/:id/status', requireEmployer, async (req, res) => {
   } catch (err) {
     console.error('Update application status error:', err);
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// ── Employer: update an applicant's pipeline stage / score / notes ──
+// PATCH /api/jobseeker/applications/:id/stage
+// Body (all optional, send only what you're changing):
+//   { hiring_stage?, score?, interviewer_notes?, attendance? }
+//
+// This is what EmployerPanel.tsx actually calls for shortlist/reject/score/
+// comment actions in the applications and hiring-pipeline tabs. Ownership is
+// enforced the same way as the /status route above: the UPDATE only touches
+// rows where the joined job belongs to this employer.
+router.patch('/:id/stage', requireEmployer, async (req, res) => {
+  try {
+    const { hiring_stage, score, interviewer_notes, attendance } = req.body;
+
+    const allowedStages = new Set([
+      'applied', 'shortlisted', 'interview_scheduled',
+      'interviewed', 'scored', 'hired', 'rejected'
+    ]);
+    if (hiring_stage !== undefined && !allowedStages.has(hiring_stage)) {
+      return res.status(400).json({ message: `hiring_stage must be one of: ${Array.from(allowedStages).join(', ')}` });
+    }
+
+    if (score !== undefined && score !== null) {
+      const n = Number(score);
+      if (!Number.isFinite(n) || n < 0 || n > 100) {
+        return res.status(400).json({ message: 'score must be a number between 0 and 100' });
+      }
+    }
+
+    const allowedAttendance = new Set(['present', 'absent', 'no_show']);
+    if (attendance !== undefined && attendance !== null && !allowedAttendance.has(attendance)) {
+      return res.status(400).json({ message: `attendance must be one of: ${Array.from(allowedAttendance).join(', ')}` });
+    }
+
+    // Build the SET clause dynamically from whichever fields were sent.
+    const sets = [];
+    const values = [];
+    if (hiring_stage !== undefined) { sets.push('ja.hiring_stage = ?'); values.push(hiring_stage); }
+    if (score !== undefined) { sets.push('ja.score = ?'); values.push(score); }
+    if (interviewer_notes !== undefined) { sets.push('ja.interviewer_notes = ?'); values.push(interviewer_notes); }
+    if (attendance !== undefined) { sets.push('ja.attendance = ?'); values.push(attendance); }
+
+    if (sets.length === 0) {
+      return res.status(400).json({ message: 'Provide at least one of: hiring_stage, score, interviewer_notes, attendance' });
+    }
+
+    values.push(req.params.id, req.shondhaanUser.id);
+
+    const [result] = await pool.query(
+      `UPDATE job_applications ja
+       JOIN jobs j ON j.id = ja.job_id
+       SET ${sets.join(', ')}
+       WHERE ja.id = ? AND j.user_id = ?`,
+      values
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: 'Application not found or not owned by you' });
+    }
+
+    const [rows] = await pool.query(`${APPLICATION_SELECT} WHERE ja.id = ? LIMIT 1`, [req.params.id]);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error('Update application stage error:', err);
+    res.status(500).json({ message: 'Server error', detail: err?.message || String(err) });
   }
 });
 

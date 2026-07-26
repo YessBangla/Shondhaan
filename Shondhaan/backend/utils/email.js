@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { OTP_EXPIRY_MINUTES } from "../config/env.js";
+import { otpEmailTemplate } from "../templates/email/otpEmail.js";
 
 export function createTransporter() {
   const host = process.env.SMTP_HOST;
@@ -22,18 +23,15 @@ export function createTransporter() {
 
 export async function sendOtpEmail(email, otp) {
   const transporter = createTransporter();
+  const expiryMinutes = Number(process.env.OTP_EXPIRY_MINUTES || 10);
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
-    subject: "Your Shondhaan signup OTP",
-    text: `Your Shondhaan OTP is ${otp}. It will expire in ${OTP_EXPIRY_MINUTES} minutes.`,
-    html: `
-      <div style="font-family:Arial,sans-serif;line-height:1.5">
-        <h2>Shondhaan signup OTP</h2>
-        <p>Your OTP code is:</p>
-        <p style="font-size:28px;font-weight:700;letter-spacing:4px">${otp}</p>
-        <p>This code will expire in ${OTP_EXPIRY_MINUTES} minutes.</p>
-      </div>
-    `,
+    subject: "🔐 Your Shondhaan Verification Code",
+    text: `Your Shondhaan OTP is ${otp}. It will expire in ${expiryMinutes} minutes.`,
+    html: otpEmailTemplate({
+      otp,
+      expiryMinutes,
+    }),
   });
 }

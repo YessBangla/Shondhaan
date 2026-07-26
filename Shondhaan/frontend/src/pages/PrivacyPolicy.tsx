@@ -10,8 +10,8 @@ const PrivacyPolicy = () => {
   useSEO({
     title: bn ? "গোপনীয়তা নীতি" : "Privacy Policy",
     description: bn
-      ? "Yess Service কীভাবে আপনার তথ্য সংগ্রহ, ব্যবহার ও সুরক্ষা করে — আমাদের গোপনীয়তা নীতি পড়ুন।"
-      : "How Yess Service collects, uses and protects your information — read our privacy policy.",
+      ? "Shondhaan কীভাবে আপনার তথ্য সংগ্রহ, ব্যবহার ও সুরক্ষা করে — আমাদের গোপনীয়তা নীতি পড়ুন।"
+      : "How Shondhaan collects, uses and protects your information — read our privacy policy.",
     canonical: "/privacy",
     locale: bn ? "bn_BD" : "en_US",
   });

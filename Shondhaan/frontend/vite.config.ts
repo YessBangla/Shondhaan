@@ -30,7 +30,7 @@ export default defineConfig(() => ({
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
       manifest: {
-        name: "Yess Service",
+        name: "Shondhaan",
         short_name: "Yess",
         description:
           "বাংলাদেশের প্রিমিয়াম হোম সার্ভিস প্ল্যাটফর্ম",

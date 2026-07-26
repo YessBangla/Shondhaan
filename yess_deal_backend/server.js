@@ -58,8 +58,8 @@ const corsOrigin = [
       "http://localhost:5173",
       "http://localhost:8080",
       "http://localhost:4000",
-      "https://shondhaan.yessbd.top",
-      "https://www.shondhaan.yessbd.top",
+      "https://shondhaan.com",
+      "https://www.shondhaan.com",
     ].filter(Boolean)
   ),
 ];

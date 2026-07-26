@@ -1,7 +1,7 @@
 import yessServiceLogo from "@/assets/yess-service-logo.png";
 
 /**
- * Floating Yess Service logo overlay shown on every service image
+ * Floating Shondhaan logo overlay shown on every service image
  * as a subtle watermark / shadow.
  * Place inside any element with `position: relative`.
  */

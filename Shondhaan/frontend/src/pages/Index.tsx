@@ -76,7 +76,7 @@ type FormattedService = {
   commission_percent: string;
 };
 
-const API_BASE = `${(INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(
+const API_BASE = `${(INDIVIDUAL_API_BASE_URL).replace(
   /\/+$/,
   ""
 )}/api`;
@@ -189,8 +189,8 @@ const Index = () => {
       ? "হোম সার্ভিসের সেরা প্ল্যাটফর্ম"
       : "Best Home Service Platform in Bangladesh",
     description: bn
-      ? "ইয়েস সার্ভিস — বাংলাদেশের প্রিমিয়াম হোম সার্ভিস।"
-      : "Yess Service — Bangladesh's premium home service platform.",
+      ? "সন্ধান — বাংলাদেশের প্রিমিয়াম হোম সার্ভিস।"
+      : "Shondhaan — Bangladesh's premium home service platform.",
     canonical: "/",
   });
 

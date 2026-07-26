@@ -1,4 +1,7 @@
-export const ALLOWED_ROLES = new Set([
+export const passwordPolicyMessage =
+  "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
+
+  export const ALLOWED_ROLES = new Set([
   "super_admin",
   "admin",
   "moderator",
@@ -30,6 +33,7 @@ export const CMS_TABLES = {
       "is_active",
     ],
   },
+
   cms_services: {
     orderBy: "sort_order",
     jsonColumns: new Set(["features", "available_cities"]),
@@ -66,6 +70,7 @@ export const CMS_TABLES = {
       "sort_order",
     ],
   },
+
   cms_special_offers: {
     orderBy: "sort_order",
     jsonColumns: new Set(),
@@ -89,6 +94,7 @@ export const CMS_TABLES = {
       "sort_order",
     ],
   },
+
   cms_hero_banners: {
     orderBy: "sort_order",
     jsonColumns: new Set(),
@@ -104,6 +110,7 @@ export const CMS_TABLES = {
       "sort_order",
     ],
   },
+
   cms_homepage_sections: {
     orderBy: "sort_order",
     jsonColumns: new Set(["service_slugs"]),
@@ -119,6 +126,3 @@ export const CMS_TABLES = {
     ],
   },
 };
-
-export const passwordPolicyMessage =
-  "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";

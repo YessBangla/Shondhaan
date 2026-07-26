@@ -20,7 +20,7 @@ const Auth = () => {
   useSEO({
     title: "Sign in or Create Account",
     description:
-      "Sign in or create your Yess Service account to book trusted home services across Bangladesh.",
+      "Sign in or create your Shondhaan account to book trusted home services across Bangladesh.",
     canonical: "/auth",
     noindex: true,
   });

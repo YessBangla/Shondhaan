@@ -136,14 +136,18 @@ const JobDetail = () => {
     // Name/phone/email come from jobseeker_profiles server-side, and age
     // is computed server-side from date_of_birth (age_at_application) —
     // sending applicantAge here would just be ignored, so it's left out.
-    await applyMutation.mutateAsync({
-      job_id: id!,
-      expected_salary: expectedSalary ? Number(expectedSalary) : null,
-      cover_letter: null,
-    });
+    try {
+      await applyMutation.mutateAsync({
+        job_id: id!,
+        expected_salary: expectedSalary ? Number(expectedSalary) : null,
+        cover_letter: null,
+      });
 
-    setSubmitting(false);
-    setShowApplyModal(false);
+      setShowApplyModal(false);
+    } finally {
+      // A failed request must not leave the Apply button permanently busy.
+      setSubmitting(false);
+    }
   };
 
   const shareUrl = typeof window !== "undefined" ? window.location.href : "";

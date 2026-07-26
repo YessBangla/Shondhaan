@@ -52,7 +52,7 @@ export function useBookingReminders(bn: boolean) {
           toast.info(bn ? "বুকিং রিমাইন্ডার" : "Booking reminder", { description: body, duration: 7000 });
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
             try {
-              new Notification(bn ? "Yess Service • রিমাইন্ডার" : "Yess Service • Reminder", {
+              new Notification(bn ? "Shondhaan • রিমাইন্ডার" : "Shondhaan • Reminder", {
                 body, icon: "/favicon.ico", tag: `reminder-${r.bookingId}`,
               });
             } catch {}

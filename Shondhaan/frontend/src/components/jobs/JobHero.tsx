@@ -7,6 +7,7 @@ import BackToHomeButton from "@/components/BackToHomeButton";
 import { divisions } from "@/data/locations";
 import { JOB_CATEGORIES } from "@/hooks/useJobData";
 import yessJobsLogo from "@/assets/yess-jobs-logo.png";
+const heroBackgroundImage = "/job-bg.png";
 
 interface JobHeroProps {
   bn: boolean;
@@ -40,18 +41,23 @@ export default function JobHero({
   const [searchFocused, setSearchFocused] = useState(false);
 
   return (
-    <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white relative overflow-hidden">
+    <div
+        className="text-white relative overflow-hidden bg-cover bg-center bg-no-repeat"
+        style={{
+          backgroundImage: `linear-gradient(to bottom right, rgba(4, 14, 39, 0.62), rgba(0, 30, 114, 0.66)), url('${heroBackgroundImage}')`,
+        }}
+      >
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-10 left-10 w-40 h-40 rounded-full bg-white/10 blur-3xl" />
         <div className="absolute bottom-10 right-10 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
       </div>
-      <div className="mx-auto max-w-6xl px-4 md:px-6 pt-4 pb-8 md:pt-5 md:pb-10 relative">
+      <div className="mx-auto max-w-7xl px-4 md:px-6 pt-4 pb-8 md:pt-5 md:pb-10 relative">
         <BackToHomeButton />
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex-1">
             {/* Title */}
             <div className="flex items-center gap-3 mb-3">
-              <div className="bg-white rounded-xl px-3 py-2 shadow-md ring-1 ring-black/5">
+              <div className="bg-white rounded-xl px-3 py-2 shadow-md ring-1 ring-black/5 hidden">
                 <img src={yessJobsLogo} alt="Yess Jobs" className="h-10 md:h-12 w-auto" />
               </div>
               <div>

@@ -101,19 +101,19 @@ const OnboardingScreen = ({ onFinish }: { onFinish: () => void }) => {
     <div
       role="region"
       aria-roledescription="onboarding carousel"
-      aria-label={`Yess Service onboarding, step ${step + 1} of ${slides.length}`}
+      aria-label={`Shondhaan onboarding, step ${step + 1} of ${slides.length}`}
       className="fixed inset-0 z-[9998] flex flex-col bg-background"
     >
       {/* Top progress bar + step counter + skip */}
       <div className="flex items-center gap-3 px-5 pt-5">
         <a
           href="/"
-          aria-label="Yess Service হোম পেজে যান"
+          aria-label="Shondhaan হোম পেজে যান"
           className="flex items-center gap-1.5 shrink-0 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
         >
           <img
             src={brandLogo}
-            alt="Yess Service লোগো"
+            alt="Shondhaan লোগো"
             className="h-7 w-7 rounded-lg object-contain shadow-sm ring-1 ring-border"
           />
           <span aria-hidden="true" className="font-heading text-sm font-bold text-foreground tracking-tight">

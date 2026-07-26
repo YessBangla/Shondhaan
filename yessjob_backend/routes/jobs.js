@@ -3,6 +3,8 @@ const express = require('express');
 const mysql = require('mysql2');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const http = require('http');
+const https = require('https');
 const router = express.Router();
 
 const pool = mysql.createPool({
@@ -168,6 +170,36 @@ function verifyJwtToken(token = '') {
   }
 }
 
+function getCentralProfile(url, authHeader, token) {
+  if (typeof fetch === 'function') {
+    return fetch(url, {
+      headers: { Authorization: authHeader, Cookie: `token=${token}` },
+    }).then(async (response) => {
+      if (!response.ok) return null;
+      return response.json();
+    });
+  }
+
+  return new Promise((resolve, reject) => {
+    const target = new URL(url);
+    const client = target.protocol === 'https:' ? https : http;
+    const request = client.request(target, {
+      method: 'GET',
+      headers: { Authorization: authHeader, Cookie: `token=${token}` },
+    }, (response) => {
+      let body = '';
+      response.setEncoding('utf8');
+      response.on('data', (chunk) => { body += chunk; });
+      response.on('end', () => {
+        if (response.statusCode < 200 || response.statusCode >= 300) return resolve(null);
+        try { resolve(JSON.parse(body)); } catch (error) { reject(error); }
+      });
+    });
+    request.on('error', reject);
+    request.end();
+  });
+}
+
 async function verifyShondhaanUser(authHeader) {
   if (!authHeader) return null;
 
@@ -183,14 +215,11 @@ async function verifyShondhaanUser(authHeader) {
 
   // 3. Fallback: forward to central backend
   try {
-    const response = await fetch(`${SHONDHAAN_API_URL}/api/users/me/profile`, {
-      headers: {
-        Authorization: authHeader,
-        Cookie: `token=${token}`,
-      },
-    });
-    if (!response.ok) return null;
-    const user = await response.json();
+    const user = await getCentralProfile(
+      `${SHONDHAAN_API_URL}/api/users/me/profile`,
+      authHeader,
+      token
+    );
     return user && user.id ? user : null;
   } catch (err) {
     console.error('[auth] Fetch to Shondhaan failed:', err.message);

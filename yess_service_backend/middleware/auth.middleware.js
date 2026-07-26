@@ -5,17 +5,26 @@ const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
 
 export const authMiddleware = (req, res, next) => {
   try {
-    const header = req.headers.authorization;
+    let token;
 
-    if (!header || !header.startsWith("Bearer ")) {
+    // ✅ 1. Check Authorization header
+    const header = req.headers.authorization;
+    if (header && header.startsWith("Bearer ")) {
+      token = header.split(" ")[1];
+    }
+
+    // ✅ 2. Check cookies if no header
+    if (!token && req.cookies?.token) {
+      token = req.cookies.token;
+    }
+
+    if (!token) {
       return res.status(401).json({ message: "No token" });
     }
 
-    const token = header.split(" ")[1];
-
     const decoded = jwt.verify(token, JWT_SECRET);
 
-    req.user = decoded; 
+    req.user = decoded;
 
     next();
   } catch (err) {

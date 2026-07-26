@@ -2,6 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import cookieParser from "cookie-parser"; // <--- ADD THIS IMPORT
 import { createServer } from "http";
 import { Server as SocketIOServer } from "socket.io";
 
@@ -39,6 +40,10 @@ const corsOrigin = [
 ];
 
 app.use(cors({ origin: corsOrigin, credentials: true }));
+
+// --- ADD THIS LINE RIGHT HERE ---
+app.use(cookieParser()); 
+// --------------------------------
 
 const httpServer = createServer(app);
 const io = new SocketIOServer(httpServer, {
@@ -104,3 +109,5 @@ if (process.env.SHURJOPAY_RECONCILE_DISABLED !== "true") {
     reconcilePendingShurjopayPayments();
   }, 5 * 1000);
 }
+
+
