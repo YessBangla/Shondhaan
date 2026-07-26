@@ -167,6 +167,19 @@
   }
 }
 
+@keyframes spinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-reverse {
+  animation: spinReverse 2s linear infinite;
+}
+
 @layer utilities {
   .app-container {
     @apply mx-auto w-full max-w-5xl px-4 md:px-6 lg:max-w-7xl lg:px-8;
