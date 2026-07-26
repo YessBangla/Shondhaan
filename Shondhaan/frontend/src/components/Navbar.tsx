@@ -447,7 +447,7 @@ const Navbar = () => {
                 onClick={() => setRequestOpen(true)}
                 aria-label={L.request.long}
                 title={L.request.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-primary/15 bg-gradient-to-b from-primary/5 to-primary/10 px-0.5 py-1.5 sm:px-1 text-primary shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:from-primary/10 hover:to-primary/15 active:scale-[0.97]"
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-primary/15 bg-gradient-to-b from-primary/5 to-primary/10 px-0.5 py-1.5 sm:px-1 text-primary shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200  hover:bg-blue-700 active:scale-[0.97]"
               >
                 <HelpCircle className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
@@ -626,7 +626,7 @@ const Navbar = () => {
           <div className="flex flex-1 items-center justify-center gap-2">
             <button
               onClick={() => setRequestOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
             >
               <HelpCircle className="h-3.5 w-3.5" />
               {bn ? "সেবা রিকোয়েস্ট" : "Request"}

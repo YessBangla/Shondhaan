@@ -92,7 +92,7 @@ const ServiceMessage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[68px]" />
+      <div className="pt-[44px] md:pt-[68px] " />
 
       <div className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10">
         {/* HEADER */}

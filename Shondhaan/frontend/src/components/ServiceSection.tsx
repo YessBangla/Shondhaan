@@ -51,7 +51,7 @@ const ServiceCardWrapper = ({
     <div
       onClick={onOpen}
       {...longPress}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-border/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl active:scale-[0.98] md:shrink-0 md:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
+      className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl active:scale-[0.98] md:shrink-0 md:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
     >
       {children}
     </div>
@@ -220,7 +220,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.5 }}
-      className="py-8 md:py-12"
+      className="py-4 md:py-4"
     >
       <div className="mb-5 flex items-center justify-between px-4 md:mb-6 md:px-0">
         <h2 className="font-heading text-xl font-bold text-foreground md:text-3xl">{heading}</h2>
@@ -255,10 +255,10 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               }}
               onLongPress={() => setQuickMenu(service)}
             >
-              <div className="overflow-hidden bg-muted yess-wm">
-                <img src={service.image} alt={service.title} className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
+            <div className="overflow-hidden  bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm">
+                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform rounded-b-full  duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
               </div>
-              <div className="p-3 md:p-4">
+              <div className="p-3 bg-blue-300/40  md:p-4">
                 <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
                   {service.title}
                 </h3>
@@ -348,7 +348,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               <div className="flex justify-center pt-2.5 pb-1">
                 <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
               </div>
-              <div className="flex items-center gap-3 px-4 pt-1 pb-3 border-b border-border">
+              <div className="flex  items-center  gap-3 px-4 pt-1 pb-3 border-b border-border">
                 <img src={quickMenu.image} alt={quickMenu.title} className="h-12 w-12 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <h4 className="truncate text-sm font-bold text-foreground">{quickMenu.title}</h4>

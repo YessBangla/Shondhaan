@@ -19,7 +19,7 @@ export interface SiteSettings {
 }
 
 const DEFAULTS: SiteSettings = {
-  logo_url: "/yess-service-logo.png",
+  logo_url: "/fullLogo.png",
   logo_text: "Yess",
   logo_accent: "Service",
   favicon_url: "/yess-service-logo.png",

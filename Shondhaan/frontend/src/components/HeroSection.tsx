@@ -466,7 +466,7 @@ const HeroSection = () => {
         style={{ 
           paddingTop: "max(72px, calc(var(--app-header-h, 96px) + 4px))",
           backgroundImage: heroImage 
-            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.92), rgba(15, 23, 42, 0.85)), url('${heroImage}')`
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.65)), url('${heroImage}')`
             : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
         }}
       >
@@ -496,11 +496,11 @@ const HeroSection = () => {
             transition={{ duration: 0.4 }}
             className="w-full text-center"
           >
-            <p className="text-[10px] font-medium tracking-widest uppercase text-amber-700/60 mb-1">
+            <p className="text-[10px] font-medium tracking-widest uppercase text-white mb-1">
               {bn ? "স্বাগতম" : "Welcome back"}
             </p>
-            <h1 className="font-serif text-lg font-light text-amber-50 leading-tight">
-              {bn ? "হ্যালো, " : "Hello, "}<span className="font-medium">{greetName}</span> 👋
+            <h1 className="font-serif text-lg font-light text-white leading-tight">
+              {bn ? "হ্যালো, " : "Hello, "}<span className="font-medium text-primary">{greetName}</span> 👋
             </h1>
           </motion.div>
 
@@ -514,8 +514,8 @@ const HeroSection = () => {
           >
             <form onSubmit={handleSubmit} className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-900/20 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
-              <div className="relative flex items-center gap-2 rounded-lg border border-amber-900/30 bg-slate-900/60 px-3 py-2 backdrop-blur-sm">
-                <Search className="h-4 w-4 text-amber-700/50 shrink-0" />
+              <div className="relative flex items-center gap-2 rounded-lg border border-amber-900/30 bg-slate-300/60 px-3 py-2 backdrop-blur-sm">
+                <Search className="h-4 w-4 text-white shrink-0" />
                 <input
                   type="text"
                   value={query}
@@ -523,11 +523,11 @@ const HeroSection = () => {
                   onFocus={() => setFocused(true)}
                   onKeyDown={handleKeyDown}
                   placeholder={bn ? "সেবা খুঁজুন" : "Search services"}
-                  className="flex-1 min-w-0 bg-transparent text-xs text-amber-50 outline-none placeholder:text-amber-700/40 text-center"
+                  className="flex-1 min-w-0 bg-transparent text-xs outline-none placeholder:text-amber-700/40 text-center"
                 />
                 <button
                   type="submit"
-                  className="flex items-center justify-center h-8 w-8 rounded-md bg-amber-700/80 text-amber-50 hover:bg-amber-700 transition-colors flex-shrink-0"
+                  className="flex items-center justify-center h-8 w-8 rounded-md bg-primary text-amber-50 hover:bg-amber-700 transition-colors flex-shrink-0"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -703,7 +703,7 @@ const HeroSection = () => {
                   {/* Button */}
                   <button
                     type="submit"
-                    className="flex items-center justify-center gap-1.5 px-6 rounded-md bg-primary text-amber-50 hover:bg-primary/90 transition-all duration-200 font-medium text-sm shadow-md shadow-amber-900/30"
+                   className="flex items-center justify-center gap-1.5 px-6 rounded-md bg-gradient-to-br from-blue-900 via-green-700 to-green-800 text-amber-50 hover:from-green-700 hover:to-green-900 transition-all duration-200 font-medium text-sm shadow-md shadow-amber-900/30"
                   >
                     <Search className="h-4 w-4" />
                     <span>{bn ? "খুঁজুন" : "Search"}</span>

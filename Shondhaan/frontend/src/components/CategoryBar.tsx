@@ -121,19 +121,19 @@ const CategoryIcon = ({ category, label }: { category: Category; label: string }
         alt={label}
         referrerPolicy="no-referrer"
         onError={() => setImageFailed(true)}
-        className="h-full w-full object-contain"
+        className="h-full md:p-4 lg:p-4 xl:p-4  w-full object-contain"
       />
     );
   }
 
   return (
-    <div className={`h-full w-full rounded-full bg-gradient-to-br ${category.color_gradient || "from-primary to-primary/70"} flex items-center justify-center`}>
+    <div className={`h-full w-full rounded-full bg-gradient-to-br ${category.color_gradient || "from-blue-500 to-emerald-500"} flex items-center justify-center`}>
       <span className="text-base font-bold text-white">{(category.name || category.title || "?")[0]}</span>
     </div>
   );
 };
 
-/* ─── Sheba-style Category Card (desktop + tablet) ─── */
+/* ─── Premium Sheba-style Category Card (desktop + tablet) ─── */
 const CategoryCard = ({
   icon,
   label,
@@ -145,29 +145,44 @@ const CategoryCard = ({
   selected?: boolean;
   onClick: () => void;
 }) => (
-  <button
+  <motion.button
     onClick={onClick}
-    className="group flex shrink-0 flex-col items-center gap-1.5 active:scale-95 transition-transform md:w-[110px] md:gap-2"
+    whileHover={{ y: -4 }}
+    whileTap={{ scale: 0.95 }}
+    className="group flex shrink-0 flex-col items-center gap-2 transition-all md:w-[110px]"
   >
-    <div className={`flex h-18 w-auto items-center justify-center rounded-full transition-all duration-300 ${selected ? "bg-primary/15 ring-2 ring-primary/30" : "bg-transparent"}`}>
-      {icon}
-    </div>
-    <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors group-hover:text-primary md:text-xs ${selected ? "text-primary" : "text-foreground/80"}`}>
+    <motion.div 
+      className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
+        selected 
+          ? "bg-gradient-to-br from-blue-500 to-emerald-500 shadow-lg shadow-blue-500/30" 
+          : "bg-gradient-to-br from-slate-50 to-blue-50 hover:from-blue-50 hover:to-emerald-50 shadow-md"
+      }`}
+      animate={selected ? { scale: 1 } : { scale: 1 }}
+    >
+      <div className={`transition-all ${selected ? "brightness-110" : ""}`}>
+        {icon}
+      </div>
+    </motion.div>
+    <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors duration-300 md:text-xs ${
+      selected 
+        ? "text-blue-600 font-bold" 
+        : "text-slate-600 group-hover:text-blue-600"
+    }`}>
       {label}
     </span>
-  </button>
+  </motion.button>
 );
 
-/* ─── Mobile category pill (per mockup): rounded soft tile + label below ─── */
+/* ─── Premium Mobile category tile ─── */
 const MOBILE_TILE_BG = [
-  "bg-amber-100",
-  "bg-emerald-100",
-  "bg-sky-100",
-  "bg-violet-100",
-  "bg-rose-100",
-  "bg-orange-100",
-  "bg-teal-100",
-  "bg-fuchsia-100",
+  "bg-gradient-to-br from-blue-100 to-blue-50",
+  "bg-gradient-to-br from-emerald-100 to-emerald-50",
+  "bg-gradient-to-br from-cyan-100 to-blue-50",
+  "bg-gradient-to-br from-teal-100 to-emerald-50",
+  "bg-gradient-to-br from-blue-100 to-cyan-50",
+  "bg-gradient-to-br from-emerald-100 to-teal-50",
+  "bg-gradient-to-br from-cyan-100 to-emerald-50",
+  "bg-gradient-to-br from-teal-100 to-cyan-50",
 ];
 
 const MobileCategoryTile = ({
@@ -183,21 +198,35 @@ const MobileCategoryTile = ({
   onClick: () => void;
   index: number;
 }) => (
-  <button
+  <motion.button
     onClick={onClick}
     aria-label={label}
-    className="press flex flex-col items-center gap-1.5 min-h-[88px] focus-visible:ring-2 focus-visible:ring-mobile-accent/50 focus-visible:rounded-2xl"
+    whileTap={{ scale: 0.92 }}
+    className="press flex flex-col items-center gap-2 min-h-[100px] focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:rounded-3xl transition-all"
   >
-    <div className={`flex h-16 w-16 items-center justify-center rounded-2xl p-2.5 shadow-sm ${selected ? "ring-2 ring-mobile-accent/60" : ""} ${MOBILE_TILE_BG[index % MOBILE_TILE_BG.length]}`}>
-      {icon}
-    </div>
-    <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight ${selected ? "text-mobile-accent" : "text-foreground/85"}`}>
+    <motion.div 
+      className={`flex h-16 w-16 items-center justify-center rounded-3xl p-2.5 shadow-md transition-all ${
+        selected 
+          ? "bg-gradient-to-br from-blue-500 to-emerald-500 shadow-lg shadow-emerald-500/40 ring-2 ring-emerald-300" 
+          : `${MOBILE_TILE_BG[index % MOBILE_TILE_BG.length]} shadow-sm hover:shadow-md`
+      }`}
+      whileHover={!selected ? { y: -2 } : {}}
+    >
+      <div className={selected ? "brightness-110" : ""}>
+        {icon}
+      </div>
+    </motion.div>
+    <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors duration-300 ${
+      selected 
+        ? "text-emerald-600 font-bold" 
+        : "text-slate-700"
+    }`}>
       {label}
     </span>
-  </button>
+  </motion.button>
 );
 
-/* ─── Main Component (Sheba-style) ─── */
+/* ─── Main Component (Premium Style) ─── */
 const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySelect }: CategoryBarProps) => {
   const navigate = useNavigate();
   const { language, t } = useLanguage();
@@ -299,71 +328,98 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
   };
   return (
     <>
-    {/* Mobile: clean tiles with header (per mockup) */}
+    {/* Mobile: Premium tiles with header - positioned over banner */}
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.1 }}
-      className="md:hidden mt-3 px-4"
+      className="md:hidden px-4"
+      style={{
+        marginTop: '-40px',
+        position: 'relative',
+        zIndex: 20,
+      }}
     >
-      <div className="mb-2.5 flex items-center justify-between pr-14">
-        <h3 className="text-[15px] font-bold text-foreground">
-          {bn ? "ক্যাটেগরি" : "Categories"}
-        </h3>
-        <button
-          onClick={showAllCategories}
-          className="press text-xs font-semibold text-mobile-accent"
-        >
-          {bn ? "সব দেখুন" : "View all"}
-        </button>
-      </div>
-      <div className="grid grid-cols-4 gap-y-3 gap-x-2">
+      <div className="mx-0 p-4 bg-white/75 backdrop-blur-lg border border-white/30 rounded-2xl shadow-xl mb-0">
+        <div className="mb-4 flex items-center justify-between">
+          <h3 className="text-base font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
+            {bn ? "ক্যাটেগরি" : "Categories"}
+          </h3>
+          <motion.button
+            onClick={showAllCategories}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-500 text-white px-3 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg"
+          >
+            {bn ? "সব দেখুন" : "View all"}
+          </motion.button>
+        </div>
+      <div className="grid grid-cols-4 gap-y-4 gap-x-2">
         {categoryItems.slice(0, 7).map((item, i) => (
           <MobileCategoryTile key={item.key} index={i} icon={item.icon} label={item.label} selected={item.selected} onClick={item.onClick} />
         ))}
-        <button
+        <motion.button
           onClick={showAllCategories}
-          className="press flex flex-col items-center gap-1.5 min-h-[88px]"
+          whileHover={{ y: -2 }}
+          whileTap={{ scale: 0.92 }}
+          className="press flex flex-col items-center gap-2 min-h-[100px]"
           aria-label={bn ? "সব ক্যাটেগরি" : "All categories"}
         >
-          <div className={`flex h-16 w-16 items-center justify-center rounded-2xl bg-secondary p-2 shadow-sm ${selectedCategoryId === "all" ? "ring-2 ring-mobile-accent/60" : ""}`}>
-            <MoreHorizontal className="h-6 w-6 text-foreground/70" />
+          <div className={`flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-slate-100 to-slate-50 p-2 shadow-md transition-all ${
+            selectedCategoryId === "all" 
+              ? "ring-2 ring-emerald-400 bg-gradient-to-br from-blue-500 to-emerald-500" 
+              : "hover:shadow-lg"
+          }`}>
+            <MoreHorizontal className={`h-6 w-6 ${selectedCategoryId === "all" ? "text-white" : "text-slate-600"}`} />
           </div>
-          <span className={`line-clamp-1 text-center text-[11px] font-semibold leading-tight ${selectedCategoryId === "all" ? "text-mobile-accent" : "text-foreground/85"}`}>
+          <span className={`line-clamp-1 text-center text-[11px] font-semibold leading-tight transition-colors ${
+            selectedCategoryId === "all" 
+              ? "text-emerald-600 font-bold" 
+              : "text-slate-700"
+          }`}>
             {bn ? "আরও" : "More"}
           </span>
-        </button>
+        </motion.button>
+      </div>
       </div>
     </motion.div>
 
-    {/* Desktop / tablet: existing card style */}
+    {/* Desktop / tablet: Premium card style - positioned over banner with glass effect */}
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="app-container relative z-20 hidden mt-5 md:block"
+      className="app-container relative z-20 hidden md:block"
+      style={{
+        marginTop: '-60px',
+        position: 'relative',
+      }}
     >
-      <div className=" p-3 sm:p-4 md:p-6">
+      <div className="mx-4 sm:mx-6 md:mx-8 p-4 sm:p-5 md:p-7 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">
         <div className="relative group">
-          {/* Scroll buttons (desktop) */}
-          <button
+          {/* Premium Scroll buttons */}
+          <motion.button
             onClick={() => scroll("left")}
-            className="absolute -left-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground md:flex"
+            whileHover={{ scale: 1.1, x: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute -left-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transition-all md:flex"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="h-4 w-4" />
-          </button>
-          <button
+            <ChevronLeft className="h-5 w-5" />
+          </motion.button>
+          <motion.button
             onClick={() => scroll("right")}
-            className="absolute -right-3 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background text-muted-foreground shadow-md transition-colors hover:text-foreground md:flex"
+            whileHover={{ scale: 1.1, x: 2 }}
+            whileTap={{ scale: 0.95 }}
+            className="absolute -right-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl transition-all md:flex"
             aria-label="Scroll right"
           >
-            <ChevronRight className="h-4 w-4" />
-          </button>
+            <ChevronRight className="h-5 w-5" />
+          </motion.button>
 
           <div
             ref={scrollRef}
-            className="flex gap-2 overflow-x-auto pb-1 md:gap-3"
+            className="flex gap-4 overflow-x-auto pb-2 md:gap-5"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {categoryItems.map((item) => (
