@@ -27,7 +27,15 @@ export function requireCmsAdmin(req, res, next) {
 
 export const requireLoggedIn = (req, res, next) => {
   try {
-    const token = req.cookies?.token;
+    // Browser clients use the httpOnly cookie, while the YessJob service
+    // validates a user's session by forwarding the Authorization header.
+    // Accept both forms so service-to-service verification does not depend
+    // on a cross-domain cookie being available.
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length).trim()
+      : null;
+    const token = bearerToken || req.cookies?.token;
     if (!token) {
       return res.status(401).json({ message: "No token provided" });
     }

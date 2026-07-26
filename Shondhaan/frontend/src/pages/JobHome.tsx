@@ -144,7 +144,7 @@ const JobHome = () => {
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
       {/* Reserve only the visible fixed header stack; keep the hero flush under JobsMenuBar */}
-      <div className="h-[44px] md:h-[76px] lg:h-[82px]" />
+      {/* <div className="h-[44px] md:h-[76px] lg:h-[82px]" /> */}
       <PlatformSwitcher className="md:hidden" exclude={["jobs"]} />
       <JobsMenuBar flushWithHeader />
       {/* Hero Section */}
