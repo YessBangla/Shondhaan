@@ -345,7 +345,7 @@ const hasSidebar =
                             {child.icon && (
                               <span className={`
                                 flex h-7 w-7 items-center justify-center rounded-lg transition-colors
-                                ${isActive ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"}
+                                ${isActive ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-white"}
                               `}>
                                 <child.icon className="h-3.5 w-3.5" />
                               </span>

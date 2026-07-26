@@ -781,7 +781,7 @@ const Navbar = () => {
                     </button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-48 p-1.5 z-[9999]" align="end">
+                  <PopoverContent className="w-48 p-1.5 z-[9999] bg-secondary" align="end">
                     <div className="flex flex-col">
                       <button
                         onClick={() => navigate("/dashboard?tab=bookings")}
@@ -814,7 +814,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Route className="h-4 w-4 text-primary" />
-                        {bn ? "à¦¸à§‡à¦¬à¦¾ à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ" : "Service Requests"}
+                        {bn ? "সার্ভিস রিকোয়েস্ট" : "Service Requests"}
                       </button>
 
                       <button
@@ -822,7 +822,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShoppingBag className="h-4 w-4 text-primary" />
-                        {bn ? "à¦®à¦¾à¦°à§à¦Ÿ à¦…à¦°à§à¦¡à¦¾à¦°" : "Mart Orders"}
+                        {bn ? "মার্ট অর্ডার্স" : "Mart Orders"}
                       </button>
 
                       <button
@@ -830,7 +830,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Heart className="h-4 w-4 text-primary" />
-                        {bn ? "à¦«à§‡à¦­à¦¾à¦°à¦¿à¦Ÿ" : "Favorites"}
+                        {bn ? "পছন্দের" : "Favorites"}
                       </button>
 
                       <button
@@ -838,7 +838,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Store className="h-4 w-4 text-primary" />
-                        {bn ? "à¦†à¦®à¦¾à¦° à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "My Ads"}
+                        {bn ? "আমার এড" : "My Ads"}
                       </button>
 
                       <button
@@ -846,7 +846,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Headphones className="h-4 w-4 text-primary" />
-                        {bn ? "à¦®à§‡à¦¸à§‡à¦œ" : "Messages"}
+                        {bn ? "মেসেজ" : "Messages"}
                       </button>
 
                       <button
@@ -854,7 +854,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShoppingCart className="h-4 w-4 text-primary" />
-                        {bn ? "à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ" : "Payments"}
+                        {bn ? "পেমেন্টস" : "Payments"}
                       </button>
 
                       <button
@@ -862,7 +862,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShieldCheck className="h-4 w-4 text-primary" />
-                        {bn ? "à¦°à¦¿à¦­à¦¿à¦‰" : "Reviews"}
+                        {bn ? "রিভিউ" : "Reviews"}
                       </button>
 
                       <button
@@ -870,15 +870,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Bell className="h-4 w-4 text-primary" />
-                        {bn ? "à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨" : "Notifications"}
-                      </button>
-
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        {t("nav.logout")}
+                        {bn ? "নোটিফিকেশন" : "Notifications"}
                       </button>
 
                       <div className="my-1 border-t border-border" />
@@ -897,6 +889,14 @@ const Navbar = () => {
                       >
                         <User className="h-4 w-4 text-primary" />
                         {bn ? "ড্যাশবোর্ড" : "Dashboard"}
+                      </button>
+
+                      <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                        >
+                        <LogOut className="h-4 w-4" />
+                        {t("nav.logout")}
                       </button>
                     </div>
                   </PopoverContent>
