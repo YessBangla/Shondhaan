@@ -33,8 +33,8 @@ const ContactUs = () => {
   useSEO({
     title: bn ? "যোগাযোগ" : "Contact Us",
     description: bn
-      ? "Yess Service-এর সাথে যোগাযোগ করুন — ফোন, ইমেইল বা মেসেজে আপনার প্রশ্ন ও মতামত জানান।"
-      : "Get in touch with Yess Service — reach us via phone, email or message for any query or feedback.",
+      ? "Shondhaan-এর সাথে যোগাযোগ করুন — ফোন, ইমেইল বা মেসেজে আপনার প্রশ্ন ও মতামত জানান।"
+      : "Get in touch with Shondhaan — reach us via phone, email or message for any query or feedback.",
     canonical: "/contact",
     locale: bn ? "bn_BD" : "en_US",
   });

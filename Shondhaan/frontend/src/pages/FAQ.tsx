@@ -11,10 +11,10 @@ import { useSEO } from "@/hooks/useSEO";
 
 const faqData = [
   {
-    q_bn: "Yess Service কী?",
-    q_en: "What is Yess Service?",
-    a_bn: "Yess Service একটি অনলাইন হোম সার্ভিস প্ল্যাটফর্ম যেখানে আপনি AC সার্ভিসিং, ক্লিনিং, ইলেকট্রিক্যাল, প্লাম্বিং, সেলুন সহ বিভিন্ন সেবা ঘরে বসে বুক করতে পারেন।",
-    a_en: "Yess Service is an online home service platform where you can book AC servicing, cleaning, electrical, plumbing, salon and many other services from home.",
+    q_bn: "Shondhaan কী?",
+    q_en: "What is Shondhaan?",
+    a_bn: "Shondhaan একটি অনলাইন হোম সার্ভিস প্ল্যাটফর্ম যেখানে আপনি AC সার্ভিসিং, ক্লিনিং, ইলেকট্রিক্যাল, প্লাম্বিং, সেলুন সহ বিভিন্ন সেবা ঘরে বসে বুক করতে পারেন।",
+    a_en: "Shondhaan is an online home service platform where you can book AC servicing, cleaning, electrical, plumbing, salon and many other services from home.",
   },
   {
     q_bn: "কিভাবে সার্ভিস বুক করতে পারি?",
@@ -67,8 +67,8 @@ const FAQ = () => {
   useSEO({
     title: bn ? "সচরাচর জিজ্ঞাসা" : "Frequently Asked Questions",
     description: bn
-      ? "Yess Service সম্পর্কে সাধারণ প্রশ্ন ও উত্তর — বুকিং, পেমেন্ট, ক্যানসেল, ইমার্জেন্সি সার্ভিস ও আরও।"
-      : "Common questions about Yess Service — booking, payment, cancellation, emergency service & more.",
+      ? "Shondhaan সম্পর্কে সাধারণ প্রশ্ন ও উত্তর — বুকিং, পেমেন্ট, ক্যানসেল, ইমার্জেন্সি সার্ভিস ও আরও।"
+      : "Common questions about Shondhaan — booking, payment, cancellation, emergency service & more.",
     canonical: "/faq",
     locale: bn ? "bn_BD" : "en_US",
     jsonLd: {

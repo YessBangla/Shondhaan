@@ -130,7 +130,7 @@ const WelcomeBanner = () => {
         <h2 className="text-base md:text-lg font-bold text-foreground leading-snug">
           {greeting.emoji} {greeting.text}, {bn ? "ইয়েস সার্ভিসের পক্ষ থেকে" : "Welcome to"}{" "}
           <span className="text-primary">{locationText}{bn ? "তে" : ""}</span>
-          {bn ? " আপনাকে স্বাগতম!" : " from Yess Service!"}
+          {bn ? " আপনাকে স্বাগতম!" : " from Shondhaan!"}
         </h2>
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground shrink-0">
           <Calendar className="h-3.5 w-3.5 text-primary/60" />

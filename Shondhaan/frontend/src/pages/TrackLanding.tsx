@@ -30,8 +30,8 @@ const TrackLanding = () => {
   useSEO({
     title: bn ? "বুকিং ট্র্যাক করুন" : "Track Your Booking",
     description: bn
-      ? "১৬-ডিজিট টোকেন বা ফোন নম্বর দিয়ে আপনার Yess Service বুকিং লাইভ ট্র্যাক করুন।"
-      : "Track your Yess Service booking live using a 16-digit token or phone number.",
+      ? "১৬-ডিজিট টোকেন বা ফোন নম্বর দিয়ে আপনার Shondhaan বুকিং লাইভ ট্র্যাক করুন।"
+      : "Track your Shondhaan booking live using a 16-digit token or phone number.",
     canonical: "/track",
     locale: bn ? "bn_BD" : "en_US",
   });

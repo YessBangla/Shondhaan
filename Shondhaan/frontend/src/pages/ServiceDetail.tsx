@@ -861,7 +861,7 @@ const CmsServiceDetail = ({
       name: serviceTitle,
       description: seoDescription,
       image: heroImage,
-      provider: { "@type": "Organization", name: "Yess Service" },
+      provider: { "@type": "Organization", name: "Shondhaan" },
       areaServed: "Bangladesh",
       aggregateRating: service.rating
         ? {

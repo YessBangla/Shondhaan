@@ -11,7 +11,7 @@ const NotFound = () => {
   useSEO({
     title: "Page Not Found",
     description:
-      "The page you are looking for does not exist or has been moved. Return to Yess Service home.",
+      "The page you are looking for does not exist or has been moved. Return to Shondhaan home.",
     noindex: true,
   });
 

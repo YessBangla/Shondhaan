@@ -86,7 +86,7 @@ const InAppRatingPrompt = () => {
                 <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
               </div>
               <h3 className="text-base font-bold text-foreground">
-                {bn ? "Yess Service কেমন লাগছে?" : "Enjoying Yess Service?"}
+                {bn ? "সন্ধান কেমন লাগছে?" : "Enjoying Shondhaan?"}
               </h3>
               <p className="mt-1 text-xs text-muted-foreground">
                 {bn ? "আপনার মতামত আমাদের আরও ভালো করতে সাহায্য করবে" : "Your rating helps us improve"}

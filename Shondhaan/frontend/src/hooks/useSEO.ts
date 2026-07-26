@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 
 export interface SEOOptions {
-  /** Page title. Will be suffixed with " | Yess Service" unless `noSuffix` is true. */
+  /** Page title. Will be suffixed with " | Shondhaan" unless `noSuffix` is true. */
   title: string;
   /** Meta description (≤ 160 chars recommended). */
   description?: string;
@@ -13,7 +13,7 @@ export interface SEOOptions {
   type?: string;
   /** Optional JSON-LD structured-data object. Stringified and injected. */
   jsonLd?: Record<string, unknown> | Record<string, unknown>[];
-  /** Skip the " | Yess Service" suffix when true. */
+  /** Skip the " | Shondhaan" suffix when true. */
   noSuffix?: boolean;
   /** Optional extra keywords, comma-separated. */
   keywords?: string;
@@ -23,8 +23,8 @@ export interface SEOOptions {
   locale?: string;
 }
 
-const DEFAULT_TITLE = "Yess Service";
-const SITE_URL = "https://shondhaan.yessbd.top";
+const DEFAULT_TITLE = "Shondhaan";
+const SITE_URL = "https://shondhaan.com";
 const DEFAULT_IMAGE = `${SITE_URL}/yess-service-logo.png`;
 
 /** Truncate to maxLen at a word boundary, appending an ellipsis when cut. */
@@ -97,7 +97,7 @@ export function useSEO(opts: SEOOptions) {
     // Google typically displays ~60 chars of <title>. Keep base title ≤ 55
     // before optional suffix to leave room without mid-word truncation.
     const baseTitle = smartTruncate(title || DEFAULT_TITLE, 55);
-    const fullTitle = noSuffix ? baseTitle : `${baseTitle} | Yess Service`;
+    const fullTitle = noSuffix ? baseTitle : `${baseTitle} | Shondhaan`;
     document.title = smartTruncate(fullTitle, 60);
 
     const url = canonical
@@ -128,7 +128,7 @@ export function useSEO(opts: SEOOptions) {
     upsertMeta("property", "og:type", type);
     upsertMeta("property", "og:image", img);
     upsertMeta("property", "og:image:alt", baseTitle);
-    upsertMeta("property", "og:site_name", "Yess Service");
+    upsertMeta("property", "og:site_name", "Shondhaan");
     upsertMeta("property", "og:locale", locale || "bn_BD");
 
     upsertMeta("name", "twitter:card", "summary_large_image");

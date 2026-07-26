@@ -29,7 +29,7 @@ export function downloadReceiptPdf(data: ReceiptData) {
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(18);
-  doc.text(data.brand ?? "Yess Service", w / 2, y, { align: "center" });
+  doc.text(data.brand ?? "Shondhaan", w / 2, y, { align: "center" });
   y += 18;
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
@@ -103,7 +103,7 @@ export function downloadReceiptPdf(data: ReceiptData) {
   y += 16;
   doc.setFontSize(8);
   doc.setTextColor(120);
-  doc.text("Thank you for choosing Yess Service!", w / 2, y, { align: "center" });
+  doc.text("Thank you for choosing Shondhaan!", w / 2, y, { align: "center" });
 
   doc.save(`receipt-${data.receiptNo}.pdf`);
 }

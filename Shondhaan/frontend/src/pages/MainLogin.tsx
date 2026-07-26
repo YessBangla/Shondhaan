@@ -13,7 +13,7 @@ const MainLogin = () => {
 
   useSEO({
     title: "Staff Login",
-    description: "Yess Service staff & admin sign-in portal.",
+    description: "Shondhaan staff & admin sign-in portal.",
     canonical: "/main-login",
     noindex: true,
   });

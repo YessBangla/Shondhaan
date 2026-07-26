@@ -9,8 +9,8 @@ import avatarArif from "@/assets/avatar-arif.png";
 
 const testimonials = [
   {
-    quote: "Yess Service আমার মতো কর্মজীবী নারীদের জন্য অত্যন্ত সহায়ক। তারা সময়মতো সেবা দিয়েছে এবং আমি তাদের সেবার মানে খুবই সন্তুষ্ট।",
-    quoteEn: "Yess Service is extremely helpful for working women like me. They provided timely service and I'm very satisfied with the quality.",
+    quote: "Shondhaan আমার মতো কর্মজীবী নারীদের জন্য অত্যন্ত সহায়ক। তারা সময়মতো সেবা দিয়েছে এবং আমি তাদের সেবার মানে খুবই সন্তুষ্ট।",
+    quoteEn: "Shondhaan is extremely helpful for working women like me. They provided timely service and I'm very satisfied with the quality.",
     name: "সাইমা আহমেদ",
     nameEn: "Saima Ahmed",
     title: "সহযোগী অধ্যাপক",
@@ -27,8 +27,8 @@ const testimonials = [
     avatar: avatarZabin,
   },
   {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Yess Service অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
-    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Yess Service app. The beautician arrived on time.",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",
     title: "ম্যানেজমেন্ট ট্রেইনি",
@@ -36,8 +36,8 @@ const testimonials = [
     avatar: avatarZeba,
   },
   {
-    quote: "প্রথমে দ্বিধায় ছিলাম অনলাইন প্ল্যাটফর্ম কেমন হবে। Yess Service ঠিক যেভাবে চেয়েছিলাম সেভাবেই কাজ সম্পন্ন করেছে। ধন্যবাদ।",
-    quoteEn: "I was initially hesitant about online platforms. Yess Service completed the work exactly as I wanted. Thank you.",
+    quote: "প্রথমে দ্বিধায় ছিলাম অনলাইন প্ল্যাটফর্ম কেমন হবে। Shondhaan ঠিক যেভাবে চেয়েছিলাম সেভাবেই কাজ সম্পন্ন করেছে। ধন্যবাদ।",
+    quoteEn: "I was initially hesitant about online platforms. Shondhaan completed the work exactly as I wanted. Thank you.",
     name: "আরিফ উর রহমান",
     nameEn: "Arif Ur Rahman",
     title: "পার্টনার, ফ্লাইআউট বিডি",
@@ -45,8 +45,8 @@ const testimonials = [
     avatar: avatarArif,
   },
    {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Yess Service অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
-    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Yess Service app. The beautician arrived on time.",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",
     title: "ম্যানেজমেন্ট ট্রেইনি",
@@ -54,8 +54,8 @@ const testimonials = [
     avatar: avatarZeba,
   },
    {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Yess Service অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
-    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Yess Service app. The beautician arrived on time.",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",
     title: "ম্যানেজমেন্ট ট্রেইনি",

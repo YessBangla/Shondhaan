@@ -147,9 +147,9 @@ const CategoryCard = ({
 }) => (
   <button
     onClick={onClick}
-    className="group flex w-[88px] shrink-0 flex-col items-center gap-1.5 active:scale-95 transition-transform md:w-[110px] md:gap-2"
+    className="group flex shrink-0 flex-col items-center gap-1.5 active:scale-95 transition-transform md:w-[110px] md:gap-2"
   >
-    <div className={`flex h-16 w-16 items-center justify-center rounded-full p-2 transition-all duration-300 group-hover:bg-primary/10 group-hover:shadow-md md:h-20 md:w-20 md:p-3 ${selected ? "bg-primary/15 ring-2 ring-primary/30" : "bg-primary/5"}`}>
+    <div className={`flex h-18 w-auto items-center justify-center rounded-full transition-all duration-300 ${selected ? "bg-primary/15 ring-2 ring-primary/30" : "bg-transparent"}`}>
       {icon}
     </div>
     <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors group-hover:text-primary md:text-xs ${selected ? "text-primary" : "text-foreground/80"}`}>
@@ -341,9 +341,9 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="app-container relative -mt-10 z-20 hidden md:-mt-12 md:block"
+      className="app-container relative z-20 hidden mt-5 md:block"
     >
-      <div className="rounded-2xl border border-border/40 bg-card p-3 shadow sm:p-4 md:p-6">
+      <div className=" p-3 sm:p-4 md:p-6">
         <div className="relative group">
           {/* Scroll buttons (desktop) */}
           <button
