@@ -93,19 +93,19 @@ const DealCard = React.forwardRef<
   return (
     <motion.div
       ref={ref}
-      whileHover={{ y: -2 }}
+      whileHover={{ y: -4 }}
       className="cursor-pointer"
       onClick={onClick}
     >
-      <Card className="border-border/50 hover:shadow-lg transition-all overflow-hidden h-full">
+      <Card className="border-blue-100/60 hover:border-emerald-400/50 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden h-full bg-white">
         <div className="relative">
-          <div className="relative aspect-[4/3] bg-muted overflow-hidden">
+          <div className="relative aspect-[4/3] bg-gradient-to-br from-blue-50 to-emerald-50 overflow-hidden">
             <ListingImage src={img} alt={listing.title} fallbackSize="lg" />
           </div>
 
           {listing.is_featured && (
             <div className="absolute top-0 left-0 z-10">
-              <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-bold px-3 py-0.5 rounded-br-lg rounded-tl-lg flex items-center gap-0.5 shadow-sm">
+              <div className="bg-gradient-to-r from-blue-600 to-emerald-500 text-white text-[9px] font-bold px-3 py-0.5 rounded-br-lg rounded-tl-lg flex items-center gap-0.5 shadow-sm">
                 <Star className="h-2.5 w-2.5 fill-white" />
                 {bn ? "প্রমোটেড" : "PROMOTED"}
               </div>
@@ -115,7 +115,7 @@ const DealCard = React.forwardRef<
           {listing.is_negotiable && (
             <Badge
               variant="outline"
-              className="absolute top-2 right-2 bg-background/80 text-[10px]"
+              className="absolute top-2 right-2 bg-white/90 text-blue-700 border-blue-200 text-[10px] backdrop-blur-sm"
             >
               {bn ? "দরদাম" : "Negotiable"}
             </Badge>
@@ -123,7 +123,7 @@ const DealCard = React.forwardRef<
         </div>
 
         <CardContent className="p-3">
-          <p className="text-lg font-bold text-primary">
+          <p className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
             ৳
             {listing.price > 0
               ? listing.price.toLocaleString("bn-BD")
@@ -137,7 +137,7 @@ const DealCard = React.forwardRef<
           </h3>
 
           <div className="flex items-center gap-2 mt-2 text-xs text-muted-foreground">
-            <MapPin className="h-3 w-3" />
+            <MapPin className="h-3 w-3 text-blue-500" />
             <span className="truncate">
               {listing.location_area ||
                 listing.location_district ||
@@ -146,14 +146,14 @@ const DealCard = React.forwardRef<
             </span>
           </div>
 
-          <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground">
+          <div className="flex items-center justify-between mt-2 text-[10px] text-muted-foreground border-t border-blue-50/50 pt-2">
             <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
+              <Clock className="h-3 w-3 text-emerald-500" />
               {timeAgo(listing.created_at, bn)}
             </span>
 
             <span className="flex items-center gap-1">
-              <Eye className="h-3 w-3" />
+              <Eye className="h-3 w-3 text-blue-500" />
               {listing.views_count || 0}
             </span>
           </div>
@@ -202,24 +202,24 @@ const DealHome = () => {
   const { data: latest, isLoading: latestLoading } = useLatestDeals();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
 
       <Navbar />
 
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
 
-      <div className="bg-gradient-to-b from-primary/10 to-background pt-[44px] pb-5 md:pt-[68px] md:pb-10">
+      <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[44px] pb-8 md:pt-[68px] md:pb-12 border-b border-blue-100/50">
         <div className="app-container text-center">
-          <h1 className="mb-2 flex items-center justify-center">
+          {/* <h1 className="mb-2 flex items-center justify-center">
             <img
               src={yessDealLogo}
               alt="Yess Deal"
               className="h-10 md:h-14 w-auto drop-shadow-md"
             />
-          </h1>
+          </h1> */}
 
-          <p className="text-muted-foreground mb-6 text-sm">
+          <p className="text-blue-800/70 mb-6 text-sm font-medium tracking-wide">
             {bn
               ? "বাংলাদেশের সবচেয়ে বিশ্বস্ত কেনাবেচার প্ল্যাটফর্ম"
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
@@ -237,11 +237,11 @@ const DealHome = () => {
             className="max-w-xl mx-auto"
           />
 
-          <div className="mt-4 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <Button
               size="lg"
               onClick={() => navigate("/deal/ads")}
-              className="rounded-xl text-sm md:text-base font-bold gap-2 px-6 md:px-8 shadow-md hover:shadow-lg"
+              className="rounded-xl text-sm md:text-base font-bold gap-2 px-6 md:px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
             >
               <LayoutGrid className="h-5 w-5" />
               {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
@@ -251,21 +251,21 @@ const DealHome = () => {
         </div>
       </div>
 
-      <div className="app-container py-6 pb-28 md:pb-10">
-        <h2 className="text-lg font-bold text-foreground mb-4">
+      <div className="app-container py-8 pb-28 md:py-10 md:pb-12">
+        <h2 className="text-lg font-bold mb-5 flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
           {bn ? "ক্যাটাগরি অনুযায়ী ব্রাউজ করুন" : "Browse by Category"}
         </h2>
 
         {catLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-10">
             {Array(14)
               .fill(0)
               .map((_, index) => (
-                <Skeleton key={index} className="h-20 rounded-xl" />
+                <Skeleton key={index} className="h-20 rounded-xl bg-blue-50/50" />
               ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-8">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10">
             {categoryTree?.map((cat) => (
               <div
                 key={cat.id}
@@ -277,9 +277,11 @@ const DealHome = () => {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => navigate(`/deal/category/${cat.slug}`)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-border/50 bg-card hover:shadow-md hover:border-primary/30 transition-all text-left"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-blue-100/60 bg-white hover:border-emerald-400/50 hover:shadow-md hover:shadow-blue-500/10 transition-all text-left"
                 >
-                  <span className="text-2xl">{cat.icon || "📦"}</span>
+                  <span className="text-2xl p-1.5 rounded-md bg-gradient-to-br from-blue-50 to-emerald-50">
+                    {cat.icon || "📦"}
+                  </span>
 
                   <div className="flex-1 min-w-0">
                     <span className="text-sm font-semibold text-foreground block truncate">
@@ -287,7 +289,7 @@ const DealHome = () => {
                     </span>
 
                     {cat.children && cat.children.length > 0 && (
-                      <span className="text-[10px] text-muted-foreground">
+                      <span className="text-[10px] text-blue-500/80 font-medium">
                         {cat.children.length}{" "}
                         {bn ? "টি সাব-ক্যাটাগরি" : "subcategories"}
                       </span>
@@ -308,7 +310,7 @@ const DealHome = () => {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -4 }}
                         transition={{ duration: 0.15 }}
-                        className="absolute left-0 right-0 top-full z-30 mt-1 bg-card border border-border/60 rounded-xl shadow-xl p-2 max-h-64 overflow-y-auto"
+                        className="absolute left-0 right-0 top-full z-30 mt-1 bg-white border border-blue-100/80 rounded-xl shadow-xl shadow-blue-500/10 p-2 max-h-64 overflow-y-auto"
                       >
                         {cat.children.map((sub: DealCategory) => (
                           <button
@@ -316,7 +318,7 @@ const DealHome = () => {
                             onClick={() =>
                               navigate(`/deal/category/${sub.slug}`)
                             }
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors text-left"
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-blue-50 hover:text-blue-700 transition-colors text-left"
                           >
                             <span className="text-base">
                               {sub.icon || "📦"}
@@ -330,7 +332,7 @@ const DealHome = () => {
 
                         <button
                           onClick={() => navigate(`/deal/category/${cat.slug}`)}
-                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-primary font-medium hover:bg-primary/10 transition-colors mt-1 border-t border-border/30 pt-2"
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-emerald-600 font-medium hover:bg-emerald-50 transition-colors mt-1 border-t border-blue-50/50 pt-2"
                         >
                           {bn
                             ? `সকল ${cat.name} দেখুন`
@@ -346,40 +348,41 @@ const DealHome = () => {
         )}
 
         {(featLoading || (featured?.length || 0) > 0) && (
-          <div className="mb-10">
-            <div className="flex items-center justify-between mb-4">
+          <div className="mb-12">
+            <div className="flex items-center justify-between mb-5">
               <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
-                <span className="bg-amber-500/10 p-1.5 rounded-lg">
-                  <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
+                <span className="bg-gradient-to-br from-blue-500 to-emerald-500 p-1.5 rounded-lg text-white shadow-sm">
+                  <Star className="h-5 w-5 fill-white" />
                 </span>
-                {bn ? "ফিচার্ড বিজ্ঞাপন" : "Featured Ads"}
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
+                  {bn ? "ফিচার্ড বিজ্ঞাপন" : "Featured Ads"}
+                </span>
               </h2>
 
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/deal/ads?featured=1")}
-                className="text-primary"
+                className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
               >
                 {bn ? "সবগুলো দেখুন" : "View All"}
                 <ChevronRight className="h-4 w-4" />
               </Button>
             </div>
-
             {featLoading ? (
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
                 {Array(4)
                   .fill(0)
                   .map((_, index) => (
-                    <Skeleton key={index} className="h-64 rounded-xl" />
+                    <Skeleton key={index} className="h-64 rounded-xl bg-blue-50/50" />
                   ))}
               </div>
             ) : (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                 {featured?.map((listing) => (
-                  <div key={listing.id} className="relative">
-                    <div className="absolute -inset-[1px] rounded-xl bg-gradient-to-br from-amber-400 via-amber-500 to-orange-500 opacity-60 z-0" />
-                    <div className="relative z-10">
+                  <div key={listing.id} className="relative group">
+                    <div className="absolute -inset-[1.5px] rounded-xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-500 opacity-60 group-hover:opacity-100 transition-opacity z-0" />
+                    <div className="relative z-10 rounded-[11px] overflow-hidden bg-white">
                       <DealCard
                         listing={listing}
                         onClick={() => navigate(`/deal/ad/${listing.id}`)}
@@ -393,8 +396,8 @@ const DealHome = () => {
           </div>
         )}
 
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-bold text-foreground">
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
             {bn ? "সর্বশেষ বিজ্ঞাপন" : "Latest Ads"}
           </h2>
 
@@ -402,7 +405,7 @@ const DealHome = () => {
             variant="ghost"
             size="sm"
             onClick={() => navigate("/deal/ads")}
-            className="text-primary"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
           >
             {bn ? "সবগুলো দেখুন" : "View All"}
             <ChevronRight className="h-4 w-4" />
@@ -414,7 +417,7 @@ const DealHome = () => {
             {Array(8)
               .fill(0)
               .map((_, index) => (
-                <Skeleton key={index} className="h-64 rounded-xl" />
+                <Skeleton key={index} className="h-64 rounded-xl bg-blue-50/50" />
               ))}
           </div>
         ) : (latest?.length || 0) > 0 ? (
@@ -429,16 +432,16 @@ const DealHome = () => {
             ))}
           </div>
         ) : (
-          <div className="rounded-xl border border-border/50 bg-card p-8 text-center text-muted-foreground">
+          <div className="rounded-xl border border-blue-100/60 bg-white p-8 text-center text-muted-foreground">
             {bn ? "এখনও কোনো বিজ্ঞাপন নেই" : "No ads yet"}
           </div>
         )}
 
-        <div className="mt-8 text-center flex gap-3 justify-center flex-wrap">
+        <div className="mt-10 text-center flex gap-3 justify-center flex-wrap">
           <Button
             size="lg"
             onClick={() => navigate("/deal/post")}
-            className="rounded-xl text-base font-bold gap-2 px-8"
+            className="rounded-xl text-base font-bold gap-2 px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
           >
             <Plus className="h-5 w-5" />
             {bn ? "ফ্রি বিজ্ঞাপন দিন" : "Post Free Ad"}
@@ -448,7 +451,7 @@ const DealHome = () => {
             size="lg"
             variant="outline"
             onClick={() => navigate("/deal/my-ads")}
-            className="rounded-xl text-base font-bold gap-2 px-8"
+            className="rounded-xl text-base font-bold gap-2 px-8 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
           >
             <Package className="h-5 w-5" />
             {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
@@ -458,7 +461,7 @@ const DealHome = () => {
             size="lg"
             variant="outline"
             onClick={() => navigate("/deal/inbox")}
-            className="rounded-xl text-base font-bold gap-2 px-8"
+            className="rounded-xl text-base font-bold gap-2 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors"
           >
             <MessageCircle className="h-5 w-5" />
             {bn ? "ইনবক্স" : "Inbox"}

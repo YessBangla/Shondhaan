@@ -1,6 +1,12 @@
-import { useState } from "react";
-import { MapPin, Navigation, ChevronRight, Loader2, X } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useState, useEffect } from "react";
+import { MapPin, Loader2, X } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { divisions as locationData } from "@/data/locations";
@@ -14,12 +20,24 @@ interface DealLocationSelectorProps {
 const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) => {
   const { language } = useLanguage();
   const bn = language === "bn";
+
   const [locating, setLocating] = useState(false);
   const [detailArea, setDetailArea] = useState("");
 
-  const selectedDivision = locationData.find(d => d.nameBn === value.division);
+  //  NEW: search state
+  const [search, setSearch] = useState("");
+  const [results, setResults] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  //  Location logic (unchanged)
+  const selectedDivision = locationData.find(
+    (d) => d.nameBn === value.division
+  );
   const districtList = selectedDivision?.districts || [];
-  const selectedDistrict = districtList.find(d => d.nameBn === value.district);
+
+  const selectedDistrict = districtList.find(
+    (d) => d.nameBn === value.district
+  );
   const thanaList = selectedDistrict?.thanas || [];
 
   const handleDivisionChange = (v: string) => {
@@ -37,165 +55,145 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
   const handleClear = () => {
     onChange({ division: "", district: "", thana: "" });
     setDetailArea("");
+    setSearch("");
+    setResults([]);
   };
 
-  const detectGps = async () => {
-    if (!navigator.geolocation) {
-      toast.error(bn ? "আপনার ব্রাউজারে GPS সাপোর্ট নেই" : "GPS not supported");
-      return;
+  // API FETCH FUNCTION
+  const fetchListings = async (query: string) => {
+    try {
+      setLoading(true);
+
+      const res = await fetch(
+        `http://localhost:4000/api/deal/listings?search=${query}`
+      );
+
+      const data = await res.json();
+
+      if (data.success) {
+        setResults(data.data);
+      } else {
+        setResults([]);
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to fetch listings");
+    } finally {
+      setLoading(false);
     }
-    setLocating(true);
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        try {
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json&accept-language=bn&zoom=16`
-          );
-          const data = await res.json();
-          const state = data.address?.state || "";
-          const city = data.address?.city || data.address?.town || data.address?.county || data.address?.state_district || "";
-          const area = data.address?.suburb || data.address?.neighbourhood || data.address?.road || data.address?.village || "";
-
-          const matchDiv = locationData.find(d =>
-            state.includes(d.nameBn) || state.toLowerCase().includes(d.name.toLowerCase())
-          );
-          if (matchDiv) {
-            let newDistrict = "";
-            let newThana = "";
-            const matchDist = matchDiv.districts.find(d =>
-              city.includes(d.nameBn) || city.toLowerCase().includes(d.name.toLowerCase())
-            );
-            if (matchDist) {
-              newDistrict = matchDist.nameBn;
-              if (matchDist.thanas && area) {
-                const matchThana = matchDist.thanas.find(t => area.includes(t) || t.includes(area));
-                if (matchThana) newThana = matchThana;
-              }
-            }
-            onChange({ division: matchDiv.nameBn, district: newDistrict, thana: newThana });
-          }
-
-          const detailParts = [data.address?.road || "", data.address?.neighbourhood || ""].filter(Boolean).join(", ");
-          if (detailParts) setDetailArea(detailParts);
-
-          toast.success(bn ? "লোকেশন পাওয়া গেছে" : "Location detected");
-        } catch {
-          toast.error(bn ? "লোকেশন পাওয়া যায়নি" : "Could not detect location");
-        }
-        setLocating(false);
-      },
-      () => {
-        toast.error(bn ? "লোকেশন অ্যাক্সেস দিন" : "Allow location access");
-        setLocating(false);
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   };
 
-  const done = (v: string) => !!v;
+  // Debounced search
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      if (search.trim()) {
+        fetchListings(search);
+      } else {
+        setResults([]);
+      }
+    }, 400);
+
+    return () => clearTimeout(delay);
+  }, [search]);
 
   return (
-    <div className="w-full space-y-2">
-      {/* GPS Auto-detect */}
-      <button
-        type="button"
-        disabled={locating}
-        onClick={detectGps}
-        className="w-full flex items-center justify-center gap-2 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 px-3 py-2.5 text-xs font-medium text-primary transition-all hover:bg-primary/10 hover:border-primary/50 active:scale-[0.98] disabled:opacity-60"
-      >
-        {locating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Navigation className="h-4 w-4" />}
-        {locating
-          ? (bn ? "লোকেশন খুঁজছে..." : "Detecting...")
-          : (bn ? "📍 স্বয়ংক্রিয় লোকেশন সনাক্ত করুন" : "📍 Auto-detect Location")}
-      </button>
+    <div className="space-y-4">
+      {/* 🔍 SEARCH INPUT */}
+      <div className="relative">
+        <Input
+          placeholder={bn ? "খুঁজুন..." : "Search deals..."}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-      {/* Cascading selects card */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        {/* Division */}
-        <div className="flex items-center gap-2 px-3 py-0.5 border-b border-border/50">
-          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(value.division) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>১</span>
-          <Select value={value.division} onValueChange={handleDivisionChange}>
-            <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
-              <SelectValue placeholder={bn ? "বিভাগ নির্বাচন করুন" : "Select Division"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
-              {locationData.map(d => (
-                <SelectItem key={d.name} value={d.nameBn} className="text-xs">
-                  <span className="font-medium">{d.nameBn}</span>
-                  <span className="text-muted-foreground ml-1.5">({d.name})</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {done(value.division) && <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0" />}
-        </div>
-
-        {/* District */}
-        <div className={`flex items-center gap-2 px-3 py-0.5 border-b border-border/50 transition-opacity ${value.division ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(value.district) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>২</span>
-          <Select value={value.district} onValueChange={handleDistrictChange} disabled={!value.division}>
-            <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
-              <SelectValue placeholder={bn ? "জেলা নির্বাচন করুন" : "Select District"} />
-            </SelectTrigger>
-            <SelectContent className="max-h-[200px]">
-              {districtList.map(d => (
-                <SelectItem key={d.name} value={d.nameBn} className="text-xs">
-                  <span className="font-medium">{d.nameBn}</span>
-                  <span className="text-muted-foreground ml-1.5">({d.name})</span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {done(value.district) && <ChevronRight className="h-3.5 w-3.5 text-primary shrink-0" />}
-        </div>
-
-        {/* Thana */}
-        {thanaList.length > 0 && (
-          <div className={`flex items-center gap-2 px-3 py-0.5 border-b border-border/50 transition-opacity ${value.district ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(value.thana) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>৩</span>
-            <Select value={value.thana} onValueChange={handleThanaChange} disabled={!value.district}>
-              <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
-                <SelectValue placeholder={bn ? "থানা/এলাকা নির্বাচন" : "Select Thana"} />
-              </SelectTrigger>
-              <SelectContent className="max-h-[200px]">
-                {thanaList.map(t => (
-                  <SelectItem key={t} value={t} className="text-xs font-medium">{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+        {loading && (
+          <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin" />
         )}
 
-        {/* Detail address */}
-        <div className="flex items-center gap-2 px-3 py-0.5">
-          <MapPin className="h-4 w-4 text-muted-foreground shrink-0" />
-          <Input
-            placeholder={bn ? "বিস্তারিত ঠিকানা (রোড, বাড়ি)" : "Detail address"}
-            value={detailArea}
-            onChange={(e) => setDetailArea(e.target.value)}
-            className="border-0 shadow-none px-0 h-9 text-xs focus-visible:ring-0 bg-transparent"
-            maxLength={200}
-          />
-        </div>
+        {search && (
+          <button
+            onClick={() => {
+              setSearch("");
+              setResults([]);
+            }}
+            className="absolute right-3 top-2.5"
+          >
+            <X size={16} />
+          </button>
+        )}
       </div>
 
-      {/* Location summary chips + clear */}
-      {(value.division || value.district || value.thana) && (
-        <div className="flex flex-wrap items-center gap-1 px-1">
-          {value.division && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">📍 {value.division}</span>
-          )}
-          {value.district && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-secondary px-2 py-0.5 text-[10px] font-medium text-foreground">🏙️ {value.district}</span>
-          )}
-          {value.thana && (
-            <span className="inline-flex items-center gap-0.5 rounded-full bg-accent px-2 py-0.5 text-[10px] font-medium text-accent-foreground">📌 {value.thana}</span>
-          )}
-          <button onClick={handleClear} className="ml-auto text-muted-foreground hover:text-foreground">
-            <X className="h-3.5 w-3.5" />
-          </button>
+      {/* 🔽 SEARCH RESULTS */}
+      {results.length > 0 && (
+        <div className="border rounded-lg max-h-60 overflow-auto">
+          {results.map((item) => (
+            <div
+              key={item.id}
+              className="p-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+            >
+              <p className="font-medium">
+                {bn ? item.title : item.title_en}
+              </p>
+              <p className="text-sm text-gray-500">
+                {item.location_district}, {item.location_area}
+              </p>
+              <p className="text-sm font-semibold">৳ {item.price}</p>
+            </div>
+          ))}
         </div>
       )}
+      {/* 📍 LOCATION SELECTORS */}
+      <div className="grid grid-cols-1 gap-3">
+        {/* Division */}
+        <Select value={value.division} onValueChange={handleDivisionChange}>
+          <SelectTrigger>
+            <SelectValue placeholder={bn ? "বিভাগ নির্বাচন করুন" : "Select Division"} />
+          </SelectTrigger>
+          <SelectContent>
+            {locationData.map((d) => (
+              <SelectItem key={d.nameBn} value={d.nameBn}>
+                {bn ? d.nameBn : d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* District */}
+        <Select value={value.district} onValueChange={handleDistrictChange}>
+          <SelectTrigger>
+            <SelectValue placeholder={bn ? "জেলা নির্বাচন করুন" : "Select District"} />
+          </SelectTrigger>
+          <SelectContent>
+            {districtList.map((d) => (
+              <SelectItem key={d.nameBn} value={d.nameBn}>
+                {bn ? d.nameBn : d.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Thana */}
+        <Select value={value.thana} onValueChange={handleThanaChange}>
+          <SelectTrigger>
+            <SelectValue placeholder={bn ? "এলাকা নির্বাচন করুন" : "Select Area"} />
+          </SelectTrigger>
+          <SelectContent>
+            {thanaList.map((t) => (
+              <SelectItem key={t} value={t}>
+                {t}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* 🧹 CLEAR BUTTON */}
+      <button
+        onClick={handleClear}
+        className="text-sm text-red-500 flex items-center gap-1"
+      >
+        <X size={14} /> {bn ? "মুছুন" : "Clear"}
+      </button>
     </div>
   );
 };
