@@ -25,7 +25,8 @@
 // tables, each carrying a `job_id` FK back to this table. Previously
 // education_required / gender_preference / age_min / age_max /
 // experience_min / experience_max lived here — they've moved to
-// job_candidate_requirements. Don't re-add them here.
+// job_candidate_requirements. Don't re-add them here. education_subject
+// also lives in job_candidate_requirements — see createJobCandidateRequirementsTable.js.
 
 const mysql = require('mysql2');
 

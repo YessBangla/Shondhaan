@@ -25,13 +25,36 @@ function getDeadlineUrgency(deadline: string | null) {
   return null;
 }
 
-export default function JobCard({ job, bn, getTypeLabel, getCatLabel, isSaved, onSave, user, navigate, featured }: JobCardProps) {
+// Strips HTML tags (description is stored as rich-text HTML from the job
+// post form) and truncates to a SHORT preview — kept deliberately small so
+// the bubble never needs to scroll. This is the only place job.description
+// is ever rendered — never render it raw/unstripped on the card itself.
+const POPUP_PREVIEW_LENGTH = 110;
+
+function getDescriptionPreview(html: string | null | undefined) {
+  if (!html) return null;
+  const div = document.createElement("div");
+  div.innerHTML = html;
+  const text = (div.textContent || "").trim().replace(/\s+/g, " ");
+  if (!text) return null;
+  if (text.length <= POPUP_PREVIEW_LENGTH) return text;
+  return `${text.slice(0, POPUP_PREVIEW_LENGTH).trim()}…`;
+}
+
+export default function JobCard({
+  job,
+  bn,
+  getTypeLabel,
+  getCatLabel,
+  isSaved,
+  onSave,
+  user,
+  navigate,
+  featured,
+}: JobCardProps) {
   const urgency = getDeadlineUrgency(job.deadline);
   const location = job.district || job.thana || job.division;
 
-  // Field names unconfirmed — adjust to whatever useApprovedJobs actually
-  // returns. Tries a pre-formatted range string first, then falls back to
-  // composing one from min/max numbers.
   const formatExperience = () => {
     if (job.experience_range) return job.experience_range;
     if (job.experience_min != null && job.experience_max != null) {
@@ -44,63 +67,96 @@ export default function JobCard({ job, bn, getTypeLabel, getCatLabel, isSaved, o
     }
     return null;
   };
+
+const education = job.education_subject || null;
   const experience = formatExperience();
+  const hasQualificationInfo = Boolean(education || experience);
+  const descriptionPreview = getDescriptionPreview(job.description);
 
   return (
     <Link
       to={`/jobs/${job.id}`}
-      className={`group flex items-center justify-between gap-4 p-4 md:p-5 rounded-2xl border bg-gradient-to-br from-white to-blue-50/40 dark:from-card dark:to-blue-950/10 hover:shadow-lg transition-all duration-300 ${
-        featured ? "border-amber-200/80 ring-1 ring-amber-100 dark:ring-amber-900/30" : "border-border hover:border-blue-200 dark:hover:border-blue-800"
-      } ${urgency === "expired" ? "opacity-50 grayscale" : ""}`}
+      className="group relative flex justify-between gap-3 rounded-lg border border-gray-300 bg-[#eef3fb] p-3 transition-all duration-200 hover:border-gray-400 hover:shadow-md"
     >
+      {/* Left */}
       <div className="flex-1 min-w-0">
-        <h3 className="text-base font-bold text-green-700 dark:text-green-400 line-clamp-1 group-hover:underline">
+        {/* Job Title */}
+        <h3 className="text-base font-bold text-green-700 group-hover:underline line-clamp-1">
           {job.title}
         </h3>
-        <p className="flex items-center gap-1.5 text-sm font-bold text-foreground line-clamp-1 mt-1">
-          <Building2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+
+        {/* Company */}
+        <p className="mt-0.5 font-semibold text-gray-800 text-sm">
           {job.company_name}
         </p>
 
-        {location && (
-          <p className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1.5">
-            <MapPin className="h-3.5 w-3.5 shrink-0" /> {location}
-          </p>
-        )}
+        {/* Information — description is never shown here by default */}
+        <div className="mt-2 space-y-1">
+          {location && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-700">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{location}</span>
+            </div>
+          )}
 
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1.5 pt-3 mt-3 border-t border-border/60">
-          {experience ? (
-            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              <Briefcase className="h-3.5 w-3.5 shrink-0" /> {experience}
-            </span>
-          ) : <span />}
+          {education && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-700">
+              <Building2 className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{education}</span>
+            </div>
+          )}
 
-          {job.deadline && (
-            <span
-              className={`flex items-center gap-1.5 text-xs whitespace-nowrap ${
-                urgency === "urgent" ? "text-red-600" : urgency === "soon" ? "text-orange-600" : "text-muted-foreground"
-              }`}
-            >
-              {bn ? "শেষ তারিখ" : "Deadline"}:
-              <span className="inline-flex items-center gap-1 font-medium">
-                <Calendar className="h-3.5 w-3.5" /> {format(new Date(job.deadline), "dd MMM yyyy")}
-              </span>
+          {experience && (
+            <div className="flex items-center gap-1.5 text-xs text-gray-700">
+              <Briefcase className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate">{experience}</span>
+            </div>
+          )}
+
+          {!hasQualificationInfo && !descriptionPreview && (
+            <span className="text-xs text-gray-400 italic">
+              {bn ? "বিস্তারিত তথ্য নেই" : "No details provided"}
             </span>
           )}
         </div>
+
+        {/* Deadline */}
+        {job.deadline && (
+          <div className="mt-2.5 flex justify-end">
+            <div className="flex items-center gap-1.5 text-xs text-gray-700">
+              <span className="font-medium">Deadline:</span>
+              <Calendar className="h-3.5 w-3.5" />
+              <span className="font-medium">
+                {format(new Date(job.deadline), "dd MMM yyyy")}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
+      {/* Logo */}
       <CompanyLogo
         src={job.company_logo_url}
         alt={job.company_name}
-        sizeClass="w-16 h-16 shrink-0"
-        iconClass={`h-8 w-8 ${featured ? "text-amber-600" : "text-blue-600"}`}
-        fallbackBgClass={
-          featured
-            ? "bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20"
-            : "bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20"
-        }
+        sizeClass="w-20 h-20 shrink-0 rounded-md bg-white border"
+        iconClass="w-8 h-8 text-gray-400"
+        fallbackBgClass="bg-white"
       />
+
+      {/* Description popup — speech-bubble, appears BELOW the card with a
+          triangular tail pointing up toward the card edge. Fixed small
+          size, short clamped text, no scrollbar. Hidden until hover. */}
+      {descriptionPreview && (
+        <div className="pointer-events-none absolute left-4 top-1/2 z-20  opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+          {/* Triangular tail, pointing up into the card */}
+          <div className="ml-3 h-0 w-0 border-x-8 border-x-transparent border-b-[10px] border-b-white drop-shadow-sm" />
+
+          {/* Bubble body */}
+          <div className="w-[220px] max-w-[85vw] rounded-xl bg-white p-3 text-[11px] leading-4 text-gray-700 shadow-xl">
+            <p className="line-clamp-4">{descriptionPreview}</p>
+          </div>
+        </div>
+      )}
     </Link>
   );
 }

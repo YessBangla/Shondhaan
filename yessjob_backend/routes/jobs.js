@@ -22,10 +22,6 @@ const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-should-be-in-env';
 
 // ── Field maps: which incoming body key goes to which table ────────────
-// Keeping these as separate lists (rather than one big WRITABLE_FIELDS)
-// is what makes the four-table split possible: pickFields() below slices
-// req.body into four buckets, one per table, based on these lists.
-
 const JOB_FIELDS = [ // -> jobs (Step 1: Job Information)
   'title', 'company_name', 'company_logo_url', 'description', 'requirements',
   'benefits', 'application_instruction', 'job_type', 'company_type',
@@ -36,8 +32,9 @@ const JOB_FIELDS = [ // -> jobs (Step 1: Job Information)
 ];
 const JOB_BOOLEAN_FIELDS = ['salary_negotiable', 'salary_hidden', 'work_from_office', 'work_from_home'];
 
+// CHANGE 1: added 'education_subject' so pickFields() no longer drops it.
 const CANDIDATE_REQ_FIELDS = [ // -> job_candidate_requirements (Step 2 + Step 3's age/gender restrict)
-  'education_required', 'preferred_institution', 'certifications',
+  'education_required', 'education_subject', 'preferred_institution', 'certifications',
   'gender_preference', 'gender_restrict',
   'age_min', 'age_max', 'age_restrict',
   'experience_required', 'experience_min', 'experience_max',
@@ -51,10 +48,6 @@ const BILLING_FIELDS = [ // -> job_billing_contacts (Step 4)
   'billing_contact_name', 'billing_designation', 'billing_email', 'billing_mobile',
   'hr_contact_name', 'hr_designation', 'hr_email', 'hr_mobile'
 ];
-
-// 'category' is deliberately not in JOB_FIELDS — the incoming request sends
-// the category's display `value` (e.g. "it"), but what's stored is
-// jobs.category_id, an INT. It's resolved separately via resolveCategoryId().
 
 function pickFields(body, fieldList, booleanFields = []) {
   const out = {};
@@ -73,7 +66,6 @@ function getUserRole(user = {}) {
 
 const ADMIN_ROLES = new Set(['admin', 'super_admin']);
 
-// Resolves whatever the client sent for "category" into a job_categories.id.
 async function resolveCategoryId(categoryInput) {
   if (categoryInput === undefined || categoryInput === null || categoryInput === '') return null;
 
@@ -90,28 +82,35 @@ async function resolveCategoryId(categoryInput) {
   return rows.length > 0 ? rows[0].id : null;
 }
 
-// Lightweight SELECT for listing pages (jobs + category only — no need to
-// drag in candidate/matching/billing data for a list view).
+// CHANGE 2: added cr.education_subject to the listing select so job cards
+// can show it without a second round-trip.
 const JOB_SELECT_WITH_CATEGORY = `
   SELECT
     jobs.*,
     jc.value AS category,
     jc.label_bn AS category_label_bn,
-    jc.label_en AS category_label_en
+    jc.label_en AS category_label_en,
+    cr.education_required,
+    cr.education_subject,
+    cr.experience_required,
+    cr.experience_min,
+    cr.experience_max,
+    COALESCE(ep.company_logo_url, jobs.company_logo_url) AS company_logo_url,
+    ep.is_verified AS company_is_verified
   FROM jobs
   LEFT JOIN job_categories jc ON jc.id = jobs.category_id
+  LEFT JOIN job_candidate_requirements cr ON cr.job_id = jobs.id
+  LEFT JOIN employer_profiles ep ON ep.user_id = jobs.user_id
 `;
 
-// Full SELECT for single-job views (create/update/detail responses) —
-// joins in all three satellite tables so the client gets one flat object
-// back, same shape as before the table split.
+// CHANGE 3: added cr.education_subject to the full select (detail/create/update responses).
 const JOB_SELECT_FULL = `
   SELECT
     jobs.*,
     jc.value AS category,
     jc.label_bn AS category_label_bn,
     jc.label_en AS category_label_en,
-    cr.education_required, cr.preferred_institution, cr.certifications,
+    cr.education_required, cr.education_subject, cr.preferred_institution, cr.certifications,
     cr.gender_preference, cr.gender_restrict,
     cr.age_min, cr.age_max, cr.age_restrict,
     cr.experience_required, cr.experience_min, cr.experience_max,
@@ -154,10 +153,6 @@ function verifyLocalAuthToken(token = '') {
   }
 }
 
-/**
- * Try to verify the JWT directly using jsonwebtoken.
- * This is the primary method since the frontend sends a JWT from the central backend.
- */
 function verifyJwtToken(token = '') {
   if (!token) return null;
   try {
@@ -205,15 +200,12 @@ async function verifyShondhaanUser(authHeader) {
 
   const token = authHeader.startsWith('Bearer ') ? authHeader.slice(7) : '';
 
-  // 1. Try direct JWT verification
   const jwtUser = verifyJwtToken(token);
   if (jwtUser) return jwtUser;
 
-  // 2. Try local HMAC token
   const localUser = verifyLocalAuthToken(token);
   if (localUser) return localUser;
 
-  // 3. Fallback: forward to central backend
   try {
     const user = await getCentralProfile(
       `${SHONDHAAN_API_URL}/api/users/me/profile`,
@@ -245,7 +237,6 @@ function requireEmployer(req, res, next) {
     });
 }
 
-// Admin/super_admin only.
 function requireAdmin(req, res, next) {
   verifyShondhaanUser(req.headers.authorization)
     .then((user) => {
@@ -264,10 +255,6 @@ function requireAdmin(req, res, next) {
     });
 }
 
-// Inserts one row into a satellite table for a freshly-created job. Always
-// inserts (even if `data` is empty) so every job has exactly one row in
-// each of the three satellite tables — that's what makes the later
-// "INSERT ... ON DUPLICATE KEY UPDATE" upsert in PATCH /:id work.
 async function insertSatelliteRow(conn, table, jobId, data) {
   const columns = ['job_id', ...Object.keys(data)];
   const values = [jobId, ...Object.values(data)];
@@ -275,8 +262,6 @@ async function insertSatelliteRow(conn, table, jobId, data) {
   await conn.query(`INSERT INTO ${table} (${columns.join(', ')}) VALUES (${placeholders})`, values);
 }
 
-// Upserts one row into a satellite table on job update. No-ops if `data`
-// is empty (client didn't send any fields for that section).
 async function upsertSatelliteRow(conn, table, jobId, data) {
   const keys = Object.keys(data);
   if (keys.length === 0) return;
@@ -291,15 +276,6 @@ async function upsertSatelliteRow(conn, table, jobId, data) {
   );
 }
 
-// Create a job posting (employer only).
-// Writes to all four tables in a single transaction: jobs, then
-// job_candidate_requirements / job_matching_criteria / job_billing_contacts,
-// all keyed on the new job's id. If any insert fails, everything rolls back
-// — you never end up with a jobs row that has no matching satellite rows.
-//
-// New jobs are always "pending" — they only become publicly visible on
-// JobHome (which filters jobs.status = 'approved') once an admin approves
-// them. Do not default this to 'approved' here even temporarily.
 router.post('/', requireEmployer, async (req, res) => {
   const jobData = pickFields(req.body, JOB_FIELDS, JOB_BOOLEAN_FIELDS);
   if (!jobData.title || !jobData.company_name || !jobData.description) {
@@ -348,7 +324,6 @@ router.post('/', requireEmployer, async (req, res) => {
   }
 });
 
-// List jobs posted by the logged-in employer
 router.get('/mine', requireEmployer, async (req, res) => {
   try {
     const [rows] = await pool.query(
@@ -361,9 +336,6 @@ router.get('/mine', requireEmployer, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-
-// ── Admin routes ──────────────────────────────────────────────────────
-// Registered before "/:id" so "admin" isn't swallowed as an id param.
 
 router.get('/admin/all', requireAdmin, async (req, res) => {
   try {
@@ -430,7 +402,6 @@ router.patch('/:id/featured', requireAdmin, async (req, res) => {
   }
 });
 
-// Get a single job (public) — full data across all four tables
 router.get('/:id', async (req, res) => {
   try {
     const [rows] = await pool.query(`${JOB_SELECT_FULL} WHERE jobs.id = ? LIMIT 1`, [req.params.id]);
@@ -444,9 +415,6 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// Update a job (only the owning employer).
-// Updates jobs directly, and upserts each satellite table — only touching
-// a satellite table if the client actually sent fields belonging to it.
 router.patch('/:id', requireEmployer, async (req, res) => {
   const jobId = req.params.id;
   const userId = req.shondhaanUser.id;
@@ -510,12 +478,7 @@ router.patch('/:id', requireEmployer, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 });
-// Delete a job (only the owning employer).
-// Removes the job's rows from all three satellite tables plus the jobs
-// row itself, in one transaction. If your DB has ON DELETE CASCADE set up
-// on the job_id foreign keys, the satellite deletes are redundant but
-// harmless; if not, they're required or the FK constraint will block
-// deleting the jobs row.
+
 router.delete('/:id', requireEmployer, async (req, res) => {
   const jobId = req.params.id;
   const userId = req.shondhaanUser.id;
@@ -549,7 +512,7 @@ router.delete('/:id', requireEmployer, async (req, res) => {
     res.status(500).json({ message: 'Server error', detail: err?.message || String(err) });
   }
 });
-// Close a job (only the owning employer)
+
 router.patch('/:id/close', requireEmployer, async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -574,7 +537,6 @@ router.patch('/:id/close', requireEmployer, async (req, res) => {
   }
 });
 
-// Reopen a job (only the owning employer)
 router.patch('/:id/reopen', requireEmployer, async (req, res) => {
   try {
     const jobId = req.params.id;
@@ -598,20 +560,20 @@ router.patch('/:id/reopen', requireEmployer, async (req, res) => {
   }
 });
 
-// Public: list open jobs (for job seekers browsing)
-// No approval gate beyond status='approved'. Lightweight join (category
-// only) since listing cards don't need candidate/billing details.
 router.get('/', async (req, res) => {
   try {
     const {
       category, search, jobType, division, district, thana,
-      education, companyType, salaryRange, experienceRange
+      education, companyType, salaryRange, experienceRange, userId
     } = req.query;
 
     const conditions = ['jobs.is_closed = 0', "jobs.status = 'approved'"];
     const values = [];
-    let joinCandidateReq = false;
 
+    if (userId) {
+      conditions.push('jobs.user_id = ?');
+      values.push(userId);
+    }
     if (category && category !== 'all') {
       conditions.push('jc.value = ?');
       values.push(category);
@@ -633,7 +595,6 @@ router.get('/', async (req, res) => {
       values.push(thana);
     }
     if (education && education !== 'any') {
-      joinCandidateReq = true;
       conditions.push('cr.education_required = ?');
       values.push(education);
     }
@@ -652,21 +613,14 @@ router.get('/', async (req, res) => {
       if (!Number.isNaN(max)) { conditions.push('jobs.salary_min <= ?'); values.push(max); }
     }
     if (experienceRange) {
-      joinCandidateReq = true;
       const [min, max] = experienceRange.split('-').map(Number);
       if (!Number.isNaN(min)) { conditions.push('cr.experience_max >= ?'); values.push(min); }
       if (!Number.isNaN(max)) { conditions.push('cr.experience_min <= ?'); values.push(max); }
     }
 
-    // education/experience filters live in job_candidate_requirements now,
-    // so only pull in that join when one of those filters is actually used.
-    const baseSelect = joinCandidateReq
-      ? `${JOB_SELECT_WITH_CATEGORY} LEFT JOIN job_candidate_requirements cr ON cr.job_id = jobs.id`
-      : JOB_SELECT_WITH_CATEGORY;
-
     const whereClause = conditions.join(' AND ');
     const [rows] = await pool.query(
-      `${baseSelect} WHERE ${whereClause} ORDER BY jobs.created_at DESC LIMIT 100`,
+      `${JOB_SELECT_WITH_CATEGORY} WHERE ${whereClause} ORDER BY jobs.created_at DESC LIMIT 100`,
       values
     );
     res.json(rows);
