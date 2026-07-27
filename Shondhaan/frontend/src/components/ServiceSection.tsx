@@ -43,7 +43,7 @@ interface DescriptionTooltipProps {
 /** Tooltip that shows the service description on hover. */
 const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps) => {
   const tooltipRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState<{ top: number; left: number; showBelow: boolean }>({ top: 0, left: 0, showBelow: false });
+  const [position, setPosition] = useState<{ top: number; left: number; arrowLeft: number }>({ top: 0, left: 0, arrowLeft: 0 });
 
   useEffect(() => {
     if (!tooltipRef.current) return;
@@ -52,54 +52,51 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
     const tooltipHeight = tooltipRect.height;
 
     const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
-    const cardTop = anchorRect.top + window.scrollY;
-    const cardBottom = anchorRect.bottom + window.scrollY;
-
-    let showBelow = false;
-    let top = cardTop - tooltipHeight - 10;
-
-    // If tooltip would go above viewport, show it below the card instead
-    if (top < window.scrollY + 8) {
-      top = cardBottom + 10;
-      showBelow = true;
-    }
-
+    
+    // Start the tooltip at the vertical middle of the card 
+    // so it covers the bottom half and hangs outside
+    let top = anchorRect.top + window.scrollY + anchorRect.height / 2;
     let left = cardCenterX - tooltipWidth / 2;
 
     // Clamp horizontally within viewport
-    const margin = 8;
+    const margin = 12;
     if (left < window.scrollX + margin) left = window.scrollX + margin;
     if (left + tooltipWidth > window.scrollX + window.innerWidth - margin) {
       left = window.scrollX + window.innerWidth - tooltipWidth - margin;
     }
 
-    setPosition({ top, left, showBelow });
+    // If the tooltip goes off the bottom of the viewport, push it up just enough to fit
+    if (top + tooltipHeight > window.scrollY + window.innerHeight - margin) {
+      top = window.scrollY + window.innerHeight - tooltipHeight - margin;
+    }
+
+    // Calculate arrow position relative to the tooltip to point at the card center
+    const arrowWidth = 8;
+    let arrowLeft = cardCenterX - left - arrowWidth / 2;
+    
+    // Clamp arrow so it doesn't escape the tooltip bounds
+    if (arrowLeft < 8) arrowLeft = 8;
+    if (arrowLeft > tooltipWidth - arrowWidth - 8) arrowLeft = tooltipWidth - arrowWidth - 8;
+
+    setPosition({ top, left, arrowLeft });
   }, [anchorRect]);
 
   return createPortal(
     <motion.div
       ref={tooltipRef}
-      initial={{ opacity: 0, scale: 0.95, y: position.showBelow ? -4 : 4 }}
+      initial={{ opacity: 0, scale: 0.95, y: -8 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.95, y: position.showBelow ? -4 : 4 }}
+      exit={{ opacity: 0, scale: 0.95, y: -8 }}
       transition={{ duration: 0.15 }}
-      className="pointer-events-none fixed z-[9998] w-[260px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-popover px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
-      style={{ top: position.top, left: position.left, position: "absolute" }}
+      className="pointer-events-none absolute z-[9998] w-[260px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-blue-300 px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
+      style={{ top: position.top, left: position.left }}
       role="tooltip"
     >
       {description}
-      {/* Arrow */}
+      {/* Arrow pointing up */}
       <span
-        className="absolute left-1/2 h-2 w-2 -translate-x-1/2 rotate-45"
-        style={{
-          top: position.showBelow ? "-4px" : "auto",
-          bottom: position.showBelow ? "auto" : "-4px",
-          backgroundColor: "var(--popover)",
-          borderTop: position.showBelow ? "1px solid var(--border)" : "none",
-          borderLeft: position.showBelow ? "1px solid var(--border)" : "none",
-          borderBottom: position.showBelow ? "none" : "1px solid var(--border)",
-          borderRight: position.showBelow ? "none" : "1px solid var(--border)",
-        }}
+        className="absolute -top-1 h-2 w-2 rotate-45 border-t border-l border-border bg-blue-300"
+        style={{ left: position.arrowLeft }}
       />
     </motion.div>,
     document.body
