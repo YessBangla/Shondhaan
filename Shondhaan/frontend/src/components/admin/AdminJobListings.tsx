@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import type { Job } from "@/hooks/useJobData";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
+const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL;
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
