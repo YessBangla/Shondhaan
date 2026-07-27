@@ -3,6 +3,9 @@ const express = require('express');
 const mysql = require('mysql2');
 const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
 // MySQL connection pool (inline — no separate db.js file)
@@ -161,6 +164,92 @@ function requireVerifiedUser(req, res, next) {
       res.status(500).json({ message: 'Could not verify login' });
     });
 }
+
+// ─────────────────────────────────────────────────────────────
+// Logo upload (multer, local disk storage)
+// ─────────────────────────────────────────────────────────────
+
+const UPLOAD_DIR = path.join(__dirname, '..', 'uploads', 'employer-logos');
+fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+
+const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp', 'image/gif']);
+const MAX_LOGO_BYTES = 2 * 1024 * 1024; // 2MB, matches the frontend check
+
+const logoStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const userId = req.shondhaanUser?.id || 'anon';
+    const ext = (path.extname(file.originalname) || '').toLowerCase() || '.jpg';
+    const unique = crypto.randomBytes(8).toString('hex');
+    cb(null, `logo_${userId}_${Date.now()}_${unique}${ext}`);
+  },
+});
+
+const logoUpload = multer({
+  storage: logoStorage,
+  limits: { fileSize: MAX_LOGO_BYTES },
+  fileFilter: (req, file, cb) => {
+    if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
+      return cb(new Error('Only jpg, png, webp, or gif images are allowed'));
+    }
+    cb(null, true);
+  },
+});
+
+// Uses your existing BACKEND_URL env var (already set in .env for
+// production: https://backend-yjob.shondhaan.com). Falls back to
+// localhost for local dev when BACKEND_URL isn't set.
+const PUBLIC_BASE_URL = process.env.BACKEND_URL || `http://localhost:${process.env.PORT || 5050}`;
+
+router.post('/logo', requireVerifiedUser, (req, res) => {
+  logoUpload.single('logo')(req, res, async (err) => {
+    if (err) {
+      const message =
+        err.code === 'LIMIT_FILE_SIZE'
+          ? 'ছবির সাইজ ২MB এর কম হতে হবে'
+          : err.message || 'Upload failed';
+      return res.status(400).json({ message });
+    }
+    if (!req.file) {
+      return res.status(400).json({ message: 'No file uploaded (expected field name "logo")' });
+    }
+
+    const publicUrl = `${PUBLIC_BASE_URL}/uploads/employer-logos/${req.file.filename}`;
+
+    try {
+      const userId = req.shondhaanUser.id;
+      const [existing] = await pool.query(
+        'SELECT id, company_logo_url FROM employer_profiles WHERE user_id = ? LIMIT 1',
+        [userId]
+      );
+
+      if (existing.length > 0) {
+        await pool.query(
+          'UPDATE employer_profiles SET company_logo_url = ? WHERE user_id = ?',
+          [publicUrl, userId]
+        );
+
+        // Best-effort cleanup of the old logo file if it lived on this server
+        const oldUrl = existing[0].company_logo_url;
+        if (oldUrl && oldUrl.startsWith(`${PUBLIC_BASE_URL}/uploads/employer-logos/`)) {
+          const oldFilename = path.basename(oldUrl);
+          const oldPath = path.join(UPLOAD_DIR, oldFilename);
+          fs.unlink(oldPath, () => {}); // ignore errors
+        }
+      }
+      // If no profile row exists yet, we don't insert one here — the
+      // registration form's POST / call will persist company_logo_url
+      // as part of formData once the user finishes the rest of the form.
+
+      res.status(200).json({ url: publicUrl });
+    } catch (dbErr) {
+      console.error('Logo upload DB update error:', dbErr);
+      // The file is already saved to disk; still return the URL so the
+      // frontend form can carry it forward even if the DB update failed.
+      res.status(200).json({ url: publicUrl, warning: 'File saved but profile update failed' });
+    }
+  });
+});
 
 router.get('/me', requireVerifiedUser, async (req, res) => {
   try {

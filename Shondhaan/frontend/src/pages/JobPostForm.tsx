@@ -20,7 +20,166 @@ const JOB_CATEGORIES_ENDPOINT =
   import.meta.env.VITE_JOB_CATEGORIES_URL || "https://backend-yjob.shondhaan.com/api/job-categories";
 
 const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL || "https://backend-yjob.shondhaan.com";
+export const EDUCATION_SUBJECTS = {
+  ssc: [
+    "Science",
+    "Business Studies (Commerce)",
+    "Humanities (Arts)",
+    "Vocational",
+    "Madrasah (Dakhil)",
+    "Agriculture",
+    "Home Economics",
+    "Any Group",
+    "Others"
+  ],
 
+  hsc: [
+    "Science",
+    "Business Studies (Commerce)",
+    "Humanities (Arts)",
+    "Vocational",
+    "Madrasah (Alim)",
+    "Agriculture",
+    "Home Economics",
+    "Any Group",
+    "Others"
+  ],
+
+  diploma: [
+    "Diploma in Computer Technology",
+    "Diploma in Civil Technology",
+    "Diploma in Electrical Technology",
+    "Diploma in Electronics Technology",
+    "Diploma in Mechanical Technology",
+    "Diploma in Power Technology",
+    "Diploma in Automobile Technology",
+    "Diploma in Architecture Technology",
+    "Diploma in Construction Technology",
+    "Diploma in Textile Technology",
+    "Diploma in Garments Technology",
+    "Diploma in Refrigeration & Air Conditioning",
+    "Diploma in Marine Technology",
+    "Diploma in Mining Technology",
+    "Diploma in Food Technology",
+    "Diploma in Chemical Technology",
+    "Diploma in Printing Technology",
+    "Diploma in Agriculture Technology",
+    "Diploma in Nursing",
+    "Diploma in Medical Technology",
+    "Diploma in Pharmacy",
+    "Any Subject",
+    "Others"
+  ],
+
+  bachelor: [
+    "Bachelor of Accounting",
+    "Bachelor of Finance",
+    "Bachelor of Management",
+    "Bachelor of Marketing",
+    "Bachelor of Human Resource Management",
+    "Bachelor of Economics",
+    "Bachelor of Business Administration (BBA)",
+
+    "Bachelor of Computer Science & Engineering (CSE)",
+    "Bachelor of Software Engineering",
+    "Bachelor of Information Technology",
+    "Bachelor of Information Systems",
+
+    "Bachelor of Electrical & Electronic Engineering (EEE)",
+    "Bachelor of Civil Engineering",
+    "Bachelor of Mechanical Engineering",
+    "Bachelor of Architecture",
+    "Bachelor of Chemical Engineering",
+    "Bachelor of Textile Engineering",
+    "Bachelor of Industrial & Production Engineering",
+
+    "Bachelor of Law (LLB)",
+    "Bachelor of English",
+    "Bachelor of Bangla",
+
+    "Bachelor of International Relations",
+    "Bachelor of Public Administration",
+    "Bachelor of Political Science",
+    "Bachelor of Sociology",
+    "Bachelor of Social Work",
+    "Bachelor of Psychology",
+
+    "Bachelor of Mathematics",
+    "Bachelor of Statistics",
+    "Bachelor of Physics",
+    "Bachelor of Chemistry",
+    "Bachelor of Biochemistry",
+
+    "Bachelor of Pharmacy (B.Pharm)",
+    "Bachelor of Nursing",
+    "Bachelor of Microbiology",
+    "Bachelor of Biotechnology",
+    "Bachelor of Agriculture",
+
+    "Any Subject",
+    "Others"
+  ],
+
+  masters: [
+    "Master of Accounting",
+    "Master of Finance",
+    "Master of Management",
+    "Master of Marketing",
+    "Master of Human Resource Management",
+    "Master of Economics",
+
+    "Master of Computer Science",
+    "Master of Software Engineering",
+    "Master of Information Technology",
+
+    "Master of Electrical & Electronic Engineering",
+    "Master of Civil Engineering",
+    "Master of Mechanical Engineering",
+    "Master of Architecture",
+
+    "Master of Law (LLM)",
+    "Master of English",
+    "Master of Bangla",
+
+    "Master of International Relations",
+    "Master of Public Administration",
+    "Master of Political Science",
+
+    "Master of Mathematics",
+    "Master of Statistics",
+    "Master of Physics",
+    "Master of Chemistry",
+
+    "Master of Pharmacy (M.Pharm)",
+    "Master of Nursing",
+    "Master of Agriculture",
+
+    "Any Subject",
+    "Others"
+  ],
+
+  mba: [
+    "MBA in Finance",
+    "MBA in Accounting",
+    "MBA in Marketing",
+    "MBA in Human Resource Management (HRM)",
+    "MBA in Management",
+    "MBA in Supply Chain Management",
+    "MBA in Operations Management",
+    "MBA in International Business",
+    "MBA in Banking",
+    "MBA in Insurance",
+    "MBA in Management Information Systems (MIS)",
+    "MBA in Business Analytics",
+    "MBA in Entrepreneurship",
+    "MBA in Project Management",
+    "MBA in Hospital Management",
+    "MBA in Hotel & Tourism Management",
+
+    "Any Major",
+    "Others"
+  ]
+};
 function getAuthHeaders() {
   const auth = getMySqlAuth();
   if (!auth?.token) return {};
@@ -28,10 +187,194 @@ function getAuthHeaders() {
 }
 const DESCRIPTION_LIMIT = 5000;
 
+// Curated list of common Bangladeshi job market titles for the Job Title
+// autocomplete below. Purely client-side (no backend endpoint yet) — each
+// entry has an English and Bangla label so the suggestion shown matches
+// whatever language the form is currently in.
+const JOB_TITLE_SUGGESTIONS: { en: string; bn: string }[] = [
+  { en: "Software Engineer", bn: "সফটওয়্যার ইঞ্জিনিয়ার" },
+  { en: "Senior Software Engineer", bn: "সিনিয়র সফটওয়্যার ইঞ্জিনিয়ার" },
+  { en: "Frontend Developer", bn: "ফ্রন্টএন্ড ডেভেলপার" },
+  { en: "Backend Developer", bn: "ব্যাকএন্ড ডেভেলপার" },
+  { en: "Full Stack Developer", bn: "ফুল স্ট্যাক ডেভেলপার" },
+  { en: "Web Developer", bn: "ওয়েব ডেভেলপার" },
+  { en: "Mobile App Developer", bn: "মোবাইল অ্যাপ ডেভেলপার" },
+  { en: "QA Engineer", bn: "কিউএ ইঞ্জিনিয়ার" },
+  { en: "DevOps Engineer", bn: "ডেভঅপস ইঞ্জিনিয়ার" },
+  { en: "System Administrator", bn: "সিস্টেম অ্যাডমিনিস্ট্রেটর" },
+  { en: "Network Engineer", bn: "নেটওয়ার্ক ইঞ্জিনিয়ার" },
+  { en: "IT Officer", bn: "আইটি অফিসার" },
+  { en: "IT Manager", bn: "আইটি ম্যানেজার" },
+  { en: "Data Analyst", bn: "ডাটা অ্যানালিস্ট" },
+  { en: "Data Scientist", bn: "ডাটা সায়েন্টিস্ট" },
+  { en: "Database Administrator", bn: "ডাটাবেজ অ্যাডমিনিস্ট্রেটর" },
+  { en: "UI/UX Designer", bn: "ইউআই/ইউএক্স ডিজাইনার" },
+  { en: "Graphic Designer", bn: "গ্রাফিক ডিজাইনার" },
+  { en: "Product Manager", bn: "প্রোডাক্ট ম্যানেজার" },
+  { en: "Project Manager", bn: "প্রজেক্ট ম্যানেজার" },
+  { en: "Business Analyst", bn: "বিজনেস অ্যানালিস্ট" },
+  { en: "Digital Marketing Executive", bn: "ডিজিটাল মার্কেটিং এক্সিকিউটিভ" },
+  { en: "SEO Executive", bn: "এসইও এক্সিকিউটিভ" },
+  { en: "Content Writer", bn: "কন্টেন্ট রাইটার" },
+  { en: "Social Media Executive", bn: "সোশ্যাল মিডিয়া এক্সিকিউটিভ" },
+  { en: "Marketing Executive", bn: "মার্কেটিং এক্সিকিউটিভ" },
+  { en: "Marketing Manager", bn: "মার্কেটিং ম্যানেজার" },
+  { en: "Brand Manager", bn: "ব্র্যান্ড ম্যানেজার" },
+  { en: "Sales Executive", bn: "সেলস এক্সিকিউটিভ" },
+  { en: "Sales Officer", bn: "সেলস অফিসার" },
+  { en: "Sales Manager", bn: "সেলস ম্যানেজার" },
+  { en: "Business Development Executive", bn: "বিজনেস ডেভেলপমেন্ট এক্সিকিউটিভ" },
+  { en: "Business Development Manager", bn: "বিজনেস ডেভেলপমেন্ট ম্যানেজার" },
+  { en: "Customer Service Representative", bn: "কাস্টমার সার্ভিস রিপ্রেজেন্টেটিভ" },
+  { en: "Call Center Agent", bn: "কল সেন্টার এজেন্ট" },
+  { en: "Accountant", bn: "হিসাবরক্ষক" },
+  { en: "Senior Accountant", bn: "সিনিয়র হিসাবরক্ষক" },
+  { en: "Accounts Officer", bn: "অ্যাকাউন্টস অফিসার" },
+  { en: "Finance Manager", bn: "ফিন্যান্স ম্যানেজার" },
+  { en: "Finance Officer", bn: "ফিন্যান্স অফিসার" },
+  { en: "Audit Officer", bn: "অডিট অফিসার" },
+  { en: "Tax Consultant", bn: "ট্যাক্স কনসালট্যান্ট" },
+  { en: "HR Executive", bn: "এইচআর এক্সিকিউটিভ" },
+  { en: "HR Officer", bn: "এইচআর অফিসার" },
+  { en: "HR Manager", bn: "এইচআর ম্যানেজার" },
+  { en: "Recruitment Specialist", bn: "রিক্রুটমেন্ট স্পেশালিস্ট" },
+  { en: "Admin Officer", bn: "অ্যাডমিন অফিসার" },
+  { en: "Office Executive", bn: "অফিস এক্সিকিউটিভ" },
+  { en: "Office Assistant", bn: "অফিস সহকারী" },
+  { en: "Receptionist", bn: "রিসেপশনিস্ট" },
+  { en: "Executive Assistant", bn: "এক্সিকিউটিভ অ্যাসিস্ট্যান্ট" },
+  { en: "Personal Assistant", bn: "পার্সোনাল অ্যাসিস্ট্যান্ট" },
+  { en: "Store Manager", bn: "স্টোর ম্যানেজার" },
+  { en: "Store Keeper", bn: "স্টোর কিপার" },
+  { en: "Warehouse Officer", bn: "ওয়্যারহাউজ অফিসার" },
+  { en: "Logistics Officer", bn: "লজিস্টিকস অফিসার" },
+  { en: "Supply Chain Officer", bn: "সাপ্লাই চেইন অফিসার" },
+  { en: "Procurement Officer", bn: "প্রকিউরমেন্ট অফিসার" },
+  { en: "Production Manager", bn: "প্রোডাকশন ম্যানেজার" },
+  { en: "Production Officer", bn: "প্রোডাকশন অফিসার" },
+  { en: "Quality Control Officer", bn: "কোয়ালিটি কন্ট্রোল অফিসার" },
+  { en: "Merchandiser", bn: "মার্চেন্ডাইজার" },
+  { en: "Garments Merchandiser", bn: "গার্মেন্টস মার্চেন্ডাইজার" },
+  { en: "Industrial Engineer", bn: "ইন্ডাস্ট্রিয়াল ইঞ্জিনিয়ার" },
+  { en: "Civil Engineer", bn: "সিভিল ইঞ্জিনিয়ার" },
+  { en: "Electrical Engineer", bn: "ইলেকট্রিক্যাল ইঞ্জিনিয়ার" },
+  { en: "Mechanical Engineer", bn: "মেকানিক্যাল ইঞ্জিনিয়ার" },
+  { en: "Site Engineer", bn: "সাইট ইঞ্জিনিয়ার" },
+  { en: "Architect", bn: "স্থপতি" },
+  { en: "Teacher", bn: "শিক্ষক" },
+  { en: "Lecturer", bn: "প্রভাষক" },
+  { en: "Trainer", bn: "প্রশিক্ষক" },
+  { en: "Doctor", bn: "ডাক্তার" },
+  { en: "Nurse", bn: "নার্স" },
+  { en: "Pharmacist", bn: "ফার্মাসিস্ট" },
+  { en: "Medical Officer", bn: "মেডিকেল অফিসার" },
+  { en: "Lab Technician", bn: "ল্যাব টেকনিশিয়ান" },
+  { en: "Driver", bn: "ড্রাইভার" },
+  { en: "Security Guard", bn: "নিরাপত্তা প্রহরী" },
+  { en: "Cleaner", bn: "পরিচ্ছন্নতাকর্মী" },
+  { en: "Cook / Chef", bn: "বাবুর্চি / শেফ" },
+  { en: "Waiter", bn: "ওয়েটার" },
+  { en: "Delivery Man", bn: "ডেলিভারি ম্যান" },
+  { en: "Field Officer", bn: "ফিল্ড অফিসার" },
+  { en: "Program Officer", bn: "প্রোগ্রাম অফিসার" },
+  { en: "Project Coordinator", bn: "প্রজেক্ট কোঅর্ডিনেটর" },
+  { en: "Monitoring & Evaluation Officer", bn: "মনিটরিং অ্যান্ড ইভালুয়েশন অফিসার" },
+  { en: "Branch Manager", bn: "শাখা ব্যবস্থাপক" },
+  { en: "Relationship Manager", bn: "রিলেশনশিপ ম্যানেজার" },
+  { en: "Credit Officer", bn: "ক্রেডিট অফিসার" },
+  { en: "Loan Officer", bn: "লোন অফিসার" },
+  { en: "Cash Officer", bn: "ক্যাশ অফিসার" },
+  { en: "Legal Officer", bn: "লিগ্যাল অফিসার" },
+  { en: "Company Secretary", bn: "কোম্পানি সেক্রেটারি" },
+  { en: "General Manager", bn: "জেনারেল ম্যানেজার" },
+  { en: "Assistant Manager", bn: "সহকারী ব্যবস্থাপক" },
+  { en: "Deputy Manager", bn: "উপ-ব্যবস্থাপক" },
+  { en: "Chief Executive Officer (CEO)", bn: "প্রধান নির্বাহী কর্মকর্তা (সিইও)" },
+  { en: "Chief Financial Officer (CFO)", bn: "প্রধান আর্থিক কর্মকর্তা (সিএফও)" },
+  { en: "Chief Technology Officer (CTO)", bn: "প্রধান প্রযুক্তি কর্মকর্তা (সিটিও)" },
+  { en: "Intern", bn: "ইন্টার্ন" },
+  { en: "Trainee", bn: "ট্রেইনি" },
+];
+
 function stripHtmlToText(html: string) {
   const div = document.createElement("div");
   div.innerHTML = html;
   return div.textContent || "";
+}
+
+// Job Title input with a lightweight, client-side autocomplete dropdown.
+// Filters JOB_TITLE_SUGGESTIONS against whatever's typed (matching either
+// language, so a Bangla-UI user typing in English still gets hits), shows
+// up to 6 results, and fills the field on click. Closes on blur (with a
+// short delay so the click on a suggestion registers before the dropdown
+// unmounts) and on Escape.
+function JobTitleAutocomplete({
+  value,
+  onChange,
+  placeholder,
+  bn,
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  placeholder: string;
+  bn: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+
+  const query = value.trim().toLowerCase();
+  const suggestions = query
+    ? JOB_TITLE_SUGGESTIONS.filter(
+        (s) => s.en.toLowerCase().includes(query) || s.bn.includes(value.trim())
+      ).slice(0, 6)
+    : [];
+
+  const selectSuggestion = (s: { en: string; bn: string }) => {
+    onChange(bn ? s.bn : s.en);
+    setOpen(false);
+  };
+
+  return (
+    <div className="relative">
+      <Input
+        className="h-9 text-sm"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => value.trim() && setOpen(true)}
+        onBlur={() => {
+          // Delay so a click on a suggestion fires before we close the list
+          setTimeout(() => setOpen(false), 150);
+        }}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setOpen(false);
+        }}
+        autoComplete="off"
+      />
+      {open && suggestions.length > 0 && (
+        <div className="absolute z-20 mt-1 w-full rounded-lg border bg-popover shadow-lg overflow-hidden">
+          {suggestions.map((s) => (
+            <button
+              key={s.en}
+              type="button"
+              // onMouseDown (not onClick) fires before the input's onBlur,
+              // so the value is set reliably even though blur closes the list
+              onMouseDown={(e) => {
+                e.preventDefault();
+                selectSuggestion(s);
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2"
+            >
+              <Briefcase className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="truncate">{bn ? s.bn : s.en}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 // Uncontrolled-DOM rich text editor. The contentEditable div's innerHTML is
@@ -246,6 +589,22 @@ const JobPostForm = () => {
   const [preferVideoResume, setPreferVideoResume] = useState(false);
   const [additionalRequirements, setAdditionalRequirements] = useState("");
 
+  // Education subject/major — depends on educationRequired (the degree
+  // level selected above). Lives here (not inside RichTextArea) since it's
+  // rendered in this component's JSX.
+  const [educationSubject, setEducationSubject] = useState("");
+  const [otherSubject, setOtherSubject] = useState("");
+  const subjectOptions =
+    EDUCATION_SUBJECTS[educationRequired as keyof typeof EDUCATION_SUBJECTS];
+
+  // Reset subject choice whenever the degree level changes, since subject
+  // lists differ per level (e.g. switching bachelor -> ssc shouldn't leave
+  // a bachelor-only subject selected).
+  useEffect(() => {
+    setEducationSubject("");
+    setOtherSubject("");
+  }, [educationRequired]);
+
   // Matching & Restrictions (step 3)
   const [industryExperience, setIndustryExperience] = useState("");
   const [skills, setSkills] = useState("");
@@ -346,6 +705,9 @@ const JobPostForm = () => {
       return;
     }
 
+    const resolvedSubject =
+      educationSubject === "Others" ? (otherSubject || null) : (educationSubject || null);
+
     await postJob.mutateAsync({
       title,
       company_name: companyName,
@@ -357,6 +719,7 @@ const JobPostForm = () => {
       category,
       company_type: companyType,
       education_required: educationRequired !== "any" ? educationRequired : null,
+      education_subject: resolvedSubject,
       gender_preference: genderRestrict ? genderPreference : "any",
       gender_restrict: genderRestrict,
       age_min: ageRestrict && ageMin ? parseInt(ageMin) : null,
@@ -483,7 +846,12 @@ const JobPostForm = () => {
                 <h3 className="font-semibold text-sm text-blue-700">{bn ? "মৌলিক তথ্য" : "Basic Information"}</h3>
 
                 <div className="grid grid-cols-3 gap-2 items-start">
-                  <Input className="h-9 text-sm" placeholder={bn ? "পদের নাম / পদবি *" : "Job Title / Position *"} value={title} onChange={(e) => setTitle(e.target.value)} />
+                  <JobTitleAutocomplete
+                    value={title}
+                    onChange={setTitle}
+                    placeholder={bn ? "পদের নাম / পদবি *" : "Job Title / Position *"}
+                    bn={bn}
+                  />
 
                  
                   {profileLoading ? (
@@ -668,6 +1036,35 @@ const JobPostForm = () => {
                     {EDUCATION_LEVELS.map((e) => <option key={e.value} value={e.value}>{bn ? e.labelBn : e.labelEn}</option>)}
                   </select>
                 </div>
+
+                {subjectOptions && (
+                  <div>
+                    <label className="text-[11px] text-muted-foreground mb-1 block">
+                      {bn ? "বিষয় / গ্রুপ / মেজর" : "Subject / Group / Major"}
+                    </label>
+                    <select
+                      value={educationSubject}
+                      onChange={(e) => setEducationSubject(e.target.value)}
+                      className="w-full rounded-lg border bg-background px-2.5 py-1.5 text-sm h-9"
+                    >
+                      <option value="">{bn ? "নির্বাচন করুন" : "Select"}</option>
+                      {subjectOptions.map((item) => (
+                        <option key={item} value={item}>
+                          {item}
+                        </option>
+                      ))}
+                    </select>
+
+                    {educationSubject === "Others" && (
+                      <Input
+                        className="h-9 text-sm mt-2"
+                        placeholder={bn ? "বিষয়ের নাম লিখুন" : "Enter subject name"}
+                        value={otherSubject}
+                        onChange={(e) => setOtherSubject(e.target.value)}
+                      />
+                    )}
+                  </div>
+                )}
 
                 {showInstitutionInput || preferredInstitution ? (
                   <div>

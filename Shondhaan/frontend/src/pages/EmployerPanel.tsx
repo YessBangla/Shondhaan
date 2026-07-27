@@ -116,9 +116,10 @@ const EmployerPanel = () => {
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState<EmployerProfile | null>(null);
   const [showSetup, setShowSetup] = useState(false);
+  const [logoUploading, setLogoUploading] = useState(false);
 
   const [formData, setFormData] = useState({
-    company_name: "", company_name_bn: "", company_type: "private",
+    company_name: "", company_name_bn: "", company_logo_url: "", company_type: "private",
     industry_type: "", establishment_year: new Date().getFullYear(),
     employee_count: "1-25", website_url: "", description: "",
     division: "", district: "", thana: "", address: "",
@@ -179,6 +180,55 @@ const EmployerPanel = () => {
     } catch (err) {
       console.error(err);
       toast.error("সেভ করতে সমস্যা হয়েছে");
+    }
+  };
+
+  // Optional: direct file upload for the logo. Requires a backend endpoint
+  // (multipart/form-data) at POST /api/employer-profile/logo that returns
+  // { url: string }. If that endpoint doesn't exist yet, this simply shows
+  // an error toast and the user can still paste a hosted image URL instead.
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("শুধুমাত্র ইমেজ ফাইল আপলোড করুন");
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error("ছবির সাইজ ২MB এর কম হতে হবে");
+      return;
+    }
+
+    setLogoUploading(true);
+    try {
+      const auth = getMySqlAuth();
+      const fd = new FormData();
+      fd.append("logo", file);
+
+      const res = await fetch(`${YESSJOB_API_BASE}/api/employer-profile/logo`, {
+        method: "POST",
+        credentials: "include",
+        headers: auth?.token ? { Authorization: `Bearer ${auth.token}` } : {},
+        body: fd,
+      });
+
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || `Upload failed (HTTP ${res.status})`);
+      }
+
+      const data = await res.json();
+      if (!data?.url) throw new Error("Upload response missing url");
+
+      setFormData(p => ({ ...p, company_logo_url: data.url }));
+      toast.success("লোগো আপলোড হয়েছে");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "লোগো আপলোড করতে সমস্যা হয়েছে, তার বদলে ইমেজ লিংক পেস্ট করুন");
+    } finally {
+      setLogoUploading(false);
+      e.target.value = "";
     }
   };
 
@@ -515,6 +565,57 @@ const EmployerPanel = () => {
               <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
                 <Users className="h-4 w-4" /> Tell Us About Your Company
               </h2>
+
+              {/* Company Logo */}
+              <div className="mb-4">
+                <label className="text-xs font-medium mb-1 block">Company Logo</label>
+                <div className="flex items-center gap-3">
+                  <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                    {formData.company_logo_url ? (
+                      <img
+                        src={formData.company_logo_url}
+                        alt="Logo preview"
+                        className="h-full w-full object-cover"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                      />
+                    ) : (
+                      <Building2 className="h-6 w-6 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <Input
+                      value={formData.company_logo_url}
+                      onChange={e => setFormData(p => ({ ...p, company_logo_url: e.target.value }))}
+                      placeholder="https://your-logo-url.com/logo.png"
+                    />
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-medium text-primary cursor-pointer hover:underline">
+                        {logoUploading ? "আপলোড হচ্ছে..." : "অথবা ফাইল থেকে আপলোড করুন"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          disabled={logoUploading}
+                          onChange={handleLogoFileChange}
+                        />
+                      </label>
+                      {formData.company_logo_url && (
+                        <button
+                          type="button"
+                          className="text-[11px] text-destructive hover:underline"
+                          onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
+                        >
+                          মুছুন
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground">
+                      লোগোর সরাসরি ইমেজ লিংক দিন (jpg/png/webp), অথবা ২MB পর্যন্ত ফাইল আপলোড করুন
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="text-xs font-medium mb-1 block">Company Name *</label>
@@ -716,8 +817,12 @@ const EmployerPanel = () => {
             <h2 className="text-lg font-bold flex items-center gap-2"><Building2 className="h-5 w-5 text-primary" /> কোম্পানি প্রোফাইল</h2>
             <div className="border rounded-xl p-5 bg-card space-y-3">
               <div className="flex items-center gap-4">
-                <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Building2 className="h-8 w-8 text-primary" />
+                <div className="h-16 w-16 rounded-xl bg-primary/10 flex items-center justify-center overflow-hidden">
+                  {profile.company_logo_url ? (
+                    <img src={profile.company_logo_url} alt={profile.company_name} className="h-full w-full object-cover" />
+                  ) : (
+                    <Building2 className="h-8 w-8 text-primary" />
+                  )}
                 </div>
                 <div>
                   <h3 className="text-lg font-bold">{profile.company_name}</h3>
@@ -740,6 +845,7 @@ const EmployerPanel = () => {
               <Button variant="outline" size="sm" onClick={() => {
                 setFormData({
                   company_name: profile.company_name, company_name_bn: profile.company_name_bn || "",
+                  company_logo_url: profile.company_logo_url || "",
                   company_type: profile.company_type, industry_type: profile.industry_type || "",
                   establishment_year: profile.establishment_year || new Date().getFullYear(),
                   employee_count: profile.employee_count, website_url: profile.website_url || "",
