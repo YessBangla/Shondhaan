@@ -33,7 +33,7 @@ const HowItWorks = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="py-10 md:py-16"
+      className="py-10 mx-auto max-w-7xl md:py-16"
     >
       <div className="text-center mb-8">
         <p className="text-sm font-medium text-primary uppercase tracking-wider mb-1">{t("howItWorks.label")}</p>

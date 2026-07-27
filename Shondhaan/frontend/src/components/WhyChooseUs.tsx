@@ -35,17 +35,17 @@ const WhyChooseUs = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.6 }}
-      className="py-12 md:py-20 relative overflow-hidden"
+      className="py-12 md:py-20 mx-auto max-w-7xl relative overflow-hidden"
     >
       {/* Decorative background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <motion.div
-          className="absolute -top-40 -right-40 w-80 h-80 bg-emerald-500/10 rounded-full blur-3xl"
+          className="absolute -top-40 -right-40 w-80 h-80 "
           animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
           transition={{ duration: 8, repeat: Infinity }}
         />
         <motion.div
-          className="absolute -bottom-40 -left-40 w-80 h-80 bg-blue-500/10 rounded-full blur-3xl"
+          className="absolute -bottom-40 -left-40 w-80 h-80"
           animate={{ y: [0, -30, 0], x: [0, -20, 0] }}
           transition={{ duration: 10, repeat: Infinity }}
         />
@@ -57,7 +57,7 @@ const WhyChooseUs = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 md:mb-16 px-4"
+          className="text-center mb-12 md:mb-16"
         >
           <motion.p
             initial={{ opacity: 0 }}
@@ -121,7 +121,7 @@ const WhyChooseUs = () => {
         </motion.div>
 
         {/* Safety Features - Premium Cards */}
-        <motion.div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5 px-4 md:px-12 lg:mx-20 mb-12 md:mb-16">
+        <motion.div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-5 px-5 mb-12 md:mb-16">
           {safetyFeatures.map((feature, i) => (
             <motion.div
               key={i}
