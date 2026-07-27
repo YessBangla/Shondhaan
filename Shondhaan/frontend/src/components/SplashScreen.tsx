@@ -23,7 +23,8 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.4 }}
-          className="fixed inset-0 z-[9999] flex flex-col items-center justify-between overflow-hidden bg-[radial-gradient(ellipse_at_top,hsl(152_65%_42%)_0%,hsl(152_70%_30%)_45%,hsl(152_75%_18%)_100%)] px-6 pb-10 pt-20 text-white"
+          // className="fixed inset-0 z-[9999] flex flex-col items-center justify-between overflow-hidden bg-[radial-gradient(ellipse_at_top,hsl(152_65%_42%)_0%,hsl(152_70%_30%)_45%,hsl(152_75%_18%)_100%)] px-6 pb-10 pt-20 text-white"
+          className="fixed inset-0 z-[9999] flex flex-col items-center justify-between overflow-hidden px-6 pb-10 pt-20 bg-white text-slate-900"
         >
           {/* Decorative blurred orbs — premium accent glow */}
           <div className="pointer-events-none absolute -left-24 -top-16 h-72 w-72 rounded-full bg-[hsl(160_75%_50%/0.22)] blur-3xl" />
@@ -31,32 +32,23 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
           <div className="pointer-events-none absolute bottom-0 left-1/2 h-64 w-[120%] -translate-x-1/2 rounded-full bg-[hsl(152_70%_45%/0.14)] blur-3xl" />
 
           {/* Logo + tagline */}
-          <motion.div
-            initial={{ y: -10, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.2, duration: 0.6 }}
-            className="relative z-10 flex flex-col items-center gap-2"
-          >
-            {settings.logo_url ? (
-              <div className="rounded-3xl bg-white p-4 shadow-2xl ring-4 ring-white/30">
-                <img
-                  src={settings.logo_url}
-                  alt="Yess"
-                  className="h-16 w-auto object-contain"
-                />
-              </div>
-            ) : (
-              <h1 className="font-heading text-6xl font-black tracking-tight drop-shadow-lg">
-                YESS
-              </h1>
-            )}
-            <p className="mt-3 text-sm font-medium tracking-wide text-white/90">
-              Your Easy Service Solution
-            </p>
-            <p className="mt-6 text-center text-base font-semibold leading-snug text-white/95">
-              আপনার প্রয়োজনীয়<br />সব সার্ভিস এখন<br />এক জায়গায়
-            </p>
-          </motion.div>
+          <div className="relative flex items-center justify-center p-4 my-auto">
+
+            {/* Outer Ring */}
+            <div className="absolute h-28 w-28 rounded-full border-[4px] border-transparent border-t-green-500 border-r-blue-500 animate-spin"></div>
+
+            {/* Inner Ring */}
+            <div className="absolute h-22 w-22 rounded-full border-[3px] border-transparent border-b-cyan-400 border-l-green-400 animate-[spin_2s_linear_reverse_infinite]"></div>
+
+            {/* Glow */}
+            <div className="absolute h-24 w-24 rounded-full bg-green-500/15 blur-xl"></div>
+
+            <img
+              src={settings.favicon_url}
+              alt="Logo"
+              className="relative z-10 h-16 w-auto object-contain"
+            />
+          </div>
 
           {/* Workers illustration */}
           <motion.img
@@ -65,7 +57,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
             initial={{ y: 40, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4, duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
-            className="relative z-10 mt-6 max-h-[42vh] w-auto object-contain drop-shadow-2xl"
+            className="hidden relative z-10 mt-6 max-h-[42vh] w-auto object-contain drop-shadow-2xl"
             loading="eager"
           />
 
@@ -75,7 +67,7 @@ const SplashScreen = ({ onFinish }: { onFinish: () => void }) => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.7, duration: 0.5 }}
             onClick={() => { setVisible(false); setTimeout(onFinish, 300); }}
-            className="relative z-10 flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-amber-400 px-8 py-3.5 text-base font-bold text-emerald-950 shadow-xl active:scale-95 transition-transform"
+            className="hidden relative z-10 flex w-full max-w-xs items-center justify-center gap-2 rounded-full bg-amber-400 px-8 py-3.5 text-base font-bold text-emerald-950 shadow-xl active:scale-95 transition-transform"
           >
             শুরু করুন
             <span className="flex h-7 w-7 items-center justify-center rounded-full bg-emerald-950/15">→</span>

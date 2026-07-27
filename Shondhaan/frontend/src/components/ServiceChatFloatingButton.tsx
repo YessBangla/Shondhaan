@@ -154,7 +154,7 @@ const ServiceChatFloatingButton = () => {
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-[80]">
+    <div className="fixed bottom-12 right-16 z-[80]">
       {open && (
         <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-primary-foreground">
@@ -232,7 +232,7 @@ const ServiceChatFloatingButton = () => {
 
       <button
         onClick={() => setOpen((value) => !value)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-green-500 text-primary-foreground shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
         title="Message support"
       >
         {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}

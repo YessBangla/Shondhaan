@@ -262,7 +262,7 @@ const hasSidebar =
   <div
   className={`hidden md:block fixed left-0 right-0 z-30
   ${hasSidebar ? "top-0" : "top-[68px]"}
-  bg-background/80 backdrop-blur-xl border-b border-border/40`}
+    bg-primary border-b border-border/40`}
 >
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center justify-center">
@@ -279,10 +279,10 @@ const hasSidebar =
                   className={`
                     relative flex items-center gap-1.5 px-3 lg:px-4 py-2.5 text-xs lg:text-[13px] font-medium whitespace-nowrap transition-all duration-200
                     ${active
-                      ? "text-primary"
+                      ? "text-white"
                       : openMenu === menu.key
-                        ? "text-primary"
-                        : "text-foreground/70 hover:text-foreground"
+                        ? "text-white"
+                        : "text-white hover:text-foreground"
                     }
                   `}
                 >
@@ -294,7 +294,7 @@ const hasSidebar =
                   {(active || openMenu === menu.key) && (
                     <motion.div
                       layoutId="megamenu-active"
-                      className="absolute bottom-0 left-2 right-2 h-[2px] bg-primary rounded-full"
+                      className="absolute bottom-0 left-2 right-2 h-[2px] bg-white rounded-full"
                       transition={{ type: "spring", stiffness: 500, damping: 30 }}
                     />
                   )}
@@ -345,7 +345,7 @@ const hasSidebar =
                             {child.icon && (
                               <span className={`
                                 flex h-7 w-7 items-center justify-center rounded-lg transition-colors
-                                ${isActive ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary"}
+                                ${isActive ? "bg-primary/15 text-primary" : "bg-muted/60 text-muted-foreground group-hover:bg-primary/10 group-hover:text-white"}
                               `}>
                                 <child.icon className="h-3.5 w-3.5" />
                               </span>

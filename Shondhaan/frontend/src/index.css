@@ -86,7 +86,8 @@
     --muted: 220 12% 16%;
     --muted-foreground: 215 12% 65%;
 
-    --accent: 152 55% 48%;
+    /* --accent: 152 55% 48%; */
+    --accent: 211, 75%, 54%;
     --accent-foreground: 210 20% 8%;
 
     --destructive: 0 70% 55%;
@@ -165,6 +166,19 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading;
   }
+}
+
+@keyframes spinReverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.animate-spin-reverse {
+  animation: spinReverse 2s linear infinite;
 }
 
 @layer utilities {

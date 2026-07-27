@@ -420,75 +420,82 @@ const Index = () => {
 
       <MobilePromoBanner />
 
-      <div className="app-container">
-        <ForYouSection />
+      {/* Service Section with Premium Gradient Background */}
+      <div className="relative">
+        {/* Gradient background overlay - subtle light blue to emerald */}
+        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" />
+        
+        {/* Content container with relative z-index */}
+        <div className="app-container relative z-10">
+          <ForYouSection />
 
-        {loading ? (
-          <>
-            <MobileServiceSkeleton />
-            <div className="mt-6 hidden md:block">
-              <ServiceCardSkeleton count={8} />
-            </div>
-          </>
-        ) : (
-          <>
-            {/* 1) Admin added homepage sections always show first */}
-            {selectedCategoryId === "all" &&
-              dynamicHomepageSections.map(({ section, services }) => {
+          {loading ? (
+            <>
+              <MobileServiceSkeleton />
+              <div className="mt-6 hidden md:block">
+                <ServiceCardSkeleton count={8} />
+              </div>
+            </>
+          ) : (
+            <>
+              {/* 1) Admin added homepage sections always show first */}
+              {selectedCategoryId === "all" &&
+                dynamicHomepageSections.map(({ section, services }) => {
+                  const heading = bn
+                    ? section.title_bn || "সার্ভিস"
+                    : section.title_en || section.title_bn || "Services";
+
+                  return (
+                    <ServiceSection
+                      key={`dynamic-${section.id}`}
+                      heading={heading}
+                      services={services}
+                      viewAllLink="/all-services"
+                    />
+                  );
+                })}
+
+              {/* 2) Category-wise services show below dynamic sections */}
+              {groupedServices.map(({ category, services }) => {
+                if (!services.length) return null;
+
                 const heading = bn
-                  ? section.title_bn || "সার্ভিস"
-                  : section.title_en || section.title_bn || "Services";
+                  ? category.name || category.title || "সার্ভিস"
+                  : category.name_en ||
+                    category.title_en ||
+                    category.name ||
+                    category.title ||
+                    "Services";
 
                 return (
                   <ServiceSection
-                    key={`dynamic-${section.id}`}
+                    key={`category-${category.id}`}
                     heading={heading}
                     services={services}
-                    viewAllLink="/all-services"
+                    viewAllLink={`/all-services?category=${category.id}`}
                   />
                 );
               })}
 
-            {/* 2) Category-wise services show below dynamic sections */}
-            {groupedServices.map(({ category, services }) => {
-              if (!services.length) return null;
-
-              const heading = bn
-                ? category.name || category.title || "সার্ভিস"
-                : category.name_en ||
-                  category.title_en ||
-                  category.name ||
-                  category.title ||
-                  "Services";
-
-              return (
+              {/* 3) Uncategorized services show at the bottom */}
+              {uncategorizedServices.length > 0 && (
                 <ServiceSection
-                  key={`category-${category.id}`}
-                  heading={heading}
-                  services={services}
-                  viewAllLink={`/all-services?category=${category.id}`}
+                  heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}
+                  services={uncategorizedServices}
+                  viewAllLink="/all-services"
                 />
-              );
-            })}
+              )}
 
-            {/* 3) Uncategorized services show at the bottom */}
-            {uncategorizedServices.length > 0 && (
-              <ServiceSection
-                heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}
-                services={uncategorizedServices}
-                viewAllLink="/all-services"
-              />
-            )}
-
-            {!hasAnyService && (
-              <div className="py-16 text-center">
-                <p className="text-muted-foreground">
-                  {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}
-                </p>
-              </div>
-            )}
-          </>
-        )}
+              {!hasAnyService && (
+                <div className="py-16 text-center">
+                  <p className="text-muted-foreground">
+                    {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       <WhyChooseUs />

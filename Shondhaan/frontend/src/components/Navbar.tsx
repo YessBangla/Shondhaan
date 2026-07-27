@@ -447,7 +447,7 @@ const Navbar = () => {
                 onClick={() => setRequestOpen(true)}
                 aria-label={L.request.long}
                 title={L.request.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-primary/15 bg-gradient-to-b from-primary/5 to-primary/10 px-0.5 py-1.5 sm:px-1 text-primary shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200 hover:from-primary/10 hover:to-primary/15 active:scale-[0.97]"
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-primary/15 bg-gradient-to-b from-primary/5 to-primary/10 px-0.5 py-1.5 sm:px-1 text-primary shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200  hover:bg-blue-700 active:scale-[0.97]"
               >
                 <HelpCircle className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
@@ -626,7 +626,7 @@ const Navbar = () => {
           <div className="flex flex-1 items-center justify-center gap-2">
             <button
               onClick={() => setRequestOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-primary/90 hover:shadow-md"
+              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
             >
               <HelpCircle className="h-3.5 w-3.5" />
               {bn ? "সেবা রিকোয়েস্ট" : "Request"}
@@ -781,7 +781,7 @@ const Navbar = () => {
                     </button>
                   </PopoverTrigger>
 
-                  <PopoverContent className="w-48 p-1.5 z-[9999]" align="end">
+                  <PopoverContent className="w-48 p-1.5 z-[9999] bg-secondary" align="end">
                     <div className="flex flex-col">
                       <button
                         onClick={() => navigate("/dashboard?tab=bookings")}
@@ -814,7 +814,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Route className="h-4 w-4 text-primary" />
-                        {bn ? "à¦¸à§‡à¦¬à¦¾ à¦°à¦¿à¦•à§‹à¦¯à¦¼à§‡à¦¸à§à¦Ÿ" : "Service Requests"}
+                        {bn ? "সার্ভিস রিকোয়েস্ট" : "Service Requests"}
                       </button>
 
                       <button
@@ -822,7 +822,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShoppingBag className="h-4 w-4 text-primary" />
-                        {bn ? "à¦®à¦¾à¦°à§à¦Ÿ à¦…à¦°à§à¦¡à¦¾à¦°" : "Mart Orders"}
+                        {bn ? "মার্ট অর্ডার্স" : "Mart Orders"}
                       </button>
 
                       <button
@@ -830,7 +830,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Heart className="h-4 w-4 text-primary" />
-                        {bn ? "à¦«à§‡à¦­à¦¾à¦°à¦¿à¦Ÿ" : "Favorites"}
+                        {bn ? "পছন্দের" : "Favorites"}
                       </button>
 
                       <button
@@ -838,7 +838,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Store className="h-4 w-4 text-primary" />
-                        {bn ? "à¦†à¦®à¦¾à¦° à¦¬à¦¿à¦œà§à¦žà¦¾à¦ªà¦¨" : "My Ads"}
+                        {bn ? "আমার এড" : "My Ads"}
                       </button>
 
                       <button
@@ -846,7 +846,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Headphones className="h-4 w-4 text-primary" />
-                        {bn ? "à¦®à§‡à¦¸à§‡à¦œ" : "Messages"}
+                        {bn ? "মেসেজ" : "Messages"}
                       </button>
 
                       <button
@@ -854,7 +854,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShoppingCart className="h-4 w-4 text-primary" />
-                        {bn ? "à¦ªà§‡à¦®à§‡à¦¨à§à¦Ÿ" : "Payments"}
+                        {bn ? "পেমেন্টস" : "Payments"}
                       </button>
 
                       <button
@@ -862,7 +862,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <ShieldCheck className="h-4 w-4 text-primary" />
-                        {bn ? "à¦°à¦¿à¦­à¦¿à¦‰" : "Reviews"}
+                        {bn ? "রিভিউ" : "Reviews"}
                       </button>
 
                       <button
@@ -870,15 +870,7 @@ const Navbar = () => {
                         className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                       >
                         <Bell className="h-4 w-4 text-primary" />
-                        {bn ? "à¦¨à§‹à¦Ÿà¦¿à¦«à¦¿à¦•à§‡à¦¶à¦¨" : "Notifications"}
-                      </button>
-
-                      <button
-                        onClick={handleSignOut}
-                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        {t("nav.logout")}
+                        {bn ? "নোটিফিকেশন" : "Notifications"}
                       </button>
 
                       <div className="my-1 border-t border-border" />
@@ -897,6 +889,14 @@ const Navbar = () => {
                       >
                         <User className="h-4 w-4 text-primary" />
                         {bn ? "ড্যাশবোর্ড" : "Dashboard"}
+                      </button>
+
+                      <button
+                          onClick={handleSignOut}
+                          className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-destructive transition-colors hover:bg-destructive/10"
+                        >
+                        <LogOut className="h-4 w-4" />
+                        {t("nav.logout")}
                       </button>
                     </div>
                   </PopoverContent>
