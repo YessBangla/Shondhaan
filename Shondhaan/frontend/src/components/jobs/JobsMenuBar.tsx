@@ -123,7 +123,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
   if (!isJobsPage) return null;
 
   return (
-    <div className={`hidden md:block bg-card border-b border-border z-40 ${flushWithHeader ? "fixed left-0 right-0 top-[71px] lg:top-[79px] -mt-px shadow-none" : "sticky top-[71px] lg:top-[79px] -mt-px shadow-sm"}`}>
+    <div className={`hidden md:block bg-card border-b border-border z-40 ${flushWithHeader ? "fixed left-0 right-0 top-[85px] lg:top-[69px] -mt-px shadow-none" : "sticky top-[71px] lg:top-[79px] -mt-px shadow-sm"}`}>
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8">
         <div className="flex items-center gap-0 md:gap-0.5 lg:gap-1">
           {menus.map((menu) => (
