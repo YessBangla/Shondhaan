@@ -8,13 +8,11 @@ const Footer = () => {
   const { language, t } = useLanguage();
   const { settings } = useSiteSettings();
   const bn = language === "bn";
-
   return (
     <footer className="hidden md:block bg-gradient-to-b from-slate-950 via-blue-950 to-slate-950 relative overflow-hidden">
       {/* Decorative gradient blobs */}
       <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-blue-500/10 to-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-tr from-emerald-500/10 to-blue-500/10 rounded-full blur-3xl pointer-events-none" />
-
       <div className="app-container relative z-10 py-16">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Section 1: Contact & Company Info */}
@@ -65,7 +63,6 @@ const Footer = () => {
               </a>
             </div>
           </div>
-
           {/* Section 2: Other Pages */}
           <div className="space-y-4">
             <div className="space-y-2">

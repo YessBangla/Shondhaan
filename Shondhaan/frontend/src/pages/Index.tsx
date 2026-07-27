@@ -164,6 +164,7 @@ const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
   return [];
 };
 
+
 const Index = () => {
   const { selectedCity } = useLocation();
   const { language } = useLanguage();
@@ -502,18 +503,17 @@ return (
       <Testimonials />
     </div>
 
-    {/* ✅ FOOTER (ALWAYS AT BOTTOM) */}
+    {/* FOOTER (ALWAYS AT BOTTOM) */}
     <Footer />
 
     {/* Floating UI (doesn’t affect layout) */}
     <ScrollButtons />
     <ServiceChatFloatingButton />
-
-    {/* Mobile spacer */}
-    <div
-      className="md:hidden"
+   
+    {/* <div
+      className="md:hidden lg:hidden"
       style={{ height: "calc(96px + env(safe-area-inset-bottom, 0px))" }}
-    />
+    /> */}
   </div>
 );
 };
