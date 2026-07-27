@@ -205,6 +205,7 @@ export const getDealListings = async (req, res) => {
 
     const params = [];
 
+    // ✅ STATUS FILTER
     if (status) {
       sql += ` AND l.status = ?`;
       params.push(status);
@@ -212,15 +213,18 @@ export const getDealListings = async (req, res) => {
       sql += ` AND l.status = 'active'`;
     }
 
+    // ✅ USER FILTER
     if (user_id) {
       sql += ` AND l.user_id = ?`;
       params.push(user_id);
     }
 
+    // ✅ FEATURED FILTER
     if (featured === "1" || featured === "true") {
       sql += ` AND l.is_featured = 1`;
     }
 
+    // ✅ CATEGORY FILTER
     if (categorySlug) {
       const [catRows] = await dealDb.query(
         `SELECT id FROM deal_categories WHERE slug = ? LIMIT 1`,
@@ -235,21 +239,17 @@ export const getDealListings = async (req, res) => {
           [parentId]
         );
 
-        const categoryIds = [parentId, ...childRows.map((row) => row.id)];
+        const categoryIds = [
+          parentId,
+          ...childRows.map((c) => c.id),
+        ];
 
         sql += ` AND l.category_id IN (${categoryIds.map(() => "?").join(",")})`;
         params.push(...categoryIds);
-      } else {
-        sql += ` AND 1 = 0`;
       }
     }
 
-    if (search) {
-      sql += ` AND (l.title LIKE ? OR l.title_en LIKE ? OR l.description LIKE ?)`;
-      const searchValue = `%${search}%`;
-      params.push(searchValue, searchValue, searchValue);
-    }
-
+    // ✅ LOCATION FILTERS
     if (division) {
       sql += ` AND l.location_division = ?`;
       params.push(division);
@@ -265,44 +265,80 @@ export const getDealListings = async (req, res) => {
       params.push(thana);
     }
 
+    // ✅ CONDITION FILTER
     if (condition) {
-      sql += ` AND l.product_condition = ?`;
+      sql += ` AND l.condition = ?`;
       params.push(condition);
     }
 
-    if (minPrice !== undefined && minPrice !== "") {
+    // ✅ PRICE FILTER
+    if (minPrice) {
       sql += ` AND l.price >= ?`;
       params.push(Number(minPrice));
     }
 
-    if (maxPrice !== undefined && maxPrice !== "") {
+    if (maxPrice) {
       sql += ` AND l.price <= ?`;
       params.push(Number(maxPrice));
     }
 
+if (search) {
+  sql += `
+    AND (
+      l.title LIKE ?
+      OR l.title_en LIKE ?
+      OR l.description LIKE ?
+      OR c.name LIKE ?
+      OR c.name_en LIKE ?
+      OR l.location_area LIKE ?
+      OR l.location_district LIKE ?
+      OR l.location_division LIKE ?
+    )
+  `;
+
+  const searchTerm = `%${search}%`;
+
+  params.push(
+    searchTerm,
+    searchTerm,
+    searchTerm,
+    searchTerm,
+    searchTerm,
+    searchTerm,
+    searchTerm,
+    searchTerm
+  );
+}
+
+    // ✅ SORTING
     if (sortBy === "price_asc") {
       sql += ` ORDER BY l.price ASC`;
     } else if (sortBy === "price_desc") {
       sql += ` ORDER BY l.price DESC`;
+    } else if (sortBy === "popular") {
+      sql += ` ORDER BY l.views_count DESC`;
     } else {
-      sql += ` ORDER BY l.is_featured DESC, l.created_at DESC`;
+      sql += ` ORDER BY l.created_at DESC`;
     }
 
-    sql += ` LIMIT 100`;
-
+    // ✅ EXECUTE QUERY
     const [rows] = await dealDb.query(sql, params);
 
-    res.json({
-      success: true,
-      data: rows.map(mapListingRow),
-    });
-  } catch (error) {
-    console.error("Get deal listings error:", error);
+    // ✅ FORMAT IMAGES (convert CSV → array)
+    const formatted = rows.map((item) => ({
+      ...item,
+      images: item.images ? item.images.split(",") : [],
+    }));
 
-    res.status(500).json({
+    return res.json({
+      success: true,
+      data: formatted,
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
       success: false,
-      message: "Failed to load deal listings",
-      error: error.message,
+      message: "Failed to fetch listings",
     });
   }
 };

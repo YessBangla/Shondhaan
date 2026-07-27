@@ -18,6 +18,7 @@ interface ServiceItem {
   rating?: number;
   price?: number;
   packageName?: string;
+  description?: string;
   cmsService?: CmsService;
 }
 
@@ -34,7 +35,75 @@ interface SharePopupProps {
   onClose: () => void;
 }
 
-/** Per-card wrapper so we can attach long-press handlers per item. */
+interface DescriptionTooltipProps {
+  description: string;
+  anchorRect: DOMRect;
+}
+
+/** Tooltip that shows the service description on hover. */
+const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps) => {
+  const tooltipRef = useRef<HTMLDivElement>(null);
+  const [position, setPosition] = useState<{ top: number; left: number; arrowLeft: number }>({ top: 0, left: 0, arrowLeft: 0 });
+
+  useEffect(() => {
+    if (!tooltipRef.current) return;
+    const tooltipRect = tooltipRef.current.getBoundingClientRect();
+    const tooltipWidth = tooltipRect.width;
+    const tooltipHeight = tooltipRect.height;
+
+    const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
+    
+    // Start the tooltip at the vertical middle of the card 
+    // so it covers the bottom half and hangs outside
+    let top = anchorRect.top + window.scrollY + anchorRect.height / 2;
+    let left = cardCenterX - tooltipWidth / 2;
+
+    // Clamp horizontally within viewport
+    const margin = 12;
+    if (left < window.scrollX + margin) left = window.scrollX + margin;
+    if (left + tooltipWidth > window.scrollX + window.innerWidth - margin) {
+      left = window.scrollX + window.innerWidth - tooltipWidth - margin;
+    }
+
+    // If the tooltip goes off the bottom of the viewport, push it up just enough to fit
+    if (top + tooltipHeight > window.scrollY + window.innerHeight - margin) {
+      top = window.scrollY + window.innerHeight - tooltipHeight - margin;
+    }
+
+    // Calculate arrow position relative to the tooltip to point at the card center
+    const arrowWidth = 8;
+    let arrowLeft = cardCenterX - left - arrowWidth / 2;
+    
+    // Clamp arrow so it doesn't escape the tooltip bounds
+    if (arrowLeft < 8) arrowLeft = 8;
+    if (arrowLeft > tooltipWidth - arrowWidth - 8) arrowLeft = tooltipWidth - arrowWidth - 8;
+
+    setPosition({ top, left, arrowLeft });
+  }, [anchorRect]);
+
+  return createPortal(
+    <motion.div
+      ref={tooltipRef}
+      initial={{ opacity: 0, scale: 0.95, y: -8 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95, y: -8 }}
+      transition={{ duration: 0.15 }}
+      className="pointer-events-none absolute z-[9998] w-[260px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-blue-300 px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
+      style={{ top: position.top, left: position.left }}
+      role="tooltip"
+    >
+      {description}
+      {/* Arrow pointing up */}
+      <span
+        className="absolute -top-1 h-2 w-2 rotate-45 border-t border-l border-border bg-blue-300"
+        style={{ left: position.arrowLeft }}
+      />
+    </motion.div>,
+    document.body
+  );
+};
+
+/** Per-card wrapper so we can attach long-press handlers and hover tooltip per item. */
 const ServiceCardWrapper = ({
   service,
   onOpen,
@@ -47,14 +116,52 @@ const ServiceCardWrapper = ({
   children: React.ReactNode;
 }) => {
   const longPress = useLongPress<HTMLDivElement>(onLongPress, 480);
+  const [hovered, setHovered] = useState(false);
+  const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
+  const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const showTooltip = (e: React.MouseEvent<HTMLDivElement> | React.FocusEvent<HTMLDivElement>) => {
+    if (!service.description) return;
+    if (hideTimer.current) {
+      clearTimeout(hideTimer.current);
+      hideTimer.current = null;
+    }
+    setHoverRect(e.currentTarget.getBoundingClientRect());
+    setHovered(true);
+  };
+
+  const hideTooltip = () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+    hideTimer.current = setTimeout(() => setHovered(false), 120);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (hideTimer.current) clearTimeout(hideTimer.current);
+    };
+  }, []);
+
   return (
-    <div
-      onClick={onOpen}
-      {...longPress}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl active:scale-[0.98] md:shrink-0 md:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
-    >
-      {children}
-    </div>
+    <>
+      <div
+        onMouseEnter={showTooltip}
+        onMouseLeave={hideTooltip}
+        onFocus={showTooltip}
+        onBlur={hideTooltip}
+        onClick={onOpen}
+        {...longPress}
+        tabIndex={0}
+        className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98] md:shrink-0 md:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
+      >
+        {children}
+      </div>
+
+      <AnimatePresence>
+        {hovered && hoverRect && service.description && (
+          <DescriptionTooltip description={service.description} anchorRect={hoverRect} />
+        )}
+      </AnimatePresence>
+    </>
   );
 };
 
@@ -255,10 +362,10 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               }}
               onLongPress={() => setQuickMenu(service)}
             >
-            <div className="overflow-hidden  bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm">
-                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform rounded-b-full  duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
+              <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm">
+                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform rounded-b-full duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
               </div>
-              <div className="p-3 bg-blue-300/40  md:p-4">
+              <div className="p-3 bg-blue-300/40 md:p-4">
                 <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
                   {service.title}
                 </h3>
@@ -348,7 +455,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               <div className="flex justify-center pt-2.5 pb-1">
                 <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
               </div>
-              <div className="flex  items-center  gap-3 px-4 pt-1 pb-3 border-b border-border">
+              <div className="flex items-center gap-3 px-4 pt-1 pb-3 border-b border-border">
                 <img src={quickMenu.image} alt={quickMenu.title} className="h-12 w-12 rounded-lg object-cover" />
                 <div className="min-w-0 flex-1">
                   <h4 className="truncate text-sm font-bold text-foreground">{quickMenu.title}</h4>

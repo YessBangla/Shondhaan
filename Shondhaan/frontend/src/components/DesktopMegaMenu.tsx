@@ -299,7 +299,6 @@ const hasSidebar =
                     />
                   )}
                 </button>
-
                 <AnimatePresence>
                   {openMenu === menu.key && (
                     <motion.div

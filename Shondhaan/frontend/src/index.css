@@ -486,7 +486,7 @@ img[loading="lazy"] {
    automatically without touching individual components. The Yess Deal
    logo and brand wordmark remain unchanged. */
 body.deal-theme {
-  --primary: 102 45% 49%;            /* #62B146 Bikroy green */
+   --primary: 208 79% 28%;           /* #62B146 Bikroy green */
   --primary-foreground: 0 0% 100%;
   --primary-light: 102 55% 94%;
   --primary-dark: 102 50% 38%;

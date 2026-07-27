@@ -78,46 +78,56 @@ const Testimonials = () => {
   };
 
   return (
-    <motion.section
+<div className="bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50">
+      <motion.section
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="py-10 md:py-16"
+      className="py-16 px-4 mx-auto max-w-7xl md:py-24 "
     >
-      <div className="text-center mb-10">
-        <p className="text-sm font-semibold text-primary uppercase tracking-widest mb-2">
+      <div className="text-center mb-12 md:mb-16">
+        <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+          <span className="h-1 w-6 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full"></span>
           {t("testimonials.label")}
+          <span className="h-1 w-6 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-full"></span>
         </p>
-        <h2 className="font-heading text-2xl font-bold text-foreground md:text-3xl">
+        <h2 className="font-heading text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-emerald-600 bg-clip-text text-transparent mb-2">
           {t("testimonials.title")}
         </h2>
-        <div className="mx-auto mt-3 h-1 w-14 rounded-full bg-gradient-to-r from-primary/80 to-primary/30" />
+        <p className="text-slate-600 mt-4 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
+          Hear from our satisfied clients about their experiences with Shondhaan
+        </p>
+        <div className="mx-auto mt-6 h-1.5 w-20 rounded-full bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600" />
       </div>
 
       <div className="relative group/section">
         {/* Edge fade masks */}
-        <div className="pointer-events-none absolute left-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-r from-background to-transparent md:block" />
-        <div className="pointer-events-none absolute right-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-l from-background to-transparent md:block" />
+        <div className="pointer-events-none absolute left-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-r from-slate-50 to-transparent md:block" />
+        <div className="pointer-events-none absolute right-0 top-0 z-[5] hidden h-full w-12 bg-gradient-to-l from-slate-50 to-transparent md:block" />
 
+        {/* Left Navigation Button */}
         <button
           onClick={() => scroll("left")}
           aria-label="Scroll left"
-          className="absolute -left-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg border border-border h-10 w-10 text-muted-foreground opacity-0 transition-all duration-300 hover:text-primary hover:border-primary/40 hover:scale-105 group-hover/section:opacity-100 md:flex"
+          className="absolute -left-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-600 to-blue-700 shadow-lg border-0 h-11 w-11 text-white opacity-0 transition-all duration-300 hover:shadow-2xl hover:scale-110 hover:from-blue-500 hover:to-blue-600 group-hover/section:opacity-100 md:flex"
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
+
+        {/* Right Navigation Button */}
         <button
           onClick={() => scroll("right")}
           aria-label="Scroll right"
-          className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background/90 backdrop-blur-sm shadow-lg border border-border h-10 w-10 text-muted-foreground opacity-0 transition-all duration-300 hover:text-primary hover:border-primary/40 hover:scale-105 group-hover/section:opacity-100 md:flex"
+          className="absolute -right-4 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-600 to-emerald-700 shadow-lg border-0 h-11 w-11 text-white opacity-0 transition-all duration-300 hover:shadow-2xl hover:scale-110 hover:from-emerald-500 hover:to-emerald-600 group-hover/section:opacity-100 md:flex"
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-5 w-5" />
         </button>
 
+        {/* Testimonials Container */}
         <div
           ref={scrollRef}
-          className="flex gap-5 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 md:px-2"
+          className="flex gap-6 overflow-x-auto snap-x snap-mandatory scroll-smooth px-4 pb-4 md:px-2"
           style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {testimonials.map((item, i) => (
@@ -126,39 +136,53 @@ const Testimonials = () => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ delay: i * 0.1 }}
-              className="relative shrink-0 w-[280px] md:w-[320px] snap-start rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm p-6 flex flex-col shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-primary/30"
+              transition={{ delay: i * 0.1, duration: 0.4 }}
+              className="relative shrink-0 w-[280px] md:w-[340px] snap-start rounded-2xl border border-blue-200/40 bg-white/80 backdrop-blur-xl p-7 flex flex-col shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl hover:border-blue-300/60 hover:bg-white group overflow-hidden"
             >
-              <div className="absolute -top-3 -left-1 h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center">
-                <Quote className="h-4 w-4 text-primary" />
+              {/* Gradient background overlay */}
+              <div className="absolute -top-20 -right-20 h-40 w-40 bg-gradient-to-b from-blue-100 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <div className="absolute -bottom-20 -left-20 h-40 w-40 bg-gradient-to-t from-emerald-100 to-transparent rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+
+              {/* Quote Icon */}
+              <div className="relative z-10 h-10 w-10 rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 flex items-center justify-center shadow-md">
+                <Quote className="h-5 w-5 text-white" />
               </div>
 
-              <p className="mt-3 text-sm text-muted-foreground leading-relaxed flex-1 italic">
+              {/* Quote Text */}
+              <p className="relative z-10 mt-5 text-sm text-slate-700 leading-relaxed flex-1 italic font-light">
                 "{language === "bn" ? item.quote : item.quoteEn}"
               </p>
 
-              <div className="mt-5 pt-4 border-t border-border/60 flex items-center gap-3">
-                <img
-                  src={item.avatar}
-                  alt={language === "bn" ? item.name : item.nameEn}
-                  className="h-11 w-11 rounded-full object-cover ring-2 ring-primary/20 shrink-0"
-                  loading="lazy"
-                  decoding="async"
-                />
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-foreground truncate">
+              {/* Divider */}
+              <div className="relative z-10 mt-6 pt-5 border-t border-blue-100/60 flex items-center gap-3">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-br from-blue-400 to-emerald-400 rounded-full opacity-20 blur-md"></div>
+                  <img
+                    src={item.avatar}
+                    alt={language === "bn" ? item.name : item.nameEn}
+                    className="relative h-12 w-12 rounded-full object-cover ring-2 ring-blue-300/50 shrink-0"
+                    loading="lazy"
+                    decoding="async"
+                  />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-slate-900 truncate">
                     {language === "bn" ? item.name : item.nameEn}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-slate-500 truncate">
                     {language === "bn" ? item.title : item.titleEn}
                   </p>
                 </div>
               </div>
+
+              {/* Bottom accent line */}
+              <div className="absolute bottom-0 left-0 h-1 w-full bg-gradient-to-r from-blue-600 via-emerald-500 to-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
             </motion.div>
           ))}
         </div>
       </div>
     </motion.section>
+</div>
   );
 };
 

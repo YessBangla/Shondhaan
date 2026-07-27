@@ -1,5 +1,5 @@
 export const MOBILE_BOTTOM_NAV_HEIGHT = 76;
-export const MOBILE_BOTTOM_NAV_GAP = 12;
+export const MOBILE_BOTTOM_NAV_GAP = 56;
 
 export const mobileNavBottom = `calc(env(safe-area-inset-bottom, 0px) + 8px)`;
 

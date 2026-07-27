@@ -164,6 +164,7 @@ const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
   return [];
 };
 
+
 const Index = () => {
   const { selectedCity } = useLocation();
   const { language } = useLanguage();
@@ -402,10 +403,12 @@ const Index = () => {
     groupedServices.some((group) => group.services.length > 0) ||
     uncategorizedServices.length > 0;
 
-  return (
-    <div className="min-h-screen bg-background">
-      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
+return (
+  <div className="min-h-screen flex flex-col bg-background">
+    <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
 
+    {/* ✅ MAIN CONTENT WRAPPER */}
+    <div className="flex-1 flex flex-col">
       <Navbar />
       <HeroSection />
 
@@ -420,12 +423,10 @@ const Index = () => {
 
       <MobilePromoBanner />
 
-      {/* Service Section with Premium Gradient Background */}
+      {/* Service Section */}
       <div className="relative">
-        {/* Gradient background overlay - subtle light blue to emerald */}
         <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" />
-        
-        {/* Content container with relative z-index */}
+
         <div className="app-container relative z-10">
           <ForYouSection />
 
@@ -438,7 +439,6 @@ const Index = () => {
             </>
           ) : (
             <>
-              {/* 1) Admin added homepage sections always show first */}
               {selectedCategoryId === "all" &&
                 dynamicHomepageSections.map(({ section, services }) => {
                   const heading = bn
@@ -455,7 +455,6 @@ const Index = () => {
                   );
                 })}
 
-              {/* 2) Category-wise services show below dynamic sections */}
               {groupedServices.map(({ category, services }) => {
                 if (!services.length) return null;
 
@@ -477,7 +476,6 @@ const Index = () => {
                 );
               })}
 
-              {/* 3) Uncategorized services show at the bottom */}
               {uncategorizedServices.length > 0 && (
                 <ServiceSection
                   heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}
@@ -489,7 +487,9 @@ const Index = () => {
               {!hasAnyService && (
                 <div className="py-16 text-center">
                   <p className="text-muted-foreground">
-                    {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}
+                    {bn
+                      ? "কোনো সার্ভিস পাওয়া যায়নি"
+                      : "No services available"}
                   </p>
                 </div>
               )}
@@ -501,20 +501,21 @@ const Index = () => {
       <WhyChooseUs />
       <HowItWorks />
       <Testimonials />
-      <AppDownload />
-      <RequestService />
-      <TrackingSearch />
-
-      <Footer />
-      <ScrollButtons />
-      <ServiceChatFloatingButton />
-
-      <div
-        className="md:hidden"
-        style={{ height: "calc(96px + env(safe-area-inset-bottom, 0px))" }}
-      />
     </div>
-  );
+
+    {/* FOOTER (ALWAYS AT BOTTOM) */}
+    <Footer />
+
+    {/* Floating UI (doesn’t affect layout) */}
+    <ScrollButtons />
+    <ServiceChatFloatingButton />
+   
+    {/* <div
+      className="md:hidden lg:hidden"
+      style={{ height: "calc(96px + env(safe-area-inset-bottom, 0px))" }}
+    /> */}
+  </div>
+);
 };
 
 export default Index;

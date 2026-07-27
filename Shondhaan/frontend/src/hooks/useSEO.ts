@@ -25,7 +25,7 @@ export interface SEOOptions {
 
 const DEFAULT_TITLE = "Shondhaan";
 const SITE_URL = "https://shondhaan.com";
-const DEFAULT_IMAGE = `${SITE_URL}/yess-service-logo.png`;
+const DEFAULT_IMAGE = `${SITE_URL}/images/shondhaan-social.png`;
 
 /** Truncate to maxLen at a word boundary, appending an ellipsis when cut. */
 function smartTruncate(text: string, maxLen: number): string {
@@ -98,8 +98,7 @@ export function useSEO(opts: SEOOptions) {
     // before optional suffix to leave room without mid-word truncation.
     const baseTitle = smartTruncate(title || DEFAULT_TITLE, 55);
     const fullTitle = noSuffix ? baseTitle : `${baseTitle} | Shondhaan`;
-    document.title = smartTruncate(fullTitle, 60);
-
+    document.title = smartTruncate(fullTitle, 60)
     const url = canonical
       ? canonical.startsWith("http")
         ? canonical

@@ -23,10 +23,10 @@ const ScrollButtons = () => {
 
   return (
     <div
-      className="fixed right-3 md:right-4 z-40 flex flex-col gap-2 md:!bottom-6"
+      className="fixed right-3 md:right-4 z-40 flex flex-col gap-2  md:!bottom-6 "
       style={{ bottom: getMobileFloatingBottom(8) }}
     >
-      <AnimatePresence>
+      {/* <AnimatePresence>
         {showUp && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -39,8 +39,8 @@ const ScrollButtons = () => {
             <ArrowUp className="h-5 w-5" />
           </motion.button>
         )}
-      </AnimatePresence>
-      <AnimatePresence>
+      </AnimatePresence> */}
+      {/* <AnimatePresence>
         {!atBottom && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8 }}
@@ -53,9 +53,8 @@ const ScrollButtons = () => {
             <ArrowDown className="h-5 w-5" />
           </motion.button>
         )}
-      </AnimatePresence>
+      </AnimatePresence> */}
     </div>
   );
 };
-
 export default ScrollButtons;

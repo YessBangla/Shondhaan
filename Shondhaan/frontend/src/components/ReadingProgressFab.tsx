@@ -44,7 +44,7 @@ export default function ReadingProgressFab() {
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
           aria-label="back to top"
-          className="fixed left-3 z-30 grid h-12 w-12 place-items-center rounded-full bg-card shadow-lg ring-1 ring-border md:bottom-6 md:left-auto md:right-4"
+          className="fixed left-3 z-30 grid h-12 w-12 place-items-center rounded-full bg-card shadow-lg ring-1 ring-border md:bottom-4 md:left-auto md:right-4"
           style={{ bottom: getMobileFloatingBottom(8) }}
         >
           <svg className="absolute inset-0 -rotate-90" viewBox="0 0 44 44">
