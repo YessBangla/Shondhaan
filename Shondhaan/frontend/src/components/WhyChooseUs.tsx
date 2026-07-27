@@ -133,7 +133,7 @@ const WhyChooseUs = () => {
               className="group relative"
             >
               {/* Background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 rounded-2xl" />
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary to-slate-900 rounded-2xl" />
               
               {/* Border glow */}
               <motion.div
@@ -160,7 +160,7 @@ const WhyChooseUs = () => {
                   initial={{ opacity: 0 }}
                   whileInView={{ opacity: 1 }}
                   transition={{ delay: i * 0.1 + 0.2 }}
-                  className="text-xs md:text-sm font-semibold text-muted-foreground whitespace-pre-line leading-snug group-hover:text-emerald-300 transition-colors duration-300"
+                  className="text-xs md:text-sm font-semibold text-white whitespace-pre-line leading-snug group-hover:text-emerald-300 transition-colors duration-300"
                 >
                   {feature.label}
                 </motion.span>
@@ -203,7 +203,7 @@ const WhyChooseUs = () => {
                 transition={{ duration: 0.6 }}
               />
 
-              <div className="relative z-10 flex flex-col items-center rounded-2xl border border-emerald-500/20 bg-gradient-to-br from-slate-900/40 via-blue-900/30 to-slate-900/40 backdrop-blur-xl p-6 md:p-8 text-center">
+              <div className="relative z-10 flex flex-col items-center rounded-2xl border border-emerald-900/20 bg-background shadow backdrop-blur-xl p-6 md:p-8 text-center">
                 {/* Icon indicator */}
                 <motion.div
                   initial={{ rotate: -180, opacity: 0 }}
