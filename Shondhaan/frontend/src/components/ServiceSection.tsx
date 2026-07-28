@@ -52,9 +52,7 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
     const tooltipHeight = tooltipRect.height;
 
     const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
-    
-    // Start the tooltip at the vertical middle of the card 
-    // so it covers the bottom half and hangs outside
+
     let top = anchorRect.top + window.scrollY + anchorRect.height / 2;
     let left = cardCenterX - tooltipWidth / 2;
 
