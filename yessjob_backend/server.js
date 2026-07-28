@@ -18,8 +18,10 @@ const createJobMatchingCriteriaTable = require('./database/Createjobmatchingcrit
 const createJobBillingContactsTable = require('./database/Createjobbillingcontactstable');
 const createJobseekerProfilesTable = require('./database/createJobseekerProfilesTable');
 const createApplicationsTable = require('./database/Createapplicationstable');
+const createInterviewsTable = require('./database/interviewsTable');
+const notificationsTable = require('./database/notificationstable');
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:5000', 'http://127.0.0.1:8080', 'http://127.0.0.1:5000'],
+  origin: ['http://localhost:8080'],
   credentials: true,
 }));
 app.use(cookieParser());
@@ -38,6 +40,9 @@ app.use('/api/jobs', require('./routes/jobs'));
 app.use("/api/job-categories", require('./routes/Jobcategories'));
 app.use('/api/jobseeker/profile', require('./routes/jobSeekerProfile'));
 app.use('/api/jobseeker/applications', require('./routes/applications'));
+app.use('/api/interviews', require('./routes/interviews'));
+app.use('/api/notifications', require('./routes/notifications'));
+
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });
@@ -59,6 +64,8 @@ async function initDatabaseAndStart() {
     await createJobBillingContactsTable();
     await createJobseekerProfilesTable();
     await createApplicationsTable();          // must come after jobs
+   await createInterviewsTable();          // must come after jobs + job_applications
+    await notificationsTable();          // can run at any point, no FKs
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });

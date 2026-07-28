@@ -5,7 +5,7 @@ import {
   Building2, Briefcase, Users, Search, Star, MapPin, Calendar,
   Eye, Plus, FileText, BookmarkPlus, Clock, Video, UserCheck,
   BarChart3, Settings, Bookmark, CalendarCheck, Package, CheckCircle,
-  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil
+  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil, Bell
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
@@ -106,6 +106,7 @@ const sidebarItems = [
   { value: "talent-search", label: "ট্যালেন্ট সার্চ", icon: <Search />, group: "নিয়োগ" },
   { value: "bookmarks", label: "সংরক্ষিত প্রার্থী", icon: <Bookmark />, group: "নিয়োগ" },
   { value: "interviews", label: "ইন্টারভিউ", icon: <CalendarCheck />, group: "নিয়োগ" },
+  { value: "notifications", label: "নোটিফিকেশন", icon: <Bell />, group: "নিয়োগ" },
   { value: "packages", label: "প্যাকেজ/প্ল্যান", icon: <Package />, group: "সেটিংস" },
 ];
 
@@ -245,6 +246,8 @@ const EmployerPanel = () => {
   const [pipelineStage, setPipelineStage] = useState<string>("all");
   const [scoreForm, setScoreForm] = useState<any>(null);
   const [editJobForm, setEditJobForm] = useState<any>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // ── Applications-tab UI state (BDJobs-style applicant list) ──
   const [applicantsSubTab, setApplicantsSubTab] = useState<"all" | "shortlist" | "final">("all");
@@ -371,12 +374,50 @@ const EmployerPanel = () => {
     }
   }, []);
 
+  // Candidate-side declines/cancellations show up here (see routes/interviews.js
+  // status updates, which insert into the notifications table).
+  const fetchNotifications = useCallback(async () => {
+    if (!profile) return;
+    try {
+      const data = await fetchJobsJson(`/api/notifications/mine`);
+      setNotifications(data || []);
+    } catch (err) {
+      console.error("Failed to load notifications:", err);
+    }
+  }, [profile]);
+
+  const fetchUnreadCount = useCallback(async () => {
+    if (!profile) return;
+    try {
+      const data = await fetchJobsJson(`/api/notifications/unread-count`);
+      setUnreadCount(data?.count || 0);
+    } catch (err) {
+      console.error("Failed to load unread count:", err);
+    }
+  }, [profile]);
+
   useEffect(() => {
     if (isEmployer && profile) {
       fetchMyJobs(); fetchApplications(); fetchSeekers();
       fetchBookmarks(); fetchInterviews(); fetchPackages();
+      fetchNotifications(); fetchUnreadCount();
     }
-  }, [isEmployer, profile, fetchMyJobs, fetchApplications, fetchSeekers, fetchBookmarks, fetchInterviews, fetchPackages]);
+  }, [isEmployer, profile, fetchMyJobs, fetchApplications, fetchSeekers,
+     fetchBookmarks, fetchInterviews, fetchPackages, fetchNotifications, fetchUnreadCount]);
+useEffect(() => {
+  if (!isEmployer || !profile) return;
+  const t = setInterval(() => {
+    fetchUnreadCount();
+    fetchInterviews();
+  }, 30000);
+  return () => clearInterval(t);
+}, [isEmployer, profile, fetchUnreadCount, fetchInterviews]);
+  // Light polling so a candidate's decline/cancel shows up without a manual refresh
+  useEffect(() => {
+    if (!isEmployer || !profile) return;
+    const t = setInterval(() => { fetchUnreadCount(); }, 30000);
+    return () => clearInterval(t);
+  }, [isEmployer, profile, fetchUnreadCount]);
 
   // Debounced-ish re-search when the talent search box changes
   useEffect(() => {
@@ -425,6 +466,53 @@ const EmployerPanel = () => {
       setInterviewForm(null);
       fetchInterviews();
       fetchApplications();
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
+  };
+
+  const markNotificationRead = async (id: string) => {
+    try {
+      await fetchJobsJson(`/api/notifications/${id}/read`, { method: "PATCH" });
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: 1 } : n));
+      setUnreadCount(prev => Math.max(0, prev - 1));
+    } catch (err: any) {
+      console.error("Failed to mark notification read:", err);
+    }
+  };
+
+  const markAllNotificationsRead = async () => {
+    try {
+      await fetchJobsJson(`/api/notifications/read-all`, { method: "PATCH" });
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: 1 })));
+      setUnreadCount(0);
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
+  };
+
+  const cancelInterview = async (id: string) => {
+    if (!window.confirm("আপনি কি নিশ্চিত এই ইন্টারভিউটি বাতিল করতে চান?")) return;
+    try {
+      await fetchJobsJson(`/api/interviews/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "cancelled" }),
+      });
+      toast.success("ইন্টারভিউ বাতিল হয়েছে");
+      fetchInterviews();
+    } catch (err: any) {
+      toast.error(err.message || "সমস্যা হয়েছে");
+    }
+  };
+
+  const completeInterview = async (id: string) => {
+    try {
+      await fetchJobsJson(`/api/interviews/${id}/status`, {
+        method: "PATCH",
+        body: JSON.stringify({ status: "completed" }),
+      });
+      toast.success("ইন্টারভিউ সম্পন্ন হিসেবে চিহ্নিত হয়েছে");
+      fetchInterviews();
     } catch (err: any) {
       toast.error(err.message || "সমস্যা হয়েছে");
     }
@@ -1261,32 +1349,51 @@ const EmployerPanel = () => {
                             </div>
                           )}
 
-                          <div className="grid grid-cols-2 gap-1.5 w-full">
-                            <button
-                              onClick={() => setInterviewForm({
-                                application_id: app.id, interview_type: "online",
-                                scheduled_at: "", duration_minutes: 30, location: "", meeting_link: "", notes: "",
-                              })}
-                              className="text-[9px] border rounded px-1.5 py-1 hover:bg-muted flex items-center gap-1 justify-center"
-                            >
-                              <Video className="h-3 w-3" /> ভিডিও
-                            </button>
-                            <button
-                              onClick={() => setInterviewForm({
-                                application_id: app.id, interview_type: "in-person",
-                                scheduled_at: "", duration_minutes: 30, location: "", meeting_link: "", notes: "",
-                              })}
-                              className="text-[9px] border rounded px-1.5 py-1 hover:bg-muted flex items-center gap-1 justify-center"
-                            >
-                              <UserCheck className="h-3 w-3" /> সাক্ষাৎ
-                            </button>
-                            <button
-                              onClick={() => setScoreForm({ id: app.id, score: app.score || 0, notes: app.interviewer_notes || "" })}
-                              className="text-[9px] border rounded px-1.5 py-1 hover:bg-muted flex items-center gap-1 justify-center col-span-2"
-                            >
-                              <Star className="h-3 w-3" /> টেস্ট / স্কোর
-                            </button>
-                          </div>
+                         {(() => {
+  const existingInterview = interviews.find((iv: any) => iv.application_id === app.id);
+  return (
+    <div className="w-full space-y-1.5">
+      {existingInterview ? (
+        <div className="text-[9px] border rounded px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+          <p className="font-bold flex items-center gap-1">
+            <CalendarCheck className="h-3 w-3" /> শিডিউল পাঠানো হয়েছে
+          </p>
+          <p>{format(new Date(existingInterview.scheduled_at), "d MMM, hh:mm a")}</p>
+          <button
+            className="underline mt-0.5"
+            onClick={() => setInterviewForm({
+              application_id: app.id,
+              interview_type: existingInterview.interview_type,
+              scheduled_at: existingInterview.scheduled_at?.slice(0, 16) || "",
+              duration_minutes: existingInterview.duration_minutes || 30,
+              location: existingInterview.location || "",
+              meeting_link: existingInterview.meeting_link || "",
+              notes: existingInterview.notes || "",
+            })}
+          >
+            সময় পরিবর্তন করুন
+          </button>
+        </div>
+      ) : (
+        <button
+          onClick={() => setInterviewForm({
+            application_id: app.id, interview_type: "in-person",
+            scheduled_at: "", duration_minutes: 30, location: "", meeting_link: "", notes: "",
+          })}
+          className="text-[10px] w-full border rounded px-2 py-1.5 bg-primary/5 border-primary/40 text-primary hover:bg-primary/10 flex items-center gap-1 justify-center font-semibold"
+        >
+          <CalendarCheck className="h-3.5 w-3.5" /> ইন্টারভিউ শিডিউল করুন
+        </button>
+      )}
+      <button
+        onClick={() => setScoreForm({ id: app.id, score: app.score || 0, notes: app.interviewer_notes || "" })}
+        className="text-[9px] border rounded px-1.5 py-1 hover:bg-muted flex items-center gap-1 justify-center w-full"
+      >
+        <Star className="h-3 w-3" /> টেস্ট / স্কোর
+      </button>
+    </div>
+  );
+})()}
 
                           <button
                             onClick={() => setCommentDraft({ id: app.id, text: app.interviewer_notes || "" })}
@@ -1373,9 +1480,17 @@ const EmployerPanel = () => {
                       <p className="font-semibold text-sm">{iv.applicant_name}</p>
                       <p className="text-xs text-muted-foreground">{iv.job_title}</p>
                     </div>
-                    <Badge className={iv.status === "scheduled" ? "bg-blue-100 text-blue-800" : iv.status === "completed" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                      {iv.status === "scheduled" ? "আসন্ন" : iv.status === "completed" ? "সম্পন্ন" : "বাতিল"}
-                    </Badge>
+                   <Badge className={
+  iv.status === "scheduled" ? "bg-blue-100 text-blue-800" :
+  iv.status === "completed" ? "bg-green-100 text-green-800" :
+  iv.status === "declined" ? "bg-orange-100 text-orange-800" :
+  "bg-red-100 text-red-800"
+}>
+  {iv.status === "scheduled" ? "আসন্ন" :
+   iv.status === "completed" ? "সম্পন্ন" :
+   iv.status === "declined" ? "প্রার্থী প্রত্যাহার করেছেন" :
+   "বাতিল"}
+</Badge>
                   </div>
                   <div className="flex gap-3 text-[10px] text-muted-foreground">
                     <span className="flex items-center gap-0.5"><Calendar className="h-2.5 w-2.5" />{format(new Date(iv.scheduled_at), "dd MMM yyyy, hh:mm a")}</span>
@@ -1384,8 +1499,57 @@ const EmployerPanel = () => {
                   </div>
                   {iv.location && <p className="text-[10px] text-muted-foreground">{iv.location}</p>}
                   {iv.meeting_link && <a href={iv.meeting_link} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary">মিটিং লিংক</a>}
+                  {iv.status === "scheduled" && (
+                    <div className="flex gap-1.5 pt-1">
+                      <Button size="sm" variant="outline" className="h-6 text-[10px] text-green-700 border-green-300" onClick={() => completeInterview(iv.id)}>
+                        <CheckCircle className="h-3 w-3 mr-1" /> সম্পন্ন হয়েছে
+                      </Button>
+                      <Button size="sm" variant="ghost" className="h-6 text-[10px] text-destructive" onClick={() => cancelInterview(iv.id)}>
+                        <XCircle className="h-3 w-3 mr-1" /> বাতিল করুন
+                      </Button>
+                    </div>
+                  )}
                 </div>
               ))}
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <Bell className="h-5 w-5 text-primary" /> নোটিফিকেশন
+                {unreadCount > 0 && <Badge className="bg-red-500 text-white text-[10px]">{unreadCount}</Badge>}
+              </h2>
+              {notifications.some(n => !n.is_read) && (
+                <Button variant="outline" size="sm" onClick={markAllNotificationsRead}>সব পঠিত হিসেবে চিহ্নিত করুন</Button>
+              )}
+            </div>
+            {notifications.length === 0 ? (
+              <p className="text-center py-8 text-muted-foreground text-sm">কোনো নোটিফিকেশন নেই</p>
+            ) : (
+              <div className="space-y-2">
+                {notifications.map((n: any) => (
+                  <div
+                    key={n.id}
+                    onClick={() => !n.is_read && markNotificationRead(n.id)}
+                    className={`border rounded-lg p-3 cursor-pointer ${n.is_read ? "bg-card" : "bg-primary/5 border-primary/30"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <p className="font-semibold text-sm">{n.title}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
+                      </div>
+                      {!n.is_read && <span className="h-2 w-2 rounded-full bg-primary shrink-0 mt-1.5" />}
+                    </div>
+                    <p className="text-[10px] text-muted-foreground mt-1.5">
+                      {format(new Date(n.created_at), "d MMM yyyy, hh:mm a")}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         );
 
