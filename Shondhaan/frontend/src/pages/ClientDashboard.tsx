@@ -480,7 +480,7 @@ const ClientDashboard = () => {
     value: "deal-my-ads",
     label: bn ? "আমার বিজ্ঞাপন" : "My Ads",
     icon: <Megaphone className="h-5 w-5" />,
-    group: bn ? "ইয়েস ডিল" : "Yess Deal",
+    group: bn ? "ইয়েস ডিল" : "Deal",
   },
   {
     value: "deal-favorites",
@@ -652,7 +652,7 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-indigo-500/10 to-blue-500/5 p-4 text-left hover:border-indigo-400/40 hover:shadow-sm transition-all group"
                   >
                     <ShoppingBag className="h-6 w-6 text-indigo-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "ইয়েস মার্ট" : "Yess Mart"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "মার্ট" : "Mart"}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "পণ্য কিনুন" : "Shop products"}</p>
                   </motion.button>
                   <motion.button
@@ -661,7 +661,7 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-orange-500/10 to-amber-500/5 p-4 text-left hover:border-orange-400/40 hover:shadow-sm transition-all group"
                   >
                     <Megaphone className="h-6 w-6 text-orange-600 mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "ইয়েস ডিল" : "Yess Deal"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "ডিল" : "Deal"}</p>
                     <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell"}</p>
                   </motion.button>
                   <motion.button

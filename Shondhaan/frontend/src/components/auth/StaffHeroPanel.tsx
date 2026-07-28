@@ -18,8 +18,8 @@ const StaffHeroPanel = () => {
 
   const slides = [
     {
-      titleBn: "Yess স্টাফ কন্ট্রোল সেন্টার",
-      titleEn: "Yess Staff Control Center",
+      titleBn: "Shondhaan স্টাফ কন্ট্রোল সেন্টার",
+      titleEn: "Shondhaan Staff Control Center",
       subtitleBn: "একই পোর্টালে সকল ১৩টি অফিস ভূমিকা — সুপার অ্যাডমিন থেকে ভেন্ডর পর্যন্ত।",
       subtitleEn: "All 13 internal roles in one portal — from Super Admin to Vendor.",
       icon: Crown,

@@ -189,7 +189,7 @@ const Footer = () => {
                   className="text-slate-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group"
                 >
                   <span className="h-1 w-1 rounded-full bg-blue-500/0 group-hover:bg-blue-500 transition-colors" />
-                  {bn ? "ইয়েস মার্ট" : "Yess Mart"}
+                  {bn ? "মার্ট" : "Mart"}
                 </button>
               </li>
               <li>
@@ -198,7 +198,7 @@ const Footer = () => {
                   className="text-slate-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group"
                 >
                   <span className="h-1 w-1 rounded-full bg-blue-500/0 group-hover:bg-blue-500 transition-colors" />
-                  {bn ? "ইয়েস ডিল" : "Yess Deal"}
+                  {bn ? "ডিল" : "Deal"}
                 </button>
               </li>
             </ul>

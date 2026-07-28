@@ -128,8 +128,8 @@ const hasSidebar =
     },
     {
       key: "mart",
-      labelBn: "ইয়েস মার্ট",
-      labelEn: "Yess Mart",
+      labelBn: "মার্ট",
+      labelEn: "Mart",
       icon: ShoppingBag,
       children: [
         { labelBn: "মার্ট হোম", labelEn: "Mart Home", href: "/mart/home", icon: Store },
@@ -144,8 +144,8 @@ const hasSidebar =
     },
     {
       key: "deal",
-      labelBn: "ইয়েস ডিল",
-      labelEn: "Yess Deal",
+      labelBn: "ডিল",
+      labelEn: "Deal",
       icon: Tag,
       children: [
         { labelBn: "ডিল হোম", labelEn: "Deal Home", href: "/deal", icon: Tag },
@@ -157,8 +157,8 @@ const hasSidebar =
     },
     {
       key: "jobs",
-      labelBn: "ইয়েস জবস",
-      labelEn: "Yess Jobs",
+      labelBn: "জবস",
+      labelEn: "Jobs",
       icon: Briefcase,
       children: [
         { labelBn: "চাকরি হোম", labelEn: "Jobs Home", href: "/jobs", icon: Briefcase },
@@ -227,7 +227,7 @@ const hasSidebar =
         { labelBn: "মার্ট অ্যাডমিন", labelEn: "Mart Admin", href: "/mart/admin", icon: BarChart3 },
         { labelBn: "মার্ট ডেলিভারি", labelEn: "Mart Delivery", href: "/mart/delivery", icon: Truck },
         { labelBn: "মার্ট কাস্টমার সার্ভিস", labelEn: "Mart Customer Service", href: "/mart/cs", icon: Headphones },
-        { labelBn: "ইয়েস ডিল প্যানেল", labelEn: "Yess Deal Panel", href: "/yessdeal", icon: Tag },
+        { labelBn: "ডিল প্যানেল", labelEn: "Deal Panel", href: "/yessdeal", icon: Tag },
       ],
     },
   ];

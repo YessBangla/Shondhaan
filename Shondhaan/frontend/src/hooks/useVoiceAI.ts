@@ -493,7 +493,7 @@ export function useVoiceAI({ userInfo, language = "bn", onTranscript, onCallEnd 
       setDetectedLang(language);
 
       const greeting = language === "bn"
-        ? `আসসালামু আলাইকুম ${userInfo.name}! আমি Yess Bangla। আপনাকে কীভাবে সাহায্য করতে পারি? আপনি বলুন, আমি শুনছি।`
+        ? `আসসালামু আলাইকুম ${userInfo.name}! আমি  আপনাকে কীভাবে সাহায্য করতে পারি? আপনি বলুন, আমি শুনছি।`
         : `Hello ${userInfo.name}! I'm Yess Bangla. How can I help you today? Please go ahead, I'm listening.`;
 
       messagesRef.current.push({ role: "assistant", content: greeting });

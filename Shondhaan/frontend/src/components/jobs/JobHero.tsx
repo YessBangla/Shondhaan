@@ -58,10 +58,10 @@ export default function JobHero({
             {/* Title */}
             <div className="flex items-center gap-3 mb-3">
               <div className="bg-white rounded-xl px-3 py-2 shadow-md ring-1 ring-black/5 hidden">
-                <img src={yessJobsLogo} alt="Yess Jobs" className="h-10 md:h-12 w-auto" />
+                <img src={yessJobsLogo} alt="Jobs" className="h-10 md:h-12 w-auto" />
               </div>
               <div>
-                <h1 className="sr-only">Yess Jobs</h1>
+                <h1 className="sr-only">Jobs</h1>
                 <p className="text-blue-200 text-xs">{bn ? "বাংলাদেশের বিশ্বস্ত চাকরির পোর্টাল" : "Bangladesh's Trusted Job Portal"}</p>
               </div>
             </div>

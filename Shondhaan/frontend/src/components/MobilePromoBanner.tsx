@@ -27,7 +27,7 @@ const MobilePromoBanner = () => {
           {bn ? "প্রথম অর্ডারে ২০% ছাড়!" : "20% off on your first order!"}
         </p>
         <p className="mt-0.5 text-[11px] opacity-90 leading-tight">
-          {bn ? "YESS এর সাথে থাকুন, সুরক্ষিত ও নিশ্চিন্তে।" : "Stay with YESS — safe & worry-free."}
+          {bn ? "সন্ধানের সাথে থাকুন, সুরক্ষিত ও নিশ্চিন্তে।" : "Stay with Shondhaan — safe & worry-free."}
         </p>
       </div>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">

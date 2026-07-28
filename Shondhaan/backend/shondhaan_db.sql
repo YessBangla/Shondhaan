@@ -436,7 +436,7 @@ CREATE TABLE `sellers` (
   `slug` varchar(255) DEFAULT NULL,
   `shop_name` varchar(255) DEFAULT NULL,
   `shop_type` varchar(50) DEFAULT NULL,
-  `seller_name` varchar(255) DEFAULT 'Yess Mart Seller',
+  `seller_name` varchar(255) DEFAULT 'Shondhaan Mart Seller',
   `seller_email` varchar(255) DEFAULT NULL,
   `seller_mobile` varchar(20) DEFAULT NULL,
   `seller_address` varchar(300) DEFAULT NULL,

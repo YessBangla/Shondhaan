@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Trophy, Medal, Award, Zap, Clock, CheckCircle, TrendingUp, Crown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-const DEMO_REP_EMAIL = "representative@yessservice.com";
+const DEMO_REP_EMAIL = "info.shondhaan.@gmail.com";
 const DEMO_REP_DISPLAY_NAME = "সম্মানিত অতিথি";
 
 interface LeaderEntry {

@@ -39,7 +39,7 @@ const PageLoader = () => {
             {settings.logo_url ? (
               <img
                 src={settings.logo_url}
-                alt={settings.logo_text || "Yess"}
+                alt={settings.logo_text || "Shondhaan"}
                 className="h-12 w-12 object-contain"
               />
             ) : (

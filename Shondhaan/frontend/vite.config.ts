@@ -31,7 +31,7 @@ export default defineConfig(() => ({
       },
       manifest: {
         name: "Shondhaan",
-        short_name: "Yess",
+        short_name: "Shondhaan",
         description:
           "বাংলাদেশের প্রিমিয়াম হোম সার্ভিস প্ল্যাটফর্ম",
         lang: "bn",
