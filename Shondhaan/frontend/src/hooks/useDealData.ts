@@ -176,7 +176,7 @@ export function useDealCategories() {
     queryKey: ["deal-categories"],
     queryFn: async () => {
       const payload = await apiGet<any>(
-        `${DEAL_API_BASE_URL}/api/deal/categories`
+        `${DEAL_API_BASE_URL}/api/deal-categories`
       );
 
       return extractArray<any>(payload)
@@ -193,7 +193,7 @@ export function useDealParentCategories() {
     queryKey: ["deal-parent-categories"],
     queryFn: async () => {
       const payload = await apiGet<any>(
-        `${DEAL_API_BASE_URL}/api/deal/categories`
+        `${DEAL_API_BASE_URL}/api/deal-categories`
       );
 
       return extractArray<any>(payload)
@@ -212,7 +212,7 @@ export function useDealSubcategories(parentId: string | null) {
       if (!parentId) return [];
 
       const payload = await apiGet<any>(
-        `${DEAL_API_BASE_URL}/api/deal/categories`
+        `${DEAL_API_BASE_URL}/api/deal-categories`
       );
 
       return extractArray<any>(payload)
@@ -233,7 +233,7 @@ export function useDealCategoryTree() {
     queryKey: ["deal-category-tree"],
     queryFn: async () => {
       const payload = await apiGet<any>(
-        `${DEAL_API_BASE_URL}/api/deal/categories`
+        `${DEAL_API_BASE_URL}/api/deal-categories`
       );
 
       const all = extractArray<any>(payload)
@@ -263,7 +263,7 @@ export function useDealListings(filters?: {
   sortBy?: string;
 }) {
   return useQuery({
-    queryKey: ["deal-listings", filters],
+    queryKey: ["deal-listings", JSON.stringify(filters)],
     queryFn: async () => {
       const params = new URLSearchParams();
 

@@ -12,10 +12,12 @@ import {
   MapPin,
   Package,
   LayoutGrid,
+  Search,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import {
   useDealCategoryTree,
@@ -56,6 +58,12 @@ const getDealImageUrl = (url?: string | null) => {
   }
 
   return `${DEAL_API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+};
+
+// ✅ Helper function to check if the icon is a URL or an emoji
+const isUrl = (str?: string | null) => {
+  if (!str) return false;
+  return str.startsWith("http://") || str.startsWith("https://");
 };
 
 function timeAgo(dateStr: string, bn = true) {
@@ -170,6 +178,8 @@ const DealHome = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
 
+  const [searchTerm, setSearchTerm] = useState("");
+
   const [locationFilter, setLocationFilter] = useState({
     division: "",
     district: "",
@@ -186,67 +196,97 @@ const DealHome = () => {
 
   useSEO({
     title: bn
-      ? "ইয়েস ডিল — কেনাবেচার সেরা প্ল্যাটফর্ম"
-      : "Yess Deal — Buy & Sell Platform",
+      ? "ডিল — কেনাবেচার সেরা প্ল্যাটফর্ম"
+      : "Deal — Buy & Sell Platform",
     description: bn
-      ? "ইয়েস ডিলে নতুন ও পুরাতন পণ্য কেনাবেচা করুন — মোবাইল, যানবাহন, প্রপার্টি, ফার্নিচার এবং আরও অনেক কিছু।"
-      : "Buy & sell new and used items on Yess Deal — mobiles, vehicles, properties, furniture & more.",
+      ? "ডিলে নতুন ও পুরাতন পণ্য কেনাবেচা করুন — মোবাইল, যানবাহন, প্রপার্টি, ফার্নিচার এবং আরও অনেক কিছু।"
+      : "Buy & sell new and used items on Deal — mobiles, vehicles, properties, furniture & more.",
     canonical: "/deal",
     keywords: bn
-      ? "কেনাবেচা, বিক্রয়, ক্লাসিফাইড বাংলাদেশ, ইয়েস ডিল"
-      : "buy sell bangladesh, classifieds, yess deal",
+      ? "কেনাবেচা, বিক্রয়, ক্লাসিফাইড বাংলাদেশ, ডিল"
+      : "buy sell bangladesh, classifieds, deal",
   });
 
   const { data: categoryTree, isLoading: catLoading } = useDealCategoryTree();
   const { data: featured, isLoading: featLoading } = useFeaturedDeals();
   const { data: latest, isLoading: latestLoading } = useLatestDeals();
 
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!searchTerm.trim()) {
+      navigate("/deal/ads");
+      return;
+    }
+
+    const params = new URLSearchParams();
+    params.set("search", searchTerm.trim());
+
+    if (locationFilter.division) params.set("division", locationFilter.division);
+    if (locationFilter.district) params.set("district", locationFilter.district);
+    if (locationFilter.thana) params.set("thana", locationFilter.thana);
+
+    navigate(`/deal/ads?${params.toString()}`);
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
-
       <Navbar />
-
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
+      <div className="mt-6 text-center py-5 flex gap-3 justify-center flex-wrap">
+        <Button
+          size="lg"
+          onClick={() => navigate("/deal/post")}
+          className="rounded-xl text-base font-bold gap-2 px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
+        >
+          <Plus className="h-5 w-5" />
+          {bn ? "ফ্রি বিজ্ঞাপন দিন" : "Post Free Ad"}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate("/deal/my-ads")}
+          className="rounded-xl text-base font-bold gap-2 px-8 border-blue-200 text-blue-700 hover:bg-primary hover:border-blue-300 transition-colors"
+        >
+          <Package className="h-5 w-5" />
+          {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate("/deal/inbox")}
+          className="rounded-xl text-base font-bold gap-2 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-700 hover:border-emerald-300 transition-colors"
+        >
+          <MessageCircle className="h-5 w-5" />
+          {bn ? "ইনবক্স" : "Inbox"}
+        </Button>
+        <Button
+          size="lg"
+          onClick={() => navigate("/deal/ads")}
+          className="rounded-xl text-sm md:text-base bg-white text-primary border border-blue-900/40 font-bold gap-2 px-6 md:px-8 hover:text-white hover:opacity-90 transition-all"
+        >
+          <LayoutGrid className="h-5 w-5" />
+          {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
 
       <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[44px] pb-8 md:pt-[68px] md:pb-12 border-b border-blue-100/50">
         <div className="app-container text-center">
-          {/* <h1 className="mb-2 flex items-center justify-center">
-            <img
-              src={yessDealLogo}
-              alt="Yess Deal"
-              className="h-10 md:h-14 w-auto drop-shadow-md"
-            />
-          </h1> */}
-
-          <p className="text-blue-800/70 mb-6 text-sm font-medium tracking-wide">
+          <p className="text-blue-900/70 mb-6 text-xl font-bold tracking-wide">
             {bn
               ? "বাংলাদেশের সবচেয়ে বিশ্বস্ত কেনাবেচার প্ল্যাটফর্ম"
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
           </p>
 
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="mx-12 mb-4">
             <DealLocationSelector
               value={locationFilter}
               onChange={setLocationFilter}
             />
-          </div>
-
-          <DealSearchBox
-            location={locationFilter.division || "all"}
-            className="max-w-xl mx-auto"
-          />
-
-          <div className="mt-6 flex justify-center">
-            <Button
-              size="lg"
-              onClick={() => navigate("/deal/ads")}
-              className="rounded-xl text-sm md:text-base font-bold gap-2 px-6 md:px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
-            >
-              <LayoutGrid className="h-5 w-5" />
-              {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
-              <ChevronRight className="h-4 w-4" />
-            </Button>
           </div>
         </div>
       </div>
@@ -279,8 +319,17 @@ const DealHome = () => {
                   onClick={() => navigate(`/deal/category/${cat.slug}`)}
                   className="w-full flex items-center gap-3 p-3 rounded-xl border border-blue-100/60 bg-white hover:border-emerald-400/50 hover:shadow-md hover:shadow-blue-500/10 transition-all text-left"
                 >
-                  <span className="text-2xl p-1.5 rounded-md bg-gradient-to-br from-blue-50 to-emerald-50">
-                    {cat.icon || "📦"}
+                  {/* ✅ FIXED: Render Image if URL, else render Emoji */}
+                  <span className="w-10 h-10 flex items-center justify-center p-1.5 rounded-md bg-gradient-to-br from-blue-50 to-emerald-50 overflow-hidden shrink-0">
+                    {cat.icon && isUrl(cat.icon) ? (
+                      <img 
+                        src={cat.icon} 
+                        alt={cat.name} 
+                        className="w-full h-full object-cover rounded" 
+                      />
+                    ) : (
+                      <span className="text-xl leading-none">{cat.icon || "📦"}</span>
+                    )}
                   </span>
 
                   <div className="flex-1 min-w-0">
@@ -315,13 +364,20 @@ const DealHome = () => {
                         {cat.children.map((sub: DealCategory) => (
                           <button
                             key={sub.id}
-                            onClick={() =>
-                              navigate(`/deal/category/${sub.slug}`)
-                            }
+                            onClick={() => navigate(`/deal/category/${sub.slug}`)}
                             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-blue-50 hover:text-blue-700 transition-colors text-left"
                           >
-                            <span className="text-base">
-                              {sub.icon || "📦"}
+                            {/* ✅ FIXED: Render Image if URL, else render Emoji for Subcategories */}
+                            <span className="w-6 h-6 flex items-center justify-center overflow-hidden shrink-0">
+                              {sub.icon && isUrl(sub.icon) ? (
+                                <img 
+                                  src={sub.icon} 
+                                  alt={sub.name} 
+                                  className="w-full h-full object-cover rounded" 
+                                />
+                              ) : (
+                                <span className="text-base leading-none">{sub.icon || "📦"}</span>
+                              )}
                             </span>
 
                             <span>
@@ -329,7 +385,6 @@ const DealHome = () => {
                             </span>
                           </button>
                         ))}
-
                         <button
                           onClick={() => navigate(`/deal/category/${cat.slug}`)}
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-emerald-600 font-medium hover:bg-emerald-50 transition-colors mt-1 border-t border-blue-50/50 pt-2"
@@ -436,37 +491,6 @@ const DealHome = () => {
             {bn ? "এখনও কোনো বিজ্ঞাপন নেই" : "No ads yet"}
           </div>
         )}
-
-        <div className="mt-10 text-center flex gap-3 justify-center flex-wrap">
-          <Button
-            size="lg"
-            onClick={() => navigate("/deal/post")}
-            className="rounded-xl text-base font-bold gap-2 px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
-          >
-            <Plus className="h-5 w-5" />
-            {bn ? "ফ্রি বিজ্ঞাপন দিন" : "Post Free Ad"}
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate("/deal/my-ads")}
-            className="rounded-xl text-base font-bold gap-2 px-8 border-blue-200 text-blue-700 hover:bg-blue-50 hover:border-blue-300 transition-colors"
-          >
-            <Package className="h-5 w-5" />
-            {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
-          </Button>
-
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => navigate("/deal/inbox")}
-            className="rounded-xl text-base font-bold gap-2 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:border-emerald-300 transition-colors"
-          >
-            <MessageCircle className="h-5 w-5" />
-            {bn ? "ইনবক্স" : "Inbox"}
-          </Button>
-        </div>
       </div>
 
       <Footer />

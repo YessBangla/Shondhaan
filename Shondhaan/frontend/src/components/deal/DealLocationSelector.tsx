@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { MapPin, Loader2, X } from "lucide-react";
+import { MapPin, Loader2, X, Search } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -65,16 +65,21 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:4000/api/deal/listings?search=${query}`
+        `http://localhost:4000/api/deal/listings?search=${encodeURIComponent(query)}`
       );
 
       const data = await res.json();
 
-      if (data.success) {
-        setResults(data.data);
-      } else {
-        setResults([]);
-      }
+      console.log("API response:", data);
+
+      const list =
+        data?.data ||
+        data?.listings ||
+        data?.items ||
+        data?.rows ||
+        [];
+
+      setResults(list);
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch listings");
@@ -99,53 +104,63 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
   return (
     <div className="space-y-4">
       {/* 🔍 SEARCH INPUT */}
-      <div className="relative">
+      <div className="relative w-full">
+        {/* Search Icon */}
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+        
         <Input
           placeholder={bn ? "খুঁজুন..." : "Search deals..."}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
+          className="pl-10 pr-10 w-full rounded-lg shadow-sm border-gray-200 focus-visible:ring-1 focus-visible:ring-gray-300"
         />
 
-        {loading && (
-          <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin" />
-        )}
-
-        {search && (
-          <button
-            onClick={() => {
-              setSearch("");
-              setResults([]);
-            }}
-            className="absolute right-3 top-2.5"
-          >
-            <X size={16} />
-          </button>
+        {/* Loading Spinner or Clear Button */}
+        {loading ? (
+          <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-400" />
+        ) : (
+          search && (
+            <button
+              onClick={() => {
+                setSearch("");
+                setResults([]);
+              }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Clear search"
+            >
+              <X size={16} />
+            </button>
+          )
         )}
       </div>
 
       {/* 🔽 SEARCH RESULTS */}
       {results.length > 0 && (
-        <div className="border rounded-lg max-h-60 overflow-auto">
+        <div className="w-full border border-gray-200 bg-white rounded-lg shadow-sm max-h-60 overflow-y-auto divide-y divide-gray-100">
           {results.map((item) => (
             <div
               key={item.id}
-              className="p-3 border-b last:border-b-0 hover:bg-gray-50 cursor-pointer"
+              className="p-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150"
             >
-              <p className="font-medium">
+              <p className="font-medium text-gray-800">
                 {bn ? item.title : item.title_en}
               </p>
-              <p className="text-sm text-gray-500">
+              <p className="text-sm text-gray-500 flex items-center gap-1 mt-1">
+                <MapPin size={12} className="text-gray-400" />
                 {item.location_district}, {item.location_area}
               </p>
-              <p className="text-sm font-semibold">৳ {item.price}</p>
+              <p className="text-sm font-semibold text-green-600 mt-1">
+                ৳ {item.price}
+              </p>
             </div>
           ))}
         </div>
       )}
+
       {/* 📍 LOCATION SELECTORS */}
       <div className="grid grid-cols-1 gap-3">
         {/* Division */}
-        <Select value={value.division} onValueChange={handleDivisionChange}>
+        {/* <Select value={value.division} onValueChange={handleDivisionChange}>
           <SelectTrigger>
             <SelectValue placeholder={bn ? "বিভাগ নির্বাচন করুন" : "Select Division"} />
           </SelectTrigger>
@@ -156,10 +171,10 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
 
         {/* District */}
-        <Select value={value.district} onValueChange={handleDistrictChange}>
+        {/* <Select value={value.district} onValueChange={handleDistrictChange}>
           <SelectTrigger>
             <SelectValue placeholder={bn ? "জেলা নির্বাচন করুন" : "Select District"} />
           </SelectTrigger>
@@ -170,10 +185,10 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
 
         {/* Thana */}
-        <Select value={value.thana} onValueChange={handleThanaChange}>
+        {/* <Select value={value.thana} onValueChange={handleThanaChange}>
           <SelectTrigger>
             <SelectValue placeholder={bn ? "এলাকা নির্বাচন করুন" : "Select Area"} />
           </SelectTrigger>
@@ -184,7 +199,7 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
               </SelectItem>
             ))}
           </SelectContent>
-        </Select>
+        </Select> */}
       </div>
 
       {/* 🧹 CLEAR BUTTON */}

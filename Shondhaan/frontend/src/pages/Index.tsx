@@ -125,7 +125,6 @@ const normalizeCity = (value: unknown) => {
 
   return cityMap[text] || text;
 };
-
 const normalizeSlug = (value: unknown) =>
   String(value || "").trim().toLowerCase();
 
@@ -160,10 +159,8 @@ const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
   if (Array.isArray(data)) return data;
   if (Array.isArray(data?.items)) return data.items;
   if (Array.isArray(data?.rows)) return data.rows;
-
   return [];
 };
-
 
 const Index = () => {
   const { selectedCity } = useLocation();
@@ -200,31 +197,29 @@ const Index = () => {
       try {
         setLoading(true);
 
-        console.log("🚀 Fetching homepage data...");
-        console.log("🌐 Services URL:", `${API_BASE}/services`);
-        console.log("🌐 Categories URL:", `${API_BASE}/categories`);
+        console.log(" Fetching homepage data...");
+        console.log(" Services URL:", `${API_BASE}/services`);
+        console.log(" Categories URL:", `${API_BASE}/categories`);
         console.log(
-          "🌐 Homepage sections URL:",
+          "Homepage sections URL:",
           `${API_BASE}/homepage-sections?active=1`
         );
-
         const [servicesRes, categoriesRes, sectionsRes] = await Promise.all([
           fetch(`${API_BASE}/services`),
           fetch(`${API_BASE}/categories`),
           fetch(`${API_BASE}/homepage-sections?active=1`),
         ]);
-
-        console.log("📡 Services status:", servicesRes.status);
-        console.log("📡 Categories status:", categoriesRes.status);
-        console.log("📡 Homepage sections status:", sectionsRes.status);
+        console.log(" Services status:", servicesRes.status);
+        console.log(" Categories status:", categoriesRes.status);
+        console.log(" Homepage sections status:", sectionsRes.status);
 
         const servicesData = await servicesRes.json().catch(() => ({}));
         const categoriesData = await categoriesRes.json().catch(() => ({}));
         const sectionsData = await sectionsRes.json().catch(() => ({}));
 
-        console.log("📦 Raw services response:", servicesData);
-        console.log("📦 Raw categories response:", categoriesData);
-        console.log("📦 Raw homepage sections response:", sectionsData);
+        console.log(" Raw services response:", servicesData);
+        console.log(" Raw categories response:", categoriesData);
+        console.log(" Raw homepage sections response:", sectionsData);
 
         const safeServices = extractArray<Service>(servicesData, ["services"]);
         const safeCategories = extractArray<Category>(categoriesData, [
@@ -252,7 +247,6 @@ const Index = () => {
         console.log("✅ Homepage loading finished");
       }
     };
-
     fetchData();
   }, []);
 

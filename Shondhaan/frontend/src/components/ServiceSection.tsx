@@ -52,9 +52,7 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
     const tooltipHeight = tooltipRect.height;
 
     const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
-    
-    // Start the tooltip at the vertical middle of the card 
-    // so it covers the bottom half and hangs outside
+
     let top = anchorRect.top + window.scrollY + anchorRect.height / 2;
     let left = cardCenterX - tooltipWidth / 2;
 
@@ -151,7 +149,7 @@ const ServiceCardWrapper = ({
         onClick={onOpen}
         {...longPress}
         tabIndex={0}
-        className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98] md:shrink-0 md:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
+        className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
       >
         {children}
       </div>
@@ -164,6 +162,7 @@ const ServiceCardWrapper = ({
     </>
   );
 };
+
 
 const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, anchorRect, onClose }, _ref) => {
   const [copied, setCopied] = useState(false);
@@ -350,8 +349,12 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
           <ChevronRight className="h-4 w-4" />
         </button>
 
-        {/* Mobile: 2-column grid (per mockup). Desktop/tablet: horizontal scroll. */}
-        <div ref={scrollRef} className="grid grid-cols-2 gap-3 px-4 pb-2 md:flex md:gap-5 md:overflow-x-auto md:px-0" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
+        {/* Horizontal scroll on all screen sizes - 2 items visible on mobile, more on desktop */}
+        <div 
+          ref={scrollRef} 
+          className="flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0"
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none", scrollSnapType: "x mandatory" }}
+        >
           {services.map((service) => (
             <ServiceCardWrapper
               key={service.title}
@@ -363,7 +366,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               onLongPress={() => setQuickMenu(service)}
             >
               <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm">
-                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform rounded-b-full duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
+                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
               </div>
               <div className="p-3 bg-blue-300/40 md:p-4">
                 <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
