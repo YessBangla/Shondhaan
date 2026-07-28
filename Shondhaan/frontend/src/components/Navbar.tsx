@@ -53,7 +53,7 @@ const API_BASE =
   import.meta.env.VITE_API_BASE ||
   "http://localhost:8081";
 
-const Navbar = () => {
+const  Navbar = () => {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
   const [requestOpen, setRequestOpen] = useState(false);
   const [trackToken, setTrackToken] = useState("");
