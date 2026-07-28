@@ -26,6 +26,7 @@ import AIWeeklySummaryCard from "@/components/client/AIWeeklySummaryCard";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 
 const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
 const PROFILE_API_BASE = MART_API_BASE;
@@ -514,6 +515,14 @@ const ClientDashboard = () => {
     icon: <User className="h-5 w-5" />,
     group: bn ? "অ্যাকাউন্ট" : "Account",
   },
+ {
+   
+  value: "job",
+  label: bn ? "আমার আবেদনসমূহ" : "My Applications",
+  icon: <User className="h-5 w-5" />,
+  group: bn ? "চাকরি" : "Job",
+
+  },
 ]}
           defaultValue="dashboard"
           panelTitle={profile.display_name || (bn ? "ক্লায়েন্ট ড্যাশবোর্ড" : "Client Dashboard")}
@@ -619,7 +628,9 @@ const ClientDashboard = () => {
                   ))}
                 </div>
               )}
-
+ {/* my applications */}
+             {/* my applications */}
+{activeTab === "job" && <JobApplicationsTab bn={bn} />}
               {/* AI Weekly Summary */}
               {activeTab === "bookings" && (
                 <div>

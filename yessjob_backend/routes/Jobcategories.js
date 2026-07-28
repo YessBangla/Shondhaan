@@ -1,15 +1,5 @@
-// routes/jobCategories.js
-//
-// Same flat style as employerProfile.js / jobs.js: router handlers directly
-// in this file, no separate model/controller layer.
-//
-// Frontend contract: GET /api/job-categories is public and returns only
-// active categories (is_active = 1) — this is what useJobCategories() in
-// useJobData.ts consumes. Any add/edit/reorder/delete done through the
-// admin routes below writes straight to the job_categories table, and
-// since createJobCategoriesTable.js only seeds once (on an empty table),
-// those changes persist across restarts and show up on the frontend on
-// the next fetch — no frontend code changes needed when categories change.
+
+
 
 const express = require("express");
 const router = express.Router();
