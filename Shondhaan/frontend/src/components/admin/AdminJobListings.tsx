@@ -105,7 +105,7 @@ const AdminJobListings = () => {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
           <Briefcase className="h-5 w-5 text-emerald-600" />
-          <h2 className="text-lg font-bold">Yess Jobs ম্যানেজমেন্ট</h2>
+          <h2 className="text-lg font-bold">Shondhaan Jobs ম্যানেজমেন্ট</h2>
           {pendingCount > 0 && <Badge className="bg-yellow-100 text-yellow-800 text-xs">{pendingCount} অপেক্ষমাণ</Badge>}
         </div>
         <div className="relative w-56">

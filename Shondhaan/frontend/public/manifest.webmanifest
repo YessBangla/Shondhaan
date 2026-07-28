@@ -17,9 +17,9 @@
     { "src": "/yess-service-logo.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "Yess Mart", "short_name": "Mart", "url": "/mart/home", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
-    { "name": "Yess Deal", "short_name": "Deal", "url": "/deal", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
-    { "name": "Yess Jobs", "short_name": "Jobs", "url": "/jobs", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
+    { "name": "Shondhaan Mart", "short_name": "Mart", "url": "/mart/home", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
+    { "name": "Shondhaan Deal", "short_name": "Deal", "url": "/deal", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
+    { "name": "Shondhaan Jobs", "short_name": "Jobs", "url": "/jobs", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
     { "name": "My Bookings", "short_name": "Bookings", "url": "/bookings", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] },
     { "name": "Profile", "short_name": "Profile", "url": "/profile", "icons": [{ "src": "/yess-service-logo.png", "sizes": "192x192" }] }
   ],

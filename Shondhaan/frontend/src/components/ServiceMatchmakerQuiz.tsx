@@ -120,7 +120,7 @@ export default function ServiceMatchmakerQuiz({ open, onClose }: Props) {
               </button>
               <div className="flex items-center gap-2">
                 <Sparkles className="h-5 w-5" />
-                <h3 className="text-base font-bold">{bn ? "Yess Help মিলবৃত্তান্ত" : "Yess Help Matchmaker"}</h3>
+                <h3 className="text-base font-bold">{bn ? "Shondhaan Help মিলবৃত্তান্ত" : "Shondhaan Help Matchmaker"}</h3>
               </div>
               <p className="mt-1 text-xs opacity-90">
                 {bn ? `প্রশ্ন ${step + 1} / ${QUESTIONS.length}` : `Step ${step + 1} of ${QUESTIONS.length}`}

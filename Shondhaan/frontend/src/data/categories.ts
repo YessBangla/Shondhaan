@@ -98,7 +98,7 @@ export const serviceCategories: ServiceCategory[] = [
   { id: "tailoring", name: "টেইলারিং", nameEn: "Tailoring", icon: catTailoring, serviceSlugs: ["ladies-tailoring", "gents-tailoring", "alteration"], color: colors.pink },
   { id: "courier", name: "কুরিয়ার ও ডেলিভারি", nameEn: "Courier & Delivery", icon: catCourier, serviceSlugs: ["parcel-delivery", "document-courier", "ecommerce-shipping"], color: colors.cyan },
   { id: "bill-pay", name: "বিল পে ও রিচার্জ", nameEn: "Bill Pay & Recharge", icon: catBillpay, serviceSlugs: ["bill-pay"], color: colors.teal },
-  { id: "yes-mart", name: "ইয়েস মার্ট", nameEn: "Yess Mart", icon: catMart, serviceSlugs: ["grocery-delivery", "fish-meat-market", "vegetables-fruits", "gas-cylinder", "jar-water", "cake-delivery", "money-transfer"], color: colors.emerald },
-  { id: "yes-deal", name: "ইয়েস ডিল", nameEn: "Yess Deal", icon: catYessDeal, serviceSlugs: ["buy-sell-electronics", "buy-sell-furniture", "buy-sell-vehicles", "flat-rent", "property-buy-sell"], color: colors.amber },
+  { id: "yes-mart", name: "ইয়েস মার্ট", nameEn: "Mart", icon: catMart, serviceSlugs: ["grocery-delivery", "fish-meat-market", "vegetables-fruits", "gas-cylinder", "jar-water", "cake-delivery", "money-transfer"], color: colors.emerald },
+  { id: "yes-deal", name: "ইয়েস ডিল", nameEn: "Deal", icon: catYessDeal, serviceSlugs: ["buy-sell-electronics", "buy-sell-furniture", "buy-sell-vehicles", "flat-rent", "property-buy-sell"], color: colors.amber },
   { id: "gift-flower", name: "গিফট ও ফ্লাওয়ার", nameEn: "Gift & Flower", icon: catEvent, serviceSlugs: ["flower-delivery", "gift-delivery"], color: colors.rose },
 ];

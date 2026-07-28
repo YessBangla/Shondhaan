@@ -37,8 +37,8 @@ const PLATFORMS: Platform[] = [
     key: "mart",
     path: "/mart",
     icon: ShoppingBag,
-    titleBn: "ইয়েস মার্ট",
-    titleEn: "Yess Mart",
+    titleBn: "মার্ট",
+    titleEn: "Mart",
     subtitleBn: "অনলাইন শপ",
     subtitleEn: "Online Shop",
     gradient: "from-amber-500 via-orange-500 to-red-500",
@@ -49,8 +49,8 @@ const PLATFORMS: Platform[] = [
     key: "deal",
     path: "/deals",
     icon: Tag,
-    titleBn: "ইয়েস ডিল",
-    titleEn: "Yess Deal",
+    titleBn: "ডিল",
+    titleEn: "Deal",
     subtitleBn: "কেনা-বেচা",
     subtitleEn: "Buy & Sell",
     gradient: "from-rose-500 via-pink-500 to-fuchsia-600",
@@ -61,8 +61,8 @@ const PLATFORMS: Platform[] = [
     key: "jobs",
     path: "/jobs",
     icon: Briefcase,
-    titleBn: "ইয়েস জবস",
-    titleEn: "Yess Jobs",
+    titleBn: "জবস",
+    titleEn: "Jobs",
     subtitleBn: "চাকরি খুঁজুন",
     subtitleEn: "Find Jobs",
     gradient: "from-emerald-500 via-teal-500 to-cyan-600",
@@ -107,7 +107,7 @@ export default function PlatformSwitcher({
           <div className="flex items-center gap-2">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground md:text-sm">
-              {bn ? "ইয়েস ইকোসিস্টেম" : "Yess Ecosystem"}
+              {bn ? "ইয়েস ইকোসিস্টেম" : "Shondhaan Ecosystem"}
             </h2>
           </div>
           <span className="hidden text-xs text-muted-foreground md:inline">

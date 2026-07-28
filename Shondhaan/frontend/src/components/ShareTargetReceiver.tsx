@@ -69,7 +69,7 @@ const ShareTargetReceiver = () => {
             </div>
             <div className="flex-1">
               <h3 className="font-heading text-base font-bold text-foreground">
-                {bn ? "শেয়ার করা কন্টেন্ট" : "Shared with Yess"}
+                {bn ? "শেয়ার করা কন্টেন্ট" : "Shared with Shondhaan"}
               </h3>
               <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{query}</p>
             </div>
@@ -98,7 +98,7 @@ const ShareTargetReceiver = () => {
             >
               <ShoppingBag className="h-5 w-5 text-primary" />
               <div className="flex-1">
-                <div className="text-sm font-semibold text-foreground">{bn ? "মার্টে খুঁজুন" : "Search Yess Mart"}</div>
+                <div className="text-sm font-semibold text-foreground">{bn ? "মার্টে খুঁজুন" : "Search Shondhaan Mart"}</div>
                 <div className="text-[11px] text-muted-foreground">{bn ? "পণ্য ও অফার দেখুন" : "Find products & offers"}</div>
               </div>
             </button>
@@ -108,7 +108,7 @@ const ShareTargetReceiver = () => {
             >
               <Package className="h-5 w-5 text-primary" />
               <div className="flex-1">
-                <div className="text-sm font-semibold text-foreground">{bn ? "ডিলে বিজ্ঞাপন দিন" : "Post on Yess Deal"}</div>
+                <div className="text-sm font-semibold text-foreground">{bn ? "ডিলে বিজ্ঞাপন দিন" : "Post on Shondhaan Deal"}</div>
                 <div className="text-[11px] text-muted-foreground">{bn ? "এই কন্টেন্ট দিয়ে নতুন বিজ্ঞাপন" : "Create a new listing"}</div>
               </div>
             </button>

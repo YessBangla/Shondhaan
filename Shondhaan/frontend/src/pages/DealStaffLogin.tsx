@@ -5,7 +5,7 @@ const DealStaffLogin = () => (
   <StaffLoginPage
     platformKey="deal"
     platformName="ইয়েস ডিল"
-    platformNameEn="Yess Deal"
+    platformNameEn="Deal"
     logoSrc={logo}
     homeHref="/deal"
     roleKeys={[

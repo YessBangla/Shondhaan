@@ -195,7 +195,7 @@ const printInvoice = (order: MartOrder, bn: boolean) => {
     .muted{color:#666}
     @media print{body{margin:0}}
   </style></head><body>
-  <h1>${bn ? "ইনভয়েস" : "Invoice"} — Yess Mart</h1>
+  <h1>${bn ? "ইনভয়েস" : "Invoice"} — Shondhaan Mart</h1>
   <div class="meta">
     <strong>${bn ? "অর্ডার" : "Order"} #${order.order_number}</strong><br>
     ${new Date(order.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}<br>
@@ -225,7 +225,7 @@ const printInvoice = (order: MartOrder, bn: boolean) => {
     </tfoot>
   </table>
   <p style="margin-top:24px;color:#666;font-size:12px">
-    ${bn ? "ধন্যবাদ ইয়েস মার্ট থেকে কেনাকাটার জন্য!" : "Thank you for shopping at Yess Mart!"}
+    ${bn ? "ধন্যবাদ ইয়েস মার্ট থেকে কেনাকাটার জন্য!" : "Thank you for shopping at Shondhaan Mart!"}
   </p>
   <script>window.onload = () => { window.print(); }<\/script>
   </body></html>`;
@@ -307,7 +307,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
           {bn ? "কোনো মার্ট অর্ডার নেই" : "No mart orders yet"}
         </p>
         <p className="text-sm text-muted-foreground mt-1">
-          {bn ? "ইয়েস মার্ট থেকে পণ্য কিনুন" : "Shop from Yess Mart"}
+          {bn ? "ইয়েস মার্ট থেকে পণ্য কিনুন" : "Shop from Shondhaan Mart"}
         </p>
         <Button className="mt-4 gap-2" onClick={() => navigate("/mart/home")}>
           <ShoppingBag className="h-4 w-4" />

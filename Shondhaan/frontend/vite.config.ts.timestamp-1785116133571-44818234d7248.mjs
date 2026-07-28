@@ -31,7 +31,7 @@ var vite_config_default = defineConfig(() => ({
       },
       manifest: {
         name: "Shondhaan",
-        short_name: "Yess",
+        short_name: "Shondhaan",
         description: "\u09AC\u09BE\u0982\u09B2\u09BE\u09A6\u09C7\u09B6\u09C7\u09B0 \u09AA\u09CD\u09B0\u09BF\u09AE\u09BF\u09AF\u09BC\u09BE\u09AE \u09B9\u09CB\u09AE \u09B8\u09BE\u09B0\u09CD\u09AD\u09BF\u09B8 \u09AA\u09CD\u09B2\u09CD\u09AF\u09BE\u099F\u09AB\u09B0\u09CD\u09AE",
         lang: "bn",
         start_url: "/",

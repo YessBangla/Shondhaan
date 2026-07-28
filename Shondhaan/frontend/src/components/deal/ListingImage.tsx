@@ -8,7 +8,7 @@ interface Props {
   fallbackSize?: "sm" | "md" | "lg";
   loading?: "lazy" | "eager";
   fit?: "cover" | "contain";
-  /** Hide the Yess Deal logo watermark overlay. */
+  /** Hide the Deal logo watermark overlay. */
   noWatermark?: boolean;
   watermarkSize?: "sm" | "md" | "lg";
 }
