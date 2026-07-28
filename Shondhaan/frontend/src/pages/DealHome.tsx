@@ -232,9 +232,7 @@ const DealHome = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
-
       <Navbar />
-
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
       <div className="mt-6 text-center py-5 flex gap-3 justify-center flex-wrap">
         <Button
@@ -387,7 +385,6 @@ const DealHome = () => {
                             </span>
                           </button>
                         ))}
-
                         <button
                           onClick={() => navigate(`/deal/category/${cat.slug}`)}
                           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-emerald-600 font-medium hover:bg-emerald-50 transition-colors mt-1 border-t border-blue-50/50 pt-2"
