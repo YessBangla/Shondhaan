@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 
 // Falls back to localhost for local dev; set VITE_SOCKET_URL in your
 // .env for staging/production builds instead of hardcoding it.
-const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "http://localhost:4000";
+const SOCKET_URL = import.meta.env.VITE_SOCKET_URL || "VITE_DEAL_API_BASE_URL";
 
 export const socket = io(SOCKET_URL, {
   withCredentials: true,

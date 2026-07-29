@@ -3,7 +3,7 @@ import { Handshake, AlertTriangle, Eye, CheckCircle, Ban, Search, RefreshCw, Fla
 import { motion } from "framer-motion";
 
 // Same base URL / helper convention as AdminDealManagement.tsx
-const API_BASE = "http://localhost:4000/api";
+const API_BASE = "VITE_DEAL_API_BASE_URL/api";
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

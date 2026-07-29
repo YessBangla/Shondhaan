@@ -31,7 +31,7 @@ import Navbar from "@/components/Navbar";
 import DealImageUploader from "@/components/deal/DealImageUploader";
 
 const DEAL_API_BASE_URL = (
-  import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000"
+  import.meta.env.VITE_DEAL_API_BASE_URL || "VITE_DEAL_API_BASE_URL"
 ).replace(/\/+$/, "");
 
 const DealPostAd = () => {

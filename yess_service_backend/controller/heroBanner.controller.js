@@ -103,6 +103,23 @@ export const getHeroBannerById = async (req, res) => {
  */
 export const createHeroBanner = async (req, res) => {
   try {
+    // ✅ ADD THIS: ensure table exists
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS cms_hero_banners (
+        id VARCHAR(191) NOT NULL,
+        title_bn VARCHAR(255) NOT NULL,
+        title_en VARCHAR(255),
+        subtitle_bn VARCHAR(255),
+        subtitle_en VARCHAR(255),
+        image_url TEXT,
+        is_active TINYINT(1) DEFAULT 1,
+        sort_order INT DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     const {
       title_bn,
       title_en = "",
