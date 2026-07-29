@@ -912,29 +912,31 @@ const  Navbar = () => {
                   </button>
                 </PopoverTrigger>
 
-                <PopoverContent className="w-52 p-1.5 z-[9999]" align="end">
+                <PopoverContent className="w-52 p-1.5 z-[9999] bg-secondary" align="end">
                   <div className="flex flex-col">
                     <button
                       onClick={() => navigate("/auth?tab=signup")}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
+                      hover:text-primary-foreground"
                     >
-                      <UserPlus className="h-4 w-4 text-primary" />
-                      {bn ? "ইউজার তৈরী" : "Sign Up"}
+                      <UserPlus className="h-4 w-4 text-forground" />
+                      {bn ? "একাউন্ট তৈরী করুন" : "Create Account"}
                     </button>
 
                     <button
                       onClick={() => navigate("/auth")}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
+                      hover:text-primary-foreground"
                     >
-                      <LogIn className="h-4 w-4 text-primary" />
-                      {bn ? "ইউজার লগইন" : "User Login"}
+                      <LogIn className="h-4 w-4 text-forground" />
+                      {bn ? "লগইন করুন" : "Login"}
                     </button>
 
-                    <div className="my-1 border-t border-border" />
+                    {/* <div className="my-1 border-t border-border" /> */}
 
                     <button
                       onClick={() => navigate("/main-login")}
-                      className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      className="hidden flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                     >
                       <Building2 className="h-4 w-4 text-primary" />
                       {bn ? "অফিস লগইন" : "Office Login"}
