@@ -106,11 +106,13 @@ const ServiceCardWrapper = ({
   service,
   onOpen,
   onLongPress,
+  disableHover, // Prevents tooltip from showing while dragging
   children,
 }: {
   service: ServiceItem;
   onOpen: (e: React.MouseEvent) => void;
   onLongPress: () => void;
+  disableHover?: boolean;
   children: React.ReactNode;
 }) => {
   const longPress = useLongPress<HTMLDivElement>(onLongPress, 480);
@@ -119,6 +121,7 @@ const ServiceCardWrapper = ({
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showTooltip = (e: React.MouseEvent<HTMLDivElement> | React.FocusEvent<HTMLDivElement>) => {
+    if (disableHover) return; // Don't show tooltip if dragging
     if (!service.description) return;
     if (hideTimer.current) {
       clearTimeout(hideTimer.current);
@@ -214,7 +217,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
     >
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-semibold text-foreground">{bn ? "শেয়ার করুন" : "Share"}</span>
-        <button onClick={onClose} className="rounded-full p-0.5 hover:bg-secondary">
+        <button onClick={onClose} className="rounded-full p-0.5 hover:bg-secondary cursor-pointer">
           <X className="h-3.5 w-3.5 text-muted-foreground" />
         </button>
       </div>
@@ -225,7 +228,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
             href={s.href}
             target="_blank"
             rel="noopener noreferrer"
-            className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color} text-white text-sm font-bold transition-transform hover:scale-110`}
+            className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color} text-white text-sm font-bold transition-transform hover:scale-110 cursor-pointer`}
           >
             {s.icon}
           </a>
@@ -235,7 +238,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
         <span className="flex-1 truncate text-[11px] text-muted-foreground">{url}</span>
         <button
           onClick={copyLink}
-          className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+          className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
         >
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? (bn ? "কপি হয়েছে" : "Copied") : (bn ? "কপি" : "Copy")}
@@ -255,6 +258,59 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const [shareState, setShareState] = useState<{ slug: string; title: string; rect: DOMRect } | null>(null);
   const [quickMenu, setQuickMenu] = useState<ServiceItem | null>(null);
   const bn = language === "bn";
+
+  // --- Desktop Drag-to-Scroll State ---
+  const [isDragging, setIsDragging] = useState(false);
+  const dragState = useRef({ startX: 0, startScrollLeft: 0, isDown: false, dragDistance: 0 });
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+
+    const handleDown = (e: MouseEvent) => {
+      if (e.button !== 0) return; // Only left click
+      dragState.current.isDown = true;
+      dragState.current.startX = e.pageX - el.offsetLeft;
+      dragState.current.startScrollLeft = el.scrollLeft;
+      dragState.current.dragDistance = 0;
+      setIsDragging(true);
+    };
+
+    const handleMove = (e: MouseEvent) => {
+      if (!dragState.current.isDown) return;
+      e.preventDefault(); // Prevent text/image selection while dragging
+      const x = e.pageX - el.offsetLeft;
+      const walk = x - dragState.current.startX;
+      dragState.current.dragDistance = Math.abs(walk);
+      el.scrollLeft = dragState.current.startScrollLeft - walk;
+    };
+
+    const handleUp = () => {
+      if (!dragState.current.isDown) return;
+      dragState.current.isDown = false;
+      setIsDragging(false);
+    };
+
+    el.addEventListener("mousedown", handleDown);
+    // Attach to window so dragging continues even if cursor leaves the container
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("mouseup", handleUp);
+
+    return () => {
+      el.removeEventListener("mousedown", handleDown);
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("mouseup", handleUp);
+    };
+  }, []);
+
+  // Prevent click events (navigation) from firing if the user was dragging
+  const handleContainerClickCapture = (e: React.MouseEvent) => {
+    if (dragState.current.dragDistance > 5) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  };
+  // -------------------------------------
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -333,7 +389,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
         {viewAllLink && (
           <button
             onClick={() => navigate(viewAllLink)}
-            className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+            className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 cursor-pointer"
           >
             {t("section.viewAll")}
             <ChevronRight className="h-4 w-4" />
@@ -342,33 +398,43 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
       </div>
 
       <div className="relative group/section">
-        <button onClick={() => scroll("left")} className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex">
+        <button onClick={() => scroll("left")} className="absolute -left-3 top-1/2 z-10 hidden -translate-y-12/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
           <ChevronLeft className="h-4 w-4" />
         </button>
-        <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex">
+        <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
           <ChevronRight className="h-4 w-4" />
         </button>
 
         {/* Horizontal scroll on all screen sizes - 2 items visible on mobile, more on desktop */}
         <div 
           ref={scrollRef} 
-          className="flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0"
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none", scrollSnapType: "x mandatory" }}
+          onClickCapture={handleContainerClickCapture}
+          className={`flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
         >
           {services.map((service) => (
             <ServiceCardWrapper
               key={service.title}
               service={service}
+              disableHover={isDragging}
               onOpen={(e) => {
                 if ((e.target as HTMLElement).closest("button, a")) return;
                 if (service.slug) navigate(`/service/${service.slug}`);
               }}
               onLongPress={() => setQuickMenu(service)}
             >
-              <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm">
-                <img src={service.image} alt={service.title} className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" decoding="async" fetchPriority="low" />
+              <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm pointer-events-none">
+                <img 
+                  src={service.image} 
+                  alt={service.title} 
+                  className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                  loading="lazy" 
+                  decoding="async" 
+                  fetchPriority="low" 
+                  draggable={false} // Prevents native browser image dragging
+                />
               </div>
-              <div className="p-3 bg-blue-300/40 md:p-4">
+              <div className="p-3 bg-blue-300/40 md:p-4 pointer-events-none">
                 <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
                   {service.title}
                 </h3>
@@ -389,17 +455,18 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                       <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
                     )}
                   </p>
-                  <div className="flex items-center gap-0.5">
+                  {/* Re-enable pointer events specifically for action buttons */}
+                  <div className="flex items-center gap-0.5 pointer-events-auto">
                     <button
                       onClick={(e) => handleAddToCart(e, service)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
                       title={bn ? "কার্টে যোগ করুন" : "Add to cart"}
                     >
                       <ShoppingCart className="h-3.5 w-3.5" />
                     </button>
                     <button
                       onClick={(e) => handleCompare(e, service)}
-                      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 ${
+                      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 cursor-pointer ${
                         service.slug && isInCompare(service.slug)
                           ? "bg-primary/15 text-primary"
                           : "text-muted-foreground hover:text-primary"
@@ -411,7 +478,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                     </button>
                     <button
                       onClick={(e) => handleShare(e, service)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary"
+                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
                       title={bn ? "শেয়ার করুন" : "Share"}
                     >
                       <Share2 className="h-3.5 w-3.5" />
@@ -459,7 +526,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
               </div>
               <div className="flex items-center gap-3 px-4 pt-1 pb-3 border-b border-border">
-                <img src={quickMenu.image} alt={quickMenu.title} className="h-12 w-12 rounded-lg object-cover" />
+                <img src={quickMenu.image} alt={quickMenu.title} className="h-12 w-12 rounded-lg object-cover" draggable={false} />
                 <div className="min-w-0 flex-1">
                   <h4 className="truncate text-sm font-bold text-foreground">{quickMenu.title}</h4>
                   {quickMenu.price ? (
@@ -469,7 +536,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 <button
                   onClick={() => setQuickMenu(null)}
                   aria-label={bn ? "বন্ধ" : "Close"}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-secondary cursor-pointer"
                 >
                   <X className="h-4 w-4" />
                 </button>
@@ -482,7 +549,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                     if (quickMenu.slug) navigate(`/service/${quickMenu.slug}`);
                     setQuickMenu(null);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary cursor-pointer"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Eye className="h-4 w-4" />
@@ -504,7 +571,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                     toast.success(bn ? "কার্টে যোগ হয়েছে!" : "Added to cart!");
                     setQuickMenu(null);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary cursor-pointer"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <ShoppingCart className="h-4 w-4" />
@@ -526,7 +593,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                     }
                     setQuickMenu(null);
                   }}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary cursor-pointer"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <Share2 className="h-4 w-4" />
@@ -540,7 +607,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                     setQuickMenu(null);
                   }}
                   disabled={!quickMenu.cmsService}
-                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50"
+                  className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left text-sm font-medium text-foreground hover:bg-secondary disabled:opacity-50 cursor-pointer"
                 >
                   <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary">
                     <GitCompareArrows className="h-4 w-4" />

@@ -404,6 +404,43 @@ export const createDealListing = async (req, res) => {
   try {
     await connection.beginTransaction();
 
+    // ✅ ADD THIS: ensure tables exist
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS deal_listings (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        user_id VARCHAR(191) NOT NULL,
+        category_id BIGINT UNSIGNED NULL,
+        title VARCHAR(255) NOT NULL,
+        title_en VARCHAR(255),
+        description TEXT,
+        price DECIMAL(12,2) DEFAULT 0,
+        is_negotiable TINYINT(1) DEFAULT 0,
+        product_condition VARCHAR(50),
+        location_division VARCHAR(100),
+        location_district VARCHAR(100),
+        location_area VARCHAR(100),
+        address TEXT,
+        seller_name VARCHAR(191),
+        phone VARCHAR(50),
+        hide_phone TINYINT(1) DEFAULT 0,
+        status VARCHAR(50) DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
+    await connection.query(`
+      CREATE TABLE IF NOT EXISTS deal_listing_images (
+        id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+        listing_id BIGINT UNSIGNED NOT NULL,
+        image_url TEXT NOT NULL,
+        sort_order INT DEFAULT 0,
+        PRIMARY KEY (id),
+        KEY idx_listing (listing_id)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+    `);
+
     const {
       user_id,
       category_id,

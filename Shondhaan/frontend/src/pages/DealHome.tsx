@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronRight,
+  ChevronUp,
   Eye,
   Clock,
   Star,
@@ -13,6 +14,7 @@ import {
   Package,
   LayoutGrid,
   Search,
+  ChevronDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -173,20 +175,152 @@ const DealCard = React.forwardRef<
 
 DealCard.displayName = "DealCard";
 
+// Category Card Component (Extracted for reusability)
+const CategoryCardItem = ({
+  cat,
+  bn,
+  isHovered,
+  onHover,
+  onLeave,
+  onCategoryClick,
+  onNavigate,
+}: {
+  cat: DealCategory;
+  bn: boolean;
+  isHovered: boolean;
+  onHover: () => void;
+  onLeave: () => void;
+  onCategoryClick: () => void;
+  onNavigate: (slug: string) => void;
+}) => {
+  return (
+    <div
+      className="relative group"
+      onMouseEnter={onHover}
+      onMouseLeave={onLeave}
+    >
+      {/* Animated gradient border glow */}
+      <div className="absolute -inset-0.5 bg-gradient-to-br from-blue-500/20 via-cyan-400/20 to-emerald-500/20 rounded-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-sm" />
+      
+      <motion.button
+        whileHover={{ y: -2 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onCategoryClick}
+        className="relative w-full h-full flex flex-col items-center justify-center gap-2 p-1 md:p-2 rounded-2xl bg-gradient-to-br from-white to-blue-50/40 border border-blue-100/40 backdrop-blur-sm hover:border-emerald-300/60 hover:from-white hover:to-emerald-50/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-emerald-500/15 text-center overflow-hidden"
+      >
+        {/* Premium icon container */}
+        <span className="relative w-7 h-8 md:w-8 md:h-8 flex items-center justify-center rounded-md bg-gradient-to-br from-blue-100/80 to-emerald-100/80 group-hover:from-blue-500 group-hover:to-emerald-500 transition-all duration-300 overflow-hidden shadow-md group-hover:shadow-lg">
+          {/* Subtle inner shine on hover */}
+          <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          
+
+          {cat.icon && isUrl(cat.icon) ? (
+            <img 
+              src={cat.icon} 
+              alt={cat.name} 
+              className="w-5 h-5 md:w-5 md:h-5 object-cover group-hover:scale-110 transition-transform duration-300" 
+            />
+          ) : (
+            <span className="text-sm md:text-base leading-none group-hover:scale-110 transition-transform duration-300">
+              {cat.icon || "📦"}
+            </span>
+          )}
+        </span>
+
+        {/* Category text */}
+        <div className="flex-1 min-w-0 flex flex-col gap-1">
+          <h3 className="text-xs md:text-sm font-bold text-foreground line-clamp-2 leading-tight group-hover:text-transparent group-hover:bg-clip-text group-hover:bg-gradient-to-r group-hover:from-blue-600 group-hover:to-emerald-500 transition-all duration-300">
+            {bn ? cat.name : cat.name_en || cat.name}
+          </h3>
+
+          {cat.children && cat.children.length > 0 && (
+            <p className="text-[9px] md:text-[10px] text-emerald-600/80 font-bold bg-emerald-100/50 px-2 py-0.5 rounded-full inline-block backdrop-blur-sm">
+              {cat.children.length}
+            </p>
+          )}
+        </div>
+      </motion.button>
+
+      {/* Premium Dropdown Menu */}
+      <AnimatePresence>
+        {isHovered &&
+          cat.children &&
+          cat.children.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -12, scale: 0.92 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -12, scale: 0.92 }}
+              transition={{ duration: 0.25, ease: "easeOut" }}
+              className="absolute left-1/2 -translate-x-1/2 top-full z-50 mt-3 w-72 bg-white/95 backdrop-blur-xl border border-blue-200/60 rounded-2xl shadow-2xl shadow-blue-500/20 p-4 max-h-96 overflow-y-auto"
+            >
+              {/* Gradient top accent */}
+              <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-300 to-transparent" />
+              
+              <div className="space-y-1.5">
+                {cat.children.map((sub: DealCategory, idx: number) => (
+                  <motion.button
+                    key={sub.id}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: idx * 0.04, ease: "easeOut" }}
+                    onClick={() => onNavigate(sub.slug)}
+                    className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm text-foreground/80 hover:text-foreground hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-emerald-50/80 transition-all duration-200 text-left group/sub border border-transparent hover:border-blue-200/40"
+                  >
+                    <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-lg group-hover/sub:scale-125 transition-transform duration-200">
+                      {sub.icon && isUrl(sub.icon) ? (
+                        <img 
+                          src={sub.icon} 
+                          alt={sub.name} 
+                          className="w-full h-full object-cover rounded" 
+                        />
+                      ) : (
+                        <span>{sub.icon || "📦"}</span>
+                      )}
+                    </span>
+
+                    <span className="font-semibold flex-1 text-sm">
+                      {bn ? sub.name : sub.name_en || sub.name}
+                    </span>
+                    
+                    <ChevronRight className="h-4 w-4 text-emerald-500 opacity-0 group-hover/sub:opacity-100 group-hover/sub:translate-x-1 transition-all duration-200" />
+                  </motion.button>
+                ))}
+              </div>
+
+              {/* View All button */}
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: 0.15 }}
+                onClick={() => onNavigate(cat.slug)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-bold bg-gradient-to-r from-blue-500/10 to-emerald-500/10 text-transparent bg-clip-text hover:from-blue-500/20 hover:to-emerald-500/20 transition-all duration-200 mt-3 border border-blue-200/40 hover:border-emerald-300/60 group/view"
+              >
+                {bn
+                  ? `সকল ${cat.name}`
+                  : `View all ${cat.name_en || cat.name}`}
+                <ChevronRight className="h-4 w-4 text-emerald-500 group-hover/view:translate-x-2 transition-transform" />
+              </motion.button>
+            </motion.div>
+          )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
 const DealHome = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const bn = language === "bn";
 
   const [searchTerm, setSearchTerm] = useState("");
+  const [expandedCategories, setExpandedCategories] = useState(false);
+  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
   const [locationFilter, setLocationFilter] = useState({
     division: "",
     district: "",
     thana: "",
   });
-
-  const [hoveredCat, setHoveredCat] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
 
@@ -229,6 +363,22 @@ const DealHome = () => {
     navigate(`/deal/ads?${params.toString()}`);
   };
 
+  // Calculate how many categories to show per row
+  const categoriesPerRow = {
+    mobile: 2,
+    tablet: 4,
+    desktop: 9,
+  };
+
+  // Get all visible categories (first row or all if expanded)
+  const visibleCategories = expandedCategories 
+    ? categoryTree 
+    : categoryTree?.slice(0, categoriesPerRow.desktop);
+
+  const hasMoreCategories = (categoryTree?.length || 0) > categoriesPerRow.desktop;
+const [bgImage, setBgImage] = useState<string>(
+  "https://img.magnific.com/free-vector/online-shopping-banner-template_23-2148795109.jpg?semt=ais_hybrid&w=740&q=80"
+);
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
@@ -274,133 +424,130 @@ const DealHome = () => {
         </Button>
       </div>
 
-      <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[44px] pb-8 md:pt-[68px] md:pb-12 border-b border-blue-100/50">
+      <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[12px] pb-8 md:pt-[18px] border-b border-blue-100/50">
         <div className="app-container text-center">
-          <p className="text-blue-900/70 mb-6 text-xl font-bold tracking-wide">
+          {/* <p className="text-blue-900/70 text-xl font-bold tracking-wide">
             {bn
               ? "বাংলাদেশের সবচেয়ে বিশ্বস্ত কেনাবেচার প্ল্যাটফর্ম"
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
-          </p>
+          </p> */}
 
-          <div className="mx-12 mb-4">
-            <DealLocationSelector
-              value={locationFilter}
-              onChange={setLocationFilter}
-            />
+          <div className="mx-12 mb-1">
+           <DealLocationSelector
+  value={locationFilter}
+  onChange={setLocationFilter}
+  bgImage={bgImage} // from DealHome's state
+/>
           </div>
         </div>
       </div>
 
-      <div className="app-container py-8 pb-28 md:py-10 md:pb-12">
-        <h2 className="text-lg font-bold mb-5 flex items-center gap-2 text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">
-          {bn ? "ক্যাটাগরি অনুযায়ী ব্রাউজ করুন" : "Browse by Category"}
-        </h2>
-
-        {catLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-10">
-            {Array(14)
-              .fill(0)
-              .map((_, index) => (
-                <Skeleton key={index} className="h-20 rounded-xl bg-blue-50/50" />
-              ))}
+      <div className="app-container py-6 pb-28 md:py-2 md:pb-10">
+        {/* ✨ PREMIUM CATEGORY SECTION WITH EXPAND FUNCTIONALITY */}
+        <div className="mb-12">
+          {/* Premium Header */}
+          <div className="mb-8">
+            <div className="flex items-baseline gap-4 mb-2">
+              <h2 className="text-xl md:text-2xl font-bold tracking-tight">
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500">
+                  {bn ? "ক্যাটাগরি অনুযায়ী ব্রাউজ করুন" : "Browse by Category"}
+                </span>
+              </h2>
+              <div className="h-1 w-16 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full" />
+            </div>
+            <p className="text-sm text-muted-foreground">
+              {bn ? "আপনার পছন্দের পণ্য খুঁজে বের করুন" : "Explore what you're looking for"}
+            </p>
           </div>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-10">
-            {categoryTree?.map((cat) => (
-              <div
-                key={cat.id}
-                className="relative"
-                onMouseEnter={() => setHoveredCat(cat.id)}
-                onMouseLeave={() => setHoveredCat(null)}
-              >
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.97 }}
-                  onClick={() => navigate(`/deal/category/${cat.slug}`)}
-                  className="w-full flex items-center gap-3 p-3 rounded-xl border border-blue-100/60 bg-white hover:border-emerald-400/50 hover:shadow-md hover:shadow-blue-500/10 transition-all text-left"
+
+          {catLoading ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-2 md:gap-2">
+              {Array(9)
+                .fill(0)
+                .map((_, index) => (
+                  <Skeleton key={index} className="h-24 rounded-2xl bg-gradient-to-br from-blue-100/50 to-emerald-100/50" />
+                ))}
+            </div>
+          ) : (
+            <div>
+              {/* Categories Grid */}
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={expandedCategories ? "expanded" : "collapsed"}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-9 gap-2 md:gap-2"
                 >
-                  {/* ✅ FIXED: Render Image if URL, else render Emoji */}
-                  <span className="w-10 h-10 flex items-center justify-center p-1.5 rounded-md bg-gradient-to-br from-blue-50 to-emerald-50 overflow-hidden shrink-0">
-                    {cat.icon && isUrl(cat.icon) ? (
-                      <img 
-                        src={cat.icon} 
-                        alt={cat.name} 
-                        className="w-full h-full object-cover rounded" 
+                  {visibleCategories?.map((cat) => (
+                    <motion.div
+                      key={cat.id}
+                      layout
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.9 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <CategoryCardItem
+                        cat={cat}
+                        bn={bn}
+                        isHovered={hoveredCat === cat.id}
+                        onHover={() => setHoveredCat(cat.id)}
+                        onLeave={() => setHoveredCat(null)}
+                        onCategoryClick={() => navigate(`/deal/category/${cat.slug}`)}
+                        onNavigate={(slug) => navigate(`/deal/category/${slug}`)}
                       />
+                    </motion.div>
+                  ))}
+                </motion.div>
+              </AnimatePresence>
+
+              {/* See More / See Less Button */}
+              {hasMoreCategories && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.3 }}
+                  className="flex justify-center mt-8"
+                >
+                  <Button
+                    onClick={() => setExpandedCategories(!expandedCategories)}
+                    className="rounded-xl font-bold gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
+                  >
+                    {expandedCategories ? (
+                      <>
+                        {bn ? "সব লুকান" : "See Less"}
+                        <ChevronUp className="h-5 w-5" />
+                      </>
                     ) : (
-                      <span className="text-xl leading-none">{cat.icon || "📦"}</span>
+                      <>
+                        {bn ? "আরো দেখুন" : "See More"}
+                        <ChevronDown className="h-5 w-5" />
+                      </>
                     )}
-                  </span>
+                  </Button>
+                </motion.div>
+              )}
 
-                  <div className="flex-1 min-w-0">
-                    <span className="text-sm font-semibold text-foreground block truncate">
-                      {bn ? cat.name : cat.name_en || cat.name}
-                    </span>
-
-                    {cat.children && cat.children.length > 0 && (
-                      <span className="text-[10px] text-blue-500/80 font-medium">
-                        {cat.children.length}{" "}
-                        {bn ? "টি সাব-ক্যাটাগরি" : "subcategories"}
-                      </span>
-                    )}
-                  </div>
-
-                  {cat.children && cat.children.length > 0 && (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
-                  )}
-                </motion.button>
-
-                <AnimatePresence>
-                  {hoveredCat === cat.id &&
-                    cat.children &&
-                    cat.children.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -4 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -4 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute left-0 right-0 top-full z-30 mt-1 bg-white border border-blue-100/80 rounded-xl shadow-xl shadow-blue-500/10 p-2 max-h-64 overflow-y-auto"
-                      >
-                        {cat.children.map((sub: DealCategory) => (
-                          <button
-                            key={sub.id}
-                            onClick={() => navigate(`/deal/category/${sub.slug}`)}
-                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-blue-50 hover:text-blue-700 transition-colors text-left"
-                          >
-                            {/* ✅ FIXED: Render Image if URL, else render Emoji for Subcategories */}
-                            <span className="w-6 h-6 flex items-center justify-center overflow-hidden shrink-0">
-                              {sub.icon && isUrl(sub.icon) ? (
-                                <img 
-                                  src={sub.icon} 
-                                  alt={sub.name} 
-                                  className="w-full h-full object-cover rounded" 
-                                />
-                              ) : (
-                                <span className="text-base leading-none">{sub.icon || "📦"}</span>
-                              )}
-                            </span>
-
-                            <span>
-                              {bn ? sub.name : sub.name_en || sub.name}
-                            </span>
-                          </button>
-                        ))}
-                        <button
-                          onClick={() => navigate(`/deal/category/${cat.slug}`)}
-                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-emerald-600 font-medium hover:bg-emerald-50 transition-colors mt-1 border-t border-blue-50/50 pt-2"
-                        >
-                          {bn
-                            ? `সকল ${cat.name} দেখুন`
-                            : `View all ${cat.name_en || cat.name}`}
-                          <ChevronRight className="h-3 w-3" />
-                        </button>
-                      </motion.div>
-                    )}
-                </AnimatePresence>
-              </div>
-            ))}
-          </div>
-        )}
+              {/* Category Count Badge */}
+              {expandedCategories && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: 0.4 }}
+                  className="flex justify-center mt-6"
+                >
+                  <p className="text-sm text-muted-foreground">
+                    {bn 
+                      ? `${categoryTree?.length} টি ক্যাটাগরি দেখাচ্ছি` 
+                      : `Showing ${categoryTree?.length} categories`}
+                  </p>
+                </motion.div>
+              )}
+            </div>
+          )}
+        </div>
 
         {(featLoading || (featured?.length || 0) > 0) && (
           <div className="mb-12">
@@ -492,7 +639,6 @@ const DealHome = () => {
           </div>
         )}
       </div>
-
       <Footer />
       <BackToHomeButton />
     </div>
