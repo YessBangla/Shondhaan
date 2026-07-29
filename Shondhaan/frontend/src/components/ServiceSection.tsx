@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback, forwardRef } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import { ChevronRight, ChevronLeft, Star, ShoppingCart, Share2, X, Copy, Check, Eye, GitCompareArrows } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
@@ -259,6 +259,21 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const [quickMenu, setQuickMenu] = useState<ServiceItem | null>(null);
   const bn = language === "bn";
 
+  // --- Vertical Scroll Zoom Effect ---
+  // We use an internal ref for Framer Motion to avoid forwardRef initialization conflicts
+  const localRef = useRef<HTMLDivElement>(null);
+  
+  const { scrollYProgress } = useScroll({
+    target: localRef,
+    offset: ["start end", "end start"]
+  });
+  
+  // Smoothly scale from 0.8 (edges) to 1.05 (center)
+  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.00, 0.8]);
+  // Smoothly fade in from 0.3 to 1 when in the middle
+  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.3, 1, 1, 0.3]);
+  // -------------------------------------
+
   // --- Desktop Drag-to-Scroll State ---
   const [isDragging, setIsDragging] = useState(false);
   const dragState = useRef({ startX: 0, startScrollLeft: 0, isDown: false, dragDistance: 0 });
@@ -376,122 +391,130 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const closeShare = useCallback(() => setShareState(null), []);
 
   return (
-    <motion.section
-      ref={ref}
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.5 }}
-      className="py-4 md:py-4"
-    >
-      <div className="mb-5 flex items-center justify-between px-4 md:mb-6 md:px-0">
-        <h2 className="font-heading text-xl font-bold text-foreground md:text-3xl">{heading}</h2>
-        {viewAllLink && (
-          <button
-            onClick={() => navigate(viewAllLink)}
-            className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 cursor-pointer"
-          >
-            {t("section.viewAll")}
-            <ChevronRight className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-
-      <div className="relative group/section">
-        <button onClick={() => scroll("left")} className="absolute -left-3 top-1/2 z-10 hidden -translate-y-12/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
-          <ChevronLeft className="h-4 w-4" />
-        </button>
-        <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
-          <ChevronRight className="h-4 w-4" />
-        </button>
-
-        {/* Horizontal scroll on all screen sizes - 2 items visible on mobile, more on desktop */}
-        <div 
-          ref={scrollRef} 
-          onClickCapture={handleContainerClickCapture}
-          className={`flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
-          style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+    <section ref={ref} className="py-8 md:py-12"> {/* Increased outer padding so scale doesn't clip */}
+      <div ref={localRef}>
+        {/* Inner wrapper that scales based on scroll position */}
+        <motion.div 
+          style={{ scale, opacity, transformOrigin: "center center" }} 
+          className="will-change-transform"
         >
-          {services.map((service) => (
-            <ServiceCardWrapper
-              key={service.title}
-              service={service}
-              disableHover={isDragging}
-              onOpen={(e) => {
-                if ((e.target as HTMLElement).closest("button, a")) return;
-                if (service.slug) navigate(`/service/${service.slug}`);
-              }}
-              onLongPress={() => setQuickMenu(service)}
-            >
-              <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm pointer-events-none">
-                <img 
-                  src={service.image} 
-                  alt={service.title} 
-                  className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                  loading="lazy" 
-                  decoding="async" 
-                  fetchPriority="low" 
-                  draggable={false} // Prevents native browser image dragging
-                />
+          <motion.div
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-50px" }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="mb-5 flex items-center justify-between px-4 md:mb-6 md:px-0">
+              <h2 className="font-heading text-xl font-bold text-foreground md:text-3xl">{heading}</h2>
+              {viewAllLink && (
+                <button
+                  onClick={() => navigate(viewAllLink)}
+                  className="flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80 cursor-pointer"
+                >
+                  {t("section.viewAll")}
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+
+            <div className="relative group/section">
+              <button onClick={() => scroll("left")} className="absolute -left-3 top-1/2 z-10 hidden -translate-y-12/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
+                <ChevronLeft className="h-4 w-4" />
+              </button>
+              <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
+                <ChevronRight className="h-4 w-4" />
+              </button>
+
+              {/* Horizontal scroll on all screen sizes - 2 items visible on mobile, more on desktop */}
+              <div 
+                ref={scrollRef} 
+                onClickCapture={handleContainerClickCapture}
+                className={`flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+              >
+                {services.map((service) => (
+                  <ServiceCardWrapper
+                    key={service.title}
+                    service={service}
+                    disableHover={isDragging}
+                    onOpen={(e) => {
+                      if ((e.target as HTMLElement).closest("button, a")) return;
+                      if (service.slug) navigate(`/service/${service.slug}`);
+                    }}
+                    onLongPress={() => setQuickMenu(service)}
+                  >
+                    <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm pointer-events-none">
+                      <img 
+                        src={service.image} 
+                        alt={service.title} 
+                        className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                        loading="lazy" 
+                        decoding="async" 
+                        fetchPriority="low" 
+                        draggable={false} // Prevents native browser image dragging
+                      />
+                    </div>
+                    <div className="p-3 bg-blue-300/40 md:p-4 pointer-events-none">
+                      <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
+                        {service.title}
+                      </h3>
+                      <div className="mt-1.5 flex items-center gap-1">
+                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                        <span className="text-xs font-medium text-muted-foreground">
+                          {service.rating ? service.rating.toFixed(1) : "0.0"}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex items-end justify-between">
+                        <p className="text-sm font-bold text-foreground md:text-base">
+                          {service.price && service.price > 0 ? (
+                            <>
+                              ৳{service.price}
+                              <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
+                            </>
+                          ) : (
+                            <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
+                          )}
+                        </p>
+                        {/* Re-enable pointer events specifically for action buttons */}
+                        <div className="flex items-center gap-0.5 pointer-events-auto">
+                          <button
+                            onClick={(e) => handleAddToCart(e, service)}
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
+                            title={bn ? "কার্টে যোগ করুন" : "Add to cart"}
+                          >
+                            <ShoppingCart className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => handleCompare(e, service)}
+                            className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 cursor-pointer ${
+                              service.slug && isInCompare(service.slug)
+                                ? "bg-primary/15 text-primary"
+                                : "text-muted-foreground hover:text-primary"
+                            }`}
+                            title={bn ? "তুলনা করুন" : "Compare"}
+                            aria-label={bn ? "তুলনা করুন" : "Compare"}
+                          >
+                            <GitCompareArrows className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => handleShare(e, service)}
+                            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
+                            title={bn ? "শেয়ার করুন" : "Share"}
+                          >
+                            <Share2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </ServiceCardWrapper>
+                ))}
               </div>
-              <div className="p-3 bg-blue-300/40 md:p-4 pointer-events-none">
-                <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
-                  {service.title}
-                </h3>
-                <div className="mt-1.5 flex items-center gap-1">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {service.rating ? service.rating.toFixed(1) : "0.0"}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-end justify-between">
-                  <p className="text-sm font-bold text-foreground md:text-base">
-                    {service.price && service.price > 0 ? (
-                      <>
-                        ৳{service.price}
-                        <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
-                      </>
-                    ) : (
-                      <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
-                    )}
-                  </p>
-                  {/* Re-enable pointer events specifically for action buttons */}
-                  <div className="flex items-center gap-0.5 pointer-events-auto">
-                    <button
-                      onClick={(e) => handleAddToCart(e, service)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
-                      title={bn ? "কার্টে যোগ করুন" : "Add to cart"}
-                    >
-                      <ShoppingCart className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => handleCompare(e, service)}
-                      className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 cursor-pointer ${
-                        service.slug && isInCompare(service.slug)
-                          ? "bg-primary/15 text-primary"
-                          : "text-muted-foreground hover:text-primary"
-                      }`}
-                      title={bn ? "তুলনা করুন" : "Compare"}
-                      aria-label={bn ? "তুলনা করুন" : "Compare"}
-                    >
-                      <GitCompareArrows className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={(e) => handleShare(e, service)}
-                      className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
-                      title={bn ? "শেয়ার করুন" : "Share"}
-                    >
-                      <Share2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </ServiceCardWrapper>
-          ))}
-        </div>
+            </div>
+          </motion.div>
+        </motion.div>
       </div>
 
-      {/* Share popup rendered via portal */}
+      {/* Share popup rendered via portal (kept outside scaling wrapper to avoid transform conflicts) */}
       <AnimatePresence>
         {shareState && (
           <SharePopup
@@ -503,7 +526,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
         )}
       </AnimatePresence>
 
-      {/* Long-press quick action sheet (mobile) */}
+      {/* Long-press quick action sheet (mobile) (kept outside scaling wrapper) */}
       <AnimatePresence>
         {quickMenu && createPortal(
           <>
@@ -622,7 +645,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
           document.body
         )}
       </AnimatePresence>
-    </motion.section>
+    </section>
   );
 });
 

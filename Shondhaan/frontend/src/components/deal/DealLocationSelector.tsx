@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from "react-router-dom"; // Added useNavigate
 import { MapPin, Loader2, X, Search, Crosshair } from "lucide-react";
 import {
   Select,
@@ -15,6 +16,7 @@ import { toast } from "sonner";
 // Types
 export interface Listing {
   id: string;
+  slug?: string; // Added slug to the interface
   title: string;
   title_en?: string;
   price: number;
@@ -46,6 +48,7 @@ const DealLocationSelector = ({
 }: DealLocationSelectorProps) => {
   const { language } = useLanguage();
   const bn = language === "bn";
+  const navigate = useNavigate(); // Initialized navigate
   const baseUrl = import.meta.env.VITE_DEAL_API_BASE_URL || "";
   const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -244,6 +247,19 @@ const DealLocationSelector = ({
     [value, onChange]
   );
 
+  // Centralized click handler for search results
+  const handleResultClick = useCallback(
+    (item: Listing) => {
+      if (onSearchResultClick) {
+        onSearchResultClick(item);
+      } else {
+        const slugOrId = item.slug || item.id;
+        navigate(`/deal/ad/${slugOrId}`);
+      }
+    },
+    [onSearchResultClick, navigate]
+  );
+
   // Keyboard navigation for search results
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -258,14 +274,14 @@ const DealLocationSelector = ({
       } else if (e.key === "Enter" && activeResultIndex >= 0) {
         e.preventDefault();
         const item = results[activeResultIndex];
-        if (item && onSearchResultClick) onSearchResultClick(item);
+        if (item) handleResultClick(item);
       } else if (e.key === "Escape") {
         setSearch("");
         setResults([]);
         setActiveResultIndex(-1);
       }
     },
-    [results, activeResultIndex, onSearchResultClick]
+    [results, activeResultIndex, handleResultClick]
   );
 
   const getListingImage = (item: Listing): string => {
@@ -358,7 +374,7 @@ const DealLocationSelector = ({
           {results.map((item, index) => (
             <div
               key={item.id}
-              onClick={() => onSearchResultClick?.(item)}
+              onClick={() => handleResultClick(item)}
               className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150 ${
                 index === activeResultIndex ? "bg-gray-50" : ""
               }`}
@@ -376,7 +392,7 @@ const DealLocationSelector = ({
                     <MapPin className="h-5 w-5 text-gray-400" />
                   </div>
                 )}
-                <div className="flex-1 min-w-0">
+                <div className="flex-2 min-w-0">
                   <p className="font-medium text-gray-800 truncate">
                     {bn ? item.title : item.title_en || item.title}
                   </p>
@@ -386,9 +402,9 @@ const DealLocationSelector = ({
                       {item.location_district}, {item.location_area}
                     </span>
                   </p>
-                  <p className="text-sm font-semibold text-emerald-600 mt-0.5">
+                  {/* <p className="text-sm font-semibold text-emerald-600 mt-0.5">
                     ৳ {item.price}
-                  </p>
+                  </p> */}
                 </div>
               </div>
             </div>
