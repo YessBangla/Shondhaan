@@ -3,7 +3,7 @@ import letterheadBg from "@/assets/letterhead-yess-bangla.jpg";
 
 /**
  * A4 Letterhead Layout
- * - Uses the official Yess Bangla company pad as full-page background
+ * - Uses the official Shondhaan Bangla company pad as full-page background
  * - Reserves top/bottom margins so report content never overlaps the
  *   printed header logo or the footer contact band
  * - Designed for both on-screen preview and print/PDF output

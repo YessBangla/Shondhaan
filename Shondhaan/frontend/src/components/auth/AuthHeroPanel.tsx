@@ -17,7 +17,7 @@ const AuthHeroPanel = () => {
       titleBn: "এক প্ল্যাটফর্মে সব সমাধান",
       titleEn: "All Solutions in One Platform",
       subtitleBn: "সন্ধান, ইয়েস মার্ট, ইয়েস ডিল ও ইয়েস জবস — সবকিছু একসাথে।",
-      subtitleEn: "Shondhaan, Yess Mart, Yess Deal & Yess Jobs — all together.",
+      subtitleEn: "Shondhaan, Shondhaan Mart, Shondhaan Deal & Shondhaan Jobs — all together.",
       gradient: "from-primary/90 to-primary/60",
       image: slidePlatform,
     },
@@ -31,7 +31,7 @@ const AuthHeroPanel = () => {
     },
     {
       titleBn: "ইয়েস মার্টে কেনাকাটা",
-      titleEn: "Shop at Yess Mart",
+      titleEn: "Shop at Shondhaan Mart",
       subtitleBn: "৭৬টি ক্যাটাগরি, COD, দ্রুত ডেলিভারি ও ফ্রি শিপিং অফার।",
       subtitleEn: "76 categories, COD, fast delivery and free shipping offers.",
       gradient: "from-emerald-700/90 to-green-500/60",
@@ -39,7 +39,7 @@ const AuthHeroPanel = () => {
     },
     {
       titleBn: "ইয়েস ডিলে বেচাকেনা",
-      titleEn: "Buy & Sell on Yess Deal",
+      titleEn: "Buy & Sell on Shondhaan Deal",
       subtitleBn: "পুরাতন ও নতুন পণ্যের সরাসরি বিজ্ঞাপন — গাড়ি, মোবাইল, প্রপার্টি।",
       subtitleEn: "Direct ads for new & used items — cars, mobiles, properties.",
       gradient: "from-amber-600/90 to-orange-400/60",
@@ -47,7 +47,7 @@ const AuthHeroPanel = () => {
     },
     {
       titleBn: "ক্যারিয়ার গড়ুন ইয়েস জবসে",
-      titleEn: "Build Career with Yess Jobs",
+      titleEn: "Build Career with Shondhaan Jobs",
       subtitleBn: "ভিডিও সিভি, স্মার্ট প্রোফাইল ও সরাসরি নিয়োগদাতাদের সংযোগ।",
       subtitleEn: "Video CV, smart profiles and direct employer connections.",
       gradient: "from-blue-600/90 to-blue-400/60",

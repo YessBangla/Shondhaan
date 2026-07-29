@@ -282,8 +282,8 @@ If the customer didn't ask for any specific service, set needs_service to false.
     setStep("chat");
 
     const greetingContent = bn
-      ? `আসসালামু আলাইকুম ${name}! 👋 আমি Yess Bangla — Shondhaan এর নিজস্ব সহকারী। আপনাকে কীভাবে সাহায্য করতে পারি?`
-      : `Hello ${name}! 👋 I'm Yess Bangla — the official assistant of Shondhaan. How can I help you today?`;
+      ? `আসসালামু আলাইকুম ${name}! 👋 আমি Shondhaan এর নিজস্ব সহকারী। আপনাকে কীভাবে সাহায্য করতে পারি?`
+      : `Hello ${name}! 👋 I'm the official assistant of Shondhaan. How can I help you today?`;
 
     const greeting: Msg = { role: "assistant", content: greetingContent };
     setMessages([greeting]);

@@ -446,4 +446,71 @@ router.get('/employer/mine', requireEmployer, async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 }); 
+// ── Jobseeker: withdraw an application (soft — status only, row stays) ──
+// PATCH /api/jobseeker/applications/:id/withdraw
+router.patch('/:id/withdraw', requireAuth, async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    const [rows] = await conn.query(
+      `SELECT ja.id, ja.status, ja.jobseeker_id, j.user_id AS employer_id, j.title AS job_title
+       FROM job_applications ja
+       JOIN jobs j ON j.id = ja.job_id
+       WHERE ja.id = ? AND ja.jobseeker_id = ?
+       LIMIT 1`,
+      [req.params.id, req.shondhaanUser.id]
+    );
+    if (rows.length === 0) {
+      await conn.rollback();
+      return res.status(404).json({ message: 'Application not found or not owned by you' });
+    }
+    const application = rows[0];
+    if (['hired', 'rejected', 'withdrawn'].includes(application.status)) {
+      await conn.rollback();
+      return res.status(400).json({ message: `Cannot withdraw an application that is already ${application.status}` });
+    }
+
+    await conn.query(
+      `UPDATE job_applications SET status = 'withdrawn' WHERE id = ?`,
+      [req.params.id]
+    );
+
+    const [interviewRows] = await conn.query(
+      `SELECT id FROM interviews WHERE application_id = ? AND status = 'scheduled'`,
+      [req.params.id]
+    );
+    if (interviewRows.length > 0) {
+      await conn.query(
+        `UPDATE interviews SET status = 'declined' WHERE application_id = ? AND status = 'scheduled'`,
+        [req.params.id]
+      );
+    }
+
+    // Let the employer know — mirrors the interview-decline notification in
+    // routes/interviews.js so both paths show up the same way in their inbox.
+    await conn.query(
+      `INSERT INTO notifications (recipient_id, type, title, message, reference_id)
+       VALUES (?, ?, ?, ?, ?)`,
+      [
+        application.employer_id,
+        'application_withdrawn',
+        'একজন প্রার্থী আবেদন প্রত্যাহার করেছেন',
+        `"${application.job_title}" পদের জন্য একজন প্রার্থী তার আবেদন প্রত্যাহার করেছেন।${interviewRows.length > 0 ? ' সংশ্লিষ্ট ইন্টারভিউটিও বাতিল হয়েছে।' : ''}`,
+        application.id,
+      ]
+    );
+
+    await conn.commit();
+
+    const [full] = await pool.query(`${APPLICATION_SELECT} WHERE ja.id = ? LIMIT 1`, [req.params.id]);
+    res.json(full[0]);
+  } catch (err) {
+    await conn.rollback();
+    console.error('Withdraw application error:', err);
+    res.status(500).json({ message: 'Server error' });
+  } finally {
+    conn.release();
+  }
+});
 module.exports = router;

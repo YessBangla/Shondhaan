@@ -478,12 +478,12 @@ img[loading="lazy"] {
   100% { transform: translateX(100%); }
 }
 
-/* ───────── Yess Deal — Bikroy.com inspired theme ─────────
+/* ─────────  ─────────
    Applied via <body class="deal-theme"> on /deal routes.
    Bikroy uses a fresh green primary (#62B146) on a clean white surface
    with light gray cards. We override the semantic tokens so every
    Tailwind class (bg-primary, text-primary, ring, etc.) re-themes
-   automatically without touching individual components. The Yess Deal
+   automatically without touching individual components. The  Deal
    logo and brand wordmark remain unchanged. */
 body.deal-theme {
    --primary: 208 79% 28%;           /* #62B146 Bikroy green */

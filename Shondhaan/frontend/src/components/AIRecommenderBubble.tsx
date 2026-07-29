@@ -69,7 +69,7 @@ export default function AIRecommenderBubble() {
               <Sparkles className="h-5 w-5 shrink-0" />
               <div className="space-y-1.5">
                 <p className="text-xs opacity-90">
-                  {bn ? "Yess Help সাজেশন" : "Yess Help suggests"}
+                  {bn ? "সন্ধান সাজেশন" : "Shondhaan Help Desk"}
                 </p>
                 <p className="text-sm font-semibold leading-snug">
                   {bn ? "আপনি কি " : "Want to revisit "}

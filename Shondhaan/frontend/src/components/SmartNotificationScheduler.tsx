@@ -54,7 +54,7 @@ const SmartNotificationScheduler = () => {
                 : "Don't miss today's flash deals — check now!",
               icon: "/favicon.ico",
               badge: "/favicon.ico",
-              tag: "yess-engage",
+              tag: "Shondhaan-engage",
             },
           );
         }

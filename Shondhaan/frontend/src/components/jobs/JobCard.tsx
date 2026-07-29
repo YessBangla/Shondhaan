@@ -149,10 +149,10 @@ const education = job.education_subject || null;
       {descriptionPreview && (
         <div className="pointer-events-none absolute left-4 top-1/2 z-20  opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
           {/* Triangular tail, pointing up into the card */}
-          <div className="ml-3 h-0 w-0 border-x-8 border-x-transparent border-b-[10px] border-b-white drop-shadow-sm" />
+          <div className="ml-3 h-0 w-0 border-x-8 border-x-transparent border-b-[10px]  border-primary drop-shadow-sm" />
 
           {/* Bubble body */}
-          <div className="w-[220px] max-w-[85vw] rounded-xl bg-white p-3 text-[11px] leading-4 text-gray-700 shadow-xl">
+          <div className="w-[300px] border border-primary max-w-[85vw] rounded-xl bg-background p-3 text-[11px] leading-4 text-gray-700 shadow-xl">
             <p className="line-clamp-4">{descriptionPreview}</p>
           </div>
         </div>

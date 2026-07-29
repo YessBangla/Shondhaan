@@ -164,7 +164,7 @@ const DealAllAds = () => {
   const PAGE_SIZE = 20;
 
   useSEO({
-    title: bn ? "সকল বিজ্ঞাপন — ইয়েস ডিল" : "All Ads — Yess Deal",
+    title: bn ? "সকল বিজ্ঞাপন — ডিল" : "All Ads — Deal",
     description: bn
       ? "বাংলাদেশের সকল বিভাগ ও জেলা থেকে নতুন ও পুরাতন পণ্যের বিজ্ঞাপন দেখুন।"
       : "Browse all classified ads from every division & district in Bangladesh.",
@@ -702,7 +702,7 @@ const DealAllAds = () => {
               onClick={() => navigate("/deal")}
               className="hover:text-primary"
             >
-              {bn ? "ইয়েস ডিল" : "Yess Deal"}
+              {bn ? "ডিল" : "Deal"}
             </button>
 
             <ChevronRight className="h-3 w-3" />

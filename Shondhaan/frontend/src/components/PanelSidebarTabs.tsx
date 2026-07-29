@@ -268,7 +268,7 @@ useEffect(() => {
         {(!collapsed || inDrawer) && (
           <div className="min-w-0">
             <p className="text-[14px] font-bold text-foreground leading-tight truncate tracking-tight">{panelTitle || "প্যানেল"}</p>
-            <p className="text-[10.5px] font-medium text-muted-foreground leading-tight">Yess Workspace</p>
+            <p className="text-[10.5px] font-medium text-muted-foreground leading-tight">Shondhaan Workspace</p>
           </div>
         )}
       </div>
@@ -799,7 +799,7 @@ const CommandPalette = ({
         </div>
 
         <div className="flex items-center justify-between px-4 py-2 border-t border-border/50 text-[10px] text-muted-foreground">
-          <span>Yess Workspace</span>
+          <span>Shondhaan Workspace</span>
           <span>Theme: <b>{themeMode}</b></span>
           <span>Lang: <b>{language}</b></span>
         </div>

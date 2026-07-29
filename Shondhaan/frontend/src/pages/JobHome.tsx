@@ -96,8 +96,7 @@ const JobHome = () => {
   // would only ever run once on mount and never pick up backend changes
   // without a full page reload — this is the actual reason edits made to
   // job_categories weren't showing up.
-  const JOB_CATEGORIES_ENDPOINT =
-    import.meta.env.VITE_JOB_CATEGORIES_URL || "https://backend-yjob.shondhaan.com/api/job-categories";
+  const JOB_CATEGORIES_ENDPOINT = `${import.meta.env.VITE_YESSJOB_API_URL}/api/job-categories`;
 
   const { data: fetchedCategories } = useQuery({
     queryKey: ["job-categories"],

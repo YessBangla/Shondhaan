@@ -1,7 +1,7 @@
 import yessDealLogo from "@/assets/yess-deal-logo.png";
 
 /**
- * Floating Yess Deal logo overlay shown on every listing image
+ * Floating Deal logo overlay shown on every listing image
  * as a subtle watermark / shadow.
  * Place inside any element with `position: relative`.
  */

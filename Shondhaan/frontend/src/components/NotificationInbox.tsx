@@ -76,7 +76,7 @@ export default function NotificationInbox({ open, onClose }: Props) {
     haptic("medium");
     setItems([]);
     localStorage.setItem(STORAGE_KEY, "[]");
-    window.dispatchEvent(new CustomEvent("yess:inbox-update"));
+    window.dispatchEvent(new CustomEvent(":inbox-update"));
   };
 
   const fmtTime = (t: number) => {

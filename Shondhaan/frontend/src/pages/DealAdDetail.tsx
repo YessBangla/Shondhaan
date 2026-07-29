@@ -193,8 +193,8 @@ const DealAdDetail = () => {
   const adImage = listing?.images?.[0];
   const adDesc = listing
     ? bn
-      ? `${listing.title} — ৳${listing.price.toLocaleString("bn-BD")}। ইয়েস ডিলে দেখুন। নিরাপদ কেনাবেচা।`
-      : `${listing.title} — ৳${listing.price.toLocaleString()}. View on Yess Deal. Safe trading.`
+      ? `${listing.title} — ৳${listing.price.toLocaleString("bn-BD")}। ডিলে দেখুন। নিরাপদ কেনাবেচা।`
+      : `${listing.title} — ৳${listing.price.toLocaleString()}. View on Deal. Safe trading.`
     : "";
   useSEO({
     title: listing
@@ -337,7 +337,7 @@ const DealAdDetail = () => {
       <div className="app-container py-4 pb-28 md:pb-10">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground mb-4">
-          <button onClick={() => navigate("/deal")} className="hover:text-primary">{bn ? "ইয়েস ডিল" : "Yess Deal"}</button>
+          <button onClick={() => navigate("/deal")} className="hover:text-primary">{bn ? "ডিল" : "Deal"}</button>
           <ChevronRight className="h-3 w-3" />
           {cat && (
             <>

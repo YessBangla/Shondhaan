@@ -358,7 +358,7 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
           {aiSummary ? (
             <div>
               <p className="text-xs font-medium text-muted-foreground flex items-center gap-1 mb-1">
-                <Sparkles className="h-3 w-3" /> {bn ? "Yess Bangla AI সারাংশ" : "Yess Bangla AI Summary"}
+                <Sparkles className="h-3 w-3" /> {bn ? "Shondhaan AI সারাংশ" : "Shondhaan AI Summary"}
               </p>
               <p className="text-sm text-foreground">{aiSummary}</p>
             </div>
