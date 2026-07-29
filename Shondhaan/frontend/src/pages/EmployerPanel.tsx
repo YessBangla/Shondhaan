@@ -15,7 +15,7 @@ import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
@@ -29,6 +29,11 @@ function getAuthHeaders() {
     return {};
   }
   return { Authorization: `Bearer ${auth.token}` };
+}
+
+function resolveMediaUrl(url?: string | null) {
+  if (!url) return "";
+  return url.startsWith("http") ? url : `${YESSJOB_API_BASE}${url}`;
 }
 
 async function fetchJobsJson(path: string, init?: RequestInit) {
@@ -257,6 +262,7 @@ const EmployerPanel = () => {
   const [viewedApplicantIds, setViewedApplicantIds] = useState<Set<string>>(new Set());
   const [applicantSort, setApplicantSort] = useState<"newest" | "oldest" | "score">("newest");
   const [commentDraft, setCommentDraft] = useState<{ id: string; text: string } | null>(null);
+  const [showPackageSelect, setShowPackageSelect] = useState(false);
 
   const markViewed = (id: string) => {
     setViewedApplicantIds(prev => new Set(prev).add(id));
@@ -404,14 +410,16 @@ const EmployerPanel = () => {
     }
   }, [isEmployer, profile, fetchMyJobs, fetchApplications, fetchSeekers,
      fetchBookmarks, fetchInterviews, fetchPackages, fetchNotifications, fetchUnreadCount]);
-useEffect(() => {
-  if (!isEmployer || !profile) return;
-  const t = setInterval(() => {
-    fetchUnreadCount();
-    fetchInterviews();
-  }, 30000);
-  return () => clearInterval(t);
-}, [isEmployer, profile, fetchUnreadCount, fetchInterviews]);
+
+  useEffect(() => {
+    if (!isEmployer || !profile) return;
+    const t = setInterval(() => {
+      fetchUnreadCount();
+      fetchInterviews();
+    }, 30000);
+    return () => clearInterval(t);
+  }, [isEmployer, profile, fetchUnreadCount, fetchInterviews]);
+
   // Light polling so a candidate's decline/cancel shows up without a manual refresh
   useEffect(() => {
     if (!isEmployer || !profile) return;
@@ -586,6 +594,11 @@ useEffect(() => {
       console.error(err);
       toast.error(err.message || "জব রিওপেন করতে সমস্যা হয়েছে");
     }
+  };
+
+  const selectPackageAndPost = (pkg: any) => {
+    setShowPackageSelect(false);
+    navigate(`/jobs/post?package_id=${pkg.id}`);
   };
 
   const updateJob = async () => {
@@ -955,7 +968,9 @@ useEffect(() => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-bold flex items-center gap-2"><Briefcase className="h-5 w-5 text-primary" /> আমার চাকরি ({myJobs.length})</h2>
-              <Button size="sm" onClick={() => navigate("/jobs/post")}><Plus className="h-3.5 w-3.5 mr-1" /> নতুন পোস্ট</Button>
+              <Button size="sm" onClick={() => setShowPackageSelect(true)}>
+                <Plus className="h-3.5 w-3.5 mr-1" /> নতুন পোস্ট
+              </Button>
             </div>
             {myJobs.length === 0 ? <p className="text-center py-8 text-muted-foreground text-sm">কোনো চাকরি পোস্ট করা হয়নি</p> :
               myJobs.map(job => {
@@ -1228,180 +1243,239 @@ useEffect(() => {
               ))}
             </div>
 
-            {/* Applicant cards */}
+            {/* ── Applicant cards — BDJobs-style layout ── */}
             {sortedApps.length === 0 ? (
               <p className="text-center py-8 text-muted-foreground text-sm">কোনো আবেদন নেই</p>
             ) : (
               <div className="space-y-3">
                 {sortedApps.map((app: any, idx: number) => {
-                  const isViewed = viewedApplicantIds.has(app.id);
                   const isRejected = app.hiring_stage === "rejected";
                   const isShortlisted = ["shortlisted", "interview_scheduled", "interviewed", "scored", "hired"].includes(app.hiring_stage || "");
                   const matchPct = app.score != null ? Math.round(app.score) : null;
+                  const existingInterview = interviews.find((iv: any) => iv.application_id === app.id);
+                  const photoSrc = resolveMediaUrl(app.jobseeker_photo_url);
+
+                  const hasInterviewType = (t: string) => existingInterview?.interview_type === t;
 
                   return (
                     <div
                       key={app.id}
                       onMouseEnter={() => markViewed(app.id)}
-                      className={`border rounded-lg bg-card overflow-hidden ${isViewed ? "" : "border-l-4 border-l-primary"}`}
+                      className="flex flex-col md:flex-row border border-gray-200 rounded-lg bg-card overflow-hidden shadow-sm"
                     >
-                      <div className="flex flex-col md:flex-row gap-3 p-3">
-                        {/* Left: checkbox, avatar, index */}
-                        <div className="flex md:flex-col items-center gap-2 md:w-16 shrink-0">
-                          <span className="text-[10px] font-bold text-muted-foreground">{idx + 1}</span>
+                      {/* ── Left: dark photo panel ── */}
+                      <div className="relative w-full md:w-28 shrink-0 bg-slate-700 flex md:flex-col text-white">
+                        <span className="absolute top-1.5 left-1.5 h-4 w-4 rounded-full bg-white/90 text-slate-800 text-[9px] font-bold flex items-center justify-center z-10">
+                          {idx + 1}
+                        </span>
+                        <input
+                          type="checkbox"
+                          checked={selectedApplicantIds.has(app.id)}
+                          onChange={() => toggleSelectApplicant(app.id)}
+                          className="absolute top-1.5 right-1.5 h-3.5 w-3.5 rounded z-10 md:hidden"
+                        />
+                        <div className="flex-1 flex items-center justify-center overflow-hidden py-4 md:py-3">
+                          {photoSrc ? (
+                            <img src={photoSrc} alt={app.jobseeker_name} className="h-20 w-20 md:h-16 md:w-16 rounded-md object-cover" />
+                          ) : (
+                            <div className="h-20 w-20 md:h-16 md:w-16 rounded-md bg-white/10 flex items-center justify-center text-white font-bold text-lg">
+                              {(app.jobseeker_name || "?").charAt(0)}
+                            </div>
+                          )}
+                        </div>
+                        <button
+                          onClick={() => setCommentDraft({ id: app.id, text: app.interviewer_notes || "" })}
+                          className="text-[10px] py-2 bg-slate-800 hover:bg-slate-900 text-center flex items-center justify-center gap-1"
+                        >
+                          <FileText className="h-3 w-3" /> Message
+                        </button>
+                      </div>
+
+                      {/* ── Identity column ── */}
+                      <div className="flex-1 min-w-0 p-3 space-y-1.5">
+                        <p className="font-bold text-sm text-primary leading-tight">{app.jobseeker_name}</p>
+                        <div className="flex flex-col gap-0.5 text-[11px] text-muted-foreground">
+                          {app.jobseeker_phone && <span className="flex items-center gap-1">📞 {app.jobseeker_phone}</span>}
+                          {app.address && (
+                            <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> {app.address}</span>
+                          )}
+                        </div>
+
+                        {matchPct != null && (
+                          <div className="flex flex-col items-center w-fit pt-1">
+                            <div className="h-11 w-11 rounded-full border-2 border-green-500 flex items-center justify-center text-[11px] font-bold text-green-600">
+                              {matchPct}%
+                            </div>
+                            <span className="text-[9px] text-muted-foreground">Matched</span>
+                          </div>
+                        )}
+
+                        <div className="flex flex-col gap-0.5 text-[10px] text-muted-foreground pt-1">
+                          {app.created_at && (
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" /> {format(new Date(app.created_at), "d MMM yyyy")}
+                            </span>
+                          )}
+                          {app.age_at_application != null && <span>Age: {app.age_at_application}</span>}
+                          {app.expected_salary != null && (
+                            <span>💰 Expected: ৳{Number(app.expected_salary).toLocaleString("bn-BD")}</span>
+                          )}
+                          {app.current_salary != null && (
+                            <span>Current: ৳{Number(app.current_salary).toLocaleString("bn-BD")}</span>
+                          )}
+                        </div>
+
+                        {(app.linkedin_url || app.cv_url) && (
+                          <div className="pt-1 space-y-0.5 text-[10px]">
+                            <p className="text-muted-foreground font-medium">Profile:</p>
+                            {app.linkedin_url && (
+                              <a href={app.linkedin_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline block">
+                                Other Profile: LinkedIn
+                              </a>
+                            )}
+                            {app.cv_url && (
+                              <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-primary flex items-center gap-0.5 hover:underline">
+                                <FileText className="h-3 w-3" /> Customized CV
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* ── Middle: education/experience column ── */}
+                      <div className="flex-1 min-w-0 p-3 space-y-2 border-t md:border-t-0 md:border-l text-[11px]">
+                        {app.education?.[0] && (
+                          <div>
+                            <p className="font-semibold">{app.education[0].degree}</p>
+                            {app.education[0].institute && <p className="text-muted-foreground">{app.education[0].institute}</p>}
+                          </div>
+                        )}
+                        {app.experience?.length > 0 && (
+                          <div className="space-y-1">
+                            {app.experience.slice(0, 2).map((exp: any, i: number) => (
+                              <p key={i}>
+                                <span className="font-semibold">{exp.company}</span>
+                                {exp.title && <><br /><span className="text-foreground">{exp.title}</span></>}
+                                {exp.duration && <span className="text-muted-foreground"> ({exp.duration})</span>}
+                              </p>
+                            ))}
+                          </div>
+                        )}
+                        {app.skills?.length > 0 && (
+                          <button className="text-primary flex items-center gap-1 hover:underline">
+                            Skills &amp; Area of Expertise ▾
+                          </button>
+                        )}
+                        {app.job_title && (
+                          <p className="text-muted-foreground">
+                            Applied for: <span className="font-medium text-foreground">{app.job_title}</span>
+                          </p>
+                        )}
+                        {app.cover_letter && <p className="text-muted-foreground line-clamp-2">{app.cover_letter}</p>}
+                        {app.interviewer_notes && <p className="text-muted-foreground">📝 {app.interviewer_notes}</p>}
+                        {app.video_cv_url && (
+                          <a href={app.video_cv_url} target="_blank" rel="noopener noreferrer" className="text-blue-600 flex items-center gap-0.5 hover:underline">
+                            <Video className="h-3 w-3" /> Video CV
+                          </a>
+                        )}
+                      </div>
+
+                      {/* ── Right: status + actions ── */}
+                      <div className="w-full md:w-40 shrink-0 border-t md:border-t-0 md:border-l p-3 flex flex-col items-center gap-2.5">
+                        <div className="flex items-center gap-2 w-full justify-between md:justify-center">
+                          {app.is_available ? (
+                            <Badge className="bg-pink-100 text-pink-700 text-[9px] whitespace-nowrap px-2 py-1 rounded-full">
+                              ⏱ Immediately Available
+                            </Badge>
+                          ) : <span />}
                           <input
                             type="checkbox"
                             checked={selectedApplicantIds.has(app.id)}
                             onChange={() => toggleSelectApplicant(app.id)}
-                            className="h-4 w-4 rounded border-input"
+                            className="hidden md:block h-3.5 w-3.5 rounded border-input"
                           />
-                          <div className="h-12 w-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold overflow-hidden">
-                            {app.jobseeker_photo_url ? (
-                              <img src={app.jobseeker_photo_url} alt={app.jobseeker_name} className="h-full w-full object-cover" />
-                            ) : (
-                              (app.jobseeker_name || "?").charAt(0)
-                            )}
-                          </div>
                         </div>
 
-                        {/* Middle: identity + meta */}
-                        <div className="flex-1 min-w-0 space-y-1.5">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <p className="font-bold text-sm text-primary">{app.jobseeker_name}</p>
-                              <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground mt-0.5">
-                                {app.jobseeker_phone && <span>📞 {app.jobseeker_phone}</span>}
-                                {app.jobseeker_email && <span>✉️ {app.jobseeker_email}</span>}
-                              </div>
-                            </div>
-                            {matchPct != null && (
-                              <div className="flex flex-col items-center shrink-0">
-                                <div className="h-10 w-10 rounded-full border-2 border-green-500 flex items-center justify-center text-[10px] font-bold text-green-600">
-                                  {matchPct}%
-                                </div>
-                                <span className="text-[8px] text-muted-foreground">Matched</span>
-                              </div>
-                            )}
-                          </div>
-
-                          {app.job_title && (
-                            <p className="text-[11px] text-muted-foreground">
-                              আবেদিত পদ: <span className="font-medium text-foreground">{app.job_title}</span>
-                            </p>
-                          )}
-
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
-                            {app.created_at && (
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" /> {format(new Date(app.created_at), "d MMM yyyy")}
-                              </span>
-                            )}
-                            {app.age_at_application != null && <span>বয়স: {app.age_at_application}</span>}
-                            {app.expected_salary != null && (
-                              <span>প্রত্যাশিত: ৳{Number(app.expected_salary).toLocaleString("bn-BD")}</span>
-                            )}
-                          </div>
-
-                          {app.cover_letter && (
-                            <p className="text-[11px] text-muted-foreground line-clamp-2">{app.cover_letter}</p>
-                          )}
-
-                          {app.interviewer_notes && (
-                            <p className="text-[11px] text-muted-foreground">📝 {app.interviewer_notes}</p>
-                          )}
-
-                          <div className="flex flex-wrap gap-2 pt-0.5">
-                            {app.cv_url && (
-                              <a href={app.cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-primary flex items-center gap-0.5 hover:underline">
-                                <FileText className="h-3 w-3" /> CV দেখুন
-                              </a>
-                            )}
-                            {app.video_cv_url && (
-                              <a href={app.video_cv_url} target="_blank" rel="noopener noreferrer" className="text-[10px] text-blue-600 flex items-center gap-0.5 hover:underline">
-                                <Video className="h-3 w-3" /> ভিডিও সিভি
-                              </a>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Right: shortlist/reject + action icons */}
-                        <div className="flex flex-row md:flex-col items-center gap-3 md:w-32 shrink-0 md:border-l md:pl-3">
-                          {isRejected ? (
-                            <Badge className="bg-red-100 text-red-800 text-[10px]">বাতিল</Badge>
-                          ) : (
-                            <div className="flex gap-2">
+                        {isRejected ? (
+                          <Badge className="bg-red-100 text-red-800 text-[10px]">বাতিল</Badge>
+                        ) : (
+                          <div className="flex flex-col items-center gap-1">
+                            <div className="flex gap-3">
                               <button
                                 title="Shortlist"
                                 onClick={() => updateHiringStage(app.id, "shortlisted")}
-                                className={`h-8 w-8 rounded-full flex items-center justify-center border ${
+                                className={`h-9 w-9 rounded-full flex items-center justify-center border-2 ${
                                   isShortlisted ? "bg-green-500 border-green-500 text-white" : "border-green-500 text-green-600 hover:bg-green-50"
                                 }`}
                               >
-                                <CheckCircle className="h-4 w-4" />
+                                <CheckCircle className="h-5 w-5" />
                               </button>
                               <button
                                 title="Reject"
                                 onClick={() => updateHiringStage(app.id, "rejected")}
-                                className="h-8 w-8 rounded-full flex items-center justify-center border border-red-500 text-red-600 hover:bg-red-50"
+                                className="h-9 w-9 rounded-full flex items-center justify-center border-2 border-red-500 text-red-600 hover:bg-red-50"
                               >
-                                <XCircle className="h-4 w-4" />
+                                <XCircle className="h-5 w-5" />
                               </button>
                             </div>
-                          )}
+                            <div className="flex gap-4 text-[9px] text-muted-foreground">
+                              <span>Shortlist</span>
+                              <span>Reject</span>
+                            </div>
+                          </div>
+                        )}
 
-                         {(() => {
-  const existingInterview = interviews.find((iv: any) => iv.application_id === app.id);
-  return (
-    <div className="w-full space-y-1.5">
-      {existingInterview ? (
-        <div className="text-[9px] border rounded px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
-          <p className="font-bold flex items-center gap-1">
-            <CalendarCheck className="h-3 w-3" /> শিডিউল পাঠানো হয়েছে
-          </p>
-          <p>{format(new Date(existingInterview.scheduled_at), "d MMM, hh:mm a")}</p>
-          <button
-            className="underline mt-0.5"
-            onClick={() => setInterviewForm({
-              application_id: app.id,
-              interview_type: existingInterview.interview_type,
-              scheduled_at: existingInterview.scheduled_at?.slice(0, 16) || "",
-              duration_minutes: existingInterview.duration_minutes || 30,
-              location: existingInterview.location || "",
-              meeting_link: existingInterview.meeting_link || "",
-              notes: existingInterview.notes || "",
-            })}
-          >
-            সময় পরিবর্তন করুন
-          </button>
-        </div>
-      ) : (
-        <button
-          onClick={() => setInterviewForm({
-            application_id: app.id, interview_type: "in-person",
-            scheduled_at: "", duration_minutes: 30, location: "", meeting_link: "", notes: "",
-          })}
-          className="text-[10px] w-full border rounded px-2 py-1.5 bg-primary/5 border-primary/40 text-primary hover:bg-primary/10 flex items-center gap-1 justify-center font-semibold"
-        >
-          <CalendarCheck className="h-3.5 w-3.5" /> ইন্টারভিউ শিডিউল করুন
-        </button>
-      )}
-      <button
-        onClick={() => setScoreForm({ id: app.id, score: app.score || 0, notes: app.interviewer_notes || "" })}
-        className="text-[9px] border rounded px-1.5 py-1 hover:bg-muted flex items-center gap-1 justify-center w-full"
-      >
-        <Star className="h-3 w-3" /> টেস্ট / স্কোর
-      </button>
-    </div>
-  );
-})()}
-
+                        {/* Assessment stage icons */}
+                        <div className="w-full space-y-1.5 text-[10px] pt-1">
                           <button
-                            onClick={() => setCommentDraft({ id: app.id, text: app.interviewer_notes || "" })}
-                            className="text-[9px] text-primary flex items-center gap-1 hover:underline"
+                            onClick={() => setScoreForm({ id: app.id, score: app.score || 0, notes: app.interviewer_notes || "" })}
+                            className={`w-full flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted ${app.score != null ? "text-green-600 font-medium" : "text-muted-foreground"}`}
                           >
-                            <Plus className="h-3 w-3" /> Comment
+                            <Star className="h-3.5 w-3.5 shrink-0" /> Online Test
+                          </button>
+                          <button
+                            onClick={() => setInterviewForm({
+                              application_id: app.id, interview_type: "in-person",
+                              scheduled_at: existingInterview?.interview_type === "in-person" ? (existingInterview.scheduled_at?.slice(0, 16) || "") : "",
+                              duration_minutes: 30, location: "", meeting_link: "", notes: "",
+                            })}
+                            className={`w-full flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted ${hasInterviewType("in-person") ? "text-blue-600 font-medium" : "text-muted-foreground"}`}
+                          >
+                            <UserCheck className="h-3.5 w-3.5 shrink-0" /> Face to Face
+                          </button>
+                          <button
+                            onClick={() => setScoreForm({ id: app.id, score: app.score || 0, notes: app.interviewer_notes || "" })}
+                            className="w-full flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted text-muted-foreground"
+                          >
+                            <Pencil className="h-3.5 w-3.5 shrink-0" /> Written Test
+                          </button>
+                          <button
+                            onClick={() => setInterviewForm({
+                              application_id: app.id, interview_type: "online",
+                              scheduled_at: existingInterview?.interview_type === "online" ? (existingInterview.scheduled_at?.slice(0, 16) || "") : "",
+                              duration_minutes: 30, location: "", meeting_link: "", notes: "",
+                            })}
+                            className={`w-full flex items-center gap-2 rounded px-2 py-1.5 hover:bg-muted ${hasInterviewType("online") ? "text-blue-600 font-medium" : "text-muted-foreground"}`}
+                          >
+                            <Video className="h-3.5 w-3.5 shrink-0" /> Video Interview
                           </button>
                         </div>
+
+                        {existingInterview && (
+                          <div className="w-full text-[9px] border rounded px-2 py-1.5 bg-blue-50 dark:bg-blue-900/20 text-blue-800 dark:text-blue-300">
+                            <p className="font-bold flex items-center gap-1">
+                              <CalendarCheck className="h-3 w-3" /> শিডিউল পাঠানো হয়েছে
+                            </p>
+                            <p>{format(new Date(existingInterview.scheduled_at), "d MMM, hh:mm a")}</p>
+                          </div>
+                        )}
+
+                        <button
+                          onClick={() => setCommentDraft({ id: app.id, text: app.interviewer_notes || "" })}
+                          className="w-full border rounded-md px-2 py-1.5 text-primary flex items-center gap-1 justify-center hover:bg-primary/5 font-medium"
+                        >
+                          <Plus className="h-3 w-3" /> Comment
+                        </button>
                       </div>
                     </div>
                   );
@@ -1621,9 +1695,60 @@ useEffect(() => {
         {(activeTab) => renderContent(activeTab)}
       </PanelSidebarTabs>
 
+      {/* Package Selection Modal — shown before posting a new job */}
+      <Dialog open={showPackageSelect} onOpenChange={setShowPackageSelect}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>প্যাকেজ নির্বাচন করুন</DialogTitle>
+            <DialogDescription>
+              জব পোস্ট করার আগে আপনার প্রয়োজন অনুযায়ী একটি প্যাকেজ বেছে নিন
+            </DialogDescription>
+          </DialogHeader>
+          {packages.length === 0 ? (
+            <p className="text-center py-8 text-muted-foreground text-sm">কোনো প্যাকেজ পাওয়া যায়নি</p>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+              {packages.map((pkg: any) => {
+                const isRecommended = pkg.is_featured;
+                const visLevel = pkg.visibility_level;
+                const features = typeof pkg.features === "string" ? JSON.parse(pkg.features || "[]") : (pkg.features || []);
+                return (
+                  <div
+                    key={pkg.id}
+                    className={`border rounded-xl p-4 bg-card relative ${isRecommended ? "border-primary ring-2 ring-primary/20" : ""} ${visLevel === "hot" ? "border-red-400" : ""}`}
+                  >
+                    {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] px-3">জনপ্রিয়</Badge>}
+                    {visLevel === "hot" && <Badge className="absolute -top-2.5 left-3 bg-red-500 text-white text-[10px] px-3">🔥 Special</Badge>}
+                    <div className="flex items-center gap-2 mb-2">
+                      {getPackageIcon(visLevel)}
+                      <h3 className="font-bold text-sm">{pkg.name}</h3>
+                    </div>
+                    <p className="text-xl font-extrabold text-primary">
+                      ৳{Number(pkg.price).toLocaleString("bn-BD")}
+                      {pkg.price > 0 && <span className="text-[10px] font-normal text-muted-foreground"> +ভ্যাট</span>}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground mb-2">{pkg.duration_days} দিন ভিজিবিলিটি</p>
+                    <ul className="space-y-1 mb-3">
+                      {features.slice(0, 3).map((f: string, i: number) => (
+                        <li key={i} className="text-[10px] text-muted-foreground flex items-start gap-1">
+                          <CheckCircle className="h-3 w-3 text-green-500 shrink-0 mt-0.5" />{f}
+                        </li>
+                      ))}
+                    </ul>
+                    <Button size="sm" className="w-full" variant={isRecommended ? "default" : "outline"} onClick={() => selectPackageAndPost(pkg)}>
+                      এই প্যাকেজ নির্বাচন করুন
+                    </Button>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Interview Schedule Modal */}
       <Dialog open={!!interviewForm} onOpenChange={() => setInterviewForm(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>ইন্টারভিউ শিডিউল করুন</DialogTitle></DialogHeader>
           {interviewForm && (
             <div className="space-y-3">
@@ -1667,7 +1792,7 @@ useEffect(() => {
 
       {/* Score Modal */}
       <Dialog open={!!scoreForm} onOpenChange={() => setScoreForm(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>প্রার্থী স্কোরিং</DialogTitle></DialogHeader>
           {scoreForm && (
             <div className="space-y-3">
@@ -1687,7 +1812,7 @@ useEffect(() => {
 
       {/* Edit Job Modal */}
       <Dialog open={!!editJobForm} onOpenChange={() => setEditJobForm(null)}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>জব সম্পাদনা করুন</DialogTitle></DialogHeader>
           {editJobForm && (
             <div className="space-y-3">
@@ -1731,7 +1856,7 @@ useEffect(() => {
 
       {/* Comment Modal (applications tab) */}
       <Dialog open={!!commentDraft} onOpenChange={() => setCommentDraft(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm" aria-describedby={undefined}>
           <DialogHeader><DialogTitle>মন্তব্য যোগ করুন</DialogTitle></DialogHeader>
           {commentDraft && (
             <div className="space-y-3">

@@ -1,4 +1,4 @@
-// server.js
+
 require('dotenv').config();
 
 const express = require('express');
@@ -10,7 +10,6 @@ const app = express();
 
 const { createJobCategoriesTable } = require("./database/Createjobcategoriestable");
 
-
 const createEmployerProfilesTable = require('./database/createEmployerProfilesTable');
 const createJobsTable = require('./database/createJobsTable');
 const createJobCandidateRequirementsTable = require('./database/Createjobcandidaterequirementstable');
@@ -20,6 +19,8 @@ const createJobseekerProfilesTable = require('./database/createJobseekerProfiles
 const createApplicationsTable = require('./database/Createapplicationstable');
 const createInterviewsTable = require('./database/interviewsTable');
 const notificationsTable = require('./database/notificationstable');
+const  createPackagesTable  = require('./database/packagestable');
+const seedPackages = require('./database/seedPackages');
 app.use(cors({
   origin: ['http://localhost:8080'],
   credentials: true,
@@ -42,18 +43,13 @@ app.use('/api/jobseeker/profile', require('./routes/jobSeekerProfile'));
 app.use('/api/jobseeker/applications', require('./routes/applications'));
 app.use('/api/interviews', require('./routes/interviews'));
 app.use('/api/notifications', require('./routes/notifications'));
-
+app.use('/api/packages', require('./routes/packages'));
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });
 
 const PORT = process.env.PORT || 5050;
 
-// Tables must be created in dependency order, each one awaited before the
-// next starts — job_categories before jobs (jobs.category_id FKs into it),
-// and jobs before the three satellite tables (they all FK into jobs.id).
-// The server only starts listening once every table is confirmed to exist,
-// so no request can hit a route before its table is ready.
 async function initDatabaseAndStart() {
   try {
     await createJobCategoriesTable();
@@ -66,6 +62,8 @@ async function initDatabaseAndStart() {
     await createApplicationsTable();          // must come after jobs
    await createInterviewsTable();          // must come after jobs + job_applications
     await notificationsTable();          // can run at any point, no FKs
+    await createPackagesTable();         // must come before the next line
+    await seedPackages();                // seed initial packages if table is empty
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
