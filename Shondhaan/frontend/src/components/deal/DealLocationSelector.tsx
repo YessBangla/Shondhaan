@@ -65,7 +65,7 @@ const DealLocationSelector = ({ value, onChange }: DealLocationSelectorProps) =>
       setLoading(true);
 
       const res = await fetch(
-        `http://localhost:4000/api/deal/listings?search=${encodeURIComponent(query)}`
+        `VITE_DEAL_API_BASE_URL/api/deal/listings?search=${encodeURIComponent(query)}`
       );
 
       const data = await res.json();

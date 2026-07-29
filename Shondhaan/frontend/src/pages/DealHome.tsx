@@ -40,7 +40,7 @@ import yessDealLogo from "@/assets/yess-deal-logo.png";
 import { useSEO } from "@/hooks/useSEO";
 
 const DEAL_API_BASE_URL = (
-  import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000"
+  import.meta.env.VITE_DEAL_API_BASE_URL || "VITE_DEAL_API_BASE_URL"
 ).replace(/\/+$/, "");
 
 const getDealImageUrl = (url?: string | null) => {
