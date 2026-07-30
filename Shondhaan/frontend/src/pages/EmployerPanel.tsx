@@ -5,7 +5,8 @@ import {
   Building2, Briefcase, Users, Search, Star, MapPin, Calendar,
   Eye, Plus, FileText, BookmarkPlus, Clock, Video, UserCheck,
   BarChart3, Settings, Bookmark, CalendarCheck, Package, CheckCircle,
-  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil, Bell
+  XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil, Bell,
+  Wallet, CreditCard
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
@@ -263,6 +264,11 @@ const EmployerPanel = () => {
   const [applicantSort, setApplicantSort] = useState<"newest" | "oldest" | "score">("newest");
   const [commentDraft, setCommentDraft] = useState<{ id: string; text: string } | null>(null);
   const [showPackageSelect, setShowPackageSelect] = useState(false);
+
+  // ── Prepaid / Postpaid selection (ShurjoPay checkout) ──
+  const [showPaymentTypeSelect, setShowPaymentTypeSelect] = useState(false);
+  const [selectedPackageForPayment, setSelectedPackageForPayment] = useState<any>(null);
+  const [prepaidLoading, setPrepaidLoading] = useState(false);
 
   const markViewed = (id: string) => {
     setViewedApplicantIds(prev => new Set(prev).add(id));
@@ -596,9 +602,44 @@ const EmployerPanel = () => {
     }
   };
 
+  // Step 1: user picks a package from the pricing grid/modal.
+  // We don't post the job yet — first they must choose prepaid vs postpaid.
   const selectPackageAndPost = (pkg: any) => {
     setShowPackageSelect(false);
-    navigate(`/jobs/post?package_id=${pkg.id}`);
+    setSelectedPackageForPayment(pkg);
+    setShowPaymentTypeSelect(true);
+  };
+
+  // Postpaid: skip online payment, go straight to job posting. Billing is
+  // settled later (e.g. monthly invoice) — enforced server-side, not here.
+  const proceedPostpaid = (pkg: any) => {
+    setShowPaymentTypeSelect(false);
+    setSelectedPackageForPayment(null);
+    navigate(`/jobs/post?package_id=${pkg.id}&payment_type=postpaid`);
+  };
+
+  // Prepaid: ask our backend to open a ShurjoPay session for this package,
+  // then hand the browser off to ShurjoPay's hosted checkout page. The
+  // ShurjoPay merchant credentials (SURJOPAY_MERCHANT_NAME/PASSWORD) stay
+  // on the server — never call get_token/secret-pay directly from the browser.
+  const proceedPrepaid = async (pkg: any) => {
+    setPrepaidLoading(true);
+    try {
+      const data = await fetchJobsJson(`/api/payments/shurjopay/initiate`, {
+        method: "POST",
+        body: JSON.stringify({
+          package_id: pkg.id,
+          amount: pkg.price,
+        }),
+      });
+      if (!data?.checkout_url) throw new Error("পেমেন্ট লিংক তৈরি করা যায়নি");
+      // Full redirect (not fetch) — ShurjoPay's hosted page needs a real navigation.
+      window.location.href = data.checkout_url;
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "পেমেন্ট শুরু করতে সমস্যা হয়েছে");
+      setPrepaidLoading(false);
+    }
   };
 
   const updateJob = async () => {
@@ -1663,7 +1704,7 @@ const EmployerPanel = () => {
                     {pkg.max_jobs_per_year && (
                       <p className="text-[10px] text-muted-foreground mb-3 border-t pt-2">📌 বছরে সর্বোচ্চ {pkg.max_jobs_per_year}টি জব</p>
                     )}
-                    <Button className="w-full" variant={isRecommended ? "default" : "outline"} size="sm">
+                    <Button className="w-full" variant={isRecommended ? "default" : "outline"} size="sm" onClick={() => selectPackageAndPost(pkg)}>
                       নির্বাচন করুন
                     </Button>
                   </div>
@@ -1741,6 +1782,57 @@ const EmployerPanel = () => {
                   </div>
                 );
               })}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Prepaid / Postpaid Selection Modal — shown right after a package is picked */}
+      <Dialog open={showPaymentTypeSelect} onOpenChange={(open) => { if (!prepaidLoading) { setShowPaymentTypeSelect(open); if (!open) setSelectedPackageForPayment(null); } }}>
+        <DialogContent className="max-w-md" aria-describedby={undefined}>
+          <DialogHeader>
+            <DialogTitle>পেমেন্ট পদ্ধতি নির্বাচন করুন</DialogTitle>
+            <DialogDescription>
+              {selectedPackageForPayment && (
+                <>
+                  <span className="font-semibold text-foreground">{selectedPackageForPayment.name}</span> — ৳{Number(selectedPackageForPayment.price).toLocaleString("bn-BD")} প্যাকেজের জন্য প্রিপেইড বা পোস্টপেইড নির্বাচন করুন
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {selectedPackageForPayment && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+              {/* Prepaid → ShurjoPay online checkout, pay now */}
+              <button
+                type="button"
+                disabled={prepaidLoading}
+                onClick={() => proceedPrepaid(selectedPackageForPayment)}
+                className="border-2 border-primary rounded-xl p-4 text-left hover:bg-primary/5 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <CreditCard className="h-5 w-5 text-primary" />
+                  <span className="font-bold text-sm">প্রিপেইড</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  {prepaidLoading ? "শুরপে পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে..." : "ShurjoPay দিয়ে এখনই কার্ড/মোবাইল ব্যাংকিং দিয়ে পেমেন্ট করুন এবং সাথে সাথে জব পোস্ট করুন।"}
+                </p>
+              </button>
+
+              {/* Postpaid → skip payment now, invoice/billing handled later */}
+              <button
+                type="button"
+                disabled={prepaidLoading}
+                onClick={() => proceedPostpaid(selectedPackageForPayment)}
+                className="border-2 border-input rounded-xl p-4 text-left hover:bg-muted/50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                <div className="flex items-center gap-2 mb-2">
+                  <Wallet className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-bold text-sm">পোস্টপেইড</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  এখন পেমেন্ট না করেই জব পোস্ট করুন — পরে ইনভয়েসের মাধ্যমে বিল পরিশোধ করুন।
+                </p>
+              </button>
             </div>
           )}
         </DialogContent>
