@@ -156,7 +156,7 @@ const ServiceChatFloatingButton = () => {
   return (
     <div className="fixed bottom-8 right-2 z-[80]">
       {open && (
-        <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-sm overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
+        <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-xs overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-primary-foreground">
             <div className="flex items-center gap-2">
               <Headphones className="h-4 w-4" />
@@ -169,8 +169,7 @@ const ServiceChatFloatingButton = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
-
-          <div className="h-80 overflow-y-auto bg-muted/30 p-3">
+          <div className="h-72 overflow-y-auto bg-muted/30 p-3">
             {loading ? (
               <div className="flex h-full items-center justify-center text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -204,7 +203,6 @@ const ServiceChatFloatingButton = () => {
               </div>
             )}
           </div>
-
           <form onSubmit={handleSubmit} className="flex items-end gap-2 border-t border-border bg-card p-3">
             <textarea
               value={draft}
@@ -230,13 +228,15 @@ const ServiceChatFloatingButton = () => {
         </div>
       )}
 
-      <button
-        onClick={() => setOpen((value) => !value)}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-green-500 text-primary-foreground shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
-        title="Message support"
-      >
-        {open ? <X className="h-6 w-6" /> : <MessageCircle className="h-6 w-6" />}
-      </button>
+      {!open && (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-green-500 text-primary-foreground shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
+          title="Message support"
+        >
+          <MessageCircle className="h-6 w-6" />
+        </button>
+      )}
     </div>
   );
 };

@@ -9,9 +9,10 @@ import { Server } from "socket.io";
 import dealRoutes from "./routes/deal.route.js";
 import categoryRoutes from "./routes/categories.route.js";
 import uploadRoutes from "./routes/upload.route.js";
-import createMessagesRouter from "./routes/messages.route.js"; // ✅ FIXED IMPORT
+import createMessagesRouter from "./routes/messages.route.js";
 import dealDb from "./config.js";
 import { registerDealChatSocket } from "./sockets/dealChat.js";
+import { initializeDatabase } from "./initDb.js"; // ✅ ADD THIS
 
 const app = express();
 const server = http.createServer(app);
@@ -95,7 +96,7 @@ app.get("/", (req, res) => {
 });
 
 //
-// ✅ HEALTH CHECK
+// HEALTH CHECK
 //
 app.get("/api/health", async (req, res) => {
   try {
@@ -128,7 +129,6 @@ app.use("/api/deal/messages", createMessagesRouter(dealDb));
 app.use("/api/deal-categories", categoryRoutes);
 
 // 404 HANDLER
-
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -137,7 +137,7 @@ app.use((req, res) => {
 });
 
 //
-// ❌ GLOBAL ERROR HANDLER
+// GLOBAL ERROR HANDLER
 //
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
@@ -149,9 +149,17 @@ app.use((err, req, res, next) => {
 });
 
 //
-// ✅ START SERVER
+// ✅ START SERVER WITH DATABASE INITIALIZATION
 //
-server.listen(PORT, () => {
+server.listen(PORT, async () => {
   console.log(` Server running at ${DEAL_BACKEND_BASE_URL}`);
   console.log(` CORS: ${corsOrigin.join(", ")}`);
+
+  // ✅ Initialize database tables on startup
+  try {
+    await initializeDatabase(dealDb);
+  } catch (error) {
+    console.error("⚠️  Failed to initialize database:", error.message);
+    console.error("Please check your database connection and retry.");
+  }
 });

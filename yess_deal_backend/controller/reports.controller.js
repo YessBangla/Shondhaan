@@ -16,7 +16,6 @@ const ensureDealReportsTable = async () => {
       KEY idx_deal_reports_status (status)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
-
   // Backward-compatibility for existing tables (e.g. when a column was added later)
   // MySQL: IF NOT EXISTS is supported only for some ALTER variants; so we detect column first.
   const columns = await dealDb.query(

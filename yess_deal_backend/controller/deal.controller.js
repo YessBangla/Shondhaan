@@ -404,7 +404,7 @@ export const createDealListing = async (req, res) => {
   try {
     await connection.beginTransaction();
 
-    // ✅ ADD THIS: ensure tables exist
+    // ADD THIS: ensure tables exist
     await connection.query(`
       CREATE TABLE IF NOT EXISTS deal_listings (
         id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
