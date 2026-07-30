@@ -18,7 +18,7 @@ const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 
 const DEAL_BACKEND_BASE_URL =
-  process.env.DEAL_BACKEND_BASE_URL || `http://localhost:${PORT}`;
+  process.env.DEAL_BACKEND_BASE_URL;
 
 //
 // ✅ SOCKET.IO SETUP
@@ -29,6 +29,7 @@ const io = new Server(server, {
       "http://localhost:5173",
       "http://localhost:8080",
       "http://127.0.0.1:8080",
+      "https://shondhaan.com",
     ],
     credentials: true,
   },
