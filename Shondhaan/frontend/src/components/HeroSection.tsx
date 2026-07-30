@@ -575,7 +575,7 @@ const HeroSection = () => {
                             className="flex items-center justify-center h-7 w-7 rounded-lg flex-shrink-0"
                             style={{ backgroundColor: `${accentColor}15` }}
                           >
-                            <Icon className="h-3.5 w-3.5" style={{ color: accentColor }} />
+                            <Icon className="h-5 w-5" style={{ color: accentColor }} />
                           </div>
                           <h3 className="font-serif text-sm font-light text-amber-50 leading-tight">
                             {bn ? labelBn : labelEn}
@@ -747,19 +747,19 @@ const HeroSection = () => {
                   >
                     <div className="absolute inset-0 bg-white/40 group-hover:opacity-100 transition-opacity duration-300" />
                     
-                    <div className="relative flex flex-col items-center h-full gap-2">
+                    <div className="relative flex flex-col items-center h-full gap-2 pt-2">
                       <div 
                         className="flex items-center justify-center h-5 w-6 rounded-lg flex-shrink-0"
                         style={{ backgroundColor: `${accentColor}20` }}
                       >
-                        <Icon className="h-3 w-3 text-black group-hover:text-white" />
+                        <Icon className="h-7 w-7 text-white group-hover:text-primary transition-colors" />
                       </div>
                       
                       <div className="flex-1">
-                        <p className="text-[8px] uppercase tracking-widest font-medium mb-0.5 text-black group-hover:text-white">
+                        <p className="text-[9px] uppercase tracking-widest font-medium mb-0.5 text-white group-hover:text-primary transition-colors">
                           {bn ? descBn : descEn}
                         </p>
-                        <h3 className="font-serif text-sm font-light text-black group-hover:text-white leading-tight">
+                        <h3 className="font-serif text-[15px] font-light text-white group-hover:text-primary transition-colors leading-tight">
                           {bn ? labelBn : labelEn}
                         </h3>
                       </div>

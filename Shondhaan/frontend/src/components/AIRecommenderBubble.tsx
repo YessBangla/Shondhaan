@@ -57,21 +57,21 @@ export default function AIRecommenderBubble() {
           className="fixed left-4 z-40 max-w-[280px] md:bottom-6 md:left-6"
           style={{ bottom: getMobileFloatingBottom(8) }}
         >
-          <div className="relative rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-3 pr-8 text-primary-foreground shadow-2xl backdrop-blur">
+          <div className="relative border border-primary rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-3 pr-8 text-primary-foreground shadow backdrop-blur">
             <button
               onClick={dismiss}
-              className="absolute right-2 top-2 rounded-full p-1 hover:bg-primary-foreground/20"
+              className="absolute right-2 top-2 rounded-full p-1 text-primary hover:bg-primary hover:text-white transition-colors"
               aria-label="dismiss"
             >
               <X className="h-3.5 w-3.5" />
             </button>
             <div className="flex items-start gap-2">
-              <Sparkles className="h-5 w-5 shrink-0" />
+              <Sparkles className="h-5 w-5 shrink-0 text-accent" />
               <div className="space-y-1.5">
-                <p className="text-xs opacity-90">
+                <p className="text-xs opacity-90 text-accent">
                   {bn ? "সন্ধান সাজেশন" : "Shondhaan Help Desk"}
                 </p>
-                <p className="text-sm font-semibold leading-snug">
+                <p className="text-sm font-semibold text-accent leading-snug">
                   {bn ? "আপনি কি " : "Want to revisit "}
                   {bn ? `${suggestion.title} আবার দেখতে চান?` : `${suggestion.titleEn || suggestion.title}?`}
                 </p>
@@ -81,7 +81,7 @@ export default function AIRecommenderBubble() {
                     dismiss();
                     navigate(`/service/${suggestion.slug}`);
                   }}
-                  className="mt-1 rounded-full bg-primary-foreground px-3 py-1 text-xs font-semibold text-primary"
+                  className="mt-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold transition-colors"
                 >
                   {bn ? "এখনই দেখুন →" : "View now →"}
                 </button>

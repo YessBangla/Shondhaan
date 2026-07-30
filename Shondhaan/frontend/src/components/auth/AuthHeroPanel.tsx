@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Briefcase, Users, ShoppingBag, Tag, Wrench, Headphones, Sparkles, Package } from "lucide-react";
+import { Briefcase, Users, ShoppingBag, Phone, Tag, Wrench, Headphones, Sparkles, Package } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import slidePlatform from "@/assets/auth-slide-platform.png";
-import slideService from "@/assets/auth-slide-service.png";
-import slideMart from "@/assets/auth-slide-mart.png";
-import slideDeal from "@/assets/auth-slide-deal.png";
-import slideJobs from "@/assets/auth-slide-jobs.png";
+import slidePlatform from "@/assets/auth-page/auth-slide-platform.png";
+import slideService from "@/assets/auth-page/auth-slide-service.png";
+import slideMart from "@/assets/auth-page/auth-slide-mart.png";
+import slideDeal from "@/assets/auth-page/auth-slide-deal.png";
+import slideJobs from "@/assets/auth-page/auth-slide-jobs.png";
+import { useSiteSettings } from "@/hooks/useSiteSettings";
 
 const AuthHeroPanel = () => {
   const { language } = useLanguage();
   const [activeSlide, setActiveSlide] = useState(0);
+  const { settings } = useSiteSettings();
 
   const slides = [
     {
@@ -102,26 +104,24 @@ const AuthHeroPanel = () => {
       </div>
 
       {/* Slide image (top-left circular) */}
-      <div className="absolute top-6 left-6 z-10 w-28 h-28 xl:w-32 xl:h-32 rounded-full bg-primary-foreground/15 backdrop-blur-md ring-2 ring-primary-foreground/30 overflow-hidden shadow-xl">
+      <div className="z-10 flex items-center justify-center w-28 h-28 xl:w-[300px] xl:h-[300px] !bg-transparent overflow-hidden">
         <AnimatePresence mode="wait">
           <motion.img
             key={activeSlide}
             src={slides[activeSlide].image}
             alt=""
-            width={128}
-            height={128}
             loading="lazy"
             initial={{ opacity: 0, scale: 0.7, rotate: -15 }}
             animate={{ opacity: 1, scale: 1, rotate: 0 }}
             exit={{ opacity: 0, scale: 0.7, rotate: 15 }}
             transition={{ duration: 0.5, ease: "easeOut" }}
-            className="absolute inset-0 w-full h-full object-cover"
+            className="max-w-full max-h-full object-contain !bg-transparent"
           />
         </AnimatePresence>
       </div>
 
       {/* Carousel text */}
-      <div className="relative z-10 flex-1 flex flex-col justify-center pt-32 xl:pt-36">
+      <div className="relative z-10 flex-1 flex flex-col justify-center pt-4">
         <AnimatePresence mode="wait">
           <motion.div
             key={activeSlide}
@@ -130,10 +130,10 @@ const AuthHeroPanel = () => {
             exit={{ opacity: 0, y: -20 }}
             transition={{ duration: 0.5 }}
           >
-            <h2 className="text-2xl xl:text-3xl font-bold leading-tight mb-3">
+            <h2 className="text-2xl xl:text-3xl text-primary font-bold leading-tight mb-3">
               {language === "bn" ? slides[activeSlide].titleBn : slides[activeSlide].titleEn}
             </h2>
-            <p className="text-sm xl:text-base opacity-90 leading-relaxed max-w-md">
+            <p className="text-sm xl:text-base text-accent leading-relaxed max-w-md">
               {language === "bn" ? slides[activeSlide].subtitleBn : slides[activeSlide].subtitleEn}
             </p>
           </motion.div>
@@ -146,7 +146,7 @@ const AuthHeroPanel = () => {
               key={i}
               onClick={() => setActiveSlide(i)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                i === activeSlide ? "w-8 bg-primary-foreground" : "w-2 bg-primary-foreground/40"
+                i === activeSlide ? "w-8 bg-primary" : "w-2 bg-gray-600"
               }`}
             />
           ))}
@@ -161,16 +161,16 @@ const AuthHeroPanel = () => {
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.1 }}
-            className="flex items-center gap-3 rounded-xl bg-primary-foreground/10 backdrop-blur-sm p-3"
+            className="flex items-center gap-3 rounded-xl bg-primary-foreground/50 backdrop-blur-sm p-3"
           >
-            <div className="flex-shrink-0 rounded-lg bg-primary-foreground/20 p-2">
+            <div className="flex-shrink-0 rounded-lg bg-primary p-2">
               <stat.icon className="h-4 w-4" />
             </div>
             <div>
-              <p className="text-sm font-bold leading-none">
+              <p className="text-sm text-primary font-bold leading-none">
                 {language === "bn" ? stat.valueBn : stat.valueEn}
               </p>
-              <p className="text-[11px] opacity-80 mt-0.5">
+              <p className="text-[11px] text-black opacity-80 mt-0.5">
                 {language === "bn" ? stat.labelBn : stat.labelEn}
               </p>
             </div>
@@ -179,7 +179,7 @@ const AuthHeroPanel = () => {
       </div>
 
       {/* Support info */}
-      <div className="relative z-10 mt-6 rounded-xl bg-primary-foreground/10 backdrop-blur-sm p-3 flex items-center gap-3">
+      <div className="relative z-10 mt-6 rounded-xl bg-orange-600/30 border border-orange-600 backdrop-blur-sm p-3 flex items-center gap-3">
         <div className="flex-shrink-0 rounded-full bg-primary-foreground/20 p-2">
           <Headphones className="h-4 w-4" />
         </div>
@@ -193,8 +193,11 @@ const AuthHeroPanel = () => {
               : "9 AM - 8 PM (Sat - Thu)"}
           </p>
         </div>
-        <a href="tel:09638666444" className="ml-auto text-xs font-bold hover:underline">
-          09638666444
+        <a href={`tel:${settings.footer_phone.replace(/[^\d+]/g, "")}`} className="ml-auto text-xs flex gap-2 font-bold hover:underline">
+          <div className="h-5 w-5 rounded-full bg-primary-foreground/20 flex items-center justify-center shrink-0">
+            <Phone className="h-3 w-3 text-white " />
+          </div>
+            <span>{settings.footer_phone}</span>
         </a>
       </div>
     </div>

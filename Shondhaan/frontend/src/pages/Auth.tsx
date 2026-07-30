@@ -313,381 +313,397 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8">
-      <div className="w-full max-w-5xl flex gap-8 items-stretch">
-        {/* Left Hero Panel - Desktop only */}
-        <div className="hidden lg:block flex-1 max-w-md">
-          <AuthHeroPanel />
-        </div>
+    <section className="relative overflow-hidden py-20">
 
-        {/* Right Auth Form */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md mx-auto lg:mx-0">
-        {/* Top 3-tab selector: Sign Up / Login / Office Login */}
-        <div className="grid grid-cols-3 gap-1 p-1 mb-5 rounded-xl border border-border bg-card shadow-sm">
-          <button
-            type="button"
-            onClick={() => { setIsLogin(false); setPassword(""); }}
-            className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
-              !isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
-            }`}
-          >
-            <UserPlus className="h-4 w-4" />
-            {language === "bn" ? "ইউজার তৈরী" : "Sign Up"}
-          </button>
-          <button
-            type="button"
-            onClick={() => { setIsLogin(true); setPassword(""); }}
-            className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
-              isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
-            }`}
-          >
-            <LogIn className="h-4 w-4" />
-            {language === "bn" ? "ইউজার লগইন" : "User Login"}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/main-login")}
-            className="flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold text-muted-foreground hover:bg-secondary transition-colors"
-          >
-            <Building2 className="h-4 w-4" />
-            {language === "bn" ? "অফিস লগইন" : "Office Login"}
-          </button>
-        </div>
+      {/* Background Image */}
+      <div className="absolute h-[100vh] inset-0 -z-20">
+        <img
+          src="/public/hero1.png"
+          alt=""
+          className="h-full w-full object-cover scale-110 blur-md"
+        />
+      </div>
+      {/* Dark Overlay */}
+      <div className="absolute inset-0 -z-10 bg-black/50"></div>
 
-        <div className="text-center mb-8">
-          <h1 className="font-heading text-2xl font-bold text-foreground">
-            {isLogin ? t("auth.login") : t("auth.createAccount")}
-          </h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {isLogin ? t("auth.loginSubtitle") : t("auth.registerSubtitle")}
-          </p>
-        </div>
+      {/* Center section */}
+        <div className="min-h-screen flex items-center justify-center px-4 py-8">
+          <div className="w-full rounded-lg max-w-5xl bg-[aliceblue]/50 flex gap-8 items-stretch lg:py-4 lg:border lg:border-primary">
+            {/* Left Hero Panel - Desktop only */}
+            <div className="hidden lg:block flex-1 max-w-md">
+              <AuthHeroPanel />
+            </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-          <form onSubmit={isLogin ? handleLogin : handleRegisterSendOtp} className="space-y-3">
-            {/* Login: email/phone toggle */}
-            {isLogin && (
-              <div className="flex rounded-lg border border-border overflow-hidden mb-1">
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod("email")}
-                  className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                    loginMethod === "email" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Mail className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.email")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setLoginMethod("phone")}
-                  className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                    loginMethod === "phone" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <Phone className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.phone")}
-                </button>
-              </div>
-            )}
+            {/* Right Auth Form */}
+            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full bg-card p-4 rounded-xl max-w-md mx-auto my-auto">
+            {/* Top 3-tab selector: Sign Up / Login / Office Login */}
+            <div className="grid grid-cols-2 gap-1 p-1 mb-5 rounded-xl border border-border bg-card shadow-sm">
+              <button
+                type="button"
+                onClick={() => { setIsLogin(false); setPassword(""); }}
+                className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
+                  !isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                <UserPlus className="h-4 w-4" />
+                {language === "bn" ? "ইউজার তৈরী" : "Sign Up"}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setIsLogin(true); setPassword(""); }}
+                className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
+                  isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
+                }`}
+              >
+                <LogIn className="h-4 w-4" />
+                {language === "bn" ? "ইউজার লগইন" : "User Login"}
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate("/main-login")}
+                className="hidden flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold text-muted-foreground hover:bg-secondary transition-colors"
+              >
+                <Building2 className="h-4 w-4" />
+                {language === "bn" ? "অফিস লগইন" : "Office Login"}
+              </button>
+            </div>
 
-            {/* Registration fields */}
-            {!isLogin && (
-              <>
-                <div className="relative">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    autoComplete="name"
-                    autoCapitalize="words"
-                    autoCorrect="off"
-                    spellCheck={false}
-                    enterKeyHint="next"
-                    placeholder={t("auth.namePlaceholder")}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    maxLength={100}
-                    className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                  />
-                </div>
-                {/* Role Selection */}
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <div className="text-center mb-8">
+              <h1 className="font-heading text-2xl font-bold text-foreground">
+                {isLogin ? t("auth.login") : t("auth.createAccount")}
+              </h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                {isLogin ? t("auth.loginSubtitle") : t("auth.registerSubtitle")}
+              </p>
+            </div>
 
-                    <select
-                      value={role}
-                      onChange={(e) => {
-                        setRole(e.target.value);
-
-                        if (e.target.value !== "mart_vendor") {
-                          setShopName("");
-                          setShopType("");
-                        }
-                      }}
-                      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
+            <div className="rounded-2xl border border-border p-6 shadow-sm">
+              <form onSubmit={isLogin ? handleLogin : handleRegisterSendOtp} className="space-y-3">
+                {/* Login: email/phone toggle */}
+                {isLogin && (
+                  <div className="flex rounded-lg border border-border overflow-hidden mb-1">
+                    <button
+                      type="button"
+                      onClick={() => setLoginMethod("email")}
+                      className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                        loginMethod === "email" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                      }`}
                     >
-                      {ROLE_OPTIONS.map((item) => (
-                        <option key={item.value} value={item.value}>
-                          {item.label}
-                        </option>
-                      ))}
-                    </select>
+                      <Mail className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.email")}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLoginMethod("phone")}
+                      className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
+                        loginMethod === "phone" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      <Phone className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.phone")}
+                    </button>
                   </div>
+                )}
 
-                  {/* Shop Name (Only Mart Vendor) */}
-                  {role === "mart_vendor" && (
+                {/* Registration fields */}
+                {!isLogin && (
+                  <>
                     <div className="relative">
-                      <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input
                         type="text"
-                        value={shopName}
-                        onChange={(e) => setShopName(e.target.value)}
-                        placeholder={
-                          language === "bn"
-                            ? "দোকানের নাম লিখুন"
-                            : "Enter Shop Name"
-                        }
-                        maxLength={150}
+                        autoComplete="name"
+                        autoCapitalize="words"
+                        autoCorrect="off"
+                        spellCheck={false}
+                        enterKeyHint="next"
+                        placeholder={t("auth.namePlaceholder")}
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        maxLength={100}
                         className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
                       />
                     </div>
-                  )}
-                  {role === "mart_vendor" && (
+                    {/* Role Selection */}
+                      <div className="relative">
+                        <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                        <select
+                          value={role}
+                          onChange={(e) => {
+                            setRole(e.target.value);
+
+                            if (e.target.value !== "mart_vendor") {
+                              setShopName("");
+                              setShopType("");
+                            }
+                          }}
+                          className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
+                        >
+                          {ROLE_OPTIONS.map((item) => (
+                            <option key={item.value} value={item.value}>
+                              {item.label}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      {/* Shop Name (Only Mart Vendor) */}
+                      {role === "mart_vendor" && (
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+
+                          <input
+                            type="text"
+                            value={shopName}
+                            onChange={(e) => setShopName(e.target.value)}
+                            placeholder={
+                              language === "bn"
+                                ? "দোকানের নাম লিখুন"
+                                : "Enter Shop Name"
+                            }
+                            maxLength={150}
+                            className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                          />
+                        </div>
+                      )}
+                      {role === "mart_vendor" && (
+                        <div className="relative">
+                          <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <select
+                            value={shopType}
+                            onChange={(e) => setShopType(e.target.value)}
+                            className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
+                          >
+                            <option value="">{language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Select shop type"}</option>
+                            {SHOP_TYPE_OPTIONS.map((item) => (
+                              <option key={item.value} value={item.value}>{item.label}</option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
                     <div className="relative">
-                      <Store className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <select
-                        value={shopType}
-                        onChange={(e) => setShopType(e.target.value)}
-                        className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none focus:ring-2 focus:ring-ring focus:border-primary transition"
-                      >
-                        <option value="">{language === "bn" ? "শপ টাইপ সিলেক্ট করুন" : "Select shop type"}</option>
-                        {SHOP_TYPE_OPTIONS.map((item) => (
-                          <option key={item.value} value={item.value}>{item.label}</option>
-                        ))}
-                      </select>
+                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <input
+                        type="tel"
+                        inputMode="numeric"
+                        pattern="01[3-9][0-9]{8}"
+                        autoComplete="tel"
+                        autoCorrect="off"
+                        enterKeyHint="next"
+                        placeholder={t("auth.phonePlaceholder")}
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                        maxLength={11}
+                        className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                      />
                     </div>
-                  )}
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <input
+                        type="text"
+                        autoComplete="street-address"
+                        autoCapitalize="sentences"
+                        enterKeyHint="next"
+                        placeholder={language === "bn" ? "ঠিকানা (বাসা, রোড, এলাকা)" : "Address (house, road, area)"}
+                        value={address}
+                        onChange={(e) => setAddress(e.target.value)}
+                        maxLength={300}
+                        className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Login phone field */}
+                {isLogin && loginMethod === "phone" && (
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="tel"
+                      inputMode="numeric"
+                      pattern="01[3-9][0-9]{8}"
+                      autoComplete="tel"
+                      enterKeyHint="next"
+                      placeholder={t("auth.phonePlaceholder")}
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
+                      maxLength={11}
+                      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                    />
+                  </div>
+                )}
+
+                {/* Email field */}
+                {((!isLogin) || (isLogin && loginMethod === "email")) && (
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <input
+                      type="email"
+                      inputMode="email"
+                      autoComplete={isLogin ? "email" : "email"}
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      enterKeyHint="next"
+                      placeholder={t("auth.emailPlaceholder")}
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      maxLength={255}
+                      className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                    />
+                  </div>
+                )}
+
+                {/* Password field */}
                 <div className="relative">
-                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <input
-                    type="tel"
-                    inputMode="numeric"
-                    pattern="01[3-9][0-9]{8}"
-                    autoComplete="tel"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                    autoCapitalize="none"
                     autoCorrect="off"
-                    enterKeyHint="next"
-                    placeholder={t("auth.phonePlaceholder")}
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                    maxLength={11}
-                    className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
+                    spellCheck={false}
+                    enterKeyHint="go"
+                    placeholder={isLogin ? t("auth.passwordPlaceholder") : t("auth.setPasswordPlaceholder")}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    maxLength={72}
+                    className="w-full rounded-lg border border-input bg-background pl-10 pr-24 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
                   />
+                  <button
+                    type="button"
+                    onClick={handleSuggestPassword}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-primary hover:underline"
+                  >
+                    {language === "bn" ? "সাজেস্ট" : "Suggest"}
+                  </button>
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
                 </div>
-                <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <input
-                    type="text"
-                    autoComplete="street-address"
-                    autoCapitalize="sentences"
-                    enterKeyHint="next"
-                    placeholder={language === "bn" ? "ঠিকানা (বাসা, রোড, এলাকা)" : "Address (house, road, area)"}
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    maxLength={300}
-                    className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                  />
+
+                {isLogin ? (
+                  <p className="text-[11px] text-muted-foreground">{passwordPolicyMessage}</p>
+                ) : (
+                  <div className="grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground">
+                    {passwordRules.map((rule) => (
+                      <span
+                        key={rule.label}
+                        className={rule.valid ? "font-medium text-primary" : undefined}
+                      >
+                        {rule.valid ? "✓ " : "• "}
+                        {rule.label}
+                      </span>
+                    ))}
+                  </div>
+                )}
+
+                <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary disabled:opacity-50">
+                  {loading
+                    ? t("auth.loading")
+                    : isLogin
+                      ? t("auth.loginBtn")
+                      : t("auth.sendOtp")
+                  }
+                </button>
+              </form>
+
+              {/* Divider */}
+              <div className="my-4 flex items-center gap-3">
+                <div className="flex-1 border-t border-border" />
+                <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
+                <div className="flex-1 border-t border-border" />
+              </div>
+
+              {/* Biometric quick login (only renders if user enrolled before on this device) */}
+              {isLogin && (
+                <div className="mb-3">
+                  <BiometricLoginButton />
                 </div>
-              </>
-            )}
+              )}
 
-            {/* Login phone field */}
-            {isLogin && loginMethod === "phone" && (
-              <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="tel"
-                  inputMode="numeric"
-                  pattern="01[3-9][0-9]{8}"
-                  autoComplete="tel"
-                  enterKeyHint="next"
-                  placeholder={t("auth.phonePlaceholder")}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/\D/g, "").slice(0, 11))}
-                  maxLength={11}
-                  className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
-            )}
-
-            {/* Email field */}
-            {((!isLogin) || (isLogin && loginMethod === "email")) && (
-              <div className="relative">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <input
-                  type="email"
-                  inputMode="email"
-                  autoComplete={isLogin ? "email" : "email"}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  enterKeyHint="next"
-                  placeholder={t("auth.emailPlaceholder")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  maxLength={255}
-                  className="w-full rounded-lg border border-input bg-background pl-10 pr-3 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-                />
-              </div>
-            )}
-
-            {/* Password field */}
-            <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                type={showPassword ? "text" : "password"}
-                autoComplete={isLogin ? "current-password" : "new-password"}
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-                enterKeyHint="go"
-                placeholder={isLogin ? t("auth.passwordPlaceholder") : t("auth.setPasswordPlaceholder")}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                maxLength={72}
-                className="w-full rounded-lg border border-input bg-background pl-10 pr-24 py-3 text-base md:text-sm text-foreground outline-none placeholder:text-muted-foreground focus:ring-2 focus:ring-ring focus:border-primary transition"
-              />
+              {/* Google Sign In */}
               <button
                 type="button"
-                onClick={handleSuggestPassword}
-                className="absolute right-10 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-primary hover:underline"
+                onClick={handleGoogleSignIn}
+                disabled={loading}
+                className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-background py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
               >
-                {language === "bn" ? "সাজেস্ট" : "Suggest"}
+                <svg className="h-4 w-4" viewBox="0 0 24 24">
+                  <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
+                  <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                  <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                  <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                </svg>
+                {t("auth.googleLogin")}
               </button>
-              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </button>
-            </div>
 
-            {isLogin ? (
-              <p className="text-[11px] text-muted-foreground">{passwordPolicyMessage}</p>
-            ) : (
-              <div className="grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground">
-                {passwordRules.map((rule) => (
-                  <span
-                    key={rule.label}
-                    className={rule.valid ? "font-medium text-primary" : undefined}
+              {isLogin && (
+                <>
+                  <button
+                    onClick={() => navigate("/reset-password")}
+                    className="mt-3 w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
                   >
-                    {rule.valid ? "✓ " : "• "}
-                    {rule.label}
-                  </span>
-                ))}
-              </div>
-            )}
+                    {t("auth.forgotPassword")}
+                  </button>
 
-            <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
-              {loading
-                ? t("auth.loading")
-                : isLogin
-                  ? t("auth.loginBtn")
-                  : t("auth.sendOtp")
-              }
-            </button>
-          </form>
+                  {/* Demo Login Section — only customer/user demo on /auth */}
+                  <div className="hidden mt-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
+                    <p className="text-xs font-semibold text-primary mb-2 text-center">
+                      {language === "bn" ? "🔑 ডেমো ইউজার দিয়ে লগইন" : "🔑 Quick Demo User Login"}
+                    </p>
+                    <div className="grid grid-cols-1 gap-1.5">
+                      {[
+                        { label: language === "bn" ? "ডেমো ইউজার" : "Demo User", email: "user@demo.yessbangla.xyz" },
+                      ].map((demo) => (
+                        <button
+                          key={demo.email}
+                          type="button"
+                          disabled={loading}
+                          onClick={async () => {
+                            setLoading(true);
+                            try {
+                              const { error } = await supabase.auth.signInWithPassword({
+                                email: demo.email,
+                                password: "Demo@1234",
+                              });
+                              if (error) throw error;
+                              toast.success(`${demo.label} ${language === "bn" ? "হিসেবে লগইন হয়েছে" : "logged in"}`);
+                              await openDashboardInNewTab();
+                            } catch (err: any) {
+                              toast.error(err.message || "Login failed");
+                            } finally {
+                              setLoading(false);
+                            }
+                          }}
+                          className="rounded-md border border-primary/20 bg-background px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                        >
+                          {demo.label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-center text-[10px] text-muted-foreground">
+                      {language === "bn" ? "স্টাফ/অ্যাডমিন? অফিস লগইন ব্যবহার করুন।" : "Staff/Admin? Use Office Login."}
+                    </p>
+                  </div>
+                </>
+              )}
 
-          {/* Divider */}
-          <div className="my-4 flex items-center gap-3">
-            <div className="flex-1 border-t border-border" />
-            <span className="text-xs text-muted-foreground">{t("auth.or")}</span>
-            <div className="flex-1 border-t border-border" />
-          </div>
-
-          {/* Biometric quick login (only renders if user enrolled before on this device) */}
-          {isLogin && (
-            <div className="mb-3">
-              <BiometricLoginButton />
+              <p className="mt-4 text-center text-sm text-muted-foreground">
+                {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}{" "}
+                <button onClick={() => { setIsLogin(!isLogin); setPassword(""); }} className="font-medium text-primary hover:underline">
+                  {isLogin ? t("auth.registerLink") : t("auth.loginLink")}
+                </button>
+              </p>
             </div>
-          )}
 
-          {/* Google Sign In */}
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-border bg-background py-3 text-sm font-medium text-foreground transition-colors hover:bg-secondary disabled:opacity-50"
-          >
-            <svg className="h-4 w-4" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-            </svg>
-            {t("auth.googleLogin")}
-          </button>
-
-          {isLogin && (
-            <>
-              <button
-                onClick={() => navigate("/reset-password")}
-                className="mt-3 w-full text-center text-xs text-muted-foreground hover:text-primary transition-colors"
-              >
-                {t("auth.forgotPassword")}
-              </button>
-
-              {/* Demo Login Section — only customer/user demo on /auth */}
-              <div className="mt-4 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
-                <p className="text-xs font-semibold text-primary mb-2 text-center">
-                  {language === "bn" ? "🔑 ডেমো ইউজার দিয়ে লগইন" : "🔑 Quick Demo User Login"}
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {[
-                    { label: language === "bn" ? "ডেমো ইউজার" : "Demo User", email: "user@demo.yessbangla.xyz" },
-                  ].map((demo) => (
-                    <button
-                      key={demo.email}
-                      type="button"
-                      disabled={loading}
-                      onClick={async () => {
-                        setLoading(true);
-                        try {
-                          const { error } = await supabase.auth.signInWithPassword({
-                            email: demo.email,
-                            password: "Demo@1234",
-                          });
-                          if (error) throw error;
-                          toast.success(`${demo.label} ${language === "bn" ? "হিসেবে লগইন হয়েছে" : "logged in"}`);
-                          await openDashboardInNewTab();
-                        } catch (err: any) {
-                          toast.error(err.message || "Login failed");
-                        } finally {
-                          setLoading(false);
-                        }
-                      }}
-                      className="rounded-md border border-primary/20 bg-background px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
-                    >
-                      {demo.label}
-                    </button>
-                  ))}
-                </div>
-                <p className="mt-2 text-center text-[10px] text-muted-foreground">
-                  {language === "bn" ? "স্টাফ/অ্যাডমিন? অফিস লগইন ব্যবহার করুন।" : "Staff/Admin? Use Office Login."}
-                </p>
-              </div>
-            </>
-          )}
-
-          <p className="mt-4 text-center text-sm text-muted-foreground">
-            {isLogin ? t("auth.noAccount") : t("auth.hasAccount")}{" "}
-            <button onClick={() => { setIsLogin(!isLogin); setPassword(""); }} className="font-medium text-primary hover:underline">
-              {isLogin ? t("auth.registerLink") : t("auth.loginLink")}
+            <button onClick={() => navigate("/")} className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground">
+              {t("auth.backHome")}
             </button>
-          </p>
+          </motion.div>
+          </div>
         </div>
 
-        <button onClick={() => navigate("/")} className="mt-4 w-full text-center text-sm text-muted-foreground hover:text-foreground">
-          {t("auth.backHome")}
-        </button>
-      </motion.div>
-      </div>
-    </div>
+    </section>
   );
 };
 

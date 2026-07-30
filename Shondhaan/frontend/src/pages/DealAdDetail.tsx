@@ -158,10 +158,10 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
             <motion.div key={ad.id} whileHover={{ y: -2 }} className="cursor-pointer" onClick={() => navigate(`/deal/ad/${ad.id}`)}>
               <Card className="border-border/50 hover:shadow-md transition-all overflow-hidden">
                 <div className="aspect-[4/3] bg-muted overflow-hidden">
-                  <ListingImage src={img} alt={ad.title} fallbackSize="md" />
+                  <ListingImage src={img} alt={ad.title} fallbackSize="md" class="max-h-[550px]" />
                 </div>
                 <CardContent className="p-2.5">
-                  <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? ad.price.toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
+                  <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? ad.price.toLocaleString("bn-BD") : (bn ? "আলোচনা সাপেক্ষে" : "Negotiable")}</p>
                   <h3 className="text-xs text-foreground line-clamp-2 mt-0.5">{ad.title}</h3>
                   {ad.location_district && <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{ad.location_district}</p>}
                 </CardContent>
