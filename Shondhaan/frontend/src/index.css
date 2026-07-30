@@ -130,10 +130,10 @@
   /* Mobile dark — keep purple accent but darker bg already applied via .dark */
   @media (max-width: 767px) {
     .dark {
-      --primary: 258 70% 68%;
+      --primary: 208, 79%, 28%;
       --primary-foreground: 210 20% 8%;
-      --ring: 258 70% 68%;
-      --accent: 258 70% 68%;
+      --ring: 208, 79%, 28%;
+      --accent: 208, 79%, 28%;
     }
   }
 }
@@ -141,11 +141,13 @@
 /* Mobile-first: override primary to purple on small screens */
 @media (max-width: 767px) {
   :root {
-    --primary: 258 70% 58%;
+    --primary: 208, 79%, 28%;
     --primary-foreground: 0 0% 100%;
     --ring: 258 70% 58%;
     --accent: 258 70% 58%;
     --accent-foreground: 0 0% 100%;
+    --popover: 208, 79%, 28%;
+    --popover-foreground: 210 11% 15%;
   }
 }
 
@@ -187,7 +189,7 @@
   }
 
   .text-gradient-green {
-    background: linear-gradient(135deg, hsl(152 60% 38%), hsl(152 55% 48%));
+    background: linear-gradient(135deg, hsl(208, 79%, 28%), hsl(152 55% 48%));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -486,7 +488,7 @@ img[loading="lazy"] {
    automatically without touching individual components. The  Deal
    logo and brand wordmark remain unchanged. */
 body.deal-theme {
-   --primary: 208 79% 28%;           /* #62B146 Bikroy green */
+  --primary: 208, 79%, 28%;          /* #62B146 Bikroy green */
   --primary-foreground: 0 0% 100%;
   --primary-light: 102 55% 94%;
   --primary-dark: 102 50% 38%;
@@ -521,14 +523,14 @@ body.deal-theme.dark,
 /* Mobile: keep Bikroy green even though global mobile override sets purple */
 @media (max-width: 767px) {
   body.deal-theme {
-    --primary: 102 45% 49%;
+    --primary: 208, 79%, 28%;
     --primary-foreground: 0 0% 100%;
     --ring: 102 45% 49%;
     --accent: 102 45% 49%;
     --accent-foreground: 0 0% 100%;
   }
   .dark body.deal-theme {
-    --primary: 102 50% 60%;
+    --primary: 208, 79%, 28%;
     --ring: 102 50% 60%;
     --accent: 102 50% 60%;
   }
