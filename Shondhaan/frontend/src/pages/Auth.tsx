@@ -318,7 +318,7 @@ const Auth = () => {
       {/* Background Image */}
       <div className="absolute h-[100vh] inset-0 -z-20">
         <img
-          src="/public/hero1.png"
+          src="/hero1.png"
           alt=""
           className="h-full w-full object-cover scale-110 blur-md"
         />
