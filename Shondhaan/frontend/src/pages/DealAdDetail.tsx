@@ -157,7 +157,17 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {relatedAds.map((ad: any, idx) => {
-          const img = ad.images?.[0];
+          // Safety check to handle images if they are a stringified JSON
+          let img = ad.images?.[0];
+          if (typeof ad.images === 'string') {
+            try {
+              const parsed = JSON.parse(ad.images);
+              img = Array.isArray(parsed) ? parsed[0] : undefined;
+            } catch {
+              img = undefined;
+            }
+          }
+
           return (
             <motion.div
               key={ad.id}
@@ -170,12 +180,14 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
               onClick={() => navigate(`/deal/ad/${ad.id}`)}
             >
               <Card className="border-border/50 hover:shadow-lg transition-all overflow-hidden h-full flex flex-col">
-                <div className="aspect-square bg-muted overflow-hidden flex-shrink-0">
-                  <ListingImage src={img} alt={ad.title} fallbackSize="md" class="w-full h-full" />
+                {/* Added relative and w-full to ensure the container has proper dimensions */}
+                <div className="relative w-full aspect-square bg-muted overflow-hidden flex-shrink-0">
+                  {/* Restored ListingImage component to handle image URLs correctly */}
+                  <ListingImage src={img} alt={ad.title} fallbackSize="md" fit="cover" className="absolute inset-0 w-full h-full object-cover" />
                 </div>
                 <CardContent className="p-3 flex-1 flex flex-col justify-between">
                   <div>
-                    <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? ad.price.toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
+                    <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? Number(ad.price).toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
                     <h3 className="text-xs text-foreground line-clamp-2 mt-1.5 leading-tight font-medium">{ad.title}</h3>
                   </div>
                   {ad.location_district && (
@@ -380,13 +392,13 @@ const DealAdDetail = () => {
                       onClick={() => setSelectedImg(i)}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className={`w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
+                      className={`relative flex items-center justify-center w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
                         i === selectedImg 
                           ? "border-primary shadow-md ring-2 ring-primary/30" 
                           : "border-border/30 hover:border-border/60"
                       }`}
                     >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <ListingImage src={img} alt="" fallbackSize="sm" fit="cover" className="absolute inset-0 w-full h-full object-cover" />
                     </motion.button>
                   ))}
                 </div>
@@ -405,7 +417,7 @@ const DealAdDetail = () => {
               </div>
               <div className="flex items-baseline gap-3 mb-4">
                 <p className="text-3xl md:text-4xl font-bold text-primary">
-                  ৳{listing.price > 0 ? listing.price.toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}
+                  ৳{listing.price > 0 ? Number(listing.price).toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}
                 </p>
                 {listing.is_negotiable && (
                   <Badge variant="outline" className="text-xs font-medium border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-400">
@@ -439,9 +451,10 @@ const DealAdDetail = () => {
                 </div>
                 <div className="rounded-lg bg-muted/50 p-3 border border-border/30">
                   <p className="text-xs text-muted-foreground font-medium mb-1">{bn ? "অবস্থা" : "Condition"}</p>
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
+                  <p className="text-sm font-semibold text-foreground flex items-center gap-1 capitalize">
                     <Package className="h-4 w-4 text-primary flex-shrink-0" />
-                    {listing.condition === "নতুন" ? (bn ? "নতুন" : "New") : listing.condition === "ব্যবহৃত" ? (bn ? "ব্যবহৃত" : "Used") : listing.condition}
+                    {/* Updated to use product_condition based on JSON payload */}
+                    {listing.product_condition === "new" ? (bn ? "নতুন" : "New") : listing.product_condition === "used" ? (bn ? "ব্যবহৃত" : "Used") : listing.product_condition}
                   </p>
                 </div>
               </div>
