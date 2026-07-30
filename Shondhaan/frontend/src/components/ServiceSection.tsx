@@ -53,7 +53,7 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
 
     const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
 
-    let top = anchorRect.top + window.scrollY + anchorRect.height / 2;
+    let top = anchorRect.top + window.scrollY + anchorRect.height / 2 + 68; // 8px below the card
     let left = cardCenterX - tooltipWidth / 2;
 
     // Clamp horizontally within viewport
@@ -269,9 +269,11 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   });
   
   // Smoothly scale from 0.8 (edges) to 1.05 (center)
-  const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.00, 0.8]);
+  // const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.00, 0.8]);
+    const scale = useTransform(scrollYProgress, [1, 1, 1], [1, 1.00, 1]);
   // Smoothly fade in from 0.3 to 1 when in the middle
-  const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.3, 1, 1, 0.3]);
+  // const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.3, 1, 1, 0.3]);
+  const opacity = useTransform(scrollYProgress, [1, 1, 1, 1], [1, 1, 1, 1]);
   // -------------------------------------
 
   // --- Desktop Drag-to-Scroll State ---

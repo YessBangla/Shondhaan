@@ -128,7 +128,6 @@ app.use("/api/deal/messages", createMessagesRouter(dealDb));
 app.use("/api/deal-categories", categoryRoutes);
 
 // 404 HANDLER
-
 app.use((req, res) => {
   res.status(404).json({
     success: false,
@@ -137,7 +136,7 @@ app.use((req, res) => {
 });
 
 //
-// ❌ GLOBAL ERROR HANDLER
+// GLOBAL ERROR HANDLER
 //
 app.use((err, req, res, next) => {
   console.error("Server error:", err);
