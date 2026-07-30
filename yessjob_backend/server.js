@@ -22,7 +22,7 @@ const notificationsTable = require('./database/notificationstable');
 const  createPackagesTable  = require('./database/packagestable');
 const seedPackages = require('./database/seedPackages');
 app.use(cors({
-  origin: ['http://localhost:8080'],
+  origin: process.env.CORS_ORIGIN,
   credentials: true,
 }));
 app.use(cookieParser());
