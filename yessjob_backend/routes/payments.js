@@ -4,9 +4,10 @@ const router = express.Router();
 const crypto = require("crypto");
 // const db = require("../database/connection"); // adjust to your actual db connection module
 const { initiateShurjoPayCheckout, verifyShurjoPayPayment } = require("../utils/shurjopay");
-const requireAuth = require("../middleware/requireAuth"); // adjust to your actual auth middleware
+// const requireAuth = require("../middleware/requireAuth"); // adjust to your actual auth middleware
 
-router.post("/shurjopay/initiate", requireAuth, async (req, res) => {
+// router.post("/shurjopay/initiate", requireAuth, async (req, res) => {
+router.post("/shurjopay/initiate", async (req, res) => {
   try {
     const { package_id, amount } = req.body;
     const employerUserId = req.user.id; // adjust to however your auth middleware attaches user info

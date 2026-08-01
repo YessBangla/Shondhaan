@@ -145,8 +145,8 @@ const JobHome = () => {
       
       {/* Reserve only the visible fixed header stack; keep the hero flush under JobsMenuBar */}
       {/* <div className="h-[44px] md:h-[76px] lg:h-[82px]" /> */}
-      {/* <PlatformSwitcher className="md:hidden" exclude={["jobs"]} />
-      <JobsMenuBar flushWithHeader /> */}
+      {/* <PlatformSwitcher className="md:hidden" exclude={["jobs"]} /> */}
+        <JobsMenuBar flushWithHeader />
       {/* Hero Section */}
       <JobHero
         bn={bn} user={user} search={search} setSearch={setSearch}

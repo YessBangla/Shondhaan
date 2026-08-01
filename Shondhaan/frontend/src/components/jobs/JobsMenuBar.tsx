@@ -39,6 +39,22 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
 
   const allMenus: { key: string; labelBn: string; labelEn: string; icon: any; children: MenuItem[]; employerOnly?: boolean; hideForEmployer?: boolean }[] = [
     {
+      key: "mybdjobs",
+      labelBn: "আমার প্রোফাইল",
+      labelEn: "My Profile",
+      icon: UserCircle,
+      hideForEmployer: true,
+      children: [
+        { labelBn: "চাকরিপ্রার্থী প্রোফাইল", labelEn: "Job Seeker Profile", href: "/jobs/profile", icon: UserCircle },
+        { labelBn: "আমার আবেদনসমূহ", labelEn: "My Applications", href: "/jobs/my", icon: Send },
+        { labelBn: "আবেদন স্ট্যাটাস ট্র্যাক", labelEn: "Track Application Status", href: "/jobs/my", icon: Eye },
+        { labelBn: "ভিডিও সিভি তৈরি", labelEn: "Create Video CV", href: "/jobs/profile#video-cv", icon: Video },
+        { labelBn: "সিভি / রিজিউমি আপলোড", labelEn: "Upload CV / Resume", href: "/jobs/profile#cv", icon: Upload },
+        { labelBn: "স্কিল ও অভিজ্ঞতা", labelEn: "Skills & Experience", href: "/jobs/profile#experience", icon: Award },
+        { labelBn: "ক্লায়েন্ট ড্যাশবোর্ড", labelEn: "Client Dashboard", href: "/dashboard", icon: LayoutDashboard },
+      ],
+    },
+    {
       key: "jobs",
       labelBn: "চাকরি খুঁজুন",
       labelEn: "Find Jobs",
@@ -55,22 +71,6 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
         { labelBn: "ফ্রেশার চাকরি", labelEn: "Fresher / Entry Level", href: "/jobs?type=fresher", icon: TrendingUp },
         { labelBn: "ফিচার্ড / হট জব", labelEn: "Featured / Hot Jobs", href: "/jobs?type=featured", icon: Award },
         { labelBn: "সরকারি চাকরি", labelEn: "Government Jobs", href: "/jobs?type=government", icon: Building2 },
-      ],
-    },
-    {
-      key: "mybdjobs",
-      labelBn: "আমার প্রোফাইল",
-      labelEn: "My Profile",
-      icon: UserCircle,
-      hideForEmployer: true,
-      children: [
-        { labelBn: "চাকরিপ্রার্থী প্রোফাইল", labelEn: "Job Seeker Profile", href: "/jobs/profile", icon: UserCircle },
-        { labelBn: "আমার আবেদনসমূহ", labelEn: "My Applications", href: "/jobs/my", icon: Send },
-        { labelBn: "আবেদন স্ট্যাটাস ট্র্যাক", labelEn: "Track Application Status", href: "/jobs/my", icon: Eye },
-        { labelBn: "ভিডিও সিভি তৈরি", labelEn: "Create Video CV", href: "/jobs/profile#video-cv", icon: Video },
-        { labelBn: "সিভি / রিজিউমি আপলোড", labelEn: "Upload CV / Resume", href: "/jobs/profile#cv", icon: Upload },
-        { labelBn: "স্কিল ও অভিজ্ঞতা", labelEn: "Skills & Experience", href: "/jobs/profile#experience", icon: Award },
-        { labelBn: "ক্লায়েন্ট ড্যাশবোর্ড", labelEn: "Client Dashboard", href: "/dashboard", icon: LayoutDashboard },
       ],
     },
     {
@@ -123,8 +123,8 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
   if (!isJobsPage) return null;
 
   return (
-    <div className={`hidden md:block bg-card border-b border-border z-40 ${flushWithHeader ? "fixed left-0 right-0 top-[85px] lg:top-[69px] -mt-px shadow-none" : "sticky top-[71px] lg:top-[79px] -mt-px shadow-sm"}`}>
-      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-8">
+    <div className={`hidden md:block bg-card border-b border-border z-40 ${flushWithHeader ? "fixed left-0 right-0 top-[85px] lg:top-[110px] -mt-px shadow-none" : "sticky top-[71px] lg:top-[79px] -mt-px shadow-sm"}`}>
+      <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-4">
         <div className="flex items-center gap-0 md:gap-0.5 lg:gap-1">
           {menus.map((menu) => (
             <div
@@ -164,35 +164,6 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
               )}
             </div>
           ))}
-
-          {/* Right side quick links */}
-          <div className="ml-auto flex items-center gap-2">
-            {!user && (
-              <>
-                <button
-                  onClick={() => navigate("/auth")}
-                  className="rounded-lg border border-primary bg-primary/10 px-4 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
-                >
-                  {bn ? "সাইন ইন" : "Sign In"}
-                </button>
-                <button
-                  onClick={() => navigate("/auth?mode=register")}
-                  className="rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-                >
-                  {bn ? "একাউন্ট তৈরি" : "Create Account"}
-                </button>
-              </>
-            )}
-            {user && isEmployer && (
-              <button
-                onClick={() => navigate("/jobs/post")}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-1.5 text-xs font-bold text-primary-foreground transition-colors hover:bg-primary/90"
-              >
-                <PlusCircle className="h-3.5 w-3.5" />
-                {bn ? "চাকরি পোস্ট" : "Post a Job"}
-              </button>
-            )}
-          </div>
         </div>
       </div>
     </div>
