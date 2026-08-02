@@ -27,11 +27,8 @@ const DEAL_BACKEND_BASE_URL =
 const io = new Server(server, {
   cors: {
     origin: [
-      "http://localhost:5173",
-      "http://localhost:8080",
-      "http://127.0.0.1:8080",
-      "https://shondhaan.com",
-    ],
+      process.env.FRONTEND_BASE_URL
+    ].filter(Boolean),
     credentials: true,
   },
 });

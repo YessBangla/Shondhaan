@@ -154,8 +154,8 @@ const CategoryCard = ({
     <motion.div 
       className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
         selected 
-          ? "bg-gradient-to-br from-blue-500 to-emerald-500 shadow-lg shadow-blue-500/30" 
-          : "bg-gradient-to-br from-slate-50 to-blue-50 hover:from-blue-50 hover:to-emerald-50 shadow-md"
+          ? "border border-2 border-primary" 
+          : ""
       }`}
       animate={selected ? { scale: 1 } : { scale: 1 }}
     >
@@ -202,13 +202,13 @@ const MobileCategoryTile = ({
     onClick={onClick}
     aria-label={label}
     whileTap={{ scale: 0.92 }}
-    className="press flex flex-col items-center gap-2 min-h-[100px] focus-visible:ring-2 focus-visible:ring-emerald-400/50 focus-visible:rounded-3xl transition-all"
+    className="press flex flex-col items-center gap-2 min-h-[100px] transition-all"
   >
     <motion.div 
-      className={`flex h-16 w-16 items-center justify-center rounded-3xl p-2.5 shadow-md transition-all ${
+      className={`flex h-16 w-16 items-center justify-center p-2.5 transition-all ${
         selected 
-          ? "bg-gradient-to-br from-blue-500 to-emerald-500 shadow-lg shadow-emerald-500/40 ring-2 ring-emerald-300" 
-          : `${MOBILE_TILE_BG[index % MOBILE_TILE_BG.length]} shadow-sm hover:shadow-md`
+          ? "border border-2 border-primary rounded-3xl" 
+          : ""
       }`}
       whileHover={!selected ? { y: -2 } : {}}
     >
@@ -347,9 +347,9 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
           </h3>
           <motion.button
             onClick={showAllCategories}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-500 text-white px-3 py-1.5 rounded-full transition-all shadow-md hover:shadow-lg"
+            // whileHover={{ scale: 1.05 }}
+            // whileTap={{ scale: 0.95 }}
+            className="text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md hover:shadow-lg"
           >
             {bn ? "সব দেখুন" : "View all"}
           </motion.button>
@@ -395,23 +395,23 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
         position: 'relative',
       }}
     >
-      <div className="mx-4 sm:mx-6 md:mx-8 p-4 sm:p-5 md:p-7 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow-2xl hover:shadow-3xl transition-shadow duration-300">
+      <div className="p-4 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow hover:shadow-3xl transition-shadow duration-300">
         <div className="relative group">
           {/* Premium Scroll buttons */}
           <motion.button
             onClick={() => scroll("left")}
-            whileHover={{ scale: 1.1, x: -2 }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute -left-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl transition-all md:flex"
+            // whileHover={{ scale: 1.1, x: -2 }}
+            // whileTap={{ scale: 0.95 }}
+            className="absolute -left-9 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll left"
           >
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
           <motion.button
             onClick={() => scroll("right")}
-            whileHover={{ scale: 1.1, x: 2 }}
-            whileTap={{ scale: 0.95 }}
-            className="absolute -right-4 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl transition-all md:flex"
+            // whileHover={{ scale: 1.1, x: 2 }}
+            // whileTap={{ scale: 0.95 }}
+            className="absolute -right-9 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll right"
           >
             <ChevronRight className="h-5 w-5" />
