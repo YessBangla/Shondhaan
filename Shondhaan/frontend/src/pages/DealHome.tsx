@@ -377,69 +377,32 @@ const DealHome = () => {
 
   const hasMoreCategories = (categoryTree?.length || 0) > categoriesPerRow.desktop;
 const [bgImage, setBgImage] = useState<string>(
-  "https://img.magnific.com/free-vector/online-shopping-banner-template_23-2148795109.jpg?semt=ais_hybrid&w=740&q=80"
+  "/deal/hero_deal.png"
 );
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
+    <div className="bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
-      <div className="mt-6 text-center py-5 flex gap-3 justify-center flex-wrap">
-        <Button
-          size="lg"
-          onClick={() => navigate("/deal/post")}
-          className="rounded-xl text-base font-bold gap-2 px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
-        >
-          <Plus className="h-5 w-5" />
-          {bn ? "ফ্রি বিজ্ঞাপন দিন" : "Post Free Ad"}
-        </Button>
-
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={() => navigate("/deal/my-ads")}
-          className="rounded-xl text-base font-bold gap-2 px-8 border-blue-200 text-blue-700 hover:bg-primary hover:border-blue-300 transition-colors"
-        >
-          <Package className="h-5 w-5" />
-          {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
-        </Button>
-
-        <Button
-          size="lg"
-          variant="outline"
-          onClick={() => navigate("/deal/inbox")}
-          className="rounded-xl text-base font-bold gap-2 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-700 hover:border-emerald-300 transition-colors"
-        >
-          <MessageCircle className="h-5 w-5" />
-          {bn ? "ইনবক্স" : "Inbox"}
-        </Button>
-        <Button
-          size="lg"
-          onClick={() => navigate("/deal/ads")}
-          className="rounded-xl text-sm md:text-base bg-white text-primary border border-blue-900/40 font-bold gap-2 px-6 md:px-8 hover:text-white hover:opacity-90 transition-all"
-        >
-          <LayoutGrid className="h-5 w-5" />
-          {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
-          <ChevronRight className="h-4 w-4" />
-        </Button>
-      </div>
 
       <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[12px] pb-8 md:pt-[18px] border-b border-blue-100/50">
-        <div className="app-container text-center">
+        {/* <div className="app-container text-center"> */}
           {/* <p className="text-blue-900/70 text-xl font-bold tracking-wide">
             {bn
               ? "বাংলাদেশের সবচেয়ে বিশ্বস্ত কেনাবেচার প্ল্যাটফর্ম"
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
           </p> */}
 
-          <div className="mx-12 mb-1">
-           <DealLocationSelector
-  value={locationFilter}
-  onChange={setLocationFilter}
-  bgImage={bgImage} // from DealHome's state
-/>
+          <div className="mb-1">
+            
+         
+            <DealLocationSelector
+              value={locationFilter}
+              onChange={setLocationFilter}
+              bgImage={bgImage} // from DealHome's state
+            />
           </div>
-        </div>
+        {/* </div> */}
       </div>
 
       <div className="app-container py-6 pb-28 md:py-2 md:pb-10">
