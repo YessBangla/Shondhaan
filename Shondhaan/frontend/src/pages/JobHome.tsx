@@ -25,6 +25,7 @@ import CompanyLogo from "@/components/jobs/CompanyLogo";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSEO } from "@/hooks/useSEO";
+import DesktopMegaMenu from "@/components/DesktopMegaMenu";
 
 const JobHome = () => {
   const { language } = useLanguage();
@@ -89,13 +90,6 @@ const JobHome = () => {
   const { data: deadlineSoonJobs = [] } = useDeadlineSoonJobs();
   const saveJob = useSaveJob();
 
-  // Fetch categories directly from the Express backend via React Query,
-  // so it participates in the SAME cache invalidation as the rest of the
-  // page (queryClient.invalidateQueries() in usePullToRefresh above, and
-  // any other refetch you trigger elsewhere). A plain useEffect+fetch here
-  // would only ever run once on mount and never pick up backend changes
-  // without a full page reload — this is the actual reason edits made to
-  // job_categories weren't showing up.
   const JOB_CATEGORIES_ENDPOINT = `${import.meta.env.VITE_YESSJOB_API_URL}/api/job-categories`;
 
   const { data: fetchedCategories } = useQuery({

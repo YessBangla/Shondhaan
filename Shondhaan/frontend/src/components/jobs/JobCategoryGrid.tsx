@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { TrendingUp, ChevronDown, X } from "lucide-react";
 import { JOB_CATEGORIES, JobCategory } from "@/hooks/useJobData";
+import JobsMenuBar from "./JobsMenuBar";
 
 
 const CATEGORY_ICONS: Record<string, string> = {
