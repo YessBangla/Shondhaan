@@ -7,6 +7,7 @@ import BackToHomeButton from "@/components/BackToHomeButton";
 import { divisions } from "@/data/locations";
 import { JOB_CATEGORIES } from "@/hooks/useJobData";
 import yessJobsLogo from "@/assets/yess-jobs-logo.png";
+import JobsMenuBar from "./JobsMenuBar";
 const heroBackgroundImage = "/job-bg.png";
 
 interface JobHeroProps {
@@ -42,7 +43,7 @@ export default function JobHero({
 
   return (
     <div
-        className="text-white relative overflow-hidden bg-cover bg-center bg-no-repeat"
+        className="text-white relative overflow-hidden bg-cover bg-center bg-no-repeat md:mt-[75px]"
         style={{
           backgroundImage: `linear-gradient(to bottom right, rgba(4, 14, 39, 0.62), rgba(0, 30, 114, 0.66)), url('${heroBackgroundImage}')`,
         }}
@@ -62,7 +63,7 @@ export default function JobHero({
               </div>
               <div>
                 <h1 className="sr-only">Jobs</h1>
-                <p className="text-blue-200 text-xs">{bn ? "বাংলাদেশের বিশ্বস্ত চাকরির পোর্টাল" : "Bangladesh's Trusted Job Portal"}</p>
+                <p className="text-accent-foreground text-[16px]">{bn ? "বাংলাদেশের বিশ্বস্ত চাকরির পোর্টাল" : "Bangladesh's Trusted Job Portal"}</p>
               </div>
             </div>
 
