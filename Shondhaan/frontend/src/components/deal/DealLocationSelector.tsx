@@ -342,7 +342,7 @@ const DealLocationSelector = ({
         <Button
           size="lg"
           onClick={() => navigate("/deal/ads")}
-          className="rounded-xl text-sm md:text-base bg-white text-primary border border-blue-900/40 font-bold gap-2 px-6 md:px-8 hover:text-white hover:opacity-90 transition-all"
+          className="rounded-xl text-sm md:text-base bg-white text-primary border border-blue-900/40 font-bold gap-2 px-6 md:px-8 hover:bg-gradient-to-r from-blue-600 to-emerald-500 hover:text-white transition-all"
         >
           <LayoutGrid className="h-5 w-5" />
           {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
@@ -552,8 +552,7 @@ const DealLocationSelector = ({
       {(value.division || value.district || value.thana || search) && (
         <button
           onClick={handleClear}
-          className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors"
-        >
+          className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors">
           <X size={14} /> {bn ? "মুছুন" : "Clear"}
         </button>
       )}

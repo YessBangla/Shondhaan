@@ -376,16 +376,16 @@ const DealHome = () => {
     : categoryTree?.slice(0, categoriesPerRow.desktop);
 
   const hasMoreCategories = (categoryTree?.length || 0) > categoriesPerRow.desktop;
-const [bgImage, setBgImage] = useState<string>(
-  "/deal/hero_deal.png"
-);
+  const [bgImage, setBgImage] = useState<string>(
+    "/deal/hero_deal.png"
+  );
   return (
-    <div className="bg-gradient-to-b from-blue-50/40 via-background to-emerald-50/30">
+    <div className="bg-[aliceblue]">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
       <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
 
-      <div className="bg-gradient-to-b from-blue-100/50 via-emerald-50/30 to-background pt-[12px] pb-8 md:pt-[18px] border-b border-blue-100/50">
+      <div className="bg-gradient-to-b from-blue-100/50 mb-4 via-emerald-50/30 to-background pt-[12px] md:pt-[18px] border-b border-blue-100/50">
         {/* <div className="app-container text-center"> */}
           {/* <p className="text-blue-900/70 text-xl font-bold tracking-wide">
             {bn
@@ -393,7 +393,7 @@ const [bgImage, setBgImage] = useState<string>(
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
           </p> */}
 
-          <div className="mb-1">
+          <div className="">
             
          
             <DealLocationSelector
@@ -602,8 +602,19 @@ const [bgImage, setBgImage] = useState<string>(
           </div>
         )}
       </div>
+      <div className="app-container flex justify-center mb-10">
+        <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => navigate("/deal/ads?featured=1")}
+            className="bg-primary px-4 w-auto text-white hover:bg-gradient-to-r from-blue-600 to-emerald-500"
+            >
+          {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All"}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
       <Footer />
-      <BackToHomeButton />
+      {/* <BackToHomeButton /> */}
     </div>
   );
 };
