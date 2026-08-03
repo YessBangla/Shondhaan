@@ -44,7 +44,7 @@ import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 import RepLeaderboard from "@/components/RepLeaderboard";
 import AdminJobListings from "@/components/admin/AdminJobListings";
 import AdminEmployerManagement from "@/components/admin/AdminEmployerManagement";
-
+import AdminPackages from "@/components/admin/Adminpackages";
 interface Booking {
   id: string;
   service_title: string;
@@ -100,7 +100,7 @@ const sidebarItems = [
   // ইয়েস জবস
   { value: "job-listings", label: "চাকরি বিজ্ঞাপন", icon: <Briefcase />, group: "ইয়েস জবস" },
   { value: "employers", label: "এমপ্লয়ার", icon: <Store />, group: "ইয়েস জবস" },
-
+{ value: "packages", label: "প্যাকেজ", icon: <Package />, group: "ইয়েস জবস" },
   // কমিউনিকেশন
   { value: "contacts", label: "মেসেজ", icon: <MessageSquare />, group: "কমিউনিকেশন" },
   { value: "service-messages", label: "Service messages", icon: <Headphones />, group: "কমিউনিকেশন" },
@@ -352,6 +352,7 @@ const AdminDashboard = () => {
       case "jobs": return <div className="p-4"><AdminJobApplications /></div>;
       case "job-listings": return <div className="p-4"><AdminJobListings /></div>;
       case "employers": return <div className="p-4"><AdminEmployerManagement /></div>;
+      case "packages": return <div className="p-4"><AdminPackages /></div>;
       case "reviews": return <div className="p-4"><AdminReviews /></div>;
       case "users": return (
         <div className="p-4 space-y-4">
