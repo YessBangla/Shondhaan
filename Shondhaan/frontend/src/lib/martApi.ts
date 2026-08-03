@@ -40,6 +40,7 @@ export interface MartProduct {
   seller_id: number | null;
   vendor_id?: number | null;
   category_id?: number | string | null;
+  slug?: string | null;
   image: string | null;
   gallery_urls?: string[] | string | null;
   name_bn: string;
@@ -57,8 +58,9 @@ export interface MartProduct {
   seller_name?: string;
   shop_name?: string | null;
   seller_email?: string | null;
-  seller_mobile?: string | null;
+seller_mobile?: string | null;
   seller_verified?: 0 | 1 | boolean;
+  seller_slug?: string | null;
   sold_count?: number | string | null;
   review_count?: number | string | null;
   avg_rating?: number | string | null;
@@ -116,7 +118,10 @@ export function toPanelProduct(product: MartProduct) {
     is_featured: Boolean(product.featured),
     image_url: product.image,
     gallery_urls: galleryUrls.slice(0, 4),
-    slug: `mysql-product-${product.id}`,
+    // Use the real slug returned from the backend. Only fall back to the
+    // mysql-product-<id> pattern if the product genuinely has no slug yet
+    // (e.g. a row created before the slug column/backfill existed).
+    slug: product.slug || `mysql-product-${product.id}`,
     category_id: product.category_id != null ? String(product.category_id) : null,
     rating: Number(product.avg_rating || 0),
     total_reviews: Number(product.review_count || 0),

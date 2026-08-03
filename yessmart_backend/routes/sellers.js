@@ -10,6 +10,25 @@ const createSlug = (value = "") =>
     .replace(/[^a-z0-9\u0980-\u09FF]+/g, "-")
     .replace(/(^-|-$)/g, "");
 
+// Generates a unique store slug WITHOUT appending the user id, so the URL can
+// show just the store name (e.g. /mart/store/tavi instead of /mart/store/tavi-8).
+async function generateUniqueSellerSlug(baseText, excludeUserId = null) {
+  const base = createSlug(baseText) || "seller";
+  let candidate = base;
+  let counter = 2;
+
+  while (true) {
+    const query = excludeUserId
+      ? "SELECT id FROM sellers WHERE slug = ? AND user_id != ? LIMIT 1"
+      : "SELECT id FROM sellers WHERE slug = ? LIMIT 1";
+    const params = excludeUserId ? [candidate, excludeUserId] : [candidate];
+    const [rows] = await pool.query(query, params);
+    if (rows.length === 0) return candidate;
+    candidate = `${base}-${counter}`;
+    counter++;
+  }
+}
+
 // ==========================
 // CREATE SELLER (POST)
 // ==========================
@@ -33,8 +52,7 @@ router.post("/", async (req, res) => {
         message: "shop_name or seller_name is required",
       });
     }
-    const slugBase = createSlug(slug || displayName) || "seller";
-    const sellerSlug = user_id ? `${slugBase}-${user_id}` : slugBase;
+const sellerSlug = await generateUniqueSellerSlug(slug || displayName, user_id);
 
     await pool.query(
       `
