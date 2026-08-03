@@ -63,6 +63,7 @@ export interface MartProduct {
   seller_email?: string | null;
   seller_mobile?: string | null;
   seller_verified?: 0 | 1 | boolean;
+  seller_slug?: string | null;
   category?: MartProductCategory;
 }
 
@@ -216,6 +217,9 @@ export function useMartProduct(slug: string) {
   return useQuery({
     queryKey: ["mart-product", slug],
     queryFn: async () => {
+      // Legacy fallback: old links that used the mysql-product-<id> pattern
+      // before real slugs existed. Keep this working so old shared/bookmarked
+      // links don't break.
       if (slug.startsWith("mysql-product-")) {
         const productId = slug.replace("mysql-product-", "");
         const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(productId)}`);
@@ -238,6 +242,28 @@ export function useMartProduct(slug: string) {
         } as MartProduct;
       }
 
+      // Try the MySQL-backed product lookup by real slug first.
+      const response = await fetch(`${API_BASE}/api/products/slug/${encodeURIComponent(slug)}`);
+      if (response.ok) {
+        const json = await response.json().catch(() => ({}));
+        if (json.success !== false && json.data) {
+          const product = toPublicProduct(json.data as any);
+          if (product.category_id) {
+            const { data: category } = await supabase
+              .from("mart_categories")
+              .select("id, name, name_en, slug")
+              .eq("id", product.category_id)
+              .single();
+            product.category = category || undefined;
+          }
+          return {
+            ...product,
+            gallery_urls: product.gallery_urls || [],
+          } as MartProduct;
+        }
+      }
+
+      // Fall back to Supabase-backed products (older/legacy product source).
       const { data, error } = await supabase
         .from("mart_products")
         .select("*, mart_categories!mart_products_category_id_fkey(id, name, name_en, slug)")

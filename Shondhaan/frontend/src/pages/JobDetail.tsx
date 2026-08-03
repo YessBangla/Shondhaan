@@ -236,10 +236,9 @@ const JobDetail = () => {
   const SubHeading = ({ children }: { children: React.ReactNode }) => (
     <h3 className="text-xs font-semibold text-foreground mt-3 mb-1">{children}</h3>
   );
-
-  const DescriptionBlock = () => (
+const DescriptionBlock = () => (
     <div
-      className="text-sm text-muted-foreground leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-2 [&_li]:mb-1"
+      className="job-description-content text-sm text-muted-foreground leading-relaxed"
       dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(job.description) }}
     />
   );

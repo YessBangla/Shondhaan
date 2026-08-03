@@ -70,7 +70,7 @@ export const EDUCATION_SUBJECTS = {
     "Others"
   ],
 
-  bachelor: [
+  bachelors: [
     "Bachelor of Accounting",
     "Bachelor of Finance",
     "Bachelor of Management",
@@ -470,7 +470,7 @@ function RichTextArea({
         {toolbarBtn("insertUnorderedList", "list", List, bn ? "বুলেট পয়েন্ট" : "Bullet points")}
       </div>
 
-      <div className="relative">
+    <div className="relative">
         {isEmpty && (
           <span className="pointer-events-none absolute left-3 top-2 text-sm text-muted-foreground">
             {placeholder}
@@ -483,7 +483,7 @@ function RichTextArea({
           onInput={handleInput}
           onMouseUp={updateActiveFormats}
           onKeyUp={updateActiveFormats}
-          className={`min-h-[120px] rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 [&_ul]:list-disc [&_ul]:pl-5 ${
+          className={`rich-editor-content min-h-[120px] rounded-lg border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
             overLimit ? "border-red-400" : ""
           }`}
         />
