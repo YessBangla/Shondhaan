@@ -138,14 +138,48 @@ const CallCenterPanel = () => {
   const [reqThanaFilter, setReqThanaFilter] = useState("all");
   const { data: serviceCategoryMap } = useServiceCategoryMap();
 
+  // Services & Packages states
+  const [services, setServices] = useState<any[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
+  const [filteredPackages, setFilteredPackages] = useState<any[]>([]);
+
   // New booking form
   const [showNewBooking, setShowNewBooking] = useState(false);
   const [newBooking, setNewBooking] = useState({
-    service_title: "", service_slug: "", package_name: "", package_price: 0,
-    customer_name: "", customer_phone: "", customer_address: "",
-    booking_date: "", booking_time: "", user_id: "", is_emergency: false,
+    service_id: "",
+    service_title: "", 
+    service_slug: "", 
+    package_id: "",
+    package_name: "", 
+    package_price: 0,
+    customer_name: "", 
+    customer_phone: "", 
+    customer_address: "",
+    booking_date: "", 
+    booking_time: "", 
+    user_id: "", 
+    is_emergency: false,
   });
   const [submitting, setSubmitting] = useState(false);
+
+  // Registration (OTP) states
+  const [showRegisterUser, setShowRegisterUser] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [registerStep, setRegisterStep] = useState<"details" | "otp">("details");
+  const [otpInput, setOtpInput] = useState("");
+  const [newUser, setNewUser] = useState({
+    name: "",
+    phone: "",
+    email: "",
+    address: "",
+    password: "CallCenter123@", 
+  });
+
+  // Service & Package Search states
+  const [serviceSearch, setServiceSearch] = useState("");
+  const [packageSearch, setPackageSearch] = useState("");
+  const [showServiceDropdown, setShowServiceDropdown] = useState(false);
+  const [showPackageDropdown, setShowPackageDropdown] = useState(false);
 
   useEffect(() => {
     if (!mysqlAuth?.token || !activeUserId) {
@@ -187,10 +221,27 @@ const CallCenterPanel = () => {
     }
   }, []);
 
-  useEffect(() => { checkRole(); }, [checkRole]);
-  useEffect(() => { if (isCallCenter) fetchData(); }, [isCallCenter, fetchData]);
+  const fetchServicesAndPackages = useCallback(async () => {
+    try {
+      const [servicesRes, packagesRes] = await Promise.all([
+        fetchOptionalArray<any>(`${API_BASE_URL}/api/services`),
+        fetchOptionalArray<any>(`${API_BASE_URL}/api/packages`)
+      ]);
+      setServices(servicesRes);
+      setPackages(packagesRes);
+    } catch (error) {
+      console.error("Failed to fetch services/packages", error);
+    }
+  }, []);
 
-  // Wrapped searchCustomer in useCallback so it can be used in a debounce effect safely
+  useEffect(() => { checkRole(); }, [checkRole]);
+  useEffect(() => { 
+    if (isCallCenter) {
+      fetchData();
+      fetchServicesAndPackages();
+    } 
+  }, [isCallCenter, fetchData, fetchServicesAndPackages]);
+
   const searchCustomer = useCallback(async () => {
     if (!searchQuery.trim()) {
       setSearchResults([]);
@@ -219,16 +270,14 @@ const CallCenterPanel = () => {
     }
   }, [searchQuery]);
 
-  // ✅ DEBOUNCE EFFECT: Triggers search automatically 400ms after user stops typing
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
-      if (searchQuery.trim().length >= 2) { // Only search if 2 or more characters
+      if (searchQuery.trim().length >= 2) {
         searchCustomer();
       } else {
         setSearchResults([]);
       }
     }, 400);
-
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery, searchCustomer]);
 
@@ -279,6 +328,91 @@ const CallCenterPanel = () => {
     }
   };
 
+  // --- OTP Registration Handlers ---
+  const handleRequestOtp = async () => {
+    if (!newUser.name || !newUser.phone || !newUser.email) {
+      toast.error("নাম, ফোন এবং ইমেইল বাধ্যতামূলক");
+      return;
+    }
+    setRegistering(true);
+    try {
+      const response = await fetch(`${CENTRAL_API_URL}/api/auth/signup/request-otp`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          name: newUser.name,
+          mobile: newUser.phone,
+          email: newUser.email,
+          address: newUser.address,
+          password: newUser.password,
+          type: "user",
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Failed to send OTP");
+      }
+
+      toast.success("OTP পাঠানো হয়েছে। গ্রাহকের ইমেইল চেক করুন।");
+      setRegisterStep("otp");
+    } catch (error: any) {
+      console.error("[handleRequestOtp] Error:", error);
+      toast.error(error?.message || "OTP পাঠাতে ব্যর্থ");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!otpInput || otpInput.length !== 6) {
+      toast.error("৬ সংখ্যার OTP দিন");
+      return;
+    }
+    setRegistering(true);
+    try {
+      const response = await fetch(`${CENTRAL_API_URL}/api/auth/signup/verify-otp`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          email: newUser.email,
+          otp: otpInput,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data?.message || "Invalid OTP");
+      }
+
+      const createdUser = data.user;
+      if (!createdUser || !createdUser.id) {
+        throw new Error("User verified, but failed to get User ID.");
+      }
+
+      setNewBooking(prev => ({
+        ...prev,
+        user_id: String(createdUser.id),
+        customer_name: createdUser.name || newUser.name,
+        customer_phone: createdUser.mobile || newUser.phone,
+        customer_address: createdUser.address || newUser.address
+      }));
+
+      toast.success("গ্রাহক সফলভাবে ভেরিফাই হয়েছে");
+      setShowRegisterUser(false);
+      setRegisterStep("details");
+      setOtpInput("");
+      setNewUser({ name: "", phone: "", email: "", address: "", password: "CallCenter123@" });
+    } catch (error: any) {
+      console.error("[handleVerifyOtp] Error:", error);
+      toast.error(error?.message || "OTP যাচাই ব্যর্থ");
+    } finally {
+      setRegistering(false);
+    }
+  };
+
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBooking.service_title || !newBooking.customer_name || !newBooking.customer_phone || !newBooking.booking_date || !newBooking.booking_time) {
@@ -289,12 +423,21 @@ const CallCenterPanel = () => {
       toast.error("কাস্টমার সিলেক্ট করুন");
       return;
     }
+    
+    if (!activeUserId) {
+      toast.error("অপারেটর আইডি পাওয়া যায়নি, আবার লগইন করুন");
+      return;
+    }
+
     setSubmitting(true);
     try {
       await createBooking({
         user_id: String(newBooking.user_id),
-        service_id: null,
-        package_id: null,
+        booked_by: String(activeUserId),
+        booker_name: mysqlUser?.name || mysqlUser?.display_name || "Call Center Agent",
+        booker_phone: mysqlUser?.phone || mysqlUser?.mobile || "",
+        service_id: newBooking.service_id || null,
+        package_id: newBooking.package_id || null,
         service_title: newBooking.service_title,
         service_slug: newBooking.service_slug || newBooking.service_title.toLowerCase().trim().replace(/\s+/g, "-"),
         package_name: newBooking.package_name || "Call Center Package",
@@ -316,7 +459,14 @@ const CallCenterPanel = () => {
     setSubmitting(false);
     toast.success("বুকিং তৈরি হয়েছে");
     setShowNewBooking(false);
-    setNewBooking({ service_title: "", service_slug: "", package_name: "", package_price: 0, customer_name: "", customer_phone: "", customer_address: "", booking_date: "", booking_time: "", user_id: "", is_emergency: false });
+    setNewBooking({ 
+      service_id: "", service_title: "", service_slug: "", 
+      package_id: "", package_name: "", package_price: 0, 
+      customer_name: "", customer_phone: "", customer_address: "", 
+      booking_date: "", booking_time: "", user_id: "", is_emergency: false 
+    });
+    setServiceSearch("");
+    setPackageSearch("");
     fetchData();
   };
 
@@ -368,8 +518,6 @@ const CallCenterPanel = () => {
               { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
               { value: "requests", label: "সেবা অনুরোধ", icon: <FileText className="h-4 w-4" /> },
               { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
-              { value: "lab-tests", label: "ল্যাব টেস্ট", icon: <FlaskConical className="h-4 w-4" /> },
-              // { value: "accounts", label: "অ্যাকাউন্টিং", icon: <Wallet className="h-4 w-4" />, group: "আর্থিক" },
             ]}
             defaultValue="search"
             panelTitle="কল সেন্টার"
@@ -396,7 +544,6 @@ const CallCenterPanel = () => {
                         <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
                       )}
                     </div>
-                    {/* The button is still here for manual refresh, but live search works automatically */}
                     <button
                       onClick={searchCustomer}
                       disabled={searching}
@@ -602,58 +749,182 @@ const CallCenterPanel = () => {
                 <div className="p-6 bg-white">
                   <h3 className="text-lg font-semibold text-slate-900 mb-5">নতুন বুকিং তৈরি করুন</h3>
 
+                  {/* Step 1: Customer Selection / Registration */}
                   <div className="mb-5 p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
-                    <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">ধাপ ১: গ্রাহক নির্বাচন করুন</p>
-                    <div className="relative flex gap-2">
-                      <input
-                        type="text"
-                        placeholder="ফোন বা নাম দিয়ে সার্চ করুন..."
-                        value={searchQuery}
-                        onChange={e => setSearchQuery(e.target.value)}
-                        className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
-                      />
-                      {searching && (
-                        <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+                    <div className="flex justify-between items-center">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">ধাপ ১: গ্রাহক নির্বাচন করুন</p>
+                      {!newBooking.user_id && (
+                        <button 
+                          type="button"
+                          onClick={() => { setShowRegisterUser(!showRegisterUser); setRegisterStep("details"); }}
+                          className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                        >
+                          {showRegisterUser ? "← সার্চে ফিরুন" : "+ নতুন গ্রাহক রেজিস্টার করুন"}
+                        </button>
                       )}
                     </div>
 
-                    {searchResults.length > 0 && (
-                      <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                        {searchResults.map(p => (
-                          <button
-                            key={p.user_id}
-                            onClick={() => {
-                              setNewBooking(prev => ({
-                                ...prev,
-                                user_id: p.user_id,
-                                customer_name: p.display_name || "",
-                                customer_phone: p.phone || "",
-                                customer_address: p.address || ""
-                              }));
-                              setSearchQuery(""); // Clear search to hide suggestions
-                              setSearchResults([]);
-                              toast.success(`${p.display_name} নির্বাচিত হয়েছে`);
-                            }}
-                            className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
-                          >
-                            <User className="h-4 w-4 text-slate-400 shrink-0" />
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
-                              <p className="text-[11px] text-slate-500 truncate">{p.phone}</p>
-                            </div>
-                          </button>
-                        ))}
+                    {!showRegisterUser ? (
+                      <>
+                        <div className="relative flex gap-2">
+                          <input
+                            type="text"
+                            placeholder="ফোন বা নাম দিয়ে সার্চ করুন..."
+                            value={searchQuery}
+                            onChange={e => setSearchQuery(e.target.value)}
+                            className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                          />
+                          {searching && (
+                            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />
+                          )}
+                        </div>
+
+                        {searchResults.length > 0 && (
+                          <div className="space-y-1.5 max-h-48 overflow-y-auto">
+                            {searchResults.map(p => (
+                              <button
+                                key={p.user_id}
+                                type="button"
+                                onClick={() => {
+                                  setNewBooking(prev => ({
+                                    ...prev,
+                                    user_id: p.user_id,
+                                    customer_name: p.display_name || "",
+                                    customer_phone: p.phone || "",
+                                    customer_address: p.address || ""
+                                  }));
+                                  setSearchQuery(""); 
+                                  setSearchResults([]);
+                                  toast.success(`${p.display_name} নির্বাচিত হয়েছে`);
+                                }}
+                                className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
+                              >
+                                <User className="h-4 w-4 text-slate-400 shrink-0" />
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
+                                  <p className="text-[11px] text-slate-500 truncate">{p.phone}</p>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {searchQuery && searchResults.length === 0 && !searching && (
+                           <p className="text-center text-xs text-slate-500 py-2">
+                              কোনো গ্রাহক পাওয়া যায়নি। <button onClick={() => setShowRegisterUser(true)} className="text-blue-600 font-medium">নতুন গ্রাহক রেজিস্টার করুন</button>
+                           </p>
+                        )}
+                      </>
+                    ) : (
+                      // Registration Form (2-Step OTP Flow)
+                      <div className="space-y-2">
+                        {registerStep === "details" ? (
+                          <>
+                            <input
+                              type="text"
+                              value={newUser.name}
+                              onChange={e => setNewUser({ ...newUser, name: e.target.value })}
+                              placeholder="গ্রাহকের নাম"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
+                            <input
+                              type="tel"
+                              value={newUser.phone}
+                              onChange={e => setNewUser({ ...newUser, phone: e.target.value })}
+                              placeholder="ফোন নম্বর"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
+                            <input
+                              type="email"
+                              value={newUser.email}
+                              onChange={e => setNewUser({ ...newUser, email: e.target.value })}
+                              placeholder="ইমেইল (OTP এখানে যাবে)"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
+                            <input
+                              type="text"
+                              value={newUser.address}
+                              onChange={e => setNewUser({ ...newUser, address: e.target.value })}
+                              placeholder="ঠিকানা"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleRequestOtp}
+                              disabled={registering}
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                            >
+                              {registering ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  OTP পাঠানো হচ্ছে...
+                                </>
+                              ) : (
+                                "OTP পাঠান"
+                              )}
+                            </button>
+                          </>
+                        ) : (
+                          // Step 2: OTP Verification
+                          <>
+                            <p className="text-xs text-slate-600 text-center mb-1">
+                              <span className="font-medium">{newUser.email}</span>-এ OTP পাঠানো হয়েছে
+                            </p>
+                            <input
+                              type="text"
+                              value={otpInput}
+                              onChange={e => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                              placeholder="৬ সংখ্যার OTP দিন"
+                              className="w-full text-center tracking-[0.5em] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
+                            <button
+                              type="button"
+                              onClick={handleVerifyOtp}
+                              disabled={registering}
+                              className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50 transition-colors"
+                            >
+                              {registering ? (
+                                <>
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  যাচাই হচ্ছে...
+                                </>
+                              ) : (
+                                "ভেরিফাই এবং সিলেক্ট করুন"
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRegisterStep("details")}
+                              className="w-full text-xs text-slate-500 hover:text-slate-700 pt-1"
+                            >
+                              ← বিস্তারিত পরিবর্তন করুন
+                            </button>
+                          </>
+                        )}
                       </div>
                     )}
 
                     {newBooking.user_id && (
-                      <p className="text-xs font-medium text-emerald-700 flex items-center gap-1.5">
-                        <CheckCircle className="h-4 w-4" />
-                        গ্রাহক নির্বাচিত: {newBooking.customer_name}
-                      </p>
+                      <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 mt-2">
+                        <p className="text-xs font-medium text-emerald-700 flex items-center gap-1.5">
+                          <CheckCircle className="h-4 w-4" />
+                          গ্রাহক নির্বাচিত: {newBooking.customer_name}
+                        </p>
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setNewBooking(prev => ({ ...prev, user_id: "", customer_name: "", customer_phone: "", customer_address: "" }));
+                            setShowRegisterUser(false);
+                          }}
+                          className="text-xs text-red-500 hover:text-red-600 font-medium"
+                        >
+                          পরিবর্তন করুন
+                        </button>
+                      </div>
                     )}
                   </div>
 
+                  {/* Step 2: Booking Details Form */}
                   <form onSubmit={handleCreateBooking} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <input
@@ -668,18 +939,109 @@ const CallCenterPanel = () => {
                         placeholder="ফোন নম্বর"
                         className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                       />
-                      <input
-                        value={newBooking.service_title}
-                        onChange={e => setNewBooking({ ...newBooking, service_title: e.target.value })}
-                        placeholder="সেবার নাম"
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
-                      />
-                      <input
-                        value={newBooking.package_name}
-                        onChange={e => setNewBooking({ ...newBooking, package_name: e.target.value })}
-                        placeholder="প্যাকেজের নাম"
-                        className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
-                      />
+                      
+                      {/* Service Searchable Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder="সেবা সার্চ করুন..."
+                          value={newBooking.service_id ? newBooking.service_title : serviceSearch}
+                          onChange={e => {
+                            setServiceSearch(e.target.value);
+                            setShowServiceDropdown(true);
+                            if (newBooking.service_id) {
+                              setNewBooking(prev => ({ ...prev, service_id: "", service_title: "", service_slug: "", package_id: "", package_name: "", package_price: 0 }));
+                              setFilteredPackages([]);
+                            }
+                          }}
+                          onFocus={() => setShowServiceDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowServiceDropdown(false), 200)}
+                          className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                        />
+                        {showServiceDropdown && (
+                          <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                            {services
+                              .filter(s => (s.title || s.name || "").toLowerCase().includes(serviceSearch.toLowerCase()))
+                              .map(s => (
+                                <button
+                                  key={s.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewBooking(prev => ({
+                                      ...prev,
+                                      service_id: s.id,
+                                      service_title: s.title || s.name || "",
+                                      service_slug: s.slug || "",
+                                      package_id: "",
+                                      package_name: "",
+                                      package_price: 0
+                                    }));
+                                    setFilteredPackages(packages.filter(p => p.service_id === s.id || p.service_slug === s.slug));
+                                    setServiceSearch("");
+                                    setShowServiceDropdown(false);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors"
+                                >
+                                  {s.title || s.name}
+                                </button>
+                              ))}
+                            {services.filter(s => (s.title || s.name || "").toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
+                              <p className="px-3 py-2 text-xs text-slate-500">কোনো সেবা পাওয়া যায়নি</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Package Searchable Input */}
+                      <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
+                        <input
+                          type="text"
+                          placeholder={newBooking.service_id ? "প্যাকেজ সার্চ করুন..." : "প্রথমে সেবা নির্বাচন করুন"}
+                          disabled={!newBooking.service_id}
+                          value={newBooking.package_id ? `${newBooking.package_name} - ৳${newBooking.package_price}` : packageSearch}
+                          onChange={e => {
+                            setPackageSearch(e.target.value);
+                            setShowPackageDropdown(true);
+                            if (newBooking.package_id) {
+                              setNewBooking(prev => ({ ...prev, package_id: "", package_name: "", package_price: 0 }));
+                            }
+                          }}
+                          onFocus={() => setShowPackageDropdown(true)}
+                          onBlur={() => setTimeout(() => setShowPackageDropdown(false), 200)}
+                          className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        />
+                        {showPackageDropdown && newBooking.service_id && (
+                          <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto bg-white border border-slate-200 rounded-lg shadow-lg">
+                            {filteredPackages
+                              .filter(p => (p.name || p.title || "").toLowerCase().includes(packageSearch.toLowerCase()))
+                              .map(p => (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => {
+                                    setNewBooking(prev => ({
+                                      ...prev,
+                                      package_id: p.id,
+                                      package_name: p.name || p.title || "",
+                                      package_price: p.price || 0
+                                    }));
+                                    setPackageSearch("");
+                                    setShowPackageDropdown(false);
+                                  }}
+                                  className="w-full text-left px-3 py-2 text-sm hover:bg-slate-50 transition-colors"
+                                >
+                                  {p.name || p.title} - ৳{p.price}
+                                </button>
+                              ))}
+                            {filteredPackages.filter(p => (p.name || p.title || "").toLowerCase().includes(packageSearch.toLowerCase())).length === 0 && (
+                              <p className="px-3 py-2 text-xs text-slate-500">কোনো প্যাকেজ পাওয়া যায়নি</p>
+                            )}
+                          </div>
+                        )}
+                      </div>
+
                       <input
                         type="number"
                         value={newBooking.package_price || ""}
