@@ -274,10 +274,14 @@ export const useCmsServices = () => {
   });
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsService>) => {
-      const payload = await cmsRequest<any>("/api/services", {
-        method: "POST",
-        body: JSON.stringify(item),
-      });
+      const isUpdate = !!item.id;
+      const payload = await cmsRequest<any>(
+        isUpdate ? `/api/services/${encodeURIComponent(item.id!)}` : "/api/services",
+        {
+          method: isUpdate ? "PUT" : "POST",
+          body: JSON.stringify(item),
+        }
+      );
       return normalizeService(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),

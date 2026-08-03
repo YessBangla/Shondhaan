@@ -314,7 +314,7 @@ const  Navbar = () => {
         </PopoverTrigger>
 
         <PopoverContent className="w-72 p-3" align="end">
-          <p className="text-xs font-semibold text-foreground mb-2">
+          <p className="text-xs font-semibold text-accent-foreground mb-2">
             {bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
           </p>
 
