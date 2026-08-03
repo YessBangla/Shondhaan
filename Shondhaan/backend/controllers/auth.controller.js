@@ -52,8 +52,8 @@ export const signupRequestOtp = async (req, res) => {
         [name, mobile, address || null, email, passwordHash, type, otpHash, expiresAt],
       );
     }
+    
 sendOtpEmail(email, otp).catch(console.error);
-
 res.json({ message: "OTP sent" });
   } catch (error) {
     console.error("Signup OTP error:", error);
