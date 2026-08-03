@@ -8,6 +8,64 @@ import { safeUser } from "../utils/users.js";
 import { sendOtpEmail } from "../utils/email.js";
 import { OTP_EXPIRY_MINUTES } from "../config/env.js";
 
+// export const signupRequestOtp = async (req, res) => {
+//   try {
+//     const name = String(req.body.name || "").trim();
+//     const mobile = normalizeMobile(req.body.mobile);
+//     const address = String(req.body.address || "").trim();
+//     const email = normalizeEmail(req.body.email);
+//     const password = String(req.body.password || "");
+//     const type = String(req.body.type || "user").trim();
+
+//     if (!name || !email || !mobile) {
+//       return res.status(400).json({ message: "Name, mobile and email are required" });
+//     }
+//     if (!validatePasswordPolicy(password)) {
+//       return res.status(400).json({ message: passwordPolicyMessage });
+//     }
+//     if (!ALLOWED_ROLES.has(type)) {
+//       return res.status(400).json({ message: "Valid account type is required" });
+//     }
+
+//     const passwordHash = await hashPassword(password);
+//     const otp = String(crypto.randomInt(100000, 999999));
+//     const otpHash = hashValue(otp);
+//     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
+//     const [existing] = await pool.execute("SELECT id, email_verified FROM users WHERE email = ? OR mobile = ? LIMIT 1", [
+//       email,
+//       mobile,
+//     ]);
+
+//     if (existing.length && existing[0].email_verified) {
+//       return res.status(409).json({ message: "An account already exists with this email or mobile" });
+//     }
+
+//     if (existing.length) {
+//       await pool.execute(
+//         "UPDATE users SET name = ?, mobile = ?, address = ?, email = ?, password = ?, type = ?, otp_hash = ?, otp_expires_at = ? WHERE id = ?",
+//         [name, mobile, address || null, email, passwordHash, type, otpHash, expiresAt, existing[0].id],
+//       );
+//     } else {
+//       await pool.execute(
+//         "INSERT INTO users (name, mobile, address, email, password, type, otp_hash, otp_expires_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+//         [name, mobile, address || null, email, passwordHash, type, otpHash, expiresAt],
+//       );
+//     }
+
+// sendOtpEmail(email, otp).catch(console.error);
+// res.json({ message: "OTP sent" });
+//   } catch (error) {
+//     console.error("Signup OTP error:", error);
+//     const message =
+//       error.code === "SMTP_CONFIG_MISSING"
+//         ? error.message
+//         : "Could not send OTP email. Please check SMTP settings.";
+//     res.status(500).json({ message });
+//   }
+// };
+
+
 export const signupRequestOtp = async (req, res) => {
   try {
     const name = String(req.body.name || "").trim();
@@ -16,6 +74,9 @@ export const signupRequestOtp = async (req, res) => {
     const email = normalizeEmail(req.body.email);
     const password = String(req.body.password || "");
     const type = String(req.body.type || "user").trim();
+
+    // 👈 Check if we should include the password in the email (Call Center flow)
+    const sendPasswordInEmail = req.body.sendPasswordInEmail === true;
 
     if (!name || !email || !mobile) {
       return res.status(400).json({ message: "Name, mobile and email are required" });
@@ -53,8 +114,10 @@ export const signupRequestOtp = async (req, res) => {
       );
     }
     
-sendOtpEmail(email, otp).catch(console.error);
-res.json({ message: "OTP sent" });
+    // 👈 Only pass the password if the flag is true, otherwise pass null
+    sendOtpEmail(email, otp, sendPasswordInEmail ? password : null).catch(console.error);
+    
+    res.json({ message: "OTP sent" });
   } catch (error) {
     console.error("Signup OTP error:", error);
     const message =
@@ -64,7 +127,6 @@ res.json({ message: "OTP sent" });
     res.status(500).json({ message });
   }
 };
-
 export const signupVerifyOtp = async (req, res) => {
   try {
     const email = normalizeEmail(req.body.email);

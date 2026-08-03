@@ -1,4 +1,56 @@
-export function otpEmailTemplate({ otp, expiryMinutes }) {
+export function otpEmailTemplate({ otp, expiryMinutes, password = null }) {
+  // Conditionally render the password block only if password exists
+  const passwordBlock = password ? `
+    <!-- PASSWORD BOX -->
+    <div
+      style="
+        margin-top:25px;
+        padding:18px;
+        background:#eff6ff;
+        border-left:4px solid #3b82f6;
+        border-radius:6px;
+      ">
+      <p
+        style="
+          margin:0;
+          font-size:16px;
+          font-weight:bold;
+          color:#333;
+        ">
+        🔑 Your Account Password
+      </p>
+      <p
+        style="
+          margin:10px 0 0;
+          font-size:14px;
+          line-height:24px;
+          color:#555;
+        ">
+        You can use the following temporary password to log in to your Shondhaan account:
+      </p>
+      <div
+        style="
+          margin-top:12px;
+          text-align:center;
+          font-size:22px;
+          font-weight:bold;
+          color:#1d4ed8;
+          letter-spacing:2px;
+        ">
+        ${password}
+      </div>
+      <p
+        style="
+          margin-top:12px;
+          font-size:13px;
+          color:#666;
+          text-align:center;
+        ">
+        For your security, please change this password after logging in.
+      </p>
+    </div>
+  ` : '';
+
   return `
 <!DOCTYPE html>
 <html>
@@ -133,7 +185,7 @@ letter-spacing:10px;
 color:#16a34a;
 font-family:Arial,Helvetica,sans-serif;
 ">
-${otp}
+ ${otp}
 </div>
 
 </td>
@@ -187,6 +239,9 @@ Shondhaan employees will never ask for your OTP via phone, email, or message.
 </p>
 
 </div>
+
+<!-- 🔑 PASSWORD BLOCK (Only shows if password is provided) -->
+ ${passwordBlock}
 
 </td>
 </tr>

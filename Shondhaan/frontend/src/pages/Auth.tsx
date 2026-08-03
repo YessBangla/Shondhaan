@@ -44,6 +44,7 @@ const Auth = () => {
   const ROLE_OPTIONS = [
   { value: "user", label: "User" },
   { value: "employer", label: "Employer" },
+    { value: "provider", label: "Provider" },
   { value: "mart_vendor", label: "Mart Vendor" },
   { value: "mart_delivery", label: "Mart Delivery" },
   { value: "mart_cs", label: "Mart Customer Service" },
