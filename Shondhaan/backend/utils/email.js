@@ -21,17 +21,21 @@ export function createTransporter() {
   });
 }
 
-export async function sendOtpEmail(email, otp) {
+export async function sendOtpEmail(email, otp, password = null) {
   const transporter = createTransporter();
   const expiryMinutes = Number(process.env.OTP_EXPIRY_MINUTES || 10);
+  
+  let textContent = `Your Shondhaan OTP is ${otp}. It will expire in ${expiryMinutes} minutes.`;
+  if (password) {
+    textContent += `\n\nYour account password is: ${password}`;
+  }
+
   await transporter.sendMail({
     from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to: email,
     subject: "🔐 Your Shondhaan Verification Code",
-    text: `Your Shondhaan OTP is ${otp}. It will expire in ${expiryMinutes} minutes.`,
-    html: otpEmailTemplate({
-      otp,
-      expiryMinutes,
-    }),
+    text: textContent,
+    // Pass the password to the template function
+    html: otpEmailTemplate({ otp, expiryMinutes, password }),
   });
 }

@@ -347,6 +347,7 @@ const CallCenterPanel = () => {
           address: newUser.address,
           password: newUser.password,
           type: "user",
+          sendPasswordInEmail: true, // 👈 ADD THIS LINE!
         }),
       });
 
@@ -355,7 +356,7 @@ const CallCenterPanel = () => {
         throw new Error(data?.message || "Failed to send OTP");
       }
 
-      toast.success("OTP পাঠানো হয়েছে। গ্রাহকের ইমেইল চেক করুন।");
+      toast.success("OTP এবং পাসওয়ার্ড পাঠানো হয়েছে। গ্রাহকের ইমেইল চেক করুন।");
       setRegisterStep("otp");
     } catch (error: any) {
       console.error("[handleRequestOtp] Error:", error);
@@ -818,7 +819,7 @@ const CallCenterPanel = () => {
                     ) : (
                       // Registration Form (2-Step OTP Flow)
                       <div className="space-y-2">
-                        {registerStep === "details" ? (
+                                           {registerStep === "details" ? (
                           <>
                             <input
                               type="text"
@@ -848,6 +849,14 @@ const CallCenterPanel = () => {
                               placeholder="ঠিকানা"
                               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                             />
+                            {/* 👈 ADD THIS PASSWORD INPUT */}
+                            <input
+                              type="text"
+                              value={newUser.password}
+                              onChange={e => setNewUser({ ...newUser, password: e.target.value })}
+                              placeholder="পাসওয়ার্ড"
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
+                            />
                             <button
                               type="button"
                               onClick={handleRequestOtp}
@@ -860,7 +869,7 @@ const CallCenterPanel = () => {
                                   OTP পাঠানো হচ্ছে...
                                 </>
                               ) : (
-                                "OTP পাঠান"
+                                "OTP এবং পাসওয়ার্ড পাঠান"
                               )}
                             </button>
                           </>
