@@ -8,10 +8,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  ChevronRight,
+  ChevronUp,
+  Eye,
+  Clock,
+  Star,
+  Plus,
+  MessageCircle,
+  Package,
+  LayoutGrid,
+  ChevronDown,
+} from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { divisions as locationData } from "@/data/locations";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 
 // Types
 export interface Listing {
@@ -37,8 +51,7 @@ interface DealLocationSelectorProps {
    bgImage?: string;
 }
 
-const DEFAULT_BG_IMAGE =
-  "https://img.magnific.com/free-vector/online-shopping-banner-template_23-2148795109.jpg?semt=ais_hybrid&w=740&q=80";
+const DEFAULT_BG_IMAGE = "/deal/hero_deal-3.png";
 
 const DealLocationSelector = ({
   value,
@@ -290,31 +303,78 @@ const DealLocationSelector = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="relative">
+     
       {/* 🔍 HERO SEARCH WITH BACKGROUND IMAGE */}
-      <div className="relative w-full overflow-hidden rounded-2xl">
-        <div
-          className="absolute inset-0 bg-cover bg-center"
-          style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}
-        />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-xs" />
+      <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
 
-        <div className="relative z-10 p-6 sm:p-8">
-          <h2 className="mb-4 text-xl sm:text-2xl font-bold text-white text-center drop-shadow">
-            {bn ? "আপনার পছন্দের ডিল খুঁজুন" : "Find deals you'll love"}
-          </h2>
 
-          <div className="flex px-12 flex-col sm:flex-row gap-2">
+      <div className="absolute z-10 top-10 md:top-28 text-center flex gap-3 justify-center w-full flex-wrap">
+        <Button
+          size="lg"
+          onClick={() => navigate("/deal/post")}
+          className="rounded-xl text-base font-bold gap-2 px-8 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
+        >
+          <Plus className="h-5 w-5" />
+          {bn ? "ফ্রি বিজ্ঞাপন দিন" : "Post Free Ad"}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate("/deal/my-ads")}
+          className="rounded-xl text-base font-bold gap-2 px-8 border-blue-200 text-blue-700 hover:bg-primary hover:border-blue-300 transition-colors"
+        >
+          <Package className="h-5 w-5" />
+          {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
+        </Button>
+
+        <Button
+          size="lg"
+          variant="outline"
+          onClick={() => navigate("/deal/inbox")}
+          className="rounded-xl text-base font-bold gap-2 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-700 hover:border-emerald-300 transition-colors"
+        >
+          <MessageCircle className="h-5 w-5" />
+          {bn ? "ইনবক্স" : "Inbox"}
+        </Button>
+        
+        <Button
+          size="lg"
+          onClick={() => navigate("/deal/ads")}
+          className="rounded-xl text-sm md:text-base bg-white text-primary border border-blue-900/40 font-bold gap-2 px-6 md:px-8 hover:bg-gradient-to-r from-blue-600 to-emerald-500 hover:text-white transition-all"
+        >
+          <LayoutGrid className="h-5 w-5" />
+          {bn ? "সকল বিজ্ঞাপন দেখুন" : "View All Ads"}
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
+
+
+      <div className="absolute h-full inset-0 bg-center md:bg-top"
+          style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}/>
+
+        <div className="absolute inset-0 bg-white/40 backdrop-blur-xs" />
+        <div className="absolute z-10 p-6 sm:p-8 mt-4 bottom-1/4 w-full">
+          {/* <h2 className="mb-4 text-xl sm:text-2xl font-bold text-primary text-center drop-shadow">
+            {bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
+          </h2> */}
+
+          <div className="flex px-8 flex-col sm:flex-row max-w-4xl mx-auto gap-2">
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                {/* Left Search Icon */}
+              <div className="absolute z-10 left-0 top-1/2 -translate-y-1/2 text-gray-400  flex h-12 w-12 items-center justify-center">
+                <Search className="h-5 w-5" />
+              </div>
               <Input
-                placeholder={bn ? "খুঁজুন..." : "Search deals..."}
+                placeholder={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-10 pr-10 w-full rounded-lg bg-white/90 backdrop-blur-sm shadow-md border-white/20 focus-visible:ring-2 focus-visible:ring-emerald-400"
-                aria-label={bn ? "ডিল খুঁজুন" : "Search deals"}
+                className="pl-10 pr-10 py-6 w-full rounded-lg bg-white backdrop-blur-sm shadow-md border-2 border-primary focus-visible:ring-2 focus-visible:ring-emerald-400"
+                aria-label={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
               />
               {loading ? (
                 <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-gray-500" />
@@ -492,8 +552,7 @@ const DealLocationSelector = ({
       {(value.division || value.district || value.thana || search) && (
         <button
           onClick={handleClear}
-          className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors"
-        >
+          className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors">
           <X size={14} /> {bn ? "মুছুন" : "Clear"}
         </button>
       )}
