@@ -238,10 +238,14 @@ export const useCmsCategories = () => {
 
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsCategory>) => {
-      const payload = await cmsRequest<any>("/api/categories", {
-        method: "POST",
-        body: JSON.stringify(item),
-      });
+      const isUpdate = !!item.id;
+      const payload = await cmsRequest<any>(
+        isUpdate ? `/api/categories/${encodeURIComponent(item.id!)}` : "/api/categories",
+        {
+          method: isUpdate ? "PUT" : "POST",
+          body: JSON.stringify(item),
+        }
+      );
       return normalizeCategory(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-categories"] }),
