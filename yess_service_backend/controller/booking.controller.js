@@ -9,7 +9,6 @@ const allowedStatuses = [
   "completed",
   "cancelled",
 ];
-
 const allowedPaymentStatuses = ["unpaid", "paid", "refunded"];
 
 const money = (value) => Math.round(Number(value || 0) * 100) / 100;
@@ -41,6 +40,9 @@ export const createBooking = async (req, res) => {
     const {
       user_id,
       service_id,
+      booked_by,
+      booker_name,
+      booker_phone,
       package_id,
       service_slug,
       service_title,
@@ -133,6 +135,7 @@ export const createBooking = async (req, res) => {
       INSERT INTO bookings (
         id,
         user_id,
+        booked_by,
         service_id,
         package_id,
         service_slug,
@@ -142,6 +145,8 @@ export const createBooking = async (req, res) => {
         customer_name,
         customer_phone,
         customer_address,
+        booker_name,
+        booker_phone,
         booking_date,
         booking_time,
         status,
@@ -150,11 +155,12 @@ export const createBooking = async (req, res) => {
         payment_amount,
         note
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
         user_id,
+        booked_by || user_id || null, // fallback to user_id if not provided
         service_id || null,
         package_id || null,
         service_slug,
@@ -164,6 +170,8 @@ export const createBooking = async (req, res) => {
         customer_name,
         customer_phone,
         customer_address,
+        booker_name || null,
+        booker_phone || null,
         booking_date,
         booking_time,
         finalStatus,
@@ -202,6 +210,7 @@ export const getBookings = async (req, res) => {
   try {
     const {
       user_id,
+      booked_by, // 👈 new
       status,
       payment_status,
       service_slug,
@@ -223,15 +232,22 @@ export const getBookings = async (req, res) => {
       values.push(user_id);
     }
 
+    // 👈 New filter for fetching bookings made by a specific user/agent
+    if (booked_by) {
+      query += ` AND booked_by = ?`;
+      values.push(booked_by);
+    }
+
     if (status) {
       query += ` AND status = ?`;
       values.push(status);
     }
 
+    // Updated fallback: Only default to 'paid' if neither user_id nor booked_by is provided
     if (payment_status) {
       query += ` AND payment_status = ?`;
       values.push(payment_status);
-    } else if (!user_id) {
+    } else if (!user_id && !booked_by) {
       query += ` AND payment_status = 'paid'`;
     }
 
@@ -395,6 +411,9 @@ export const updateBooking = async (req, res) => {
       customer_name,
       customer_phone,
       customer_address,
+      booked_by,       // 👈 new
+      booker_name,     // 👈 new
+      booker_phone,    // 👈 new
       booking_date,
       booking_time,
       note,
@@ -407,6 +426,9 @@ export const updateBooking = async (req, res) => {
         customer_name = ?,
         customer_phone = ?,
         customer_address = ?,
+        booked_by = ?,
+        booker_name = ?,
+        booker_phone = ?,
         booking_date = ?,
         booking_time = ?,
         note = ?
@@ -416,6 +438,9 @@ export const updateBooking = async (req, res) => {
         customer_name ?? old.customer_name,
         customer_phone ?? old.customer_phone,
         customer_address ?? old.customer_address,
+        booked_by ?? old.booked_by,
+        booker_name ?? old.booker_name,
+        booker_phone ?? old.booker_phone,
         booking_date ?? old.booking_date,
         booking_time ?? old.booking_time,
         note ?? old.note,

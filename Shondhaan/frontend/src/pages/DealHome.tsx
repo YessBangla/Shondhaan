@@ -406,7 +406,7 @@ const DealHome = () => {
       </div>
 
       <div className="app-container py-6 pb-28 md:py-2 md:pb-10">
-        {/* ✨ PREMIUM CATEGORY SECTION WITH EXPAND FUNCTIONALITY */}
+        {/*PREMIUM CATEGORY SECTION WITH EXPAND FUNCTIONALITY */}
         <div className="mb-12">
           {/* Premium Header */}
           <div className="mb-8">

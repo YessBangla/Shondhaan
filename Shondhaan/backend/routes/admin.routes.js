@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireSuperAdmin } from "../middleware/auth.middleware.js";
+import { requireAdminOrCallCenter, requireSuperAdmin } from "../middleware/auth.middleware.js";
 import {
   createUser,
   listUsers,
@@ -10,7 +10,7 @@ import {
 const router = Router();
 
 router.post("/users", requireSuperAdmin, createUser);
-router.get("/users", requireSuperAdmin, listUsers);
+router.get("/users", requireAdminOrCallCenter, listUsers);
 router.get("/types", requireSuperAdmin, getTypes);
 router.patch("/users/:id/type", requireSuperAdmin, updateUserType);
 

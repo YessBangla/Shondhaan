@@ -38,6 +38,26 @@ function timeAgo(dateStr: string, bn = true) {
   return bn ? `${days} দিন আগে` : `${days}d ago`;
 }
 
+// Helper component to render category icons whether they are URLs or emojis
+const CategoryIcon = ({ icon, className = "w-5 h-5" }: { icon?: string; className?: string }) => {
+  if (!icon) return null;
+  
+  const isImage = icon.startsWith("http") || icon.startsWith("/") || icon.startsWith("data:") || icon.startsWith("blob:");
+  
+  if (isImage) {
+    return (
+      <img 
+        src={icon} 
+        alt="Category Icon" 
+        className={`${className} object-contain`}
+        onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+      />
+    );
+  }
+  
+  return <span className="text-base leading-none">{icon}</span>;
+};
+
 const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) => {
   const navigate = useNavigate();
 
@@ -369,7 +389,10 @@ const DealAdDetail = () => {
           <ChevronRight className="h-3 w-3" />
           {cat && (
             <>
-              <button onClick={() => navigate(`/deal/category/${cat.slug}`)} className="hover:text-primary transition-colors truncate">{bn ? cat.name : (cat.name_en || cat.name)}</button>
+              <button onClick={() => navigate(`/deal/category/${cat.slug}`)} className="hover:text-primary transition-colors truncate flex items-center gap-1.5">
+                <CategoryIcon icon={cat.icon} className="w-3 h-3" />
+                <span className="truncate">{bn ? cat.name : (cat.name_en || cat.name)}</span>
+              </button>
               <ChevronRight className="h-3 w-3" />
             </>
           )}
@@ -651,7 +674,6 @@ const DealAdDetail = () => {
         listingTitle={listing.title}
         bn={bn}
       />
-
       <Footer />
     </div>
   );

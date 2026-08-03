@@ -75,8 +75,8 @@ const NidUpload = ({
         onClick={() => inputRef.current?.click()}
         className={`relative flex h-32 w-full items-center justify-center rounded-xl border-2 border-dashed overflow-hidden transition-all duration-300 ${
           preview
-            ? "border-primary/40 bg-primary/[0.03]"
-            : "border-border bg-muted/30 hover:border-primary/40 hover:bg-primary/[0.04]"
+            ? "border-primary/40 "
+            : "border-border bg-muted/30 hover:border-primary/40 "
         }`}
       >
         {preview ? (
@@ -88,7 +88,7 @@ const NidUpload = ({
                 e.stopPropagation();
                 onFileChange(null);
               }}
-              className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm transition-transform hover:scale-110"
+              className="absolute top-1.5 right-1.5 flex h-6 w-6 items-center justify-center rounded-full text-destructive-foreground shadow-sm transition-transform hover:scale-110"
             >
               <X className="h-3 w-3" />
             </button>
@@ -391,7 +391,7 @@ const JoinUs = () => {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-transform hover:scale-[1.01] active:scale-[0.99] mt-6"
+                    className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99] mt-6 bg-primary text-primary-foreground "
                   >
                     <Send className="h-4 w-4" />
                     {submitting

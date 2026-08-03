@@ -86,6 +86,26 @@ const getDealImageUrl = (url?: string | null) => {
   return `${DEAL_API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 };
 
+// Helper component to render category icons whether they are URLs or emojis
+const CategoryIcon = ({ icon, className = "w-5 h-5" }: { icon?: string; className?: string }) => {
+  if (!icon) return null;
+  
+  const isImage = icon.startsWith("http") || icon.startsWith("/") || icon.startsWith("data:") || icon.startsWith("blob:");
+  
+  if (isImage) {
+    return (
+      <img 
+        src={icon} 
+        alt="" 
+        className={`${className} object-contain`}
+        onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+      />
+    );
+  }
+  
+  return <span className="text-base leading-none flex items-center justify-center">{icon}</span>;
+};
+
 const getConditionLabel = (condition?: string | null, bn = true) => {
   if (!condition) return "";
 
@@ -422,7 +442,9 @@ const DealAllAds = () => {
                 onClick={() => toggleCat(cat.slug)}
                 className="flex-1 flex items-center gap-2 text-left text-sm cursor-pointer min-w-0"
               >
-                <span className="text-base shrink-0">{cat.icon}</span>
+                <span className="shrink-0 flex items-center justify-center w-5 h-5">
+                  <CategoryIcon icon={cat.icon} className="w-5 h-5" />
+                </span>
 
                 <span
                   className={`flex-1 truncate ${
@@ -450,7 +472,9 @@ const DealAllAds = () => {
                           : "text-foreground"
                       }`}
                     >
-                      <span className="shrink-0">{child.icon || "•"}</span>
+                      <span className="shrink-0 flex items-center justify-center w-4 h-4">
+                        <CategoryIcon icon={child.icon || "•"} className="w-4 h-4" />
+                      </span>
 
                       <span className="truncate flex-1">
                         {bn ? child.name : child.name_en || child.name}
@@ -849,7 +873,8 @@ const DealAllAds = () => {
 
               return (
                 <Badge key={slug} variant="secondary" className="gap-1">
-                  {cat?.icon} {bn ? cat?.name : cat?.name_en || cat?.name}
+                  <CategoryIcon icon={cat?.icon} className="w-3 h-3" />
+                  {bn ? cat?.name : cat?.name_en || cat?.name}
                   <button onClick={() => toggleCat(slug)}>
                     <X className="h-3 w-3" />
                   </button>
@@ -1282,4 +1307,3 @@ function ListingListItem({
 }
 
 export default DealAllAds;
-
