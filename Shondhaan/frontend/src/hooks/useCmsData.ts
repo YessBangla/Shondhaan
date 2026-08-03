@@ -1,8 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
-import { CENTRAL_API_BASE_URL } from "@/lib/api";
+import {INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
-const API_BASE_URL = CENTRAL_API_BASE_URL;
+const API_BASE_URL = INDIVIDUAL_API_BASE_URL;
 async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
   const auth = getMySqlAuth();
   const response = await fetch(`${API_BASE_URL}${path}`, {
@@ -19,7 +19,6 @@ async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T
   }
   return data as T;
 }
-
 const unwrapRows = <T,>(payload: any): T[] => {
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(payload?.data)) return payload.data as T[];
@@ -117,7 +116,7 @@ function useCmsTable<T extends Record<string, any>>(
     queryKey: [queryKey],
     queryFn: async () => {
       const { data } = await cmsRequest<{ data: T[] }>(
-        `/api/cms/${table}?orderBy=${encodeURIComponent(orderBy)}`
+        `/api/${table}?orderBy=${encodeURIComponent(orderBy)}`
       );
       return data as T[];
     },
@@ -125,7 +124,7 @@ function useCmsTable<T extends Record<string, any>>(
 
   const upsert = useMutation({
     mutationFn: async (item: Partial<T>) => {
-      const { data } = await cmsRequest<{ data: T }>(`/api/cms/${table}`, {
+      const { data } = await cmsRequest<{ data: T }>(`/api/${table}`, {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -136,7 +135,7 @@ function useCmsTable<T extends Record<string, any>>(
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      await cmsRequest(`/api/cms/${table}/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await cmsRequest(`/api/${table}/${encodeURIComponent(id)}`, { method: "DELETE" });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: [queryKey] }),
   });
@@ -232,14 +231,14 @@ export const useCmsCategories = () => {
   const query = useQuery({
     queryKey: ["cms-categories"],
     queryFn: async () => {
-      const payload = await cmsRequest<any>("/api/cms/cms_categories?orderBy=sort_order");
+      const payload = await cmsRequest<any>("/api/categories?orderBy=sort_order");
       return unwrapRows<any>(payload).map(normalizeCategory);
     },
   });
 
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsCategory>) => {
-      const payload = await cmsRequest<any>("/api/cms/cms_categories", {
+      const payload = await cmsRequest<any>("/api/categories", {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -250,7 +249,7 @@ export const useCmsCategories = () => {
 
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      await cmsRequest(`/api/cms/cms_categories/${encodeURIComponent(id)}`, {
+      await cmsRequest(`/api/categories/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
     },
@@ -265,14 +264,13 @@ export const useCmsServices = () => {
   const query = useQuery({
     queryKey: ["cms-services"],
     queryFn: async () => {
-      const payload = await cmsRequest<any>("/api/cms/cms_services?orderBy=sort_order");
+      const payload = await cmsRequest<any>("/api/services?orderBy=sort_order");
       return unwrapRows<any>(payload).map(normalizeService);
     },
   });
-
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsService>) => {
-      const payload = await cmsRequest<any>("/api/cms/cms_services", {
+      const payload = await cmsRequest<any>("/api/services", {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -280,10 +278,9 @@ export const useCmsServices = () => {
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),
   });
-
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      await cmsRequest(`/api/cms/cms_services/${encodeURIComponent(id)}`, {
+      await cmsRequest(`/api/services/${encodeURIComponent(id)}`, {
         method: "DELETE",
       });
     },
@@ -298,7 +295,7 @@ export const useCmsPackages = (serviceId?: string) => {
     queryKey: ["cms-packages", serviceId],
     queryFn: async () => {
       const payload = await cmsRequest<any>(
-        `/api/cms/cms_service_packages?orderBy=sort_order&service_id=${encodeURIComponent(serviceId || "")}`
+        `/api/packages?orderBy=sort_order&service_id=${encodeURIComponent(serviceId || "")}`
       );
       return unwrapRows<any>(payload).map(normalizePackage);
     },
@@ -306,7 +303,7 @@ export const useCmsPackages = (serviceId?: string) => {
   });
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsServicePackage>) => {
-      const payload = await cmsRequest<any>("/api/cms/cms_service_packages", {
+      const payload = await cmsRequest<any>("/api/packages", {
         method: "POST",
         body: JSON.stringify(item),
       });
@@ -316,7 +313,7 @@ export const useCmsPackages = (serviceId?: string) => {
   });
   const remove = useMutation({
     mutationFn: async (id: string) => {
-      await cmsRequest(`/api/cms/cms_service_packages/${encodeURIComponent(id)}`, { method: "DELETE" });
+      await cmsRequest(`/api/packages/${encodeURIComponent(id)}`, { method: "DELETE" });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-packages"] }),
   });
