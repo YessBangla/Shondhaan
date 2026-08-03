@@ -262,8 +262,7 @@ const hasSidebar =
   <div
   className={`hidden md:block fixed left-0 right-0 z-30
   ${hasSidebar ? "top-0" : "top-[68px]"}
-    bg-primary border-b border-border/40`}
->
+    bg-primary border-b border-border/40`}>
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center justify-center">
           {visibleMenus.map((menu) => {
@@ -336,7 +335,7 @@ const hasSidebar =
                               group flex w-full items-center gap-3 px-4 py-2.5 text-[13px] transition-all duration-150 rounded-lg mx-1
                               ${isActive
                                 ? "bg-primary/10 text-primary font-semibold"
-                                : "text-foreground/80 hover:bg-accent hover:text-accent-foreground"
+                                : "text-foreground/80 hover:bg-primary hover:text-accent-foreground"
                               }
                             `}
                             style={{ width: "calc(100% - 8px)" }}

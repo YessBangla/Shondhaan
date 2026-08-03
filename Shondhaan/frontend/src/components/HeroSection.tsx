@@ -681,9 +681,8 @@ const HeroSection = () => {
                 <div className="relative flex items-stretch gap-2 rounded-lg border border-white-900/30 bg-white backdrop-blur-sm p-1.5 shadow-lg shadow-amber-900/20 text-black">
                   {/* Location */}
                   <div className="hidden lg:flex items-center gap-1.5 rounded-md border border-white-900/20 bg-white-900 px-3.5 text-xs text-black">
-                    {/* <MapPin className="h-3.5 w-3.5 opacity-60" /> */}
                     <LocationSelector />
-                    <ChevronDown className="h-3 w-3 ml-auto opacity-40" />
+                    {/* <MapPin className="h-3.5 w-3.5 opacity-60" /> */}
                   </div>
 
                   {/* Input */}
