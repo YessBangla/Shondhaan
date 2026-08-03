@@ -11,6 +11,17 @@ export const requireSuperAdmin = (req, res, next) => {
   });
 };
 
+// ✅ NEW MIDDLEWARE: Allows super_admin, admin, and call_center
+export const requireAdminOrCallCenter = (req, res, next) => {
+  requireLoggedIn(req, res, () => {
+    const role = req.user?.role || req.user?.type;
+    if (!["super_admin", "admin", "call_center"].includes(role)) {
+      return res.status(403).json({ message: "Forbidden" });
+    }
+    next();
+  });
+};
+
 export function requireCmsAdmin(req, res, next) {
   const token = req.cookies?.token;
   if (!token) {

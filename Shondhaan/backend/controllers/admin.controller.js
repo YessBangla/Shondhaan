@@ -47,11 +47,40 @@ export const createUser = async (req, res) => {
   }
 };
 
+// export const listUsers = async (req, res) => {
+//   try {
+//     const [rows] = await pool.execute(
+//       "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users ORDER BY created_at DESC",
+//     );
+//     res.json({ users: rows.map(safeAdminUser) });
+//   } catch (error) {
+//     console.error("List users error:", error);
+//     res.status(500).json({ message: "Could not load users" });
+//   }
+// };
+
 export const listUsers = async (req, res) => {
   try {
-    const [rows] = await pool.execute(
-      "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users ORDER BY created_at DESC",
-    );
+    // 1. Get the search term from the URL query parameters
+    const search = req.query.search;
+    
+    // 2. Base query
+    let query = "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users";
+    let params = [];
+
+    // 3. If a search term exists, add a WHERE clause to filter results
+    if (search) {
+      query += " WHERE name LIKE ? OR mobile LIKE ? OR email LIKE ?";
+      const searchTerm = `%${search}%`; // Add wildcards for partial matching
+      params.push(searchTerm, searchTerm, searchTerm);
+    }
+
+    // 4. Add ordering
+    query += " ORDER BY created_at DESC";
+
+    // 5. Execute the query
+    const [rows] = await pool.execute(query, params);
+    
     res.json({ users: rows.map(safeAdminUser) });
   } catch (error) {
     console.error("List users error:", error);

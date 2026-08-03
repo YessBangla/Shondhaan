@@ -30,7 +30,7 @@ const PanelHero = ({
   gradient = "from-primary via-emerald-600 to-teal-700",
   rightIcon,
   stats,
-  liveStatus = "সব স্বাভাবিক",
+  // liveStatus = "সব স্বাভাবিক",
   className,
 }: PanelHeroProps) => {
   return (
@@ -64,14 +64,14 @@ const PanelHero = ({
           {subtitle && (
             <p className="text-[13px] text-primary-foreground/85 mt-1.5 max-w-xl">{subtitle}</p>
           )}
-          <div className="flex items-center gap-1.5 mt-3 text-[11px] text-primary-foreground/85">
+          {/* <div className="flex items-center gap-1.5 mt-3 text-[11px] text-primary-foreground/85">
             <span className="inline-flex items-center gap-1">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
               লাইভ
             </span>
             <span className="opacity-60">•</span>
             <span>{liveStatus}</span>
-          </div>
+          </div> */}
         </div>
         {rightIcon && (
           <div className="hidden md:flex h-16 w-16 rounded-2xl bg-white/15 backdrop-blur items-center justify-center ring-1 ring-white/25 shrink-0 [&>*]:h-7 [&>*]:w-7">

@@ -19,7 +19,6 @@ import Footer from "@/components/Footer";
 const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL;
 const CENTRAL_PROFILE_API = `${CENTRAL_API_BASE_URL.replace(/\/+$/, "")}/api/users/me/profile`;
 
-
 type CentralProfile = {
   id: number;
   name: string | null;
@@ -134,15 +133,14 @@ const Profile = () => {
       reader.readAsDataURL(file);
     });
 
-
-const getFullImageUrl = (path: string | null) => {
-  if (!path) return null;
-
-  if (path.startsWith("http")) return path;
-
-  // ✅ encode spaces & special characters
-  return `https://backend-central.shondhaan.com${encodeURI(path)}`;
-};
+  const getFullImageUrl = (path: string | null) => {
+    if (!path) return null;
+    if (path.startsWith("http")) return path;
+    const baseUrl = CENTRAL_API_BASE_URL.replace(/\/+$/, "");
+    const formattedPath = path.startsWith("/") ? path : `/${path}`;
+    // ✅ encode spaces & special characters
+    return `${baseUrl}${encodeURI(formattedPath)}`;
+  };
 
   const applyCentralProfile = (profile: CentralProfile) => {
     const role = (profile.type || profile.role || "user") as any;
@@ -151,9 +149,7 @@ const getFullImageUrl = (path: string | null) => {
     setSellerEmail(profile.email || "");
     setPhone(profile.mobile || profile.phone || "");
     setAddress(profile.address || "");
-    setAvatarUrl(
-  getFullImageUrl(profile.profile_image || profile.avatar_url || null)
-);
+    setAvatarUrl(getFullImageUrl(profile.profile_image || profile.avatar_url || null));
     setBio(profile.bio || "");
     setGender(profile.gender || "");
     setDateOfBirth(profile.date_of_birth ? profile.date_of_birth.split("T")[0] : "");
@@ -185,7 +181,6 @@ const getFullImageUrl = (path: string | null) => {
       throw error;
     }
   };
-      
 
   const saveCentralProfile = async (payload: Record<string, unknown>) => {
     const response = await fetch(CENTRAL_PROFILE_API, {
@@ -308,43 +303,68 @@ const getFullImageUrl = (path: string | null) => {
     fetchProfile();
   }, [user, mysqlAuth]);
 
-const handleAvatarUpload = async (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-  try {
-    setUploadingAvatar(true);
+    try {
+      setUploadingAvatar(true);
 
-    const formData = new FormData();
-    formData.append("profile_image", file); // ✅ MUST MATCH BACKEND FIELD
+      if (mysqlAuth?.user) {
+        // --- CENTRAL API (MySQL) UPLOAD ---
+        const formData = new FormData();
+        formData.append("profile_image", file); // ✅ MUST MATCH BACKEND FIELD
 
-    const res = await fetch(
-      "https://backend-central.shondhaan.com/api/users/me/profile",
-      {
-        method: "PATCH", // ✅ IMPORTANT
-        credentials: "include",
-        body: formData,
+        const res = await fetch(CENTRAL_PROFILE_API, {
+          method: "PATCH", // ✅ IMPORTANT
+          credentials: "include",
+          body: formData,
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.message || "Upload failed");
+        }
+
+        setAvatarUrl(getFullImageUrl(data.profile_image));
+        toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile picture updated");
+      } else if (user) {
+        // --- SUPABASE UPLOAD ---
+        const fileExt = file.name.split(".").pop();
+        const fileName = `${user.id}-${Date.now()}.${fileExt}`;
+        const filePath = `avatars/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("avatars")
+          .upload(filePath, file);
+
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage
+          .from("avatars")
+          .getPublicUrl(filePath);
+
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ avatar_url: publicUrlData.publicUrl })
+          .eq("user_id", user.id);
+
+        if (updateError) throw updateError;
+
+        setAvatarUrl(publicUrlData.publicUrl);
+        toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile picture updated");
       }
-    );
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || "Upload failed");
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || (bn ? "আপলোড ব্যর্থ হয়েছে" : "Upload failed"));
+    } finally {
+      setUploadingAvatar(false);
+      // Reset file input so the same file can be selected again
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
+  };
 
-    // ✅ update image instantly
-    setAvatarUrl(getFullImageUrl(data.profile_image));
-
-    console.log("Updated profile:", data);
-  } catch (err: any) {
-    console.error(err);
-  } finally {
-    setUploadingAvatar(false);
-  }
-};
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -505,10 +525,10 @@ const handleAvatarUpload = async (
               <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-primary/20 to-secondary overflow-hidden border-3 border-primary/30">
                 {avatarUrl ? (
                  <img
-  src={avatarUrl || "/default-avatar.png"}
-  alt="avatar"
-  className="w-24 h-24 rounded-full object-cover"
-/>
+                  src={avatarUrl || "/default-avatar.png"}
+                  alt="avatar"
+                  className="w-24 h-24 rounded-full object-cover"
+                />
                 ) : (
                   <User className="h-12 w-12 text-primary" />
                 )}
@@ -516,7 +536,7 @@ const handleAvatarUpload = async (
               {!editMode && (
                 <button
                   onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingAvatar || !user}
+                  disabled={uploadingAvatar}
                   className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {uploadingAvatar ? (
@@ -526,13 +546,13 @@ const handleAvatarUpload = async (
                   )}
                 </button>
               )}
-      <input
-  type="file"
-  accept="image/*"
-  ref={fileInputRef}
-  onChange={handleAvatarUpload}
-  hidden
-/>
+              <input
+                type="file"
+                accept="image/*"
+                ref={fileInputRef}
+                onChange={handleAvatarUpload}
+                hidden
+              />
             </div>
 
             {/* Info Section */}

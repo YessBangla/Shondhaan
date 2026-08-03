@@ -208,7 +208,7 @@ const SuperAdminOverview = () => {
             <p className="text-[13px] text-primary-foreground/85 mt-1.5 max-w-xl">
               রিয়েল-টাইম মেট্রিক, ট্রেন্ড, এবং প্রতিটি প্ল্যাটফর্মের অ্যাকটিভিটি — Linear-class কন্ট্রোল।
             </p>
-            <div className="flex items-center gap-1.5 mt-3 text-[11px] text-primary-foreground/85">
+            {/* <div className="flex items-center gap-1.5 mt-3 text-[11px] text-primary-foreground/85">
               <span className="inline-flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
                 লাইভ
@@ -217,7 +217,7 @@ const SuperAdminOverview = () => {
               <span>{toBn(new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }))}</span>
               <span className="opacity-60">•</span>
               <span>সব সিস্টেম স্বাভাবিক</span>
-            </div>
+            </div> */}
           </div>
           <div className="hidden md:flex h-16 w-16 rounded-2xl bg-white/15 backdrop-blur items-center justify-center ring-1 ring-white/25 shrink-0">
             <Sparkles className="h-7 w-7" />

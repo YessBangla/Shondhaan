@@ -431,7 +431,6 @@ const [bgImage, setBgImage] = useState<string>(
               ? "বাংলাদেশের সবচেয়ে বিশ্বস্ত কেনাবেচার প্ল্যাটফর্ম"
               : "Bangladesh's Most Trusted Buy & Sell Platform"}
           </p> */}
-
           <div className="mx-12 mb-1">
            <DealLocationSelector
   value={locationFilter}
@@ -443,7 +442,7 @@ const [bgImage, setBgImage] = useState<string>(
       </div>
 
       <div className="app-container py-6 pb-28 md:py-2 md:pb-10">
-        {/* ✨ PREMIUM CATEGORY SECTION WITH EXPAND FUNCTIONALITY */}
+        {/*PREMIUM CATEGORY SECTION WITH EXPAND FUNCTIONALITY */}
         <div className="mb-12">
           {/* Premium Header */}
           <div className="mb-8">

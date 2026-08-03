@@ -32,7 +32,7 @@ export interface PanelHeroConfig {
   subtitle?: string;
   badge?: { icon?: React.ReactNode; label: string };
   gradient?: string;
-  liveStatus?: string;
+  // liveStatus?: string;
   rightIcon?: React.ReactNode;
   hideOnTabs?: string[];
 }
@@ -385,7 +385,7 @@ useEffect(() => {
           {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : (<><ChevronLeft className="h-3.5 w-3.5" /> সংকুচিত</>)}
         </button>
 
-        <button
+        {/* <button
           onClick={() => setResetConfirmOpen(true)}
           className={cn(
             "hidden md:flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
@@ -395,7 +395,7 @@ useEffect(() => {
         >
           <RotateCcw className="h-3.5 w-3.5" />
           {!collapsed && <span>লেআউট রিসেট</span>}
-        </button>
+        </button> */}
       </div>
     </div>
   );
@@ -452,6 +452,16 @@ useEffect(() => {
               >
                 <Menu className="h-5 w-5" />
               </button>
+              
+              {/* ✅ GO BACK BUTTON ADDED HERE */}
+              <button
+                onClick={() => navigate(-1)}
+                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground"
+                title="পেছনে যান"
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </button>
+
               <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
                 {activeItem?.icon || panelIcon}
               </div>

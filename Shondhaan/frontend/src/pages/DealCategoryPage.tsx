@@ -19,7 +19,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { divisions as locationData } from "@/data/locations";
 import DealWatermark from "@/components/deal/DealWatermark";
 
-
 function timeAgo(dateStr: string, bn = true) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -29,6 +28,28 @@ function timeAgo(dateStr: string, bn = true) {
   const days = Math.floor(hours / 24);
   return bn ? `${days} দিন আগে` : `${days}d ago`;
 }
+
+// Helper component to render category icons whether they are URLs or emojis
+const CategoryIcon = ({ icon, className = "w-5 h-5" }: { icon?: string; className?: string }) => {
+  if (!icon) return null;
+  
+  // Check if it's a URL, base64, or blob path
+  const isImage = icon.startsWith("http") || icon.startsWith("/") || icon.startsWith("data:") || icon.startsWith("blob:");
+  
+  if (isImage) {
+    return (
+      <img 
+        src={icon} 
+        alt="Category Icon" 
+        className={`${className} object-contain`}
+        onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
+      />
+    );
+  }
+  
+  // Fallback for emojis or plain text
+  return <span className="text-base leading-none">{icon}</span>;
+};
 
 const DealCategoryPage = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -105,7 +126,8 @@ const DealCategoryPage = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate("/deal")}><ChevronLeft className="h-5 w-5" /></Button>
           <div>
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              {currentCat?.icon} {bn ? (currentCat?.name || "সকল বিজ্ঞাপন") : (currentCat?.name_en || "All Ads")}
+              <CategoryIcon icon={currentCat?.icon} className="w-6 h-6" />
+              {bn ? (currentCat?.name || "সকল বিজ্ঞাপন") : (currentCat?.name_en || "All Ads")}
             </h1>
             <p className="text-xs text-muted-foreground">{listings?.length || 0} {bn ? "টি বিজ্ঞাপন" : " ads found"}</p>
           </div>
@@ -162,7 +184,9 @@ const DealCategoryPage = () => {
                         onClick={() => navigate(`/deal/category/${cat.slug}`)}
                         className={`w-full text-left text-sm p-2 rounded-lg hover:bg-muted transition-colors flex items-center gap-2 ${cat.slug === slug ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground"}`}
                       >
-                        <span>{cat.icon}</span>
+                        <span className="flex items-center justify-center w-5 h-5 shrink-0">
+                          <CategoryIcon icon={cat.icon} className="w-5 h-5" />
+                        </span>
                         <span>{bn ? cat.name : (cat.name_en || cat.name)}</span>
                       </button>
                       {/* Show subcategories if this parent is active or one of its children is */}
@@ -174,7 +198,9 @@ const DealCategoryPage = () => {
                               onClick={() => navigate(`/deal/category/${sub.slug}`)}
                               className={`w-full text-left text-xs p-1.5 rounded-md hover:bg-muted transition-colors flex items-center gap-1.5 ${sub.slug === slug ? "bg-primary/10 text-primary font-medium" : "text-muted-foreground"}`}
                             >
-                              <span className="text-sm">{sub.icon}</span>
+                              <span className="flex items-center justify-center w-4 h-4 shrink-0">
+                                <CategoryIcon icon={sub.icon} className="w-4 h-4" />
+                              </span>
                               <span>{bn ? sub.name : (sub.name_en || sub.name)}</span>
                             </button>
                           ))}
@@ -186,7 +212,7 @@ const DealCategoryPage = () => {
               </CardContent>
             </Card>
           </div>
-
+          
           {/* Listings */}
           <div className="flex-1">
             {isLoading ? (
@@ -214,7 +240,7 @@ const DealCategoryPage = () => {
           </div>
         </div>
       </div>
-      <Footer />
+      <Footer/>
     </div>
   );
 };
@@ -267,6 +293,7 @@ function ListingListItem({ listing, onClick, bn }: { listing: DealListing; onCli
             <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{listing.views_count}</span>
           </div>
         </div>
+
         {listing.is_featured && <Badge className="bg-amber-500 text-white text-[10px] self-start shrink-0">{bn ? "ফিচার্ড" : "Featured"}</Badge>}
       </CardContent>
     </Card>
