@@ -936,7 +936,7 @@ const  Navbar = () => {
 
                     <button
                       onClick={() => navigate("/main-login")}
-                      className="hidden flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+                      className="hidden items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
                     >
                       <Building2 className="h-4 w-4 text-primary" />
                       {bn ? "অফিস লগইন" : "Office Login"}
