@@ -110,27 +110,29 @@ const getCategoryFallbackImage = (category: Category) => {
 };
 
 const CategoryIcon = ({ category, label }: { category: Category; label: string }) => {
-  const [imageFailed, setImageFailed] = useState(false);
-  const imageUrl = !imageFailed ? getCategoryImageUrl(category) : "";
+  // const [imageFailed, setImageFailed] = useState(false);
+  const icon_url = getCategoryImageUrl(category);
   const fallbackImage = getCategoryFallbackImage(category);
 
-  if (imageUrl || fallbackImage) {
+  const isFullUrl = (url: string | null | undefined) =>
+    !!url && /^https?:\/\//i.test(url);
+
+  const imageSrc = !icon_url
+    ? fallbackImage
+    : isFullUrl(icon_url)
+    ? icon_url
+    : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${icon_url}`;
+
     return (
       <img
-        src={imageUrl || fallbackImage}
+        src={imageSrc}
         alt={label}
         referrerPolicy="no-referrer"
         onError={() => setImageFailed(true)}
         className="h-full md:p-4 lg:p-4 xl:p-4  w-full object-contain"
       />
+      
     );
-  }
-
-  return (
-    <div className={`h-full w-full rounded-full bg-gradient-to-br ${category.color_gradient || "from-blue-500 to-emerald-500"} flex items-center justify-center`}>
-      <span className="text-base font-bold text-white">{(category.name || category.title || "?")[0]}</span>
-    </div>
-  );
 };
 
 /* ─── Premium Sheba-style Category Card (desktop + tablet) ─── */
@@ -154,7 +156,7 @@ const CategoryCard = ({
     <motion.div 
       className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
         selected 
-          ? "border border-2 border-primary" 
+          ? "border-primary" 
           : ""
       }`}
       animate={selected ? { scale: 1 } : { scale: 1 }}
@@ -207,7 +209,7 @@ const MobileCategoryTile = ({
     <motion.div 
       className={`flex h-16 w-16 items-center justify-center p-2.5 transition-all ${
         selected 
-          ? "border border-2 border-primary rounded-3xl" 
+          ? "border-primary rounded-3xl" 
           : ""
       }`}
       whileHover={!selected ? { y: -2 } : {}}
@@ -218,7 +220,7 @@ const MobileCategoryTile = ({
     </motion.div>
     <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors duration-300 ${
       selected 
-        ? "text-emerald-600 font-bold" 
+        ? "text-emerald-600 font-bold"
         : "text-slate-700"
     }`}>
       {label}

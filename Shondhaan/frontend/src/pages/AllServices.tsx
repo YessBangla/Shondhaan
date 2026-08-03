@@ -50,7 +50,7 @@ type ApiService = {
   price?: string | number;
 };
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3000/api";
+const API_BASE = import.meta.env.VITE_SERVICE_API_BASE_URL + "/api";
 
 const parseJsonArray = (value: unknown): string[] => {
   if (!value) return [];
@@ -381,213 +381,215 @@ const AllServices = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[aliceblue]">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[20px]" />
 
       <div className="app-container py-5 md:py-8">
-        <div className="mb-5 flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            <ChevronLeft className="h-5 w-5" />
-          </button>
-
-          <h1 className="font-heading text-xl font-bold text-foreground md:text-2xl">
-            {t("as.title")}
-          </h1>
-        </div>
-
-        <div className="mb-4 space-y-2.5">
-          <div className="flex items-center gap-2">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-
-              <input
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder={t("as.searchPlaceholder")}
-                className="w-full rounded-xl border border-input bg-background py-3 pl-10 pr-9 text-sm outline-none focus:ring-1 focus:ring-ring"
-              />
-
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-secondary"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
-              )}
-            </div>
-
+        <div className="block gap-3">
+          <div className="mb-5 flex items-center gap-3 w-full">
             <button
               type="button"
-              onClick={() => setShowFilters((prev) => !prev)}
-              className={`relative flex h-11 w-11 items-center justify-center rounded-xl border ${
-                showFilters || isFiltering
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-input bg-background text-foreground"
-              }`}
+              onClick={() => navigate(-1)}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <SlidersHorizontal className="h-4 w-4" />
-
-              {isFiltering && (
-                <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
-              )}
+              <ChevronLeft className="h-5 w-5" />
             </button>
+
+            <h1 className="font-heading text-xl font-bold text-foreground md:text-2xl">
+              {t("as.title")}
+            </h1>
           </div>
+          
+          <div className="mb-4 space-y-2.5 w-full">
+            <div className="flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
-          {showFilters && (
-            <div className="space-y-3 rounded-xl border border-border bg-card p-3">
-              <div>
-                <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
-                  {bn ? "ক্যাটাগরি" : "Category"}
-                </p>
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder={t("as.searchPlaceholder")}
+                  className="w-full rounded-xl border border-primary bg-background py-3 pl-10 pr-9 text-sm outline-none focus:ring-1 focus:ring-ring"
+                />
 
-                <div className="flex flex-wrap gap-1.5">
+                {searchQuery && (
                   <button
                     type="button"
-                    onClick={() => setFilterCategory("all")}
-                    className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                      filterCategory === "all"
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border bg-background text-foreground hover:bg-secondary"
-                    }`}
+                    onClick={() => setSearchQuery("")}
+                    className="absolute right-2.5 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full bg-muted text-muted-foreground hover:bg-secondary"
                   >
-                    {bn ? "সব" : "All"}
+                    <X className="h-3.5 w-3.5" />
                   </button>
+                )}
+              </div>
 
-                  {activeCategories.map((cat) => (
+              <button
+                  type="button"
+                  onClick={() => setShowFilters((prev) => !prev)}
+                  className={`relative flex h-12 w-14 items-center bg-primary text-white justify-center rounded-xl border ${
+                    showFilters || isFiltering
+                      ? "bg-green-700 text-primary"
+                      : "border-input bg-background text-foreground"
+                  }`}
+                >
+                <SlidersHorizontal className="h-4 w-4" />
+
+                {isFiltering && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary ring-2 ring-background" />
+                )}
+              </button>
+            </div>
+
+            {showFilters && (
+              <div className="space-y-3 rounded-xl border border-border bg-card p-3">
+                <div>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+                    {bn ? "ক্যাটাগরি" : "Category"}
+                  </p>
+
+                  <div className="flex flex-wrap gap-1.5">
                     <button
                       type="button"
-                      key={cat.id}
-                      onClick={() => {
-                        setFilterCategory(cat.id);
-                        setActiveCategory(cat.id);
-                      }}
+                      onClick={() => setFilterCategory("all")}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
-                        filterCategory === cat.id
+                        filterCategory === "all"
                           ? "border-primary bg-primary text-primary-foreground"
                           : "border-border bg-background text-foreground hover:bg-secondary"
                       }`}
                     >
-                      {getCatName(cat)}
+                      {bn ? "সব" : "All"}
                     </button>
-                  ))}
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-2">
-                <div>
-                  <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
-                    {bn ? "সাজান" : "Sort"}
-                  </p>
-
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-2 py-2 text-xs text-foreground outline-none"
-                  >
-                    <option value="popular">{bn ? "জনপ্রিয়" : "Popular"}</option>
-                    <option value="rating">{bn ? "সর্বোচ্চ রেটিং" : "Top rated"}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
-                    <MapPin className="mr-0.5 inline h-3 w-3" />
-                    {bn ? "অবস্থান" : "Location"}
-                  </p>
-
-                  <select
-                    value={cityOverride}
-                    onChange={(e) => setCityOverride(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-2 py-2 text-xs text-foreground outline-none"
-                  >
-                    <option value="">
-                      {bn ? `বর্তমান (${selectedCity})` : `Current (${selectedCity})`}
-                    </option>
-
-                    {allCities.map((city) => (
-                      <option key={city} value={city}>
-                        {city}
-                      </option>
+                    {activeCategories.map((cat) => (
+                      <button
+                        type="button"
+                        key={cat.id}
+                        onClick={() => {
+                          setFilterCategory(cat.id);
+                          setActiveCategory(cat.id);
+                        }}
+                        className={`rounded-full border px-3 py-1 text-xs font-medium ${
+                          filterCategory === cat.id
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border bg-background text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        {getCatName(cat)}
+                      </button>
                     ))}
-                  </select>
+                  </div>
                 </div>
-              </div>
 
-              <div>
-                <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
-                  {bn ? "ন্যূনতম রেটিং" : "Min rating"}
-                </p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+                      {bn ? "সাজান" : "Sort"}
+                    </p>
 
-                <div className="flex gap-1">
-                  {[0, 3, 4, 4.5].map((rating) => (
-                    <button
-                      type="button"
-                      key={rating}
-                      onClick={() => setMinRating(rating)}
-                      className={`flex flex-1 items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 text-xs ${
-                        minRating === rating
-                          ? "border-primary bg-primary/10 font-semibold text-primary"
-                          : "border-border bg-background text-foreground hover:bg-secondary"
-                      }`}
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background px-2 py-2 text-xs text-foreground outline-none"
                     >
-                      {rating === 0 ? (
-                        bn ? "সব" : "Any"
-                      ) : (
-                        <>
-                          {rating}+ <Star className="h-3 w-3 fill-current" />
-                        </>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      <option value="popular">{bn ? "জনপ্রিয়" : "Popular"}</option>
+                      <option value="rating">{bn ? "সর্বোচ্চ রেটিং" : "Top rated"}</option>
+                    </select>
+                  </div>
 
-              <div>
-                <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
-                  {bn ? "প্রাপ্যতা" : "Availability"}
-                </p>
+                  <div>
+                    <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+                      <MapPin className="mr-0.5 inline h-3 w-3" />
+                      {bn ? "অবস্থান" : "Location"}
+                    </p>
 
-                <div className="grid grid-cols-3 gap-1">
-                  {[
-                    { id: "all", label: bn ? "সব" : "All" },
-                    { id: "citywide", label: bn ? "শহর" : "City" },
-                    { id: "nationwide", label: bn ? "সারাদেশ" : "Nationwide" },
-                  ].map((item) => (
-                    <button
-                      type="button"
-                      key={item.id}
-                      onClick={() => setAvailability(item.id)}
-                      className={`rounded-lg border px-2 py-1.5 text-xs font-medium ${
-                        availability === item.id
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border bg-background text-foreground hover:bg-secondary"
-                      }`}
+                    <select
+                      value={cityOverride}
+                      onChange={(e) => setCityOverride(e.target.value)}
+                      className="w-full rounded-lg border border-input bg-background px-2 py-2 text-xs text-foreground outline-none"
                     >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
+                      <option value="">
+                        {bn ? `বর্তমান (${selectedCity})` : `Current (${selectedCity})`}
+                      </option>
 
-              {isFiltering && (
-                <button
-                  type="button"
-                  onClick={clearAllFilters}
-                  className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background py-2 text-xs font-medium text-muted-foreground hover:bg-secondary"
-                >
-                  <X className="h-3.5 w-3.5" />
-                  {bn ? "সব ফিল্টার মুছুন" : "Clear all filters"}
-                </button>
-              )}
-            </div>
-          )}
+                      {allCities.map((city) => (
+                        <option key={city} value={city}>
+                          {city}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+                    {bn ? "ন্যূনতম রেটিং" : "Min rating"}
+                  </p>
+
+                  <div className="flex gap-1">
+                    {[0, 3, 4, 4.5].map((rating) => (
+                      <button
+                        type="button"
+                        key={rating}
+                        onClick={() => setMinRating(rating)}
+                        className={`flex flex-1 items-center justify-center gap-0.5 rounded-lg border px-2 py-1.5 text-xs ${
+                          minRating === rating
+                            ? "border-primary bg-primary/10 font-semibold text-primary"
+                            : "border-border bg-background text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        {rating === 0 ? (
+                          bn ? "সব" : "Any"
+                        ) : (
+                          <>
+                            {rating}+ <Star className="h-3 w-3 fill-current" />
+                          </>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="mb-1.5 text-[11px] font-semibold uppercase text-muted-foreground">
+                    {bn ? "প্রাপ্যতা" : "Availability"}
+                  </p>
+
+                  <div className="grid grid-cols-3 gap-1">
+                    {[
+                      { id: "all", label: bn ? "সব" : "All" },
+                      { id: "citywide", label: bn ? "শহর" : "City" },
+                      { id: "nationwide", label: bn ? "সারাদেশ" : "Nationwide" },
+                    ].map((item) => (
+                      <button
+                        type="button"
+                        key={item.id}
+                        onClick={() => setAvailability(item.id)}
+                        className={`rounded-lg border px-2 py-1.5 text-xs font-medium ${
+                          availability === item.id
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-background text-foreground hover:bg-secondary"
+                        }`}
+                      >
+                        {item.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {isFiltering && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="flex w-full items-center justify-center gap-1.5 rounded-lg border border-border bg-background py-2 text-xs font-medium text-muted-foreground hover:bg-secondary"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    {bn ? "সব ফিল্টার মুছুন" : "Clear all filters"}
+                  </button>
+                )}
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex gap-6">
@@ -634,6 +636,7 @@ const AllServices = () => {
             )}
           </main>
         </div>
+        
       </div>
 
       <Footer />
@@ -662,15 +665,19 @@ const CategorySidebar = ({
               type="button"
               key={cat.id}
               onClick={() => scrollToCategory(cat.id)}
-              className={`flex w-full items-center gap-2.5 rounded-lg border-l-[3px] px-3 py-2.5 text-left text-sm transition-all ${
+              className={`flex w-full items-center rounded gap-2.5 px-3 py-2.5 text-left text-sm transition-all ${
                 activeCategory === cat.id
                   ? "border-primary bg-primary/10 font-semibold text-primary"
-                  : "border-transparent text-muted-foreground hover:bg-secondary hover:text-foreground"
+                  : "border-transparent text-muted-foreground hover:text-primary hover:font-semibold"
               }`}
             >
               {cat.icon_url && (
                 <img
-                  src={cat.icon_url}
+                  src={
+                    /^https?:\/\//i.test(cat.icon_url)
+                      ? cat.icon_url
+                      : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${cat.icon_url}`
+                  }
                   alt={getCatName(cat)}
                   className="h-6 w-6 object-contain"
                 />
@@ -699,7 +706,11 @@ const CategorySidebar = ({
             >
               {cat.icon_url && (
                 <img
-                  src={cat.icon_url}
+                  src={
+                    /^https?:\/\//i.test(cat.icon_url)
+                      ? cat.icon_url
+                      : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${cat.icon_url}`
+                  }
                   alt={getCatName(cat)}
                   className="h-4 w-4 object-contain"
                 />
@@ -766,13 +777,17 @@ const CategorySections = ({
             className={index > 0 ? "mt-10" : ""}
           >
             <div className="mb-4 flex items-center gap-3 border-b border-border px-1 pb-3">
-              {cat.icon_url && (
-                <img
-                  src={cat.icon_url}
-                  alt={getCatName(cat)}
-                  className="h-7 w-7 object-contain"
-                />
-              )}
+            {cat.icon_url && (
+              <img
+                src={
+                  /^https?:\/\//i.test(cat.icon_url)
+                    ? cat.icon_url
+                    : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${cat.icon_url}`
+                }
+                alt={getCatName(cat)}
+                className="h-7 w-7 object-contain"
+              />
+            )}
 
               <h2 className="font-heading text-lg font-bold text-foreground">
                 {getCatName(cat)}
@@ -872,8 +887,15 @@ const CmsServiceCard = ({
       className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
     >
       <div className="relative aspect-[4/3] overflow-hidden yess-wm">
-        <img
-          src={getServiceImage(service.slug, service.image_url)}
+      <img
+          src={getServiceImage(
+            service.slug,
+            service.image_url
+              ? /^https?:\/\//i.test(service.image_url)
+                ? service.image_url
+                : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${service.image_url}`
+              : service.image_url
+          )}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
