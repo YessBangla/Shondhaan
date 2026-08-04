@@ -1,14 +1,50 @@
-import { useState } from "react";
-import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { useCmsServices, useCmsCategories, useCmsPackages, CmsService, CmsServicePackage } from "@/hooks/useCmsData";
 import ImageUploader from "./ImageUploader";
 import { toast } from "sonner";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
-const empty: Partial<CmsService> = {
+// Helper function to generate slug from string
+const slugify = (text: string) => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-")       // Replace spaces with -
+    .replace(/[^\w\-]+/g, "")   // Remove all non-word chars
+    .replace(/\-\-+/g, "-");    // Replace multiple - with single -
+};
+
+// Predefined list of cities for the dropdown
+const CITY_OPTIONS = [
+  "Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barishal", 
+  "Rangpur", "Mymensingh", "Comilla", "Gazipur", "Narayanganj", "Bogura"
+];
+
+// Helper to fix relative image URLs coming from the backend
+const getStaticBaseUrl = () => {
+  try {
+    return new URL(INDIVIDUAL_API_BASE_URL).origin;
+  } catch {
+    return INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+};
+const STATIC_BASE_URL = getStaticBaseUrl();
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${STATIC_BASE_URL}${path}`;
+};
+
+// Set numbers to undefined so inputs start empty instead of showing 0
+const empty: any = {
   slug: "", title: "", title_en: "", image_url: "", description: "",
-  rating: 4.5, total_reviews: 0, total_orders: 0,
-  features: [], available_cities: [], category_id: null, is_active: true, sort_order: 0,
-  platform_fee: 0,
+  rating: undefined, total_reviews: undefined, total_orders: undefined, price: undefined,
+  features: [], available_cities: [], category_id: null, is_active: true, sort_order: undefined,
+  platform_fee: undefined, commission_percent: undefined,
 };
 
 const labelClass = "mb-1 block text-xs font-semibold text-muted-foreground";
@@ -21,22 +57,60 @@ const AdminServices = () => {
   const [editing, setEditing] = useState<Partial<CmsService> | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [featuresText, setFeaturesText] = useState("");
-  const [citiesText, setCitiesText] = useState("");
+  const [showCitiesDropdown, setShowCitiesDropdown] = useState(false);
+  const cityDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close city dropdown when clicking outside
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node)) {
+        setShowCitiesDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, []);
 
   const startEdit = (s?: CmsService) => {
-    const item = s || empty;
+    const item: any = s ? { ...s } : { ...empty };
+    
+    // Convert 0 to undefined so inputs don't start with 0, making it easier to type a new number
+    ["price", "total_reviews", "total_orders", "sort_order", "platform_fee"].forEach(key => {
+      if (item[key] === 0) item[key] = undefined;
+    });
+    
     setEditing({ ...item });
     setFeaturesText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
-    setCitiesText(Array.isArray(item.available_cities) ? (item.available_cities as string[]).join(", ") : "");
+  };
+
+  const toggleCity = (city: string) => {
+    setEditing(prev => {
+      if (!prev) return prev;
+      const currentCities = prev.available_cities || [];
+      const newCities = currentCities.includes(city)
+        ? currentCities.filter(c => c !== city)
+        : [...currentCities, city];
+      return { ...prev, available_cities: newCities };
+    });
   };
 
   const handleSave = () => {
     if (!editing?.title || !editing?.slug) { toast.error("টাইটেল ও স্লাগ আবশ্যক"); return; }
+    
+    // Convert string inputs to numbers on save
     const payload = {
       ...editing,
+      price: editing.price !== undefined && editing.price !== "" ? Number(editing.price) : 0,
+      platform_fee: (editing as any).platform_fee !== undefined && (editing as any).platform_fee !== "" ? Number((editing as any).platform_fee) : 0,
+      commission_percent: (editing as any).commission_percent !== undefined && (editing as any).commission_percent !== "" ? Number((editing as any).commission_percent) : 10,
+      rating: editing.rating !== undefined && editing.rating !== "" ? Number(editing.rating) : 4.5,
+      total_reviews: editing.total_reviews !== undefined && editing.total_reviews !== "" ? Number(editing.total_reviews) : 0,
+      total_orders: editing.total_orders !== undefined && editing.total_orders !== "" ? Number(editing.total_orders) : 0,
+      sort_order: editing.sort_order !== undefined && editing.sort_order !== "" ? Number(editing.sort_order) : 0,
       features: featuresText.split(",").map(s => s.trim()).filter(Boolean),
-      available_cities: citiesText.split(",").map(s => s.trim()).filter(Boolean),
+      available_cities: editing.available_cities || [],
     };
+    
     upsert.mutate(payload as any, {
       onSuccess: () => { toast.success("সেভ হয়েছে"); setEditing(null); },
       onError: (e: any) => toast.error(e.message),
@@ -63,12 +137,25 @@ const AdminServices = () => {
             </div>
             <div>
               <label className={labelClass}>Title (English)</label>
-              <input value={editing.title_en || ""} onChange={e => setEditing({...editing, title_en: e.target.value})} placeholder="e.g. AC Service" className={inputClass} />
+              <input 
+                value={editing.title_en || ""} 
+                onChange={e => {
+                  const newTitleEn = e.target.value;
+                  setEditing(prev => prev ? ({ ...prev, title_en: newTitleEn, slug: slugify(newTitleEn) }) : prev);
+                }} 
+                placeholder="e.g. AC Service" 
+                className={inputClass} 
+              />
             </div>
             <div>
               <label className={labelClass}>স্লাগ *</label>
-              <input value={editing.slug || ""} onChange={e => setEditing({...editing, slug: e.target.value})} placeholder="e.g. ac-service" className={inputClass} />
-              <p className="mt-1 text-[10px] text-muted-foreground">URL এ ব্যবহার হবে। Space দিবেন না। Example: plumbing</p>
+              <input 
+                value={editing.slug || ""} 
+                onChange={e => setEditing({...editing, slug: e.target.value})} 
+                placeholder="auto-generated-from-english-title" 
+                className={inputClass} 
+              />
+              <p className="mt-1 text-[10px] text-muted-foreground">English নাম লিখলে অটোমেটিক স্লাগ তৈরি হবে। প্রয়োজনে এডিট করতে পারবেন।</p>
             </div>
             <div>
               <label className={labelClass}>ক্যাটেগরি</label>
@@ -83,49 +170,139 @@ const AdminServices = () => {
             <label className={labelClass}>বিবরণ</label>
             <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="সেবার সংক্ষিপ্ত বিবরণ লিখুন" rows={2} className={inputClass} />
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          
+          <div className="grid grid-cols-2 sm:grid-cols-6 gap-2">
+            <div>
+              <label className={labelClass}>বেস প্রাইস</label>
+              <div className="relative">
+                <input 
+                  type="number" 
+                  min="0" 
+                  value={(editing as any).price ?? ""} 
+                  onChange={e => setEditing({...editing, price: e.target.value} as any)} 
+                  placeholder="0" 
+                  className="w-full rounded-lg border border-input bg-background px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" 
+                />
+                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
+              </div>
+            </div>
             <div>
               <label className={labelClass}>রেটিং</label>
-              <input type="number" step="0.1" value={editing.rating || 0} onChange={e => setEditing({...editing, rating: parseFloat(e.target.value)})} placeholder="4.5" className={inputClass} />
+              <input 
+                type="number" 
+                step="0.1" 
+                value={editing.rating ?? ""} 
+                onChange={e => setEditing({...editing, rating: e.target.value} as any)} 
+                placeholder="4.5" 
+                className={inputClass} 
+              />
             </div>
             <div>
               <label className={labelClass}>মোট রিভিউ</label>
-              <input type="number" value={editing.total_reviews || 0} onChange={e => setEditing({...editing, total_reviews: parseInt(e.target.value)})} placeholder="0" className={inputClass} />
+              <input 
+                type="number" 
+                value={editing.total_reviews ?? ""} 
+                onChange={e => setEditing({...editing, total_reviews: e.target.value} as any)} 
+                placeholder="0" 
+                className={inputClass} 
+              />
             </div>
             <div>
               <label className={labelClass}>মোট অর্ডার</label>
-              <input type="number" value={editing.total_orders || 0} onChange={e => setEditing({...editing, total_orders: parseInt(e.target.value)})} placeholder="0" className={inputClass} />
+              <input 
+                type="number" 
+                value={editing.total_orders ?? ""} 
+                onChange={e => setEditing({...editing, total_orders: e.target.value} as any)} 
+                placeholder="0" 
+                className={inputClass} 
+              />
             </div>
             <div>
               <label className={labelClass}>কমিশন</label>
               <div className="relative">
-                <input type="number" step="0.5" min="0" max="100" value={(editing as any).commission_percent ?? 10} onChange={e => setEditing({...editing, commission_percent: parseFloat(e.target.value)} as any)} placeholder="10" className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" />
+                <input 
+                  type="number" 
+                  step="0.5" 
+                  min="0" 
+                  max="100" 
+                  value={(editing as any).commission_percent ?? ""} 
+                  onChange={e => setEditing({...editing, commission_percent: e.target.value} as any)} 
+                  placeholder="10" 
+                  className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" 
+                />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">%</span>
               </div>
             </div>
             <div>
               <label className={labelClass}>Platform Fee</label>
               <div className="relative">
-                <input type="number" step="1" min="0" value={(editing as any).platform_fee ?? 0} onChange={e => setEditing({...editing, platform_fee: parseFloat(e.target.value) || 0} as any)} placeholder="0" className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" />
+                <input 
+                  type="number" 
+                  step="1" 
+                  min="0" 
+                  value={(editing as any).platform_fee ?? ""} 
+                  onChange={e => setEditing({...editing, platform_fee: e.target.value} as any)} 
+                  placeholder="0" 
+                  className="w-full rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 pr-8 text-sm outline-none focus:ring-1 focus:ring-ring" 
+                />
                 <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground">৳</span>
               </div>
             </div>
           </div>
+
           <div>
             <label className={labelClass}>ফিচারসমূহ</label>
             <input value={featuresText} onChange={e => setFeaturesText(e.target.value)} placeholder="কমা দিয়ে লিখুন: দ্রুত সার্ভিস, অভিজ্ঞ টেকনিশিয়ান" className={inputClass} />
           </div>
-          <div>
-            <label className={labelClass}>সেবা পাওয়া যাবে যে শহরে</label>
-            <input value={citiesText} onChange={e => setCitiesText(e.target.value)} placeholder="কমা দিয়ে লিখুন: dhaka, chittagong, sylhet" className={inputClass} />
+          
+          {/* Multi-select Cities Dropdown */}
+          <div className="relative" ref={cityDropdownRef}>
+            <label className={labelClass}>সেবা পাওয়া যাবে যে শহরে</label>
+            <button
+              type="button"
+              onClick={() => setShowCitiesDropdown(!showCitiesDropdown)}
+              className="w-full flex items-center justify-between rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
+            >
+              <span className={`truncate ${editing.available_cities?.length ? "text-foreground" : "text-muted-foreground"}`}>
+                {editing.available_cities?.length 
+                  ? editing.available_cities.join(", ") 
+                  : "শহর নির্বাচন করুন"}
+              </span>
+              <ChevronDown className={`h-4 w-4 opacity-50 transition-transform ${showCitiesDropdown ? "rotate-180" : ""}`} />
+            </button>
+            {showCitiesDropdown && (
+              <div className="absolute z-20 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg p-1">
+                {CITY_OPTIONS.map(city => (
+                  <label
+                    key={city}
+                    className="flex items-center gap-2 p-2 rounded-md hover:bg-secondary cursor-pointer text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={editing.available_cities?.includes(city) || false}
+                      onChange={() => toggleCity(city)}
+                      className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                    />
+                    <span>{city}</span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
+
           <div className="flex flex-wrap items-end gap-3">
             <label className="flex items-center gap-1.5 text-xs text-foreground">
               <input type="checkbox" checked={editing.is_active ?? true} onChange={e => setEditing({...editing, is_active: e.target.checked})} /> সক্রিয়
             </label>
             <div>
               <label className={labelClass}>ক্রম</label>
-              <input type="number" value={editing.sort_order || 0} onChange={e => setEditing({...editing, sort_order: parseInt(e.target.value)})} className="w-24 rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring" placeholder="0" />
+              <input 
+                type="number" 
+                value={editing.sort_order ?? ""} 
+                onChange={e => setEditing({...editing, sort_order: e.target.value} as any)} 
+                className="w-24 rounded-lg border border-input bg-background px-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring" 
+                placeholder="0" 
+              />
             </div>
           </div>
           <div className="flex gap-2">
@@ -144,7 +321,8 @@ const AdminServices = () => {
           <div key={s.id} className="rounded-xl border border-border bg-card">
             <div className="flex items-center justify-between p-3">
               <div className="flex items-center gap-3">
-                {s.image_url && <img src={s.image_url} alt={s.title} className="h-10 w-10 rounded-lg object-cover" />}
+                {/* FIXED: Applied getImageSrc here */}
+                {s.image_url && <img src={getImageSrc(s.image_url)} alt={s.title} className="h-10 w-10 rounded-lg object-cover" />}
                 <div>
                   <p className="text-sm font-medium text-foreground">{s.title}</p>
                   <p className="text-[10px] text-muted-foreground">/{s.slug} • {s.is_active ? "✅ সক্রিয়" : "❌ নিষ্ক্রিয়"}</p>
@@ -176,13 +354,24 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
   const [featText, setFeatText] = useState("");
 
   const startEdit = (p?: CmsServicePackage) => {
-    const item = p || { service_id: serviceId, name: "", price: 0, original_price: null, features: [], sort_order: 0 };
+    const item: any = p ? { ...p } : { service_id: serviceId, name: "", price: undefined, original_price: null, features: [], sort_order: 0 };
+    
+    // Convert 0 to undefined so inputs don't start with 0
+    if (item.price === 0) item.price = undefined;
+    if (item.original_price === 0) item.original_price = null;
+    
     setEditing({ ...item });
     setFeatText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
   };
+  
   const handleSave = () => {
     if (!editing?.name) return;
-    upsert.mutate({ ...editing, features: featText.split(",").map(s => s.trim()).filter(Boolean) } as any, {
+    upsert.mutate({ 
+      ...editing, 
+      price: editing.price !== undefined && editing.price !== "" ? Number(editing.price) : 0,
+      original_price: editing.original_price !== undefined && editing.original_price !== "" ? Number(editing.original_price) : null,
+      features: featText.split(",").map(s => s.trim()).filter(Boolean) 
+    } as any, {
       onSuccess: () => { toast.success("প্যাকেজ সেভ হয়েছে"); setEditing(null); },
       onError: (e: any) => toast.error(e.message),
     });
@@ -203,11 +392,23 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
             </div>
             <div>
               <label className={labelClass}>দাম *</label>
-              <input type="number" value={editing.price || 0} onChange={e => setEditing({...editing, price: parseInt(e.target.value)})} placeholder="500" className={smallInputClass} />
+              <input 
+                type="number" 
+                value={editing.price ?? ""} 
+                onChange={e => setEditing({...editing, price: e.target.value} as any)} 
+                placeholder="500" 
+                className={smallInputClass} 
+              />
             </div>
             <div>
               <label className={labelClass}>আগের দাম</label>
-              <input type="number" value={editing.original_price || ""} onChange={e => setEditing({...editing, original_price: e.target.value ? parseInt(e.target.value) : null})} placeholder="800" className={smallInputClass} />
+              <input 
+                type="number" 
+                value={editing.original_price ?? ""} 
+                onChange={e => setEditing({...editing, original_price: e.target.value === "" ? null : e.target.value} as any)} 
+                placeholder="800" 
+                className={smallInputClass} 
+              />
             </div>
           </div>
           <div>

@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
-import {INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 const API_BASE_URL = INDIVIDUAL_API_BASE_URL;
 async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -19,6 +19,7 @@ async function cmsRequest<T>(path: string, options: RequestInit = {}): Promise<T
   }
   return data as T;
 }
+
 const unwrapRows = <T,>(payload: any): T[] => {
   if (Array.isArray(payload)) return payload as T[];
   if (Array.isArray(payload?.data)) return payload.data as T[];
@@ -124,8 +125,12 @@ function useCmsTable<T extends Record<string, any>>(
 
   const upsert = useMutation({
     mutationFn: async (item: Partial<T>) => {
-      const { data } = await cmsRequest<{ data: T }>(`/api/${table}`, {
-        method: "POST",
+      const isUpdate = !!item.id;
+      const path = isUpdate ? `/api/${table}/${item.id}` : `/api/${table}`;
+      const method = isUpdate ? "PUT" : "POST";
+      
+      const { data } = await cmsRequest<{ data: T }>(path, {
+        method,
         body: JSON.stringify(item),
       });
       return data;
@@ -238,8 +243,12 @@ export const useCmsCategories = () => {
 
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsCategory>) => {
-      const payload = await cmsRequest<any>("/api/categories", {
-        method: "POST",
+      const isUpdate = !!item.id;
+      const path = isUpdate ? `/api/categories/${item.id}` : "/api/categories";
+      const method = isUpdate ? "PUT" : "POST";
+      
+      const payload = await cmsRequest<any>(path, {
+        method,
         body: JSON.stringify(item),
       });
       return normalizeCategory(unwrapItem<any>(payload));
@@ -268,16 +277,22 @@ export const useCmsServices = () => {
       return unwrapRows<any>(payload).map(normalizeService);
     },
   });
+  
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsService>) => {
-      const payload = await cmsRequest<any>("/api/services", {
-        method: "POST",
+      const isUpdate = !!item.id;
+      const path = isUpdate ? `/api/services/${item.id}` : "/api/services";
+      const method = isUpdate ? "PUT" : "POST";
+      
+      const payload = await cmsRequest<any>(path, {
+        method,
         body: JSON.stringify(item),
       });
       return normalizeService(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),
   });
+  
   const remove = useMutation({
     mutationFn: async (id: string) => {
       await cmsRequest(`/api/services/${encodeURIComponent(id)}`, {
@@ -289,6 +304,7 @@ export const useCmsServices = () => {
 
   return { ...query, upsert, remove };
 };
+
 export const useCmsPackages = (serviceId?: string) => {
   const qc = useQueryClient();
   const query = useQuery({
@@ -301,24 +317,32 @@ export const useCmsPackages = (serviceId?: string) => {
     },
     enabled: !!serviceId,
   });
+  
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsServicePackage>) => {
-      const payload = await cmsRequest<any>("/api/packages", {
-        method: "POST",
+      const isUpdate = !!item.id;
+      const path = isUpdate ? `/api/packages/${item.id}` : "/api/packages";
+      const method = isUpdate ? "PUT" : "POST";
+      
+      const payload = await cmsRequest<any>(path, {
+        method,
         body: JSON.stringify(item),
       });
       return normalizePackage(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-packages"] }),
   });
+  
   const remove = useMutation({
     mutationFn: async (id: string) => {
       await cmsRequest(`/api/packages/${encodeURIComponent(id)}`, { method: "DELETE" });
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-packages"] }),
   });
+  
   return { ...query, upsert, remove };
 };
+
 export const useCmsOffers = () => useCmsTable<CmsSpecialOffer>("cms_special_offers", "cms-offers");
 export const useCmsHeroBanners = () => useCmsTable<CmsHeroBanner>("cms_hero_banners", "cms-hero-banners");
 export const useCmsHomepageSections = () => useCmsTable<CmsHomepageSection>("cms_homepage_sections", "cms-homepage-sections");
