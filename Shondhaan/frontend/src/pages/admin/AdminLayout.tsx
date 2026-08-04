@@ -59,7 +59,7 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "ইয়েস মার্ট",
+    label: "সন্ধান মার্ট",
     accent: "from-emerald-500 to-teal-600",
     dot: "bg-teal-500",
     items: [
@@ -67,7 +67,7 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "ইয়েস ডিল",
+    label: "সন্ধান ডিল",
     accent: "from-amber-500 to-orange-600",
     dot: "bg-amber-500",
     items: [
@@ -76,7 +76,7 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "ইয়েস জবস",
+    label: "সন্ধান জবস",
     accent: "from-blue-500 to-indigo-600",
     dot: "bg-blue-500",
     items: [
@@ -824,9 +824,9 @@ const AdminLayout = () => {
           { keys: "g r", label: "সেবা রিকোয়েস্ট" },
           { keys: "g u", label: "ইউজার ম্যানেজমেন্ট" },
           { keys: "g s", label: "সেবা CMS" },
-          { keys: "g m", label: "ইয়েস মার্ট" },
-          { keys: "g l", label: "ইয়েস ডিল" },
-          { keys: "g j", label: "ইয়েস জবস" },
+          { keys: "g m", label: "সন্ধান মার্ট" },
+          { keys: "g l", label: "সন্ধান ডিল" },
+          { keys: "g j", label: "সন্ধান জবস" },
           { keys: "g n", label: "নোটিফিকেশন" },
           { keys: "g p", label: "পারমিশন" },
           { keys: "g t", label: "স্টাফ অ্যাসাইনমেন্ট" },

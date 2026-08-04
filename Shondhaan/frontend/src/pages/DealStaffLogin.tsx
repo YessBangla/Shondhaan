@@ -4,7 +4,7 @@ import logo from "@/assets/yess-deal-logo.png";
 const DealStaffLogin = () => (
   <StaffLoginPage
     platformKey="deal"
-    platformName="ইয়েস ডিল"
+    platformName="সন্ধান ডিল"
     platformNameEn="Deal"
     logoSrc={logo}
     homeHref="/deal"

@@ -136,8 +136,8 @@ const StaffLoginPage = ({
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4 py-8" data-platform={platformKey}>
-      <div className="w-full max-w-5xl flex gap-8 items-stretch">
+    <div className="min-h-screen bg-[aliceblue] flex items-center justify-center px-4 py-8" data-platform={platformKey}>
+      <div className="w-full max-w-5xl flex gap-8 items-stretch border shadow bg-white rounded-xl py-4">
         <div className="hidden lg:block flex-1 max-w-md">
           <AuthHeroPanel />
         </div>
@@ -162,7 +162,7 @@ const StaffLoginPage = ({
               <span className="text-[11px] font-semibold text-primary">Office / Staff Login</span>
             </div>
             <h1 className="font-heading text-2xl font-bold text-foreground">
-              {bn ? `${platformName} Portal` : `${platformNameEn} Portal`}
+              {bn ? `${platformName} পোর্টাল` : `${platformNameEn} Portal`}
             </h1>
             <p className="text-sm text-muted-foreground mt-1">Sign in with your backend staff account.</p>
           </div>
@@ -217,7 +217,7 @@ const StaffLoginPage = ({
               <button
                 type="submit"
                 disabled={submitting}
-                className={`w-full py-2.5 rounded-xl bg-gradient-to-r ${gradient} text-white font-semibold text-sm shadow-md hover:opacity-95 disabled:opacity-60 inline-flex items-center justify-center gap-2`}
+                className={`w-full py-2.5 rounded-xl bg-primary text-white font-semibold text-sm shadow-md hover:opacity-95 disabled:opacity-60 inline-flex items-center justify-center gap-2`}
               >
                 {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
                 {submitting ? "Signing in..." : "Sign in"}

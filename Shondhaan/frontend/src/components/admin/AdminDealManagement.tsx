@@ -434,7 +434,7 @@ const AdminDealManagement = () => {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
-          🤝 ইয়েস ডিল ম্যানেজমেন্ট
+          🤝 সন্ধান ডিল ম্যানেজমেন্ট
         </h3>
         <Button variant="outline" size="sm" onClick={() => { fetchListings(); fetchCategories(); fetchReports(); }}>
           <RefreshCw className="h-3.5 w-3.5 mr-1" /> রিফ্রেশ

@@ -1071,7 +1071,7 @@ const DealAllAds = () => {
       </div>
 
       <Footer />
-      <BackToHomeButton />
+      {/* <BackToHomeButton /> */}
     </div>
   );
 };

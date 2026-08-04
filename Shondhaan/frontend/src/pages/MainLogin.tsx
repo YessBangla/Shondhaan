@@ -23,8 +23,8 @@ const MainLogin = () => {
       
       <StaffLoginPage
         platformKey="mart"
-        platformName="Yess স্টাফ"
-        platformNameEn="Yess Staff"
+        platformName="সন্ধান স্টাফ"
+        platformNameEn="Shondhaan Staff"
         logoSrc={logo}
         homeHref="/"
         roleKeys={[

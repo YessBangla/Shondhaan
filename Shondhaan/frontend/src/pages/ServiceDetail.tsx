@@ -1144,11 +1144,11 @@ const CmsServiceDetail = ({
         </Breadcrumb>
       </div>
 
-      <div className="relative h-[100px] mx-16 md:h-[240px] yess-wm">
+      <div className="relative h-[100px] md:h-[240px] app-container ">
         <img
           src={getServiceDisplayImage(service.slug, service.image_url)}
           alt={serviceTitle}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-coverapp-container"
         />
         <div
           className={`absolute inset-0 bg-gradient-to-t ${
