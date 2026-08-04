@@ -1,3 +1,4 @@
+console.log("Gemini key loaded:", !!process.env.GEMINI_API_KEY);
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
@@ -21,6 +22,7 @@ import { reconcilePendingShurjopayPayments } from "./controller/shurjopay.contro
 import { ensurePlatformFeeSchema } from "./config/db.js";
 import { ensureServiceChatSchema } from "./controller/serviceChat.controller.js";
 import { initServiceChatSocket } from "./sockets/serviceChat.js";
+import prescriptionRouter from "./routes/prescription.route.js";
 
 const app = express();
 
@@ -73,6 +75,8 @@ app.use("/api/hero-banners", heroBannerRoutes);
 app.use("/api/homepage-sections", homepageSectionRoutes);
 app.use("/api/uploads", uploadRoutes);
 app.use("/api/service-chat", serviceChatRoutes);
+app.use("/api/prescription", prescriptionRouter);
+
 
 app.get("/", (req, res) => {
   res.type("html");
