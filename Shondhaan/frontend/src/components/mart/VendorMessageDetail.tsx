@@ -182,12 +182,24 @@ export default function VendorMessageDetail() {
               </div>
             </div>
 
-            {conversation?.product_id && (
+{conversation?.product_id && (
               <Button
                 variant="outline"
                 size="sm"
                 className="h-9 rounded-xl gap-1.5 shrink-0"
-                onClick={() => navigate(`/mart/product/mysql-product-${conversation.product_id}`)}
+                onClick={async () => {
+                  try {
+                    // Resolve the real product slug so the URL shows the product
+                    // name (e.g. /mart/product/black-dress) instead of the legacy
+                    // mysql-product-<id> pattern.
+                    const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(String(conversation.product_id))}`);
+                    const json = await res.json().catch(() => ({}));
+                    const slug = json?.data?.slug;
+                    navigate(slug ? `/mart/product/${encodeURIComponent(slug)}` : `/mart/product/mysql-product-${conversation.product_id}`);
+                  } catch {
+                    navigate(`/mart/product/mysql-product-${conversation.product_id}`);
+                  }
+                }}
               >
                 <ExternalLink className="h-3.5 w-3.5" />
                 View

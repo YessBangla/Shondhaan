@@ -123,9 +123,9 @@ $$;
 -- Seed assignable modules
 INSERT INTO public.assignable_modules (module_key, label_bn, label_en, category, icon, applicable_roles, sort_order) VALUES
 ('services', 'সেবা ম্যানেজমেন্ট', 'Services', 'platform', 'Wrench', ARRAY['admin','moderator','supervisor'], 1),
-('mart', 'ইয়েস মার্ট', 'Yess Mart', 'platform', 'ShoppingCart', ARRAY['admin','moderator','mart_support'], 2),
-('deal', 'ইয়েস ডিল', 'Yess Deal', 'platform', 'Handshake', ARRAY['admin','moderator'], 3),
-('jobs', 'ইয়েস জবস', 'Yess Jobs', 'platform', 'Briefcase', ARRAY['admin','moderator'], 4),
+('mart', 'সন্ধান মার্ট', 'Yess Mart', 'platform', 'ShoppingCart', ARRAY['admin','moderator','mart_support'], 2),
+('deal', 'সন্ধান ডিল', 'Yess Deal', 'platform', 'Handshake', ARRAY['admin','moderator'], 3),
+('jobs', 'সন্ধান জবস', 'Yess Jobs', 'platform', 'Briefcase', ARRAY['admin','moderator'], 4),
 ('bookings', 'বুকিং ম্যানেজমেন্ট', 'Bookings', 'operations', 'Calendar', ARRAY['admin','call_center','supervisor'], 5),
 ('approvals', 'অ্যাপ্রুভাল কিউ', 'Approval Queue', 'operations', 'CheckCircle', ARRAY['admin','moderator','supervisor'], 6),
 ('disputes', 'ডিসপিউট ও রিফান্ড', 'Disputes', 'operations', 'AlertTriangle', ARRAY['admin','call_center','finance','supervisor'], 7),

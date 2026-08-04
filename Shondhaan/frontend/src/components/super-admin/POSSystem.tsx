@@ -79,7 +79,7 @@ const POSSystem = () => {
 
   const printInvoice = () => {
     const invoiceContent = `
-      ========= ইয়েস সার্ভিস =========
+      ========= সন্ধান সার্ভিস =========
       ইনভয়েস নং: INV-${Date.now().toString(36).toUpperCase()}
       তারিখ: ${new Date().toLocaleDateString("bn-BD")}
       গ্রাহক: ${customerName || "ওয়াক-ইন"}

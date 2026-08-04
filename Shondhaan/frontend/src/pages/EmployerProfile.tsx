@@ -85,7 +85,7 @@ const EmployerProfile = () => {
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white">
         <div className="app-container py-8">
-          <BackToHomeButton />
+          {/* <BackToHomeButton /> */}
           <div className="flex items-start gap-4 mt-3">
             {employer.company_logo_url && !logoErr ? (
               <img

@@ -39,7 +39,7 @@ const EmployerList = () => {
       {/* Header */}
       <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white">
         <div className="app-container py-8">
-          <BackToHomeButton />
+          {/* <BackToHomeButton /> */}
           <div className="flex items-center gap-3 mt-2 mb-4">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5">
               <Building2 className="h-7 w-7" />

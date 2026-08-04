@@ -53,7 +53,7 @@ export default function JobHero({
         <div className="absolute bottom-10 right-10 w-56 h-56 rounded-full bg-white/10 blur-3xl" />
       </div>
       <div className="mx-auto max-w-7xl px-4 md:px-6 pt-4 pb-8 md:pt-5 md:pb-10 relative">
-        <BackToHomeButton />
+        {/* <BackToHomeButton /> */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
           <div className="flex-1">
             {/* Title */}

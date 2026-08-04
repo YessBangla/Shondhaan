@@ -373,8 +373,8 @@ const AdminAnalytics = () => {
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
           <TabsTrigger value="service" className="text-xs"><ShoppingCart className="h-3.5 w-3.5 mr-1" /> সেবা ও বুকিং</TabsTrigger>
           <TabsTrigger value="commission" className="text-xs"><Wallet className="h-3.5 w-3.5 mr-1" /> কমিশন ও আয়</TabsTrigger>
-          <TabsTrigger value="mart" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> ইয়েস মার্ট</TabsTrigger>
-          <TabsTrigger value="deal" className="text-xs"><Handshake className="h-3.5 w-3.5 mr-1" /> ইয়েস ডিল</TabsTrigger>
+          <TabsTrigger value="mart" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> সন্ধান মার্ট</TabsTrigger>
+          <TabsTrigger value="deal" className="text-xs"><Handshake className="h-3.5 w-3.5 mr-1" /> সন্ধান ডিল</TabsTrigger>
         </TabsList>
 
         {/* ── সেবা ও বুকিং ── */}
@@ -531,7 +531,7 @@ const AdminAnalytics = () => {
           </ChartCard>
         </TabsContent>
 
-        {/* ── ইয়েস মার্ট ── */}
+        {/* ── সন্ধান মার্ট ── */}
         <TabsContent value="mart" className="space-y-4">
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={exportMartReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
@@ -595,7 +595,7 @@ const AdminAnalytics = () => {
           </div>
         </TabsContent>
 
-        {/* ── ইয়েস ডিল ── */}
+        {/* ── সন্ধান ডিল ── */}
         <TabsContent value="deal" className="space-y-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <SummaryCard icon={Handshake} label="মোট বিজ্ঞাপন" value={toBnNum(dealStats.totalListings)} color="text-primary" bgColor="bg-primary/10" />

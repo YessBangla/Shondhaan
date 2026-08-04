@@ -359,7 +359,17 @@ const AdminServices = () => {
           <div key={s.id} className="rounded-xl border border-border bg-card overflow-hidden">
             <div className="flex items-center justify-between p-3">
               <div className="flex items-center gap-3">
-                {s.image_url && <img src={getImageSrc(s.image_url)} alt={s.title} className="h-10 w-10 rounded-lg object-cover" />}
+                {s.image_url && (
+                    <img
+                      src={
+                        /^https?:\/\//i.test(s.image_url)
+                          ? s.image_url
+                          : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${s.image_url}`
+                      }
+                      alt={s.title}
+                      className="h-10 w-10 rounded-lg object-cover"
+                    />
+                  )}
                 <div>
                   <p className="text-sm font-medium text-foreground">{s.title}</p>
                   <p className="text-[10px] text-muted-foreground">/{s.slug} • {s.is_active ? "✅ সক্রিয়" : "❌ নিষ্ক্রিয়"}</p>
@@ -400,20 +410,19 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
     setEditing({ ...item });
     setFeatText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
   };
-  
-  const handleSave = () => {
-    if (!editing?.name) return;
-    upsert.mutate({ 
-      ...editing, 
-      price: editing.price !== undefined && editing.price !== "" ? Number(editing.price) : 0,
-      original_price: editing.original_price !== undefined && editing.original_price !== "" ? Number(editing.original_price) : null,
-      features: featText.split(",").map(s => s.trim()).filter(Boolean) 
-    } as any, {
-      onSuccess: () => { toast.success("প্যাকেজ সেভ হয়েছে"); setEditing(null); },
-      onError: (e: any) => toast.error(e.message),
-    });
-  };
 
+const handleSave = () => {
+  if (!editing?.name) { toast.error("প্যাকেজ নাম আবশ্যক"); return; }
+
+  const payload = { ...editing, features: featText.split(",").map(s => s.trim()).filter(Boolean) };
+
+  console.warn("🔥 PACKAGE PAYLOAD:", payload);
+
+  upsert.mutate(payload as any, {
+    onSuccess: () => { toast.success("প্যাকেজ সেভ হয়েছে"); setEditing(null); },
+    onError: (e: any) => toast.error(e.message),
+  });
+};
   return (
     <div className="border-t border-border bg-secondary/20 px-3 pb-3 pt-2">
       <div className="flex items-center justify-between mb-2">

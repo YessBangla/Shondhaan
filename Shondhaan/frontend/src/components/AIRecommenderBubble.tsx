@@ -57,7 +57,7 @@ export default function AIRecommenderBubble() {
           className="fixed left-4 z-40 max-w-[280px] md:bottom-6 md:left-6"
           style={{ bottom: getMobileFloatingBottom(8) }}
         >
-          <div className="relative border border-primary rounded-2xl bg-gradient-to-br from-primary to-primary/80 p-3 pr-8 text-primary-foreground shadow backdrop-blur">
+          <div className="relative border border-primary rounded-2xl bg-accent-foreground p-3 pr-8 text-primary-foreground shadow backdrop-blur">
             <button
               onClick={dismiss}
               className="absolute right-2 top-2 rounded-full p-1 text-primary hover:bg-primary hover:text-white transition-colors"
@@ -78,10 +78,10 @@ export default function AIRecommenderBubble() {
                 <button
                   onClick={() => {
                     haptic("medium");
-                    dismiss();
+                    dismiss(); 
                     navigate(`/service/${suggestion.slug}`);
                   }}
-                  className="mt-1 rounded-full bg-primary px-3 py-1 text-xs font-semibold transition-colors"
+                  className="mt-1 rounded-full bg-primary px-3 py-1 text-xs text-white font-semibold transition-colors"
                 >
                   {bn ? "এখনই দেখুন →" : "View now →"}
                 </button>

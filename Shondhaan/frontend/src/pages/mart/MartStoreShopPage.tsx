@@ -235,7 +235,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
           <main className="flex-1 min-w-0">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3 overflow-x-auto">
-              <button onClick={() => navigate("/mart/home")} className="hover:text-primary shrink-0">{bn ? "ইয়েস মার্ট" : "Yess Mart"}</button>
+              <button onClick={() => navigate("/mart/home")} className="hover:text-primary shrink-0">{bn ? "সন্ধান মার্ট" : "Yess Mart"}</button>
               <ChevronRight className="h-3 w-3 shrink-0" />
               <span className="text-foreground truncate">{currentTitle}</span>
             </div>

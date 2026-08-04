@@ -54,7 +54,7 @@ const CentralAccounts = () => {
 
   const revenueBySource = [
     { name: "সেবা বুকিং", value: serviceRevenue },
-    { name: "ইয়েস মার্ট", value: martRevenue },
+    { name: "সন্ধান মার্ট", value: martRevenue },
     { name: "কমিশন", value: commissionTotal },
   ].filter(r => r.value > 0);
 

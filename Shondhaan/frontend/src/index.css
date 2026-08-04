@@ -126,7 +126,33 @@
       radial-gradient(ellipse at 80% 20%, hsl(210 60% 60% / 0.08) 0%, transparent 50%),
       radial-gradient(ellipse at 50% 100%, hsl(280 50% 60% / 0.06) 0%, transparent 50%);
   }
+/* Editor (Post a Job form) — real bullets while typing */
+.rich-editor-content ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.5rem 0;
+}
+.rich-editor-content li {
+  margin-bottom: 0.25rem;
+}
 
+/* Rendered job description (Job Detail page) — custom bullets, fully contained */
+.job-description-content ul {
+  list-style: none;
+  padding-left: 0;
+  margin: 0.5rem 0;
+}
+.job-description-content li {
+  position: relative;
+  padding-left: 1rem;
+  margin-bottom: 0.25rem;
+}
+.job-description-content li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: hsl(var(--muted-foreground));
+}
   /* Mobile dark — keep purple accent but darker bg already applied via .dark */
   @media (max-width: 767px) {
     .dark {

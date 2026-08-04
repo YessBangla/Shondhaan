@@ -4,7 +4,7 @@ import logo from "@/assets/yess-jobs-logo.png";
 const JobsStaffLogin = () => (
   <StaffLoginPage
     platformKey="jobs"
-    platformName="ইয়েস জবস"
+    platformName="সন্ধান জবস"
     platformNameEn="Yess Jobs"
     logoSrc={logo}
     homeHref="/jobs"

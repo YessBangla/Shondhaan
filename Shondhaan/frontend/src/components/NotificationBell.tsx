@@ -12,6 +12,26 @@ import {
   markMartSellerNotificationReadRemote,
 } from "@/lib/martSellerNotifications";
 
+const API_BASE =
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  import.meta.env.VITE_API_URL ||
+  "http://localhost:8081";
+
+// Resolves a numeric product id to its real slug so the product URL can show
+// the readable product name (e.g. /mart/product/black-dress) instead of the
+// legacy mysql-product-<id> pattern. Falls back to null so callers can keep
+// the legacy pattern (the product-detail page will auto-upgrade the URL).
+async function resolveProductSlug(productId: string | number): Promise<string | null> {
+  try {
+    const res = await fetch(`${API_BASE}/api/products/${encodeURIComponent(String(productId))}`);
+    const json = await res.json().catch(() => ({}));
+    return json?.data?.slug || null;
+  } catch {
+    return null;
+  }
+}
+
 interface Notification {
   id: string;
   product_id?: string | number | null;
@@ -151,11 +171,14 @@ const NotificationBell = () => {
         ? "qa"
         : null;
     const fallbackHash = fallbackProductTab === "reviews" ? "product-reviews" : "product-qa";
-    const fallbackProductUrl =
-      !notification.action_url && fallbackProductTab && notification.product_id != null
-        ? `/mart/product/mysql-product-${encodeURIComponent(String(notification.product_id))}?tab=${fallbackProductTab}#${fallbackHash}`
-        : null;
-    const actionUrl = notification.action_url || fallbackProductUrl;
+    const fallbackProductUrl = async () => {
+      if (notification.action_url || fallbackProductTab === null || notification.product_id == null) return null;
+      const slug = await resolveProductSlug(notification.product_id);
+      return slug
+        ? `/mart/product/${encodeURIComponent(slug)}?tab=${fallbackProductTab}#${fallbackHash}`
+        : `/mart/product/mysql-product-${encodeURIComponent(String(notification.product_id))}?tab=${fallbackProductTab}#${fallbackHash}`;
+    };
+    const actionUrl = notification.action_url || (await fallbackProductUrl());
 
     if (!actionUrl) return;
 

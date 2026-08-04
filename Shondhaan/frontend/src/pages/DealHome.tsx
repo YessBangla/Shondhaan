@@ -107,7 +107,7 @@ const DealCard = React.forwardRef<
       className="cursor-pointer"
       onClick={onClick}
     >
-      <Card className="border-blue-100/60 hover:border-emerald-400/50 hover:shadow-xl hover:shadow-emerald-500/10 transition-all duration-300 overflow-hidden h-full bg-white">
+      <Card className="border-blue-100/60 hover:border-emerald-400/50 hover:shadow-xl hover:shadow-emerald-500/10 border shadow transition-all duration-300 overflow-hidden h-full bg-white">
         <div className="relative">
           <div className="relative aspect-[4/3] bg-gradient-to-br from-blue-50 to-emerald-50 overflow-hidden">
             <ListingImage src={img} alt={listing.title} fallbackSize="lg" />
@@ -127,7 +127,7 @@ const DealCard = React.forwardRef<
               variant="outline"
               className="absolute top-2 right-2 bg-white/90 text-blue-700 border-blue-200 text-[10px] backdrop-blur-sm"
             >
-              {bn ? "দরদাম" : "Negotiable"}
+              {bn ? "আলোচনা সাপেক্ষে" : "Negotiable"}
             </Badge>
           )}
         </div>
@@ -138,7 +138,7 @@ const DealCard = React.forwardRef<
             {listing.price > 0
               ? listing.price.toLocaleString("bn-BD")
               : bn
-                ? "আলোচনা সাপেক্ষ"
+                ? "আলোচনা সাপেক্ষে"
                 : "Negotiable"}
           </p>
 
@@ -547,7 +547,7 @@ const DealHome = () => {
                 {featured?.map((listing) => (
                   <div key={listing.id} className="relative group">
                     <div className="absolute -inset-[1.5px] rounded-xl bg-gradient-to-br from-blue-500 via-cyan-400 to-emerald-500 opacity-60 group-hover:opacity-100 transition-opacity z-0" />
-                    <div className="relative z-10 rounded-[11px] overflow-hidden bg-white">
+                    <div className="relative z-10 rounded-[11px] border overflow-hidden bg-white">
                       <DealCard
                         listing={listing}
                         onClick={() => navigate(`/deal/ad/${listing.id}`)}
@@ -586,7 +586,7 @@ const DealHome = () => {
               ))}
           </div>
         ) : (latest?.length || 0) > 0 ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-6">
             {latest?.map((listing) => (
               <DealCard
                 key={listing.id}

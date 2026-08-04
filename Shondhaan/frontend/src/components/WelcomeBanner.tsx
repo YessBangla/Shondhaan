@@ -128,7 +128,7 @@ const WelcomeBanner = () => {
       {/* Row 1: Greeting + Date */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
         <h2 className="text-base md:text-lg font-bold text-foreground leading-snug">
-          {greeting.emoji} {greeting.text}, {bn ? "ইয়েস সার্ভিসের পক্ষ থেকে" : "Welcome to"}{" "}
+          {greeting.emoji} {greeting.text}, {bn ? "সন্ধান সার্ভিসের পক্ষ থেকে" : "Welcome to"}{" "}
           <span className="text-primary">{locationText}{bn ? "তে" : ""}</span>
           {bn ? " আপনাকে স্বাগতম!" : " from Shondhaan!"}
         </h2>

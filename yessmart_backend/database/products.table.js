@@ -13,6 +13,7 @@ async function createProductsTable() {
       gallery_urls JSON NULL,
       name_bn VARCHAR(500) NOT NULL,
       name_en VARCHAR(500) NULL,
+      slug VARCHAR(255) NULL,
       description TEXT NULL,
 
       sale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
@@ -65,6 +66,7 @@ async function createProductsTable() {
     ["gallery_urls",    "JSON NULL"],
     ["name_bn",         "VARCHAR(500) NOT NULL DEFAULT ''"],
     ["name_en",         "VARCHAR(500) NULL"],
+    ["slug",            "VARCHAR(255) NULL"],
     ["description",     "TEXT NULL"],
     ["sale_price",      "DECIMAL(10,2) NOT NULL DEFAULT 0.00"],
     ["original_price",  "DECIMAL(10,2) NULL"],
@@ -121,6 +123,26 @@ async function createProductsTable() {
       console.log("Added FK: fk_products_sub_category");
     } catch (err) {
       console.warn("Could not add FK fk_products_sub_category:", err.message);
+    }
+  }
+
+  // Add a UNIQUE index on slug once the column exists (allows multiple NULLs
+  // in MySQL, so old rows without a slug yet won't violate uniqueness).
+  const [slugIndexRows] = await pool.query(`
+    SELECT INDEX_NAME FROM information_schema.STATISTICS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'products'
+      AND INDEX_NAME = 'uniq_products_slug'
+  `);
+
+  if (slugIndexRows.length === 0) {
+    try {
+      await pool.query(`
+        ALTER TABLE products ADD UNIQUE INDEX uniq_products_slug (slug)
+      `);
+      console.log("Added unique index: uniq_products_slug");
+    } catch (err) {
+      console.warn("Could not add unique index uniq_products_slug:", err.message);
     }
   }
 

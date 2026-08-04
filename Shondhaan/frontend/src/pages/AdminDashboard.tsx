@@ -44,7 +44,7 @@ import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 import RepLeaderboard from "@/components/RepLeaderboard";
 import AdminJobListings from "@/components/admin/AdminJobListings";
 import AdminEmployerManagement from "@/components/admin/AdminEmployerManagement";
-
+import AdminPackages from "@/components/admin/Adminpackages";
 interface Booking {
   id: string;
   service_title: string;
@@ -90,17 +90,17 @@ const sidebarItems = [
   { value: "banners", label: "ব্যানার", icon: <Image />, group: "সেবা CMS" },
   { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সেবা CMS" },
 
-  // ইয়েস মার্ট
-  { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "ইয়েস মার্ট" },
+  // সন্ধান মার্ট
+  { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "সন্ধান মার্ট" },
 
-  // ইয়েস ডিল
-  { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "ইয়েস ডিল" },
-  { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "ইয়েস ডিল" },
+  // সন্ধান ডিল
+  { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "সন্ধান ডিল" },
+  { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "সন্ধান ডিল" },
 
-  // ইয়েস জবস
-  { value: "job-listings", label: "চাকরি বিজ্ঞাপন", icon: <Briefcase />, group: "ইয়েস জবস" },
-  { value: "employers", label: "এমপ্লয়ার", icon: <Store />, group: "ইয়েস জবস" },
-
+  // সন্ধান জবস
+  { value: "job-listings", label: "চাকরি বিজ্ঞাপন", icon: <Briefcase />, group: "সন্ধান জবস" },
+  { value: "employers", label: "এমপ্লয়ার", icon: <Store />, group: "সন্ধান জবস" },
+{ value: "packages", label: "প্যাকেজ", icon: <Package />, group: "সন্ধান জবস" },
   // কমিউনিকেশন
   { value: "contacts", label: "মেসেজ", icon: <MessageSquare />, group: "কমিউনিকেশন" },
   { value: "service-messages", label: "Service messages", icon: <Headphones />, group: "কমিউনিকেশন" },

@@ -44,25 +44,20 @@ const AdminCategories = () => {
   const { data: categories = [], isLoading, upsert, remove } = useCmsCategories();
   const [editing, setEditing] = useState<Partial<CmsCategory> | null>(null);
 
-  // Lock body scroll when modal is open
-  useEffect(() => {
-    document.body.style.overflow = editing ? "hidden" : "auto";
-    return () => { document.body.style.overflow = "auto"; };
-  }, [editing]);
+const handleSave = () => {
+  if (!editing?.name) { toast.error("নাম আবশ্যক"); return; }
 
-  const handleSave = () => {
-    if (!editing?.name) { toast.error("নাম আবশ্যক"); return; }
-    
-    const payload = {
-      ...editing,
-      sort_order: editing.sort_order !== undefined && editing.sort_order !== "" ? Number(editing.sort_order) : 0,
-    };
+  console.log("Submitting category payload:", editing);
+  console.log("JSON payload:", JSON.stringify(editing, null, 2));
 
-    upsert.mutate(payload as any, {
-      onSuccess: () => { toast.success("সেভ হয়েছে"); setEditing(null); },
-      onError: (e: any) => toast.error(e.message),
-    });
-  };
+  upsert.mutate(editing as any, {
+    onSuccess: () => { toast.success("সেভ হয়েছে"); setEditing(null); },
+    onError: (e: any) => {
+      console.error("Category save failed:", e);
+      toast.error(e.message);
+    },
+  });
+};
 
   if (isLoading) return <div className="py-8 text-center text-muted-foreground">লোড হচ্ছে...</div>;
 
@@ -173,9 +168,21 @@ const AdminCategories = () => {
         {categories.map(c => (
           <div key={c.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors">
             <div className="flex items-center gap-3">
-              <div className={`h-10 w-10 rounded-lg bg-gradient-to-r ${c.color_gradient} flex items-center justify-center shadow-sm`}>
-                {/* FIXED: Applied getImageSrc here */}
-                {c.icon_url ? <img src={getImageSrc(c.icon_url)} alt={c.name} className="h-6 w-6 object-contain" /> : <span className="text-white text-sm font-bold">{c.name[0]}</span>}
+              {/* <div className={`h-8 w-8 rounded-lg bg-gradient-to-r ${c.color_gradient} flex items-center justify-center`}> */}
+              <div className={`h-8 w-8 rounded-lg flex items-center justify-center`}>
+                {c.icon_url ? (
+                  <img
+                    src={
+                      /^https?:\/\//i.test(c.icon_url)
+                        ? c.icon_url
+                        : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${c.icon_url}`
+                    }
+                    alt={c.name}
+                    className="h-5 w-5 object-contain"
+                  />
+                ) : (
+                  <span className="text-white text-xs font-bold">{c.name[0]}</span>
+                )}
               </div>
               <div>
                 <p className="text-sm font-medium text-foreground">{c.name}</p>

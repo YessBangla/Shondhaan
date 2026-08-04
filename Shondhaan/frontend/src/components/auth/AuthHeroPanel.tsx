@@ -18,13 +18,13 @@ const AuthHeroPanel = () => {
     {
       titleBn: "এক প্ল্যাটফর্মে সব সমাধান",
       titleEn: "All Solutions in One Platform",
-      subtitleBn: "সন্ধান, ইয়েস মার্ট, ইয়েস ডিল ও ইয়েস জবস — সবকিছু একসাথে।",
+      subtitleBn: "সন্ধান, সন্ধান মার্ট, সন্ধান ডিল ও সন্ধান জবস — সবকিছু একসাথে।",
       subtitleEn: "Shondhaan, Shondhaan Mart, Shondhaan Deal & Shondhaan Jobs — all together.",
       gradient: "from-primary/90 to-primary/60",
       image: slidePlatform,
     },
     {
-      titleBn: "ঘরে বসে সব সার্ভিস",
+      titleBn: "ঘরে বসে সকল সার্ভিস",
       titleEn: "All Services at Your Doorstep",
       subtitleBn: "ক্লিনিং, ইলেকট্রিশিয়ান, প্লাম্বিং, এসি, হেলথ — ১৮৬+ সার্ভিস।",
       subtitleEn: "Cleaning, electrician, plumbing, AC, health — 186+ services.",
@@ -32,7 +32,7 @@ const AuthHeroPanel = () => {
       image: slideService,
     },
     {
-      titleBn: "ইয়েস মার্টে কেনাকাটা",
+      titleBn: "সন্ধান মার্টে কেনাকাটা",
       titleEn: "Shop at Shondhaan Mart",
       subtitleBn: "৭৬টি ক্যাটাগরি, COD, দ্রুত ডেলিভারি ও ফ্রি শিপিং অফার।",
       subtitleEn: "76 categories, COD, fast delivery and free shipping offers.",
@@ -40,7 +40,7 @@ const AuthHeroPanel = () => {
       image: slideMart,
     },
     {
-      titleBn: "ইয়েস ডিলে বেচাকেনা",
+      titleBn: "সন্ধান ডিলে বেচাকেনা",
       titleEn: "Buy & Sell on Shondhaan Deal",
       subtitleBn: "পুরাতন ও নতুন পণ্যের সরাসরি বিজ্ঞাপন — গাড়ি, মোবাইল, প্রপার্টি।",
       subtitleEn: "Direct ads for new & used items — cars, mobiles, properties.",
@@ -48,7 +48,7 @@ const AuthHeroPanel = () => {
       image: slideDeal,
     },
     {
-      titleBn: "ক্যারিয়ার গড়ুন ইয়েস জবসে",
+      titleBn: "ক্যারিয়ার গড়ুন সন্ধান জব এ",
       titleEn: "Build Career with Shondhaan Jobs",
       subtitleBn: "ভিডিও সিভি, স্মার্ট প্রোফাইল ও সরাসরি নিয়োগদাতাদের সংযোগ।",
       subtitleEn: "Video CV, smart profiles and direct employer connections.",
