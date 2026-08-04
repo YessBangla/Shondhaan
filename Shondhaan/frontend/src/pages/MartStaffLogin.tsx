@@ -4,7 +4,7 @@ import logo from "@/assets/yess-mart-logo.png";
 const MartStaffLogin = () => (
   <StaffLoginPage
     platformKey="mart"
-    platformName="ইয়েস মার্ট"
+    platformName="সন্ধান মার্ট"
     platformNameEn="Yess Mart"
     logoSrc={logo}
     homeHref="/mart/home"

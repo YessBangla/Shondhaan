@@ -49,10 +49,10 @@ const AdminTabs = () => (
         <LayoutList className="h-3.5 w-3.5" /> সেকশন
       </TabsTrigger>
       <TabsTrigger value="mart-overview" className="flex items-center gap-1.5 text-xs">
-        <ShoppingCart className="h-3.5 w-3.5" /> ইয়েস মার্ট
+        <ShoppingCart className="h-3.5 w-3.5" /> সন্ধান মার্ট
       </TabsTrigger>
       <TabsTrigger value="deal-overview" className="flex items-center gap-1.5 text-xs">
-        <Handshake className="h-3.5 w-3.5" /> ইয়েস ডিল
+        <Handshake className="h-3.5 w-3.5" /> সন্ধান ডিল
       </TabsTrigger>
       <TabsTrigger value="deal-categories" className="flex items-center gap-1.5 text-xs">
         <Grid3X3 className="h-3.5 w-3.5" /> ডিল ক্যাটেগরি

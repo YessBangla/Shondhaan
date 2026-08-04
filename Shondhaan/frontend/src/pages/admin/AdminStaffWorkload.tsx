@@ -20,7 +20,7 @@ type Staff = {
 };
 
 const ROLE_FILTERS = [
-  { value: "all", label: "সব স্টাফ" },
+  { value: "all", label: "সকল স্টাফ" },
   { value: "provider", label: "প্রোভাইডার" },
   { value: "moderator", label: "মডারেটর" },
   { value: "admin", label: "অ্যাডমিন" },

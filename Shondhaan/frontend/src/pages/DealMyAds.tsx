@@ -225,7 +225,7 @@ const DealMyAds = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="pt-[44px] md:pt-[68px]" />
-      <BackToHomeButton />
+      {/* <BackToHomeButton /> */}
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-3xl mx-auto px-4 py-4 pb-28 md:pb-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-5">

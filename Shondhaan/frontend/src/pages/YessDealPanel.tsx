@@ -153,7 +153,7 @@ const YessDealPanel = () => {
       <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
         <Tag className="h-16 w-16 text-muted-foreground/40" />
         <h2 className="text-xl font-bold text-foreground">{bn ? "অ্যাক্সেস নেই" : "Access Denied"}</h2>
-        <p className="text-muted-foreground text-center">{bn ? "আপনার ইয়েস ডিল সেলার অ্যাক্সেস নেই।" : "You don't have Yess Deal seller access."}</p>
+        <p className="text-muted-foreground text-center">{bn ? "আপনার সন্ধান ডিল সেলার অ্যাক্সেস নেই।" : "You don't have Yess Deal seller access."}</p>
         <Button onClick={() => navigate("/")}>{bn ? "হোমে যান" : "Go Home"}</Button>
       </div>
     );
@@ -191,7 +191,7 @@ const YessDealPanel = () => {
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-              🤝 {bn ? "ইয়েস ডিল প্যানেল" : "Yess Deal Panel"}
+              🤝 {bn ? "সন্ধান ডিল প্যানেল" : "Yess Deal Panel"}
             </h1>
             <p className="text-sm text-muted-foreground">{bn ? "আপনার বিজ্ঞাপন ম্যানেজ করুন" : "Manage your listings"}</p>
           </div>
@@ -230,7 +230,7 @@ const YessDealPanel = () => {
           <PanelSidebarTabs
             items={sidebarItems}
             defaultValue="listings"
-            panelTitle={bn ? "ইয়েস ডিল" : "Yess Deal"}
+            panelTitle={bn ? "সন্ধান ডিল" : "Yess Deal"}
             panelIcon={<Tag className="h-5 w-5" />}
           >
             {(activeTab) => (

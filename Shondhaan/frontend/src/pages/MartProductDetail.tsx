@@ -83,7 +83,7 @@ const MartProductDetail = () => {
   const productPrice = product?.price ? Number(product.price) : null;
   const productDesc = product
     ? bn
-      ? `${productName} — ৳${productPrice?.toLocaleString("bn-BD") || ""}। ইয়েস মার্টে কিনুন।`
+      ? `${productName} — ৳${productPrice?.toLocaleString("bn-BD") || ""}। সন্ধান মার্টে কিনুন।`
       : `${productName} — ৳${productPrice?.toLocaleString() || ""}. Buy on Yess Mart.`
     : "";
 
@@ -145,7 +145,7 @@ const MartProductDetail = () => {
     product?.shop_name ||
     product?.seller_name ||
     vendorProfile?.display_name ||
-    (bn ? "ইয়েস মার্ট বিক্রেতা" : "Yess Mart Seller");
+    (bn ? "সন্ধান মার্ট বিক্রেতা" : "Yess Mart Seller");
 
   const vendorVerified = product?.seller_verified === 1 || product?.seller_verified === true;
 
@@ -338,7 +338,7 @@ const MartProductDetail = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="app-container py-2 flex items-center gap-1 overflow-x-auto text-xs text-gray-500 whitespace-nowrap">
           <button onClick={() => navigate("/mart/home")} className="hover:text-primary">
-            {bn ? "ইয়েস মার্ট" : "Yess Mart"}
+            {bn ? "সন্ধান মার্ট" : "Yess Mart"}
           </button>
           <ChevronRight className="h-3 w-3 text-gray-400 shrink-0" />
           {product.category && (

@@ -107,7 +107,7 @@ export default function PlatformSwitcher({
           <div className="flex items-center gap-2">
             <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
             <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground md:text-sm">
-              {bn ? "ইয়েস ইকোসিস্টেম" : "Shondhaan Ecosystem"}
+              {bn ? "সন্ধান ইকোসিস্টেম" : "Shondhaan Ecosystem"}
             </h2>
           </div>
           <span className="hidden text-xs text-muted-foreground md:inline">
