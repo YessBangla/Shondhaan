@@ -443,7 +443,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
             <button
               type="submit"
               disabled={submitting || submitted}
-              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-green-800 disabled:opacity-50"
             >
               <Send className="h-4 w-4" />
               {submitting
