@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { Plus, Edit2, Trash2, Save, X } from "lucide-react";
 import { useCmsCategories, CmsCategory } from "@/hooks/useCmsData";
 import ImageUploader from "./ImageUploader";
@@ -74,13 +75,14 @@ const AdminCategories = () => {
         </button>
       </div>
 
-      {/* Modal Form */}
-      {editing && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center bg-black/50 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="relative w-full max-w-2xl my-8 rounded-xl bg-card border border-border shadow-2xl flex flex-col max-h-[calc(100vh-4rem)]">
+      {/* Modal Form rendered via Portal to escape parent overflow constraints */}
+      {editing && createPortal(
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
+          {/* Modal Container */}
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col bg-card border border-border shadow-2xl rounded-xl overflow-hidden">
             
             {/* Modal Header */}
-            <div className="sticky top-0 z-10 flex items-center justify-between bg-card p-4 border-b border-border rounded-t-xl">
+            <div className="shrink-0 flex items-center justify-between bg-card p-4 border-b border-border">
               <h3 className="font-heading text-lg font-bold text-foreground">
                 {editing.id ? "ক্যাটেগরি এডিট করুন" : "নতুন ক্যাটেগরি যোগ করুন"}
               </h3>
@@ -89,8 +91,8 @@ const AdminCategories = () => {
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="p-6 space-y-5 overflow-y-auto">
+            {/* Modal Body (Scrollable) */}
+            <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1 block text-xs font-semibold text-muted-foreground">নাম (বাংলা) *</label>
@@ -153,7 +155,7 @@ const AdminCategories = () => {
             </div>
 
             {/* Modal Footer */}
-            <div className="sticky bottom-0 flex items-center justify-end gap-3 bg-card p-4 border-t border-border rounded-b-xl">
+            <div className="shrink-0 flex items-center justify-end gap-3 bg-card p-4 border-t border-border">
               <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors">
                 বাতিল
               </button>
@@ -162,7 +164,8 @@ const AdminCategories = () => {
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Categories List */}
