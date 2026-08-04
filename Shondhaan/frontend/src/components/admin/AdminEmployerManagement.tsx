@@ -1,14 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { listMySqlUsers } from "@/lib/mysqlAuth";
 import { YESSJOB_API_BASE_URL } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, CheckCircle2, XCircle, Eye, Search, MapPin, Users, Globe, Phone, Mail, Package } from "lucide-react";
+import { Building2, Eye, Search, Phone, Mail, MapPin, Package } from "lucide-react";
 import { toast } from "sonner";
 
+// NOTE: /api/admin/users lives on a different backend server than
+// /api/packages (see src/api/mysqlAuth.ts, which uses
+// VITE_API_BASE_URL / VITE_CENTRAL_API_BASE_URL). YESSJOB_API_BASE_URL
+// below is ONLY used for the packages endpoints, which run on the
+// separate yessjob backend.
 const API_BASE = `${YESSJOB_API_BASE_URL.replace(/\/+$/, "")}/api`;
 
 const VISIBILITY_OPTIONS = [
@@ -46,29 +51,49 @@ const parseFeatures = (features: unknown): string[] => {
   return [];
 };
 
+interface MySqlUser {
+  id: number;
+  name: string;
+  mobile: string;
+  address: string | null;
+  email: string;
+  type: string;
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
 const AdminEmployerManagement = () => {
   const qc = useQueryClient();
-  const [filter, setFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [selected, setSelected] = useState<any>(null);
+  const [selected, setSelected] = useState<MySqlUser | null>(null);
   const [packageForm, setPackageForm] = useState<any>(null);
   const [saving, setSaving] = useState(false);
 
-  const { data: employers = [], isLoading } = useQuery({
-    queryKey: ["admin-employers", filter, searchTerm],
+  // Employers come from the same backend/DB as auth & admin user
+  // management (listMySqlUsers -> GET /api/admin/users on the correct
+  // server), filtered to type === "employer".
+  const { data: employers = [], isLoading, error } = useQuery({
+    queryKey: ["admin-employers", searchTerm],
     queryFn: async () => {
-      let q = supabase.from("employer_profiles").select("*").order("created_at", { ascending: false });
-      if (filter === "verified") q = q.eq("is_verified", true);
-      if (filter === "pending") q = q.eq("is_verified", false);
-      if (searchTerm.length > 1) q = q.ilike("company_name", `%${searchTerm}%`);
-      const { data, error } = await q;
-      if (error) throw error;
-      return data || [];
+      const { users } = await listMySqlUsers();
+      let list = (users as MySqlUser[]).filter((u) => u.type === "employer");
+
+      if (searchTerm.trim().length > 1) {
+        const t = searchTerm.trim().toLowerCase();
+        list = list.filter(
+          (u) =>
+            u.name?.toLowerCase().includes(t) ||
+            u.email?.toLowerCase().includes(t) ||
+            u.mobile?.toLowerCase().includes(t)
+        );
+      }
+
+      return list;
     },
   });
 
-  // Job packages now come from the Express/MySQL backend (packages.js),
-  // not Supabase.
+  // Job packages come from the separate Express/MySQL yessjob backend.
   const { data: packages = [] } = useQuery({
     queryKey: ["admin-job-packages"],
     queryFn: async () => {
@@ -76,17 +101,6 @@ const AdminEmployerManagement = () => {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.message || "Package load failed");
       return Array.isArray(json) ? json : json?.data || [];
-    },
-  });
-
-  const toggleVerify = useMutation({
-    mutationFn: async ({ id, verified }: { id: string; verified: boolean }) => {
-      const { error } = await supabase.from("employer_profiles").update({ is_verified: verified } as any).eq("id", id);
-      if (error) throw error;
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["admin-employers"] });
-      toast.success("আপডেট হয়েছে");
     },
   });
 
@@ -190,44 +204,38 @@ const AdminEmployerManagement = () => {
     },
   });
 
-  const pendingCount = employers.filter((e: any) => !e.is_verified).length;
-
   return (
     <div className="space-y-6">
-      {/* Employer Profiles */}
+      {/* Employer List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-2">
             <Building2 className="h-5 w-5 text-emerald-600" />
             <h2 className="text-lg font-bold">এমপ্লয়ার ম্যানেজমেন্ট</h2>
-            {pendingCount > 0 && <Badge className="bg-yellow-100 text-yellow-800 text-xs">{pendingCount} যাচাই অপেক্ষমাণ</Badge>}
+            <Badge className="bg-muted text-muted-foreground text-xs">{employers.length} জন</Badge>
           </div>
           <div className="relative w-56">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input value={searchTerm} onChange={e => setSearchTerm(e.target.value)} placeholder="কোম্পানি খুঁজুন..." className="pl-8 h-8 text-xs" />
+            <Input
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="নাম, ইমেইল বা মোবাইল খুঁজুন..."
+              className="pl-8 h-8 text-xs"
+            />
           </div>
         </div>
 
-        <div className="flex gap-1 flex-wrap">
-          {[
-            { key: "all", label: "সকল" },
-            { key: "pending", label: "যাচাই অপেক্ষমাণ" },
-            { key: "verified", label: "যাচাইকৃত" },
-          ].map(f => (
-            <button key={f.key} onClick={() => setFilter(f.key)}
-              className={`px-3 py-1 rounded-full text-xs font-medium ${filter === f.key ? "bg-emerald-500 text-white" : "bg-muted text-muted-foreground"}`}>
-              {f.label}
-            </button>
-          ))}
-        </div>
-
         {isLoading ? (
-          <div className="space-y-3">{[1, 2, 3].map(i => <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />)}</div>
+          <div className="space-y-3">{[1, 2, 3].map((i) => <div key={i} className="h-16 rounded-lg bg-muted animate-pulse" />)}</div>
+        ) : error ? (
+          <p className="text-center py-8 text-destructive text-sm">
+            এমপ্লয়ার লোড করা যায়নি: {(error as Error).message}
+          </p>
         ) : employers.length === 0 ? (
           <p className="text-center py-8 text-muted-foreground text-sm">কোনো এমপ্লয়ার নেই</p>
         ) : (
           <div className="space-y-2">
-            {employers.map((emp: any) => (
+            {employers.map((emp) => (
               <div key={emp.id} className="border rounded-lg p-3 bg-card">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -235,24 +243,21 @@ const AdminEmployerManagement = () => {
                       <Building2 className="h-4 w-4 text-emerald-600" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-semibold text-sm truncate">{emp.company_name}</h3>
+                      <h3 className="font-semibold text-sm truncate">{emp.name}</h3>
                       <div className="flex gap-2 mt-0.5 text-[10px] text-muted-foreground flex-wrap">
-                        {emp.industry_type && <span>{emp.industry_type}</span>}
-                        {emp.district && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{emp.district}</span>}
-                        <span className="flex items-center gap-0.5"><Users className="h-2.5 w-2.5" />{emp.employee_count} জন</span>
+                        {emp.email && <span className="flex items-center gap-0.5"><Mail className="h-2.5 w-2.5" />{emp.email}</span>}
+                        {emp.mobile && <span className="flex items-center gap-0.5"><Phone className="h-2.5 w-2.5" />{emp.mobile}</span>}
+                        {emp.address && <span className="flex items-center gap-0.5"><MapPin className="h-2.5 w-2.5" />{emp.address}</span>}
                       </div>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <Badge className={`text-[10px] ${emp.is_verified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
-                      {emp.is_verified ? "যাচাইকৃত" : "অপেক্ষমাণ"}
+                    <Badge className={`text-[10px] ${emp.email_verified ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}`}>
+                      {emp.email_verified ? "ইমেইল যাচাইকৃত" : "যাচাই হয়নি"}
                     </Badge>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelected(emp)}><Eye className="h-3.5 w-3.5" /></Button>
-                    {!emp.is_verified ? (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-green-600" onClick={() => toggleVerify.mutate({ id: emp.id, verified: true })}><CheckCircle2 className="h-4 w-4" /></Button>
-                    ) : (
-                      <Button variant="ghost" size="icon" className="h-7 w-7 text-red-600" onClick={() => toggleVerify.mutate({ id: emp.id, verified: false })}><XCircle className="h-4 w-4" /></Button>
-                    )}
+                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setSelected(emp)}>
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -295,23 +300,15 @@ const AdminEmployerManagement = () => {
       {/* Employer Detail Modal */}
       <Dialog open={!!selected} onOpenChange={() => setSelected(null)}>
         <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
-          <DialogHeader><DialogTitle>{selected?.company_name}</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>{selected?.name}</DialogTitle></DialogHeader>
           {selected && (
             <div className="space-y-3 text-xs">
               <div className="grid grid-cols-2 gap-2 p-3 bg-muted/30 rounded-lg">
-                {selected.company_name_bn && <div><span className="text-muted-foreground">বাংলা নাম:</span> <span className="font-medium">{selected.company_name_bn}</span></div>}
-                <div><span className="text-muted-foreground">ধরন:</span> <span className="font-medium">{selected.company_type}</span></div>
-                {selected.industry_type && <div><span className="text-muted-foreground">ইন্ডাস্ট্রি:</span> <span className="font-medium">{selected.industry_type}</span></div>}
-                {selected.establishment_year && <div><span className="text-muted-foreground">প্রতিষ্ঠা:</span> <span className="font-medium">{selected.establishment_year}</span></div>}
-                <div><span className="text-muted-foreground">কর্মী:</span> <span className="font-medium">{selected.employee_count}</span></div>
-                {selected.district && <div className="flex items-center gap-1"><MapPin className="h-3 w-3 text-muted-foreground" /><span className="font-medium">{selected.district}{selected.thana ? `, ${selected.thana}` : ""}</span></div>}
-                {selected.contact_phone && <div className="flex items-center gap-1"><Phone className="h-3 w-3 text-muted-foreground" /><span className="font-medium">{selected.contact_phone}</span></div>}
-                {selected.contact_email && <div className="flex items-center gap-1"><Mail className="h-3 w-3 text-muted-foreground" /><span className="font-medium">{selected.contact_email}</span></div>}
-                {selected.website_url && <div className="flex items-center gap-1"><Globe className="h-3 w-3 text-muted-foreground" /><a href={selected.website_url} target="_blank" rel="noopener noreferrer" className="text-primary">{selected.website_url}</a></div>}
-              </div>
-              {selected.description && <p className="text-muted-foreground">{selected.description}</p>}
-              <div className="flex gap-2 pt-2">
-                <p className="text-muted-foreground">মোট পোস্ট: {selected.total_jobs_posted} | মোট নিয়োগ: {selected.total_hires}</p>
+                <div><span className="text-muted-foreground">ইমেইল:</span> <span className="font-medium">{selected.email}</span></div>
+                <div><span className="text-muted-foreground">মোবাইল:</span> <span className="font-medium">{selected.mobile}</span></div>
+                {selected.address && <div><span className="text-muted-foreground">ঠিকানা:</span> <span className="font-medium">{selected.address}</span></div>}
+                <div><span className="text-muted-foreground">টাইপ:</span> <span className="font-medium">{selected.type}</span></div>
+                <div><span className="text-muted-foreground">যোগদান:</span> <span className="font-medium">{new Date(selected.created_at).toLocaleDateString("bn-BD")}</span></div>
               </div>
             </div>
           )}

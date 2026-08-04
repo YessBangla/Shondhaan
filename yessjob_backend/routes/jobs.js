@@ -6,6 +6,9 @@ const jwt = require('jsonwebtoken');
 const http = require('http');
 const https = require('https');
 const router = express.Router();
+// NEW: burns one job-post credit off an enrolled_packages row and returns
+// its visibility_level/expires_at so we can stamp them onto the job.
+const { consumeJobSlot } = require('./enrolledPackages');
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -32,7 +35,6 @@ const JOB_FIELDS = [ // -> jobs (Step 1: Job Information)
 ];
 const JOB_BOOLEAN_FIELDS = ['salary_negotiable', 'salary_hidden', 'work_from_office', 'work_from_home'];
 
-// CHANGE 1: added 'education_subject' so pickFields() no longer drops it.
 const CANDIDATE_REQ_FIELDS = [ // -> job_candidate_requirements (Step 2 + Step 3's age/gender restrict)
   'education_required', 'education_subject', 'preferred_institution', 'certifications',
   'gender_preference', 'gender_restrict',
@@ -82,8 +84,6 @@ async function resolveCategoryId(categoryInput) {
   return rows.length > 0 ? rows[0].id : null;
 }
 
-// CHANGE 2: added cr.education_subject to the listing select so job cards
-// can show it without a second round-trip.
 const JOB_SELECT_WITH_CATEGORY = `
   SELECT
     jobs.*,
@@ -103,7 +103,6 @@ const JOB_SELECT_WITH_CATEGORY = `
   LEFT JOIN employer_profiles ep ON ep.user_id = jobs.user_id
 `;
 
-// CHANGE 3: added cr.education_subject to the full select (detail/create/update responses).
 const JOB_SELECT_FULL = `
   SELECT
     jobs.*,
@@ -123,6 +122,20 @@ const JOB_SELECT_FULL = `
   LEFT JOIN job_candidate_requirements cr ON cr.job_id = jobs.id
   LEFT JOIN job_matching_criteria mc ON mc.job_id = jobs.id
   LEFT JOIN job_billing_contacts bc ON bc.job_id = jobs.id
+`;
+
+// Sort clause shared by the two public/browsable listing routes: jobs whose
+// visibility hasn't expired are ranked by package tier (hot first), then
+// recency; anything with no active enrollment (or an expired one) falls
+// back to plain "basic" ordering by recency alone.
+const VISIBILITY_ORDER_BY = `
+  ORDER BY
+    CASE
+      WHEN jobs.visibility_expires_at IS NOT NULL AND jobs.visibility_expires_at > NOW()
+      THEN FIELD(jobs.visibility_level, 'hot', 'premium_plus', 'premium', 'standard', 'basic')
+      ELSE 5
+    END ASC,
+    jobs.created_at DESC
 `;
 
 function verifyLocalAuthToken(token = '') {
@@ -294,11 +307,26 @@ router.post('/', requireEmployer, async (req, res) => {
   const matchingData = pickFields(req.body, MATCHING_FIELDS);
   const billingData = pickFields(req.body, BILLING_FIELDS);
 
+  const enrolledPackageId = req.body.enrolled_package_id || null;
+
   const conn = await pool.getConnection();
   try {
     await conn.beginTransaction();
 
     const userId = req.shondhaanUser.id;
+
+    // If the employer picked a paid/enrolled package for this post, burn
+    // one job-post credit from it and inherit its visibility for the
+    // enrollment's remaining lifetime. Posting without one (or once quota
+    // runs out) just falls back to default 'basic' visibility.
+    if (enrolledPackageId) {
+      const enrollment = await consumeJobSlot(conn, enrolledPackageId, userId);
+      jobData.enrolled_package_id = enrollment.id;
+      jobData.package_id = enrollment.package_id;
+      jobData.visibility_level = enrollment.visibility_level;
+      jobData.visibility_expires_at = enrollment.expires_at;
+    }
+
     const jobColumns = ['user_id', ...Object.keys(jobData)];
     const jobValues = [userId, ...Object.values(jobData)];
     const [jobResult] = await conn.query(
@@ -320,7 +348,7 @@ router.post('/', requireEmployer, async (req, res) => {
     await conn.rollback();
     conn.release();
     console.error('Create job error:', err);
-    res.status(500).json({ message: 'Server error', detail: err?.message || String(err) });
+    res.status(err.status || 500).json({ message: err.status ? err.message : 'Server error', detail: err?.message || String(err) });
   }
 });
 
@@ -619,8 +647,12 @@ router.get('/', async (req, res) => {
     }
 
     const whereClause = conditions.join(' AND ');
+    // Public listing: packages with unexpired visibility rank first
+    // (hot > premium_plus > premium > standard > basic), newest within
+    // each tier. Expired/none-enrolled jobs sort together at the bottom
+    // by recency, same as before this feature existed.
     const [rows] = await pool.query(
-      `${JOB_SELECT_WITH_CATEGORY} WHERE ${whereClause} ORDER BY jobs.created_at DESC LIMIT 100`,
+      `${JOB_SELECT_WITH_CATEGORY} WHERE ${whereClause} ${VISIBILITY_ORDER_BY} LIMIT 100`,
       values
     );
     res.json(rows);
