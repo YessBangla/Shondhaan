@@ -142,7 +142,7 @@ const OrderTracker = ({ status, bn }: { status: string; bn: boolean }) => {
 const generateInvoice = (order: MartOrder, bn: boolean) => {
   const lines = [
     `==============================`,
-    bn ? `ইনভয়েস - ইয়েস মার্ট` : `INVOICE - Yess Mart`,
+    bn ? `ইনভয়েস - সন্ধান মার্ট` : `INVOICE - Yess Mart`,
     `==============================`,
     ``,
     `${bn ? "অর্ডার নম্বর" : "Order #"}: ${order.order_number}`,

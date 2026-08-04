@@ -733,7 +733,7 @@ const AdminNotificationRules = () => {
     const perm = await Notification.requestPermission();
     if (perm === "granted") {
       update("desktop_notifications", true);
-      new Notification("ইয়েস বাংলা", { body: "ডেস্কটপ নোটিফিকেশন চালু হয়েছে ✓" });
+      new Notification("সন্ধান বাংলা", { body: "ডেস্কটপ নোটিফিকেশন চালু হয়েছে ✓" });
     } else {
       toast.error("ব্রাউজার পারমিশন দেয়নি");
     }

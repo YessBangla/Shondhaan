@@ -79,15 +79,15 @@ const sidebarItems = [
   { value: "banners", label: "ব্যানার", icon: <Image />, group: "সেবা CMS" },
   { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সেবা CMS" },
 
-  // ইয়েস মার্ট
-  { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "ইয়েস মার্ট" },
-   { value: "kyc verification", label: "SELLER KYC VERIFICATION", icon: <UserCheck />, group: "ইয়েস মার্ট" },
-   { value: "delivery kyc verification", label: "DELIVERY KYC VERIFICATION", icon: <Truck />, group: "ইয়েস মার্ট" },
-   { value: "category add", label: "Category Add", icon: <UserCheck />, group: "ইয়েস মার্ট" },
-{ value: "mart-banners", label: "মার্ট ব্যানার", icon: <Image />, group: "ইয়েস মার্ট" },
-  // ইয়েস ডিল
-  { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "ইয়েস ডিল" },
-  { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "ইয়েস ডিল" },
+  // সন্ধান মার্ট
+  { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "সন্ধান মার্ট" },
+   { value: "kyc verification", label: "SELLER KYC VERIFICATION", icon: <UserCheck />, group: "সন্ধান মার্ট" },
+   { value: "delivery kyc verification", label: "DELIVERY KYC VERIFICATION", icon: <Truck />, group: "সন্ধান মার্ট" },
+   { value: "category add", label: "Category Add", icon: <UserCheck />, group: "সন্ধান মার্ট" },
+{ value: "mart-banners", label: "মার্ট ব্যানার", icon: <Image />, group: "সন্ধান মার্ট" },
+  // সন্ধান ডিল
+  { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "সন্ধান ডিল" },
+  { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "সন্ধান ডিল" },
 
   // সেবা রিকোয়েস্ট
   { value: "requests", label: "সেবা রিকোয়েস্ট", icon: <FileText />, group: "অপারেশন" },

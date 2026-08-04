@@ -222,7 +222,7 @@ const MartAdminPanel = () => {
             defaultValue="orders"
             panelTitle={bn ? "মার্ট অ্যাডমিন" : "Mart Admin"}
             hero={{
-              title: bn ? "ইয়েস মার্ট কন্ট্রোল" : "Yess Mart Control",
+              title: bn ? "সন্ধান মার্ট কন্ট্রোল" : "Yess Mart Control",
               subtitle: bn ? "ভেন্ডর, পণ্য, অর্ডার ও ডেলিভারি — এক অ্যাডমিন ভিউ।" : "Vendors, products, orders & delivery — one admin view.",
               badge: { label: bn ? "মার্ট অ্যাডমিন" : "Mart Admin" },
               gradient: "from-emerald-500 via-teal-600 to-emerald-700",

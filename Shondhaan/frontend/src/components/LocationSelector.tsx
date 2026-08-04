@@ -211,11 +211,11 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 border-r border-border px-3 py-3.5 text-sm text-foreground transition-colors hover:bg-orange-400/40 md:px-4 whitespace-nowrap"
+          className="flex items-center gap-1.5 border-r border-border px-3 py-3.5 text-sm text-foreground transition-colors md:px-4 whitespace-nowrap"
         >
           <MapPin className="h-4 w-4 text-primary shrink-0" />
           <span className="max-w-[100px] md:max-w-[160px] truncate text-xs md:text-sm">{displayText}</span>
-          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0" />
+          <ChevronDown className="h-3 w-3 text-muted-foreground shrink-0"/>
         </button>
       )}
 

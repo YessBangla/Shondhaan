@@ -177,7 +177,7 @@ const MartShopPanel = () => {
         
         <div className="pt-[44px] md:pt-[104px]" />
         <div className="max-w-lg mx-auto px-4 py-8">
-          <BackToHomeButton />
+          {/* <BackToHomeButton /> */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
             className="rounded-2xl border border-border bg-card p-6 mt-4">
             <div className="flex items-center gap-3 mb-6">

@@ -410,7 +410,7 @@ return (
         categories={categories}
         selectedCategoryId={selectedCategoryId}
         onCategorySelect={(id) => {
-          console.log("✅ Category clicked:", id);
+          console.log("Category clicked:", id);
           setSelectedCategoryId(id);
         }}
       />

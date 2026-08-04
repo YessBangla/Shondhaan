@@ -480,7 +480,7 @@ const ClientDashboard = () => {
     value: "deal-my-ads",
     label: bn ? "আমার বিজ্ঞাপন" : "My Ads",
     icon: <Megaphone className="h-5 w-5" />,
-    group: bn ? "ইয়েস ডিল" : "Deal",
+    group: bn ? "সন্ধান ডিল" : "Deal",
   },
   {
     value: "deal-favorites",

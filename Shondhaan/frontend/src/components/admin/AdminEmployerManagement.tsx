@@ -1,12 +1,50 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { YESSJOB_API_BASE_URL } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Building2, CheckCircle2, XCircle, Eye, Search, MapPin, Users, Globe, Phone, Mail, Calendar, Package } from "lucide-react";
+import { Building2, CheckCircle2, XCircle, Eye, Search, MapPin, Users, Globe, Phone, Mail, Package } from "lucide-react";
 import { toast } from "sonner";
+
+const API_BASE = `${YESSJOB_API_BASE_URL.replace(/\/+$/, "")}/api`;
+
+const VISIBILITY_OPTIONS = [
+  { value: "basic", label: "Basic" },
+  { value: "standard", label: "Standard" },
+  { value: "premium", label: "Premium" },
+  { value: "premium_plus", label: "Premium Plus" },
+  { value: "hot", label: "Hot" },
+];
+
+const emptyPackageForm = () => ({
+  name: "",
+  price: 0,
+  duration_days: 30,
+  visibility_level: "standard",
+  max_applications: null as number | null,
+  max_jobs_per_year: null as number | null,
+  is_featured: false,
+  is_active: true,
+  sort_order: 0,
+  featuresText: "",
+});
+
+const parseFeatures = (features: unknown): string[] => {
+  if (!features) return [];
+  if (Array.isArray(features)) return features.map(String).filter(Boolean);
+  if (typeof features === "string") {
+    try {
+      const parsed = JSON.parse(features);
+      if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
+    } catch {
+      return features.split(",").map((f) => f.trim()).filter(Boolean);
+    }
+  }
+  return [];
+};
 
 const AdminEmployerManagement = () => {
   const qc = useQueryClient();
@@ -14,6 +52,7 @@ const AdminEmployerManagement = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selected, setSelected] = useState<any>(null);
   const [packageForm, setPackageForm] = useState<any>(null);
+  const [saving, setSaving] = useState(false);
 
   const { data: employers = [], isLoading } = useQuery({
     queryKey: ["admin-employers", filter, searchTerm],
@@ -28,11 +67,15 @@ const AdminEmployerManagement = () => {
     },
   });
 
+  // Job packages now come from the Express/MySQL backend (packages.js),
+  // not Supabase.
   const { data: packages = [] } = useQuery({
     queryKey: ["admin-job-packages"],
     queryFn: async () => {
-      const { data } = await supabase.from("job_packages").select("*").order("sort_order");
-      return data || [];
+      const res = await fetch(`${API_BASE}/packages/admin/all`);
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || "Package load failed");
+      return Array.isArray(json) ? json : json?.data || [];
     },
   });
 
@@ -47,31 +90,103 @@ const AdminEmployerManagement = () => {
     },
   });
 
-  const savePackage = useMutation({
-    mutationFn: async (pkg: any) => {
-      if (pkg.id) {
-        const { error } = await supabase.from("job_packages").update(pkg).eq("id", pkg.id);
-        if (error) throw error;
-      } else {
-        const { error } = await supabase.from("job_packages").insert(pkg);
-        if (error) throw error;
+  const openNewPackageForm = () => setPackageForm(emptyPackageForm());
+
+  const openEditPackageForm = (pkg: any) => {
+    setPackageForm({
+      id: pkg.id,
+      name: pkg.name || "",
+      price: pkg.price ?? 0,
+      duration_days: pkg.duration_days ?? 30,
+      visibility_level: pkg.visibility_level || "standard",
+      max_applications: pkg.max_applications ?? null,
+      max_jobs_per_year: pkg.max_jobs_per_year ?? null,
+      is_featured: !!pkg.is_featured,
+      is_active: pkg.is_active === false || pkg.is_active === 0 ? false : true,
+      sort_order: pkg.sort_order ?? 0,
+      featuresText: parseFeatures(pkg.features).join(", "),
+    });
+  };
+
+  const closePackageForm = () => setPackageForm(null);
+
+  const handleSavePackage = async () => {
+    if (!packageForm) return;
+
+    if (!packageForm.name?.trim()) {
+      toast.error("প্যাকেজের নাম দিন");
+      return;
+    }
+    if (packageForm.price === "" || Number.isNaN(Number(packageForm.price)) || Number(packageForm.price) < 0) {
+      toast.error("সঠিক দাম দিন");
+      return;
+    }
+    const features = String(packageForm.featuresText || "")
+      .split(",")
+      .map((f: string) => f.trim())
+      .filter(Boolean);
+    if (features.length === 0) {
+      toast.error("অন্তত একটি ফিচার দিন");
+      return;
+    }
+
+    const payload = {
+      name: packageForm.name.trim(),
+      price: Number(packageForm.price),
+      duration_days: Number(packageForm.duration_days || 30),
+      visibility_level: packageForm.visibility_level,
+      max_applications:
+        packageForm.max_applications === "" || packageForm.max_applications === null
+          ? null
+          : Number(packageForm.max_applications),
+      max_jobs_per_year:
+        packageForm.max_jobs_per_year === "" || packageForm.max_jobs_per_year === null
+          ? null
+          : Number(packageForm.max_jobs_per_year),
+      features,
+      is_featured: !!packageForm.is_featured,
+      is_active: packageForm.is_active !== false,
+      sort_order: Number(packageForm.sort_order || 0),
+    };
+
+    try {
+      setSaving(true);
+      const isEdit = Boolean(packageForm.id);
+      const res = await fetch(
+        isEdit ? `${API_BASE}/packages/${packageForm.id}` : `${API_BASE}/packages`,
+        {
+          method: isEdit ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        }
+      );
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json?.message || (json?.errors || []).join(", ") || "Package save failed");
       }
-    },
-    onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-job-packages"] });
-      setPackageForm(null);
-      toast.success("প্যাকেজ সেভ হয়েছে");
-    },
-  });
+      toast.success(isEdit ? "প্যাকেজ আপডেট হয়েছে" : "প্যাকেজ সেভ হয়েছে");
+      closePackageForm();
+    } catch (error: any) {
+      console.error("Save package error:", error);
+      toast.error(error?.message || "প্যাকেজ সেভ করা যায়নি");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const deletePackage = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("job_packages").delete().eq("id", id);
-      if (error) throw error;
+    mutationFn: async (id: number) => {
+      const res = await fetch(`${API_BASE}/packages/${id}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.message || "Package delete failed");
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["admin-job-packages"] });
       toast.success("মুছে ফেলা হয়েছে");
+    },
+    onError: (error: any) => {
+      toast.error(error?.message || "প্যাকেজ মুছা যায়নি");
     },
   });
 
@@ -146,27 +261,34 @@ const AdminEmployerManagement = () => {
         )}
       </div>
 
-      {/* Job Packages Management */}
+      {/* Job Packages Management (backed by Express /api/packages) */}
       <div className="space-y-4 border-t pt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> জব পোস্টিং প্যাকেজ</h2>
-          <Button size="sm" onClick={() => setPackageForm({ name: "", name_bn: "", price: 0, duration_days: 30, max_applications: null, is_featured: false, visibility_level: "standard", features: [], sort_order: 0 })}>
-            নতুন প্যাকেজ
-          </Button>
+          <Button size="sm" onClick={openNewPackageForm}>নতুন প্যাকেজ</Button>
         </div>
         <div className="space-y-2">
-          {packages.map((pkg: any) => (
-            <div key={pkg.id} className="border rounded-lg p-3 bg-card flex items-center justify-between">
-              <div>
-                <h3 className="font-semibold text-sm">{pkg.name}</h3>
-                <p className="text-xs text-muted-foreground">৳{pkg.price} • {pkg.duration_days} দিন{pkg.is_featured ? " • ফিচার্ড" : ""}</p>
+          {packages.length === 0 ? (
+            <p className="text-center py-6 text-muted-foreground text-xs">কোনো প্যাকেজ নেই</p>
+          ) : (
+            packages.map((pkg: any) => (
+              <div key={pkg.id} className="border rounded-lg p-3 bg-card flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-sm">
+                    {pkg.name}
+                    {pkg.is_active === false || pkg.is_active === 0 ? (
+                      <span className="ml-1.5 rounded-full bg-destructive/10 px-1.5 py-0.5 text-[9px] text-destructive">Inactive</span>
+                    ) : null}
+                  </h3>
+                  <p className="text-xs text-muted-foreground">৳{pkg.price} • {pkg.duration_days} দিন{pkg.is_featured ? " • ফিচার্ড" : ""}</p>
+                </div>
+                <div className="flex gap-1">
+                  <Button variant="ghost" size="sm" className="text-xs" onClick={() => openEditPackageForm(pkg)}>সম্পাদনা</Button>
+                  <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => deletePackage.mutate(pkg.id)}>মুছুন</Button>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <Button variant="ghost" size="sm" className="text-xs" onClick={() => setPackageForm(pkg)}>সম্পাদনা</Button>
-                <Button variant="ghost" size="sm" className="text-xs text-destructive" onClick={() => deletePackage.mutate(pkg.id)}>মুছুন</Button>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
       </div>
 
@@ -197,8 +319,8 @@ const AdminEmployerManagement = () => {
       </Dialog>
 
       {/* Package Form Modal */}
-      <Dialog open={!!packageForm} onOpenChange={() => setPackageForm(null)}>
-        <DialogContent className="max-w-md">
+      <Dialog open={!!packageForm} onOpenChange={(open) => !open && closePackageForm()}>
+        <DialogContent className="max-w-md max-h-[85vh] overflow-y-auto">
           <DialogHeader><DialogTitle>{packageForm?.id ? "প্যাকেজ সম্পাদনা" : "নতুন প্যাকেজ"}</DialogTitle></DialogHeader>
           {packageForm && (
             <div className="space-y-3">
@@ -209,22 +331,52 @@ const AdminEmployerManagement = () => {
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">মূল্য (৳)</label>
-                  <Input type="number" value={packageForm.price} onChange={e => setPackageForm((p: any) => ({ ...p, price: parseFloat(e.target.value) }))} />
+                  <Input type="number" value={packageForm.price} onChange={e => setPackageForm((p: any) => ({ ...p, price: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">সময়কাল (দিন)</label>
-                  <Input type="number" value={packageForm.duration_days} onChange={e => setPackageForm((p: any) => ({ ...p, duration_days: parseInt(e.target.value) }))} />
+                  <Input type="number" value={packageForm.duration_days} onChange={e => setPackageForm((p: any) => ({ ...p, duration_days: e.target.value }))} />
                 </div>
                 <div>
                   <label className="text-xs font-medium mb-1 block">সর্বোচ্চ আবেদন</label>
-                  <Input type="number" value={packageForm.max_applications || ""} onChange={e => setPackageForm((p: any) => ({ ...p, max_applications: e.target.value ? parseInt(e.target.value) : null }))} placeholder="আনলিমিটেড" />
+                  <Input type="number" value={packageForm.max_applications ?? ""} onChange={e => setPackageForm((p: any) => ({ ...p, max_applications: e.target.value ? e.target.value : null }))} placeholder="আনলিমিটেড" />
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block">ভিজিবিলিটি লেভেল</label>
+                  <select
+                    value={packageForm.visibility_level}
+                    onChange={e => setPackageForm((p: any) => ({ ...p, visibility_level: e.target.value }))}
+                    className="w-full rounded-md border border-input bg-background px-2.5 py-2 text-xs outline-none focus:ring-1 focus:ring-ring h-9"
+                  >
+                    {VISIBILITY_OPTIONS.map(v => <option key={v.value} value={v.value}>{v.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="text-xs font-medium mb-1 block">বছরে সর্বোচ্চ জব</label>
+                  <Input type="number" value={packageForm.max_jobs_per_year ?? ""} onChange={e => setPackageForm((p: any) => ({ ...p, max_jobs_per_year: e.target.value ? e.target.value : null }))} placeholder="No limit" />
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                <input type="checkbox" id="pkg-featured" checked={packageForm.is_featured} onChange={e => setPackageForm((p: any) => ({ ...p, is_featured: e.target.checked }))} />
-                <label htmlFor="pkg-featured" className="text-xs">ফিচার্ড প্যাকেজ</label>
+              <div>
+                <label className="text-xs font-medium mb-1 block">ফিচার (কমা দিয়ে আলাদা করুন)</label>
+                <Input
+                  value={packageForm.featuresText}
+                  onChange={e => setPackageForm((p: any) => ({ ...p, featuresText: e.target.value }))}
+                  placeholder="৩০ দিন ভিজিবিলিটি, ফিচার্ড ব্যাজ"
+                />
               </div>
-              <Button onClick={() => savePackage.mutate(packageForm)} className="w-full">সেভ করুন</Button>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="pkg-featured" checked={packageForm.is_featured} onChange={e => setPackageForm((p: any) => ({ ...p, is_featured: e.target.checked }))} />
+                  <label htmlFor="pkg-featured" className="text-xs">ফিচার্ড প্যাকেজ</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input type="checkbox" id="pkg-active" checked={packageForm.is_active !== false} onChange={e => setPackageForm((p: any) => ({ ...p, is_active: e.target.checked }))} />
+                  <label htmlFor="pkg-active" className="text-xs">Active</label>
+                </div>
+              </div>
+              <Button onClick={handleSavePackage} disabled={saving} className="w-full">
+                {saving ? "সেভ হচ্ছে..." : "সেভ করুন"}
+              </Button>
             </div>
           )}
         </DialogContent>

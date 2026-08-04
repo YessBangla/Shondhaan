@@ -83,7 +83,7 @@ const MartProductDetail = () => {
   const productPrice = product?.price ? Number(product.price) : null;
   const productDesc = product
     ? bn
-      ? `${productName} — ৳${productPrice?.toLocaleString("bn-BD") || ""}। ইয়েস মার্টে কিনুন।`
+      ? `${productName} — ৳${productPrice?.toLocaleString("bn-BD") || ""}। সন্ধান মার্টে কিনুন।`
       : `${productName} — ৳${productPrice?.toLocaleString() || ""}. Buy on Yess Mart.`
     : "";
 
@@ -145,7 +145,7 @@ const MartProductDetail = () => {
     product?.shop_name ||
     product?.seller_name ||
     vendorProfile?.display_name ||
-    (bn ? "ইয়েস মার্ট বিক্রেতা" : "Yess Mart Seller");
+    (bn ? "সন্ধান মার্ট বিক্রেতা" : "Yess Mart Seller");
 
   const vendorVerified = product?.seller_verified === 1 || product?.seller_verified === true;
 
@@ -155,6 +155,18 @@ const MartProductDetail = () => {
       ? slug?.replace("mysql-product-", "")
       : product.id
     : null;
+
+  // Upgrade legacy mysql-product-<id> links to the readable slug URL so the
+  // address bar shows the product name (e.g. /mart/product/teddy-bear) instead
+  // of /mart/product/mysql-product-5. Preserves any ?tab= query and #hash.
+  useEffect(() => {
+    if (isMysqlProduct && product?.slug) {
+      navigate(
+        `/mart/product/${encodeURIComponent(product.slug)}${location.search || ""}${location.hash || ""}`,
+        { replace: true }
+      );
+    }
+  }, [isMysqlProduct, product?.slug, navigate, location.search, location.hash]);
 
   const { data: orderStats } = useQuery<ProductOrderStats>({
     queryKey: ["mart-product-order-stats", orderStatsProductId, isMysqlProduct],
@@ -326,7 +338,7 @@ const MartProductDetail = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="app-container py-2 flex items-center gap-1 overflow-x-auto text-xs text-gray-500 whitespace-nowrap">
           <button onClick={() => navigate("/mart/home")} className="hover:text-primary">
-            {bn ? "ইয়েস মার্ট" : "Yess Mart"}
+            {bn ? "সন্ধান মার্ট" : "Yess Mart"}
           </button>
           <ChevronRight className="h-3 w-3 text-gray-400 shrink-0" />
           {product.category && (
@@ -648,7 +660,7 @@ const MartProductDetail = () => {
                 </div>
                 <div className="flex gap-2">
                   <button
-                    onClick={() => navigate(`/mart/store/${product.vendor_id}`)}
+                    onClick={() => navigate(`/mart/store/${product.seller_slug || product.vendor_id}`)}
                     className="flex-1 h-8 text-xs border border-primary text-primary bg-white hover:bg-primary/10 rounded-sm font-medium transition-colors"
                   >
                     {bn ? "স্টোর দেখুন" : "Visit Store"}
@@ -693,7 +705,7 @@ const MartProductDetail = () => {
                 <p className="text-xs font-semibold truncate">{vendorDisplayName}</p>
                 <p className="text-[11px] text-gray-400">{vendorStats?.count || 0} {bn ? "পণ্য" : "products"}</p>
               </div>
-              <button onClick={() => navigate(`/mart/store/${product.vendor_id}`)} className="text-[11px] border border-primary text-primary px-2 py-1 rounded-sm shrink-0">{bn ? "স্টোর" : "Store"}</button>
+<button onClick={() => navigate(`/mart/store/${product.seller_slug || product.vendor_id}`)} className="text-[11px] border border-primary text-primary px-2 py-1 rounded-sm shrink-0">{bn ? "স্টোর" : "Store"}</button>
             </div>
             {/* Delivery row */}
             <div className="flex items-center gap-3 bg-gray-50 rounded-sm p-3">

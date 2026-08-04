@@ -29,8 +29,15 @@ const parseStoreCarouselMedia = (value: unknown): StoreMediaItem[] => {
 };
 
 // ── Fetchers ───────────────────────────────────────────────────────────────────
-const fetchSeller = async (userId: string) => {
-  const res  = await fetch(`${API_BASE}/sellers?user_id=${userId}`);
+// The store URL can be either a numeric user id (legacy /mart/store/8) or a
+// store slug (e.g. /mart/store/rabeya-shop-2). Detect which one we got and
+// query the backend accordingly.
+const fetchSeller = async (vendorId: string) => {
+  const isNumeric = /^\d+$/.test(vendorId);
+  const query = isNumeric
+    ? `user_id=${encodeURIComponent(vendorId)}`
+    : `slug=${encodeURIComponent(vendorId)}`;
+  const res  = await fetch(`${API_BASE}/sellers?${query}`);
   const json = await res.json();
   if (!json.success || !json.data?.length) throw new Error("Seller not found");
   return json.data[0];

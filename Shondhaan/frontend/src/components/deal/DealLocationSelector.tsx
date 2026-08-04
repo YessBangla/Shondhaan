@@ -354,7 +354,7 @@ const DealLocationSelector = ({
       <div className="absolute h-full inset-0 bg-center md:bg-top"
           style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}/>
 
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-xs" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" />
         <div className="absolute z-10 p-6 sm:p-8 mt-4 bottom-1/4 w-full">
           {/* <h2 className="mb-4 text-xl sm:text-2xl font-bold text-primary text-center drop-shadow">
             {bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}

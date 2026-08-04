@@ -341,13 +341,13 @@ const MartHome = () => {
   }, []);
 
   useSEO({
-    title: bn ? "ইয়েস মার্ট — অনলাইন শপিং" : "Yess Mart — Online Shopping",
+    title: bn ? "সন্ধান মার্ট — অনলাইন শপিং" : "Yess Mart — Online Shopping",
     description: bn
-      ? "ইয়েস মার্টে কেনাকাটা করুন — মুদি, ইলেকট্রনিক্স, পোশাক, প্রসাধনী ও আরও অনেক পণ্য। দ্রুত ডেলিভারি, ক্যাশ অন ডেলিভারি।"
+      ? "সন্ধান মার্টে কেনাকাটা করুন — মুদি, ইলেকট্রনিক্স, পোশাক, প্রসাধনী ও আরও অনেক পণ্য। দ্রুত ডেলিভারি, ক্যাশ অন ডেলিভারি।"
       : "Shop on Yess Mart — groceries, electronics, fashion, beauty & more. Fast delivery, Cash on Delivery available.",
     canonical: "/mart/home",
     keywords: bn
-      ? "অনলাইন শপিং বাংলাদেশ, ইয়েস মার্ট, ক্যাশ অন ডেলিভারি"
+      ? "অনলাইন শপিং বাংলাদেশ, সন্ধান মার্ট, ক্যাশ অন ডেলিভারি"
       : "online shopping bangladesh, yess mart, cash on delivery",
   });
 
@@ -1185,7 +1185,7 @@ const MartHome = () => {
       </div>
 
       <Footer />
-      <BackToHomeButton />
+      {/* <BackToHomeButton /> */}
       <div className="h-20 md:hidden" />
     </div>
   );

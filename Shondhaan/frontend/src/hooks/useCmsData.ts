@@ -244,13 +244,13 @@ export const useCmsCategories = () => {
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsCategory>) => {
       const isUpdate = !!item.id;
-      const path = isUpdate ? `/api/categories/${item.id}` : "/api/categories";
-      const method = isUpdate ? "PUT" : "POST";
-      
-      const payload = await cmsRequest<any>(path, {
-        method,
-        body: JSON.stringify(item),
-      });
+      const payload = await cmsRequest<any>(
+        isUpdate ? `/api/categories/${encodeURIComponent(item.id!)}` : "/api/categories",
+        {
+          method: isUpdate ? "PUT" : "POST",
+          body: JSON.stringify(item),
+        }
+      );
       return normalizeCategory(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-categories"] }),
@@ -281,13 +281,13 @@ export const useCmsServices = () => {
   const upsert = useMutation({
     mutationFn: async (item: Partial<CmsService>) => {
       const isUpdate = !!item.id;
-      const path = isUpdate ? `/api/services/${item.id}` : "/api/services";
-      const method = isUpdate ? "PUT" : "POST";
-      
-      const payload = await cmsRequest<any>(path, {
-        method,
-        body: JSON.stringify(item),
-      });
+      const payload = await cmsRequest<any>(
+        isUpdate ? `/api/services/${encodeURIComponent(item.id!)}` : "/api/services",
+        {
+          method: isUpdate ? "PUT" : "POST",
+          body: JSON.stringify(item),
+        }
+      );
       return normalizeService(unwrapItem<any>(payload));
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["cms-services"] }),

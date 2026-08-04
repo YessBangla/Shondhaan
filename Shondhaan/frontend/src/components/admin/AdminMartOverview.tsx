@@ -111,7 +111,7 @@ const AdminMartOverview = () => {
     <div className="p-4 space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
-          <ShoppingCart className="h-5 w-5 text-primary" /> ইয়েস মার্ট ম্যানেজমেন্ট
+          <ShoppingCart className="h-5 w-5 text-primary" /> সন্ধান মার্ট ম্যানেজমেন্ট
         </h3>
         <button onClick={fetchData} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
           <RefreshCw className="h-3.5 w-3.5" /> রিফ্রেশ

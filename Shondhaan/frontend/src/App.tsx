@@ -220,9 +220,9 @@ const App = () => {
         <OnboardingScreen onFinish={handleOnboardingFinish} />
       )}
       <BrowserRouter>
-        <LanguageProvider>
-        <AuthProvider>
-            <SocketInitializer /> 
+          <LanguageProvider>
+          <AuthProvider>
+          <SocketInitializer /> 
           <CartProvider>
           <CompareProvider>
           <MartCartProvider>
