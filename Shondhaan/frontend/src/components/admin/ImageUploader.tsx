@@ -11,17 +11,27 @@ type ImageUploaderProps = {
   label?: string;
 };
 
-const API_BASE_URL = (INDIVIDUAL_API_BASE_URL ).replace(
-  /\/+$/,
-  ""
-);
+// Helper to extract just the root domain (e.g. http://localhost:5000)
+// This prevents images from trying to load from http://localhost:5000/api/uploads/...
+const getStaticBaseUrl = () => {
+  const apiBaseUrl = INDIVIDUAL_API_BASE_URL || "";
+  try {
+    // If it's a valid absolute URL, extract just the origin
+    return new URL(apiBaseUrl).origin;
+  } catch {
+    // Fallback if it's a relative path like /api
+    return apiBaseUrl.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+};
+
+const STATIC_BASE_URL = getStaticBaseUrl();
 
 const getImageSrc = (url?: string) => {
   if (!url) return "";
-  if (/^https?:\/\//i.test(url)) return url;
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
 
   const path = url.startsWith("/") ? url : `/${url}`;
-  return `${API_BASE_URL}${path}`;
+  return `${STATIC_BASE_URL}${path}`;
 };
 
 const ImageUploader = ({
@@ -32,6 +42,7 @@ const ImageUploader = ({
 }: ImageUploaderProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [imgError, setImgError] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -54,12 +65,14 @@ const ImageUploader = ({
     formData.append("folder", folder);
 
     setUploading(true);
+    setImgError(false);
 
     try {
       const auth = getMySqlAuth();
 
+      // Use the full API URL for the fetch request
       const response = await fetch(
-        `${API_BASE_URL}/api/uploads?folder=${encodeURIComponent(folder)}`,
+        `${INDIVIDUAL_API_BASE_URL}/api/uploads?folder=${encodeURIComponent(folder)}`,
         {
           method: "POST",
           headers: {
@@ -100,17 +113,21 @@ const ImageUploader = ({
       </label>
 
       <div className="rounded-xl border border-dashed border-border bg-background p-3">
-        {preview ? (
+        {preview && !imgError ? (
           <div className="relative overflow-hidden rounded-lg border border-border">
             <img
               src={preview}
               alt={label}
               className="h-44 w-full object-cover"
+              onError={() => setImgError(true)} // Handle broken images gracefully
             />
 
             <button
               type="button"
-              onClick={() => onChange("")}
+              onClick={() => {
+                onChange("");
+                setImgError(false);
+              }}
               className="absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white hover:bg-black/80"
             >
               <X className="h-4 w-4" />
@@ -137,7 +154,7 @@ const ImageUploader = ({
           </button>
         )}
 
-        {preview && (
+        {preview && !imgError && (
           <button
             type="button"
             onClick={() => inputRef.current?.click()}

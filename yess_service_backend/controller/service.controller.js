@@ -322,120 +322,106 @@ export const updateService = async (req, res) => {
     await ensurePlatformFeeSchema();
 
     const { id } = req.params;
-
-    const {
-      slug,
-      title,
-      title_en,
-      image_url,
-      description,
-      rating,
-      total_reviews,
-      total_orders,
-      commission_percent,
-      features,
-      available_cities,
-      category_id,
-      is_active,
-      sort_order,
-      price,
-      platform_fee,
-    } = req.body;
+    const body = req.body;
 
     const [existing] = await pool.execute(
-      `
-      SELECT *
-      FROM services
-      WHERE id = ?
-      LIMIT 1
-      `,
+      `SELECT * FROM services WHERE id = ? LIMIT 1`,
       [id]
     );
 
     if (existing.length === 0) {
-      return res.status(404).json({
-        message: "Service not found",
-      });
+      return res.status(404).json({ message: "Service not found" });
     }
 
-    if (!slug || !title) {
-      return res.status(400).json({
-        message: "slug and title are required",
-      });
+    const service = existing[0];
+
+    // Validate only if slug is being changed
+    if (body.slug !== undefined) {
+      if (!body.slug || !body.slug.trim()) {
+        return res.status(400).json({ message: "slug cannot be empty" });
+      }
+
+      // Check uniqueness excluding current row
+      if (body.slug !== service.slug) {
+        const [dup] = await pool.execute(
+          `SELECT id FROM services WHERE slug = ? AND id != ? LIMIT 1`,
+          [body.slug, id]
+        );
+        if (dup.length > 0) {
+          return res.status(409).json({ message: "Service slug already exists" });
+        }
+      }
     }
 
-    const finalPrice =
-      price !== undefined && price !== null && price !== ""
-        ? Number(price)
-        : Number(existing[0].price || 0);
-
-    if (Number.isNaN(finalPrice) || finalPrice < 0) {
-      return res.status(400).json({
-        message: "Price must be a valid number",
-      });
+    if (body.title !== undefined && !body.title) {
+      return res.status(400).json({ message: "title cannot be empty" });
     }
 
-    const finalPlatformFee =
-      platform_fee !== undefined && platform_fee !== null && platform_fee !== ""
-        ? Number(platform_fee)
-        : Number(existing[0].platform_fee || 0);
-
-    if (Number.isNaN(finalPlatformFee) || finalPlatformFee < 0) {
-      return res.status(400).json({
-        message: "Platform fee must be a valid number",
-      });
+    // Price validation
+    if (body.price !== undefined && body.price !== null && body.price !== "") {
+      const p = Number(body.price);
+      if (Number.isNaN(p) || p < 0) {
+        return res.status(400).json({ message: "Price must be a valid number" });
+      }
     }
 
-    const query = `
-      UPDATE services SET
-        slug = ?,
-        title = ?,
-        title_en = ?,
-        image_url = ?,
-        description = ?,
-        rating = ?,
-        total_reviews = ?,
-        total_orders = ?,
-        commission_percent = ?,
-        price = ?,
-        platform_fee = ?,
-        features = ?,
-        available_cities = ?,
-        category_id = ?,
-        is_active = ?,
-        sort_order = ?
-      WHERE id = ?
-    `;
+    // Platform fee validation
+    if (body.platform_fee !== undefined && body.platform_fee !== null && body.platform_fee !== "") {
+      const pf = Number(body.platform_fee);
+      if (Number.isNaN(pf) || pf < 0) {
+        return res.status(400).json({ message: "Platform fee must be a valid number" });
+      }
+    }
 
-    const values = [
-      slug,
-      title,
-      title_en || null,
-      image_url || null,
-      description || null,
-      rating || 4.5,
-      total_reviews || 0,
-      total_orders || 0,
-      commission_percent || 10,
-      finalPrice,
-      finalPlatformFee,
-      stringifyArray(features),
-      stringifyArray(available_cities),
-      category_id || null,
-      normalizeBool(is_active, true) ? 1 : 0,
-      sort_order || 0,
-      id,
-    ];
+    // Build dynamic SET clause
+    const fields = [];
+    const values = [];
 
+    const setField = (column, value) => {
+      fields.push(`${column} = ?`);
+      values.push(value);
+    };
+
+    if (body.slug !== undefined)                setField("slug", body.slug);
+    if (body.title !== undefined)               setField("title", body.title);
+    if (body.title_en !== undefined)            setField("title_en", body.title_en || null);
+    if (body.image_url !== undefined)           setField("image_url", body.image_url || null);
+    if (body.description !== undefined)         setField("description", body.description || null);
+    if (body.rating !== undefined)              setField("rating", body.rating ?? 4.5);
+    if (body.total_reviews !== undefined)       setField("total_reviews", body.total_reviews ?? 0);
+    if (body.total_orders !== undefined)        setField("total_orders", body.total_orders ?? 0);
+    if (body.commission_percent !== undefined)  setField("commission_percent", body.commission_percent ?? 10);
+    if (body.features !== undefined)            setField("features", stringifyArray(body.features));
+    if (body.available_cities !== undefined)    setField("available_cities", stringifyArray(body.available_cities));
+    if (body.category_id !== undefined)         setField("category_id", body.category_id || null);
+    if (body.is_active !== undefined)           setField("is_active", normalizeBool(body.is_active, true) ? 1 : 0);
+    if (body.sort_order !== undefined)          setField("sort_order", body.sort_order ?? 0);
+
+    if (body.price !== undefined) {
+      const p = (body.price === null || body.price === "")
+        ? Number(service.price || 0)
+        : Number(body.price);
+      setField("price", p);
+    }
+
+    if (body.platform_fee !== undefined) {
+      const pf = (body.platform_fee === null || body.platform_fee === "")
+        ? Number(service.platform_fee || 0)
+        : Number(body.platform_fee);
+      setField("platform_fee", pf);
+    }
+
+    if (fields.length === 0) {
+      return res.status(400).json({ message: "No fields provided to update" });
+    }
+
+    values.push(id);
+
+    const query = `UPDATE services SET ${fields.join(", ")} WHERE id = ?`;
     await pool.execute(query, values);
 
     const [rows] = await pool.execute(
-      `
-      SELECT *
-      FROM services
-      WHERE id = ?
-      LIMIT 1
-      `,
+      `SELECT * FROM services WHERE id = ? LIMIT 1`,
       [id]
     );
 
@@ -447,9 +433,7 @@ export const updateService = async (req, res) => {
     console.error("Update service error:", error);
 
     if (error.code === "ER_DUP_ENTRY") {
-      return res.status(409).json({
-        message: "Service slug already exists",
-      });
+      return res.status(409).json({ message: "Service slug already exists" });
     }
 
     return res.status(500).json({

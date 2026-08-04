@@ -16,6 +16,23 @@ import catElectrical from "@/assets/cat-electrical.png";
 import catPainting from "@/assets/cat-painting.png";
 import catDriver from "@/assets/cat-driver.png";
 
+// Helper to fix relative image URLs coming from the backend
+const getStaticBaseUrl = () => {
+  try {
+    return new URL(INDIVIDUAL_API_BASE_URL).origin;
+  } catch {
+    return INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+};
+const STATIC_BASE_URL = getStaticBaseUrl();
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${STATIC_BASE_URL}${path}`;
+};
+
 const fallbackCategories: { icon: string; labelKey: TranslationKey; slug: string }[] = [
   { icon: catAc, labelKey: "cat.acService", slug: "ac-service" },
   { icon: catAppliance, labelKey: "cat.applianceRepair", slug: "gas-stove" },
@@ -101,8 +118,10 @@ const categoryFallbackImages: Record<string, string> = {
   "plumbing": catAppliance,
 };
 
+// FIXED: Applied getImageSrc here to format the URL correctly
 const getCategoryImageUrl = (category: Category) => {
-  return category.icon_url || category.image_url || "";
+  const rawUrl = category.icon_url || category.image_url || "";
+  return getImageSrc(rawUrl);
 };
 
 const getCategoryFallbackImage = (category: Category) => {
