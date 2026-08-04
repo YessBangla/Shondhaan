@@ -1,10 +1,14 @@
+// routes/payments.js
 const express = require("express");
-const mysql = require("mysql2");
 const router = express.Router();
-
-// TODO: import your existing admin auth middleware, e.g.:
-// const { requireAdmin } = require("../middleware/auth");
-// and add `requireAdmin` before the handler on every admin-only route below.
+const mysql = require("mysql2");
+const requireAuth = require("../middleware/requireAuth");
+const {
+  initiateShurjoPayCheckout,
+  verifyShurjoPayPayment,
+  paymentRecordFrom,
+  isSuccessfulPayment,
+} = require("../utils/shurjopay");
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -16,196 +20,121 @@ const pool = mysql.createPool({
   queueLimit: 0
 }).promise();
 
-const ALLOWED_VISIBILITY = ["basic", "standard", "premium", "premium_plus", "hot"];
-
-function parseFeatures(row) {
-  return {
-    ...row,
-    features: typeof row.features === "string" ? JSON.parse(row.features) : row.features,
-  };
+// Guarded — this used to crash the whole module at require-time if
+// FRONTEND_URL wasn't set in .env, because .replace() was called on undefined.
+if (!process.env.FRONTEND_URL) {
+  console.warn("⚠️  FRONTEND_URL is not set in .env — payment redirects will fall back to http://localhost:8080");
 }
-
-function validatePackageBody(body, { partial = false } = {}) {
-  const errors = [];
-  const {
-    name, price, duration_days, visibility_level,
-    max_applications, max_jobs_per_year, features,
-    is_featured, is_active, sort_order,
-  } = body;
-
-  if (!partial || name !== undefined) {
-    if (!name || typeof name !== "string" || !name.trim()) errors.push("name is required");
-  }
-  if (!partial || price !== undefined) {
-    if (price === undefined || price === null || isNaN(Number(price)) || Number(price) < 0) {
-      errors.push("price must be a non-negative number");
-    }
-  }
-  if (duration_days !== undefined && duration_days !== null) {
-    if (isNaN(Number(duration_days)) || Number(duration_days) <= 0) errors.push("duration_days must be a positive number");
-  }
-  if (!partial || visibility_level !== undefined) {
-    if (!ALLOWED_VISIBILITY.includes(visibility_level)) {
-      errors.push(`visibility_level must be one of: ${ALLOWED_VISIBILITY.join(", ")}`);
-    }
-  }
-  if (max_applications !== undefined && max_applications !== null) {
-    if (isNaN(Number(max_applications)) || Number(max_applications) < 0) errors.push("max_applications must be a non-negative number or null");
-  }
-  if (max_jobs_per_year !== undefined && max_jobs_per_year !== null) {
-    if (isNaN(Number(max_jobs_per_year)) || Number(max_jobs_per_year) < 0) errors.push("max_jobs_per_year must be a non-negative number or null");
-  }
-  if (!partial || features !== undefined) {
-    if (!Array.isArray(features) || features.some(f => typeof f !== "string")) {
-      errors.push("features must be an array of strings");
-    }
-  }
-  if (sort_order !== undefined && sort_order !== null) {
-    if (isNaN(Number(sort_order))) errors.push("sort_order must be a number");
-  }
-  if (is_featured !== undefined && ![0, 1, true, false].includes(is_featured)) errors.push("is_featured must be boolean");
-  if (is_active !== undefined && ![0, 1, true, false].includes(is_active)) errors.push("is_active must be boolean");
-
-  return errors;
-}
+const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:8080").replace(/\/+$/, "");
 
 // -----------------------------------------------------------------------
-// Public: active packages only, used by the employer-facing package
-// selection modal. Keep this route's path/shape unchanged.
+// Initiate: create a ShurjoPay session for a job package and hand the
+// browser off to ShurjoPay's hosted checkout page.
 // -----------------------------------------------------------------------
-router.get("/", async (req, res) => {
+router.post("/shurjopay/initiate", requireAuth, async (req, res) => {
+  const { package_id, amount } = req.body;
+  const employer_user_id = req.user?.id;
+
+  if (!employer_user_id) return res.status(401).json({ message: "Unauthorized" });
+  if (!package_id || !amount) return res.status(400).json({ message: "package_id ও amount আবশ্যক" });
+
+  try {
+    const order_id = `ORD-${Date.now()}-${employer_user_id}`;
+
+    const spResponse = await initiateShurjoPayCheckout({
+      amount,
+      orderId: order_id,
+      customerName: req.user?.name,
+      customerEmail: req.user?.email,
+      customerPhone: req.user?.phone,
+      packageId: package_id,
+    });
+
+    const checkout_url = spResponse.checkout_url;
+    if (!checkout_url) {
+      console.error("ShurjoPay initiate: no checkout URL in response:", spResponse);
+      return res.status(502).json({ message: "পেমেন্ট গেটওয়ে থেকে সাড়া পাওয়া যায়নি" });
+    }
+
+    const record = paymentRecordFrom(spResponse);
+    const sp_order_id = record.sp_order_id || record.order_id || order_id;
+
+    await pool.query(
+      `INSERT INTO payment_transactions
+        (employer_user_id, package_id, amount, order_id, sp_order_id, status, raw_response)
+       VALUES (?, ?, ?, ?, ?, 'pending', ?)`,
+      [employer_user_id, package_id, amount, order_id, sp_order_id, JSON.stringify(spResponse)]
+    );
+
+    res.json({ checkout_url });
+  } catch (err) {
+    console.error("POST /api/payments/shurjopay/initiate failed:", err);
+    res.status(500).json({ message: err.message || "পেমেন্ট শুরু করতে সমস্যা হয়েছে" });
+  }
+});
+
+// -----------------------------------------------------------------------
+// Verify: ShurjoPay redirects the customer's browser here after completing
+// payment. This is a GET (browser navigation), so no auth header is present.
+// -----------------------------------------------------------------------
+router.get("/shurjopay/verify/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
   try {
     const [rows] = await pool.query(
-      `SELECT id, name, price, duration_days, visibility_level,
-              max_applications, max_jobs_per_year, features,
-              is_featured
-       FROM packages
-       WHERE is_active = 1
-       ORDER BY sort_order ASC, price ASC`
+      `SELECT * FROM payment_transactions WHERE order_id = ? LIMIT 1`,
+      [orderId]
     );
-    res.json(rows.map(parseFeatures));
-  } catch (err) {
-    console.error("GET /api/packages failed:", err);
-    res.status(500).json({ message: "প্যাকেজ লোড করতে সমস্যা হয়েছে" });
-  }
-});
+    const txn = rows[0];
 
-// -----------------------------------------------------------------------
-// Admin: full list including inactive packages, for the admin dashboard
-// table. NOTE: this must be declared before GET "/:id" or Express will
-// try to match "admin" as an :id param.
-// -----------------------------------------------------------------------
-router.get("/admin/all", /* requireAdmin, */ async (req, res) => {
-  try {
-    const [rows] = await pool.query(
-      `SELECT * FROM packages ORDER BY sort_order ASC, price ASC`
-    );
-    res.json(rows.map(parseFeatures));
-  } catch (err) {
-    console.error("GET /api/packages/admin/all failed:", err);
-    res.status(500).json({ message: "প্যাকেজ লোড করতে সমস্যা হয়েছে" });
-  }
-});
-
-// Admin: single package by id
-router.get("/:id", /* requireAdmin, */ async (req, res) => {
-  try {
-    const [rows] = await pool.query(`SELECT * FROM packages WHERE id = ?`, [req.params.id]);
-    if (rows.length === 0) return res.status(404).json({ message: "প্যাকেজ পাওয়া যায়নি" });
-    res.json(parseFeatures(rows[0]));
-  } catch (err) {
-    console.error("GET /api/packages/:id failed:", err);
-    res.status(500).json({ message: "প্যাকেজ লোড করতে সমস্যা হয়েছে" });
-  }
-});
-
-// Admin: create package
-router.post("/", /* requireAdmin, */ async (req, res) => {
-  const errors = validatePackageBody(req.body);
-  if (errors.length) return res.status(400).json({ message: "ইনপুট সঠিক নয়", errors });
-
-  const {
-    name, price, duration_days = 30, visibility_level,
-    max_applications = null, max_jobs_per_year = null, features,
-    is_featured = 0, is_active = 1, sort_order = 0,
-  } = req.body;
-
-  try {
-    const [result] = await pool.query(
-      `INSERT INTO packages
-        (name, price, duration_days, visibility_level, max_applications,
-         max_jobs_per_year, features, is_featured, is_active, sort_order)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
-        name.trim(), price, duration_days, visibility_level,
-        max_applications, max_jobs_per_year, JSON.stringify(features),
-        is_featured ? 1 : 0, is_active ? 1 : 0, sort_order,
-      ]
-    );
-    const [rows] = await pool.query(`SELECT * FROM packages WHERE id = ?`, [result.insertId]);
-    res.status(201).json(parseFeatures(rows[0]));
-  } catch (err) {
-    console.error("POST /api/packages failed:", err);
-    res.status(500).json({ message: "প্যাকেজ তৈরি করতে সমস্যা হয়েছে" });
-  }
-});
-
-// Admin: update package (partial update supported)
-router.put("/:id", /* requireAdmin, */ async (req, res) => {
-  const errors = validatePackageBody(req.body, { partial: true });
-  if (errors.length) return res.status(400).json({ message: "ইনপুট সঠিক নয়", errors });
-
-  const fields = [];
-  const values = [];
-  const fieldMap = {
-    name: v => v.trim(),
-    price: v => v,
-    duration_days: v => v,
-    visibility_level: v => v,
-    max_applications: v => v,
-    max_jobs_per_year: v => v,
-    features: v => JSON.stringify(v),
-    is_featured: v => (v ? 1 : 0),
-    is_active: v => (v ? 1 : 0),
-    sort_order: v => v,
-  };
-
-  for (const key of Object.keys(fieldMap)) {
-    if (req.body[key] !== undefined) {
-      fields.push(`${key} = ?`);
-      values.push(fieldMap[key](req.body[key]));
+    if (!txn) {
+      return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error&reason=not_found`);
     }
-  }
 
-  if (fields.length === 0) return res.status(400).json({ message: "কোনো ফিল্ড দেওয়া হয়নি" });
+    // Already finalized (e.g. user hit back/refresh on this URL) — don't re-process
+    if (txn.status === "success") {
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}`);
+    }
 
-  try {
-    values.push(req.params.id);
-    const [result] = await pool.query(`UPDATE packages SET ${fields.join(", ")} WHERE id = ?`, values);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "প্যাকেজ পাওয়া যায়নি" });
+    const spOrderIdToVerify = txn.sp_order_id || orderId;
+    const verification = await verifyShurjoPayPayment(spOrderIdToVerify);
 
-    const [rows] = await pool.query(`SELECT * FROM packages WHERE id = ?`, [req.params.id]);
-    res.json(parseFeatures(rows[0]));
+    const record = Array.isArray(verification) ? verification[0] : paymentRecordFrom(verification);
+    const isSuccess = isSuccessfulPayment(record);
+
+    await pool.query(
+      `UPDATE payment_transactions
+       SET status = ?, raw_response = ?, sp_order_id = COALESCE(sp_order_id, ?)
+       WHERE order_id = ?`,
+      [isSuccess ? "success" : "failed", JSON.stringify(verification), record?.order_id || null, orderId]
+    );
+
+    if (isSuccess) {
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}`);
+    }
+    return res.redirect(`${FRONTEND_URL}/employer/packages?payment=failed&order_id=${orderId}`);
   } catch (err) {
-    console.error("PUT /api/packages/:id failed:", err);
-    res.status(500).json({ message: "প্যাকেজ আপডেট করতে সমস্যা হয়েছে" });
+    console.error(`GET /api/payments/shurjopay/verify/${orderId} failed:`, err);
+    return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error`);
   }
 });
 
-// Admin: delete package
-// Prefer soft-delete (is_active = 0) if packages may already be referenced
-// by past purchases; hard delete only makes sense once jobs.package_id
-// has ON DELETE SET NULL / RESTRICT decided.
-router.delete("/:id", /* requireAdmin, */ async (req, res) => {
+// -----------------------------------------------------------------------
+// Cancel: customer backed out of ShurjoPay checkout before paying.
+// -----------------------------------------------------------------------
+router.get("/shurjopay/cancel/:orderId", async (req, res) => {
+  const { orderId } = req.params;
+
   try {
-    const [result] = await pool.query(`DELETE FROM packages WHERE id = ?`, [req.params.id]);
-    if (result.affectedRows === 0) return res.status(404).json({ message: "প্যাকেজ পাওয়া যায়নি" });
-    res.json({ message: "প্যাকেজ মুছে ফেলা হয়েছে" });
+    await pool.query(
+      `UPDATE payment_transactions SET status = 'cancelled' WHERE order_id = ? AND status IN ('initiated','pending')`,
+      [orderId]
+    );
   } catch (err) {
-    console.error("DELETE /api/packages/:id failed:", err);
-    // Likely FK constraint from jobs.package_id referencing this package
-    res.status(409).json({ message: "এই প্যাকেজটি ব্যবহৃত হচ্ছে, তাই মুছে ফেলা যাচ্ছে না। এটি নিষ্ক্রিয় (inactive) করুন।" });
+    console.error(`GET /api/payments/shurjopay/cancel/${orderId} failed:`, err);
   }
+
+  return res.redirect(`${FRONTEND_URL}/employer/packages?payment=cancelled&order_id=${orderId}`);
 });
 
 module.exports = router;
