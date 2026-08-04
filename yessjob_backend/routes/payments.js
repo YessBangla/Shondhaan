@@ -9,6 +9,9 @@ const {
   paymentRecordFrom,
   isSuccessfulPayment,
 } = require("../utils/shurjopay");
+// NEW: turn a verified payment into an enrolled_packages row so the
+// employer's job posts inherit the package's visibility.
+const { enrollEmployerInPackage } = require("./enrolledPackages");
 
 const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
@@ -91,9 +94,17 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error&reason=not_found`);
     }
 
-    // Already finalized (e.g. user hit back/refresh on this URL) — don't re-process
+    // Already finalized (e.g. user hit back/refresh on this URL) — don't
+    // re-process the payment, but do look up the enrollment it already
+    // created so the redirect still carries enrolled_package_id.
     if (txn.status === "success") {
-      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}`);
+      const [enrolledRows] = await pool.query(
+        `SELECT id FROM enrolled_packages WHERE payment_transaction_id = ? LIMIT 1`,
+        [txn.id]
+      );
+      const enrolledPackageId = enrolledRows[0]?.id;
+      const suffix = enrolledPackageId ? `&enrolled_package_id=${enrolledPackageId}` : "";
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}${suffix}`);
     }
 
     const spOrderIdToVerify = txn.sp_order_id || orderId;
@@ -110,7 +121,26 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
     );
 
     if (isSuccess) {
-      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}`);
+      // NEW: payment cleared -> create the enrolled_packages row so the
+      // employer's next job post can draw its visibility/quota from it.
+      let enrolledPackageId = null;
+      try {
+        const enrollment = await enrollEmployerInPackage({
+          employer_user_id: txn.employer_user_id,
+          package_id: txn.package_id,
+          payment_transaction_id: txn.id,
+          order_id: txn.order_id,
+        });
+        enrolledPackageId = enrollment.id;
+      } catch (enrollErr) {
+        // Payment already succeeded — don't fail the redirect over this,
+        // but log loudly since it means the employer paid without getting
+        // a usable enrollment. Worth an admin alert/retry job in practice.
+        console.error(`Enrollment creation failed for order ${orderId}:`, enrollErr);
+      }
+
+      const suffix = enrolledPackageId ? `&enrolled_package_id=${enrolledPackageId}` : "";
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}${suffix}`);
     }
     return res.redirect(`${FRONTEND_URL}/employer/packages?payment=failed&order_id=${orderId}`);
   } catch (err) {

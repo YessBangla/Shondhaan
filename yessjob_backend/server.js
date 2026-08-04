@@ -22,6 +22,7 @@ const notificationsTable = require('./database/notificationstable');
 const  createPackagesTable  = require('./database/packagestable');
 const seedPackages = require('./database/seedPackages');
 const paymentTransactionsTable = require('./database/paymenttransactionTable');
+const createEnrolledPackagesTable = require('./database/enrolledpackageTable');
 app.use(cors({
   origin: process.env.CORS_ORIGIN,
   credentials: true,
@@ -46,6 +47,7 @@ app.use('/api/interviews', require('./routes/interviews'));
 app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/packages', require('./routes/packages'));
 app.use('/api/payments', require('./routes/payments'));
+app.use('/api/enrolled-packages', require('./routes/enrolledPackages'));
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });
@@ -67,6 +69,7 @@ async function initDatabaseAndStart() {
     await createPackagesTable();         // must come before the next line
     await seedPackages();                // seed initial packages if table is empty
     await paymentTransactionsTable();    // must come after packages
+    await createEnrolledPackagesTable(); // must come after packages + payment_transactions
     app.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
     });
