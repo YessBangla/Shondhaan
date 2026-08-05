@@ -35,7 +35,7 @@ export default function CompanyLogo({
 
   return (
     <div
-      className={`${sizeClass} ${rounded} flex items-center justify-center shrink-0 border shadow-sm overflow-hidden ${
+      className={`${sizeClass} ${rounded} flex items-center justify-center shrink-0 overflow-hidden ${
         showImg ? `${imageBgClass} ${padClass}` : fallbackBgClass
       }`}
     >
@@ -47,7 +47,7 @@ export default function CompanyLogo({
           decoding="async"
           referrerPolicy="no-referrer"
           onError={() => setErrored(true)}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain rounded"
         />
       ) : (
         <Building2 className={iconClass} />
