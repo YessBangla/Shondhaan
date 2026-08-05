@@ -291,7 +291,7 @@ const  Navbar = () => {
         <PopoverTrigger asChild>
           {showLabel ? (
             <button
-              className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+              className="text-nowrap flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
               title={bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
             >
               <Route className={iconSize} />
@@ -626,7 +626,7 @@ const  Navbar = () => {
           <div className="flex flex-1 items-center justify-center gap-2">
             <button
               onClick={() => setRequestOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
+              className="flex text-nowrap items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
             >
               <HelpCircle className="h-3.5 w-3.5" />
               {bn ? "সেবা রিকোয়েস্ট" : "Request"}
@@ -634,7 +634,7 @@ const  Navbar = () => {
 
             <button
               onClick={() => setEmergencyOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 hover:shadow-md animate-pulse"
+              className="text-nowrap flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 hover:shadow-md animate-pulse"
             >
               <Zap className="h-3.5 w-3.5" />
               {t("emergency.btn")}

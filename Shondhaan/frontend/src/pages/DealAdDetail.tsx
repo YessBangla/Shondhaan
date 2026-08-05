@@ -550,11 +550,11 @@ const DealAdDetail = () => {
                       }}
                     >
                       <Phone className="h-4 w-4" />
-                      <span>{bn ? "ফোন দেখুন" : "Show Phone"}</span>
+                      <span>{bn ? "নাম্বার দেখুন" : "Show Phone"}</span>
                     </Button>
                   ) : (
                     <a href={`tel:${listing.phone}`} className="block w-full">
-                      <Button className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white">
+                      <Button className="w-full gap-2 bg-primary hover:bg-green-800 text-white">
                         <Phone className="h-4 w-4" />
                         <span className="font-mono font-semibold">{listing.phone}</span>
                       </Button>
@@ -562,7 +562,7 @@ const DealAdDetail = () => {
                   )}
 
                   <Button
-                    className="w-full gap-2 border-primary text-primary hover:bg-primary/10"
+                    className="w-full gap-2 border-primary text-primary hover:bg-green-800"
                     variant="outline"
                     disabled={startConversation.isPending}
                     onClick={handleChatClick}
@@ -572,7 +572,7 @@ const DealAdDetail = () => {
                     ) : (
                       <MessageCircle className="h-4 w-4" />
                     )}
-                    {bn ? "চ্যাট করুন" : "Send Message"}
+                    {bn ? "মেসেজ দিন" : "Send Message"}
                   </Button>
                 </CardContent>
               </Card>
@@ -582,7 +582,7 @@ const DealAdDetail = () => {
             <motion.div className="flex gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.14 }}>
               <Button
                 variant="outline"
-                className="flex-1 gap-2 text-sm font-medium hover:bg-red-50 dark:hover:bg-red-950/20 hover:border-red-200 dark:hover:border-red-800"
+                className="flex-1 gap-2 text-sm font-medium hover:bg-red-50 hover:text-black dark:hover:bg-red-950/20 hover:border-red-200 dark:hover:border-red-800"
                 disabled={favoriteLoading}
                 onClick={handleToggleFavorite}
               >
@@ -591,7 +591,7 @@ const DealAdDetail = () => {
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="flex-1 gap-2 text-sm font-medium">
+                  <Button variant="outline" className="hover:bg-green-800 flex-1 gap-2 text-sm font-medium">
                     <Share2 className="h-4 w-4" />{bn ? "শেয়ার" : "Share"}
                   </Button>
                 </PopoverTrigger>
