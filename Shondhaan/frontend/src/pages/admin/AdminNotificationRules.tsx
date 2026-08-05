@@ -1900,7 +1900,7 @@ const AdminNotificationRules = () => {
           enabled={rules.enabled_pending_approvals} onToggle={(v) => update("enabled_pending_approvals", v)}
           threshold={rules.pending_approval_threshold} unit="আইটেম"
           onChange={(v) => update("pending_approval_threshold", v)} min={1} max={50} />
-        <RuleCard icon={<MessageSquare className="h-4 w-4" />} title="খোলা সেবা রিকোয়েস্ট"
+        <RuleCard icon={<MessageSquare className="h-4 w-4" />} title="খোলা সার্ভিস রিকোয়েস্ট"
           description="খোলা রিকোয়েস্ট এই সংখ্যা ছাড়ালে সতর্ক করুন"
           enabled={rules.enabled_open_requests} onToggle={(v) => update("enabled_open_requests", v)}
           threshold={rules.open_request_threshold} unit="রিকোয়েস্ট"

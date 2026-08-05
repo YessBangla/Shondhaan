@@ -17,8 +17,15 @@ export default {
         xs: "400px",
       },
       fontFamily: {
-        heading: ['"Space Grotesk"', 'sans-serif'],
-        body: ['"Hind Siliguri"', 'sans-serif'],
+        h1: ['"Anek Bangla"', 'sans-serif'],
+        h2: ['"Anek Bangla"', 'sans-serif'],
+        h3: ['"Anek Bangla"', 'sans-serif'],
+        h4: ['"Anek Bangla"', 'sans-serif'],
+        h5: ['"Anek Bangla"', 'sans-serif'],
+        span: ['"Anek Bangla"', 'sans-serif'],
+        label: ['"Anek Bangla"', 'sans-serif'],
+        heading: ['"Anek Bangla"', 'sans-serif'],
+        body: ['"Anek Bangla"', 'sans-serif'],
       },
       colors: {
         border: "hsl(var(--border))",

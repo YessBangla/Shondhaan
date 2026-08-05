@@ -72,7 +72,7 @@ const TrackLanding = () => {
     {
       icon: FileText,
       title: bn ? "রিকোয়েস্ট গৃহীত" : "Request Received",
-      desc: bn ? "আপনার সেবা রিকোয়েস্ট সিস্টেমে নথিভুক্ত হয়েছে।" : "Your request is logged in the system.",
+      desc: bn ? "আপনার সার্ভিস রিকোয়েস্ট সিস্টেমে নথিভুক্ত হয়েছে।" : "Your request is logged in the system.",
     },
     {
       icon: PhoneCall,

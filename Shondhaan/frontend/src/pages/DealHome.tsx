@@ -209,7 +209,7 @@ const CategoryCardItem = ({
         className="relative w-full h-full flex flex-col items-center justify-center gap-2 p-1 md:p-2 rounded-2xl bg-gradient-to-br from-white to-blue-50/40 border border-blue-100/40 backdrop-blur-sm hover:border-emerald-300/60 hover:from-white hover:to-emerald-50/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-emerald-500/15 text-center overflow-hidden"
       >
         {/* Premium icon container */}
-        <span className="relative w-7 h-8 md:w-8 md:h-8 flex items-center justify-center rounded-md bg-gradient-to-br from-blue-100/80 to-emerald-100/80 group-hover:from-blue-500 group-hover:to-emerald-500 transition-all duration-300 overflow-hidden shadow-md group-hover:shadow-lg">
+        <span className="relative w-7 h-8 md:w-8 md:h-8 flex items-center justify-center transition-all duration-300 overflow-hidden">
           {/* Subtle inner shine on hover */}
           <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           
@@ -394,8 +394,6 @@ const DealHome = () => {
           </p> */}
 
           <div className="">
-            
-         
             <DealLocationSelector
               value={locationFilter}
               onChange={setLocationFilter}
@@ -413,7 +411,7 @@ const DealHome = () => {
             <div className="flex items-baseline gap-4 mb-2">
               <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-500">
-                  {bn ? "ক্যাটাগরি অনুযায়ী ব্রাউজ করুন" : "Browse by Category"}
+                  {bn ? "ক্যাটাগরি অনুযায়ী খুজুন" : "Browse by Category"}
                 </span>
               </h2>
               <div className="h-1 w-16 bg-gradient-to-r from-blue-500 to-emerald-500 rounded-full" />
@@ -476,8 +474,7 @@ const DealHome = () => {
                 >
                   <Button
                     onClick={() => setExpandedCategories(!expandedCategories)}
-                    className="rounded-xl font-bold gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all"
-                  >
+                    className="rounded-xl font-bold gap-2 px-8 py-3 bg-gradient-to-r from-blue-600 to-emerald-500 text-white shadow-lg shadow-blue-500/20 hover:shadow-xl hover:shadow-emerald-500/30 hover:opacity-90 transition-all">
                     {expandedCategories ? (
                       <>
                         {bn ? "সব লুকান" : "See Less"}

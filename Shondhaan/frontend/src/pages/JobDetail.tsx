@@ -313,7 +313,7 @@ const DescriptionBlock = () => (
       ) : !user && (job.contact_phone || job.contact_email) ? (
         <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 p-3 text-center mt-3">
           <p className="text-xs text-muted-foreground mb-2">{bn ? "যোগাযোগের তথ্য দেখতে লগইন করুন" : "Login to see contact details"}</p>
-          <Button size="sm" onClick={() => navigate("/auth")} className="bg-blue-600 hover:bg-blue-700">{bn ? "লগইন" : "Login"}</Button>
+          <Button size="sm" onClick={() => navigate("/auth")} className="bg-primary hover:bg-emerald-700 text-white">{bn ? "লগইন" : "Login"}</Button>
         </div>
       ) : null}
     </div>
@@ -389,7 +389,7 @@ const DescriptionBlock = () => (
                 {!isExpired && (
                   <Button
                     onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
+                    className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
                   >
                     <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
                   </Button>
@@ -581,13 +581,44 @@ const DescriptionBlock = () => (
                   z-20
                 "
               >
-                <Button
-                  onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                  className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white text-base font-semibold gap-2"
-                >
-                  <Send className="h-5 w-5" />
-                  {bn ? "এখনই আবেদন করুন" : "Apply Now"}
-                </Button>
+                <div className="flex flex-wrap justify-end items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+                    {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+                    {bn ? "সংরক্ষণ" : "Save"}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                        <Facebook className="h-4 w-4 text-blue-600" /> Facebook
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                        <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                        <Send className="h-4 w-4 text-green-600" /> WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
+                        <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                  {!isExpired && (
+                    <Button
+                      onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+                      className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
+                    >
+                      <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
+                    </Button>
+                  )}
+                </div>
               </div>
             )}
           </div>

@@ -251,7 +251,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
         </div>
         <Button
           size="sm"
-          className="press w-full mt-2 text-xs h-9 disabled:opacity-50"
+          className="press w-full mt-2 text-xs h-9 text-white disabled:opacity-50"
           disabled={product.stock <= 0}
           onClick={handleAddToCart}
           aria-label={bn ? "কার্টে যোগ করুন" : "Add to cart"}

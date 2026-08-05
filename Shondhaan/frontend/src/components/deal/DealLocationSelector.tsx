@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom"; // Added useNavigate
 import { MapPin, Loader2, X, Search, Crosshair } from "lucide-react";
+import { Typewriter } from "react-simple-typewriter";
 import {
   Select,
   SelectContent,
@@ -302,14 +303,47 @@ const DealLocationSelector = ({
     return item.image || "";
   };
 
+  const typingWords = {
+    en: [
+      "Find the Best Deals",
+      "Buy & Sell Easily",
+      "Find Used Products",
+      "Discover Great Offers",
+      "Trade with Confidence",
+    ],
+    bn: [
+      "যেকোনো পন্য কিনুন ও বিক্রি করুন",
+      "আপনার ব্যবহৃত পণ্য বিক্রি করুন",
+      "পুরোনো জিনিস ক্রয়-বিক্রয় করুন",
+      "সেরা দামে ডিল করুন",
+      "নিরাপদে লেনদেন করুন",
+    ],
+  };
+
   return (
     <div className="relative">
      
       {/* 🔍 HERO SEARCH WITH BACKGROUND IMAGE */}
       <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
 
+      <div className="absolute z-10 top-5 md:top-10 w-full flex justify-center">
+        <h1 className="text-center text-3xl md:text-5xl leading-[1.9] bg-gradient-to-r from-blue-400 via-green-600 to-blue-900 bg-clip-text text-white font-bold">
+          <Typewriter
+            key={language} // Restart animation when language changes
+            words={bn ? typingWords.bn : typingWords.en}
+            loop={0} // Infinite loop
+            cursor
+            cursorStyle="|"
+            typeSpeed={80}
+            deleteSpeed={40}
+            delaySpeed={2000}
+          />
+          {/* <span className="ml-1 inline-block animate-pulse text-white">|</span> */}
+        </h1>
+      </div>
+      
 
-      <div className="absolute z-10 top-10 md:top-28 text-center flex gap-3 justify-center w-full flex-wrap">
+      <div className="absolute z-10 top-10 md:top-[150px] text-center flex gap-3 justify-center w-full flex-wrap">
         <Button
           size="lg"
           onClick={() => navigate("/deal/post")}
@@ -350,10 +384,8 @@ const DealLocationSelector = ({
         </Button>
       </div>
 
-
       <div className="absolute h-full inset-0 bg-center md:bg-top"
           style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}/>
-
         <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" />
         <div className="absolute z-10 p-6 sm:p-8 mt-4 bottom-1/4 w-full">
           {/* <h2 className="mb-4 text-xl sm:text-2xl font-bold text-primary text-center drop-shadow">
