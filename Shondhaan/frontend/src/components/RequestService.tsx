@@ -225,7 +225,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold">
-              {bn ? "সেবা রিকোয়েস্ট সার্ভিস" : "Service Request"}
+              {bn ? "সার্ভিস রিকোয়েস্ট সার্ভিস" : "Service Request"}
             </DialogTitle>
             <DialogDescription>
               {bn ? "আপনার প্রয়োজনীয় সেবার বিবরণ দিন" : "Describe the service you need"}

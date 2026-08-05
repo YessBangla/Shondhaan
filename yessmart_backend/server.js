@@ -21,6 +21,7 @@ const createDeliveryAreasTable = require("./database/delivery_areas.table");
 const createCouponsTable = require("./database/coupons.table");
 const createDeliveryRequestsTable = require("./database/createDeliveryRequestsTable");
 const createDeliverymenTable = require("./database/deliverymen.table");
+const createNotificationsTable = require("./database/createNotificationsTable");
 
 const createWishlistTable = require("./database/createWishlist.table"); // Import the createWishlistTable function
 const createMessagesTable = require("./database/Createmessage.table"); // Import the createMessagesTable function
@@ -144,16 +145,15 @@ server.listen(PORT, async () => {
     const connection = await pool.getConnection();
     console.log("MySQL connected successfully.");
     connection.release();
-await createOrdersCountTable();
-await createDeliveryRequestsTable();
-
-  await createBkashSettingsTable();
-  await createNagadSettingsTable();
-  await createRocketSettingsTable();
-  await createOrdersTable();
-await createTransactionTable();
-await createOrderItemsTable();
-await createShippingAddressesTable();
+    await createOrdersCountTable();
+    await createDeliveryRequestsTable();
+    await createBkashSettingsTable();
+    await createNagadSettingsTable();
+    await createRocketSettingsTable();
+    await createOrdersTable();
+    await createTransactionTable();
+    await createOrderItemsTable();
+    await createShippingAddressesTable();
     await initDatabase();
     await createReviewsTable();
     await createProductQuestionsTable();
@@ -163,6 +163,7 @@ await createShippingAddressesTable();
     await createUserProfileTable();
     await createWishlistTable(); // Create the product_wishlists table
     await createMessagesTable(); // Create the mart_conversations and mart_messages tables
+    await createNotificationsTable(); // Create the notifications table
     await createBannersTable(); // ★ NEW — Create the banners table
     console.log("All tables initialized successfully.");
   } catch (error) {

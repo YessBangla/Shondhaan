@@ -89,8 +89,8 @@ const sidebarItems = [
   { value: "deal-overview", label: "ডিল ওভারভিউ", icon: <Handshake />, group: "সন্ধান ডিল" },
   { value: "deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 />, group: "সন্ধান ডিল" },
 
-  // সেবা রিকোয়েস্ট
-  { value: "requests", label: "সেবা রিকোয়েস্ট", icon: <FileText />, group: "অপারেশন" },
+  // সার্ভিস রিকোয়েস্ট
+  { value: "requests", label: "সার্ভিস রিকোয়েস্ট", icon: <FileText />, group: "অপারেশন" },
   { value: "bookings", label: "বুকিং", icon: <Calendar />, group: "অপারেশন" },
 
   // কমিউনিকেশন

@@ -163,7 +163,7 @@ const AuthHeroPanel = () => {
             transition={{ delay: i * 0.1 }}
             className="flex items-center gap-3 rounded-xl bg-primary-foreground/50 backdrop-blur-sm p-3"
           >
-            <div className="flex-shrink-0 rounded-lg bg-primary p-2">
+            <div className="flex-shrink-0 rounded-lg bg-primary text-white p-2">
               <stat.icon className="h-4 w-4" />
             </div>
             <div>
@@ -193,9 +193,9 @@ const AuthHeroPanel = () => {
               : "9 AM - 8 PM (Sat - Thu)"}
           </p>
         </div>
-        <a href={`tel:${settings.footer_phone.replace(/[^\d+]/g, "")}`} className="ml-auto text-xs flex gap-2 font-bold hover:underline">
+        <a href={`tel:${settings.footer_phone.replace(/[^\d+]/g, "")}`} className="text-nowrap ml-auto text-xs flex gap-2 font-bold hover:underline">
           <div className="h-5 w-5 rounded-full bg-primary-foreground/20 flex items-center justify-center shrink-0">
-            <Phone className="h-3 w-3 text-white " />
+            <Phone className="h-3 w-3 " />
           </div>
             <span>{settings.footer_phone}</span>
         </a>

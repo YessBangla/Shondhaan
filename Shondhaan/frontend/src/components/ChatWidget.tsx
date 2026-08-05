@@ -237,7 +237,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
       });
 
       const confirmMsg = bn
-        ? "✅ আপনার কলের ভিত্তিতে একটি **সেবা রিকোয়েস্ট** স্বয়ংক্রিয়ভাবে তৈরি হয়েছে। আমাদের টিম শীঘ্রই যোগাযোগ করবে।"
+        ? "✅ আপনার কলের ভিত্তিতে একটি **সার্ভিস রিকোয়েস্ট** স্বয়ংক্রিয়ভাবে তৈরি হয়েছে। আমাদের টিম শীঘ্রই যোগাযোগ করবে।"
         : "✅ A **service request** has been automatically created based on your call. Our team will contact you soon.";
 
       setMessages(prev => [...prev, { role: "assistant", content: confirmMsg }]);
@@ -634,7 +634,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                             "আপনাদের সেবার মূল্য কত?",
                             "আমার বুকিংয়ের স্ট্যাটাস জানতে চাই",
                             "একটি সেবা বুকিং করতে চাই",
-                            "সেবা রিকোয়েস্ট করতে চাই",
+                            "সার্ভিস রিকোয়েস্ট করতে চাই",
                             "কোন কোন এলাকায় সেবা পাওয়া যায়?",
                           ]
                         : [

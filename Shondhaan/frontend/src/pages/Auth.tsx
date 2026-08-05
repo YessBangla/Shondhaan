@@ -343,7 +343,7 @@ const Auth = () => {
                 type="button"
                 onClick={() => { setIsLogin(false); setPassword(""); }}
                 className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
-                  !isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
+                  !isLogin ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-secondary"
                 }`}
               >
                 <UserPlus className="h-4 w-4" />
@@ -353,7 +353,7 @@ const Auth = () => {
                 type="button"
                 onClick={() => { setIsLogin(true); setPassword(""); }}
                 className={`flex flex-col items-center gap-1 py-2 rounded-lg text-[11px] font-semibold transition-colors ${
-                  isLogin ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:bg-secondary"
+                  isLogin ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:bg-secondary"
                 }`}
               >
                 <LogIn className="h-4 w-4" />
@@ -387,7 +387,7 @@ const Auth = () => {
                       type="button"
                       onClick={() => setLoginMethod("email")}
                       className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                        loginMethod === "email" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                        loginMethod === "email" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
                       }`}
                     >
                       <Mail className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.email")}
@@ -396,7 +396,7 @@ const Auth = () => {
                       type="button"
                       onClick={() => setLoginMethod("phone")}
                       className={`flex-1 py-2.5 text-sm font-medium transition-colors ${
-                        loginMethod === "phone" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                        loginMethod === "phone" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
                       }`}
                     >
                       <Phone className="inline h-4 w-4 mr-1.5 -mt-0.5" /> {t("auth.phone")}
@@ -584,7 +584,7 @@ const Auth = () => {
 
                 {isLogin ? (
                   <p className="text-[11px] text-muted-foreground">{passwordPolicyMessage}</p>
-                ) : (
+                  ) : (
                   <div className="grid grid-cols-2 gap-1.5 text-[11px] text-muted-foreground">
                     {passwordRules.map((rule) => (
                       <span
@@ -598,7 +598,7 @@ const Auth = () => {
                   </div>
                 )}
 
-                <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary disabled:opacity-50">
+                <button type="submit" disabled={loading} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary disabled:opacity-50">
                   {loading
                     ? t("auth.loading")
                     : isLogin

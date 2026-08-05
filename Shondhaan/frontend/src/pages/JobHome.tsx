@@ -228,9 +228,9 @@ const JobHome = () => {
 
             {/* All Jobs */}
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-1 h-5 rounded-full bg-blue-600" />
-              <h2 className="font-bold text-base">
-                {selectedCategory !== "all" ? getCatLabel(selectedCategory) : bn ? "সর্বশেষ চাকরি" : "Latest Jobs"}
+              <div className="w-1 h-5 rounded-full bg-blue-600"/>
+              <h2 className="font-bold  text-base">
+                {selectedCategory !== "all" ? getCatLabel(selectedCategory) : bn ? "নতুন চাকরির বিজ্ঞাপন" : "Latest Jobs"}
               </h2>
               <Badge variant="outline" className="text-[10px]">{recentJobs.length}</Badge>
             </div>
