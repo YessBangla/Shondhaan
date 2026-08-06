@@ -10,6 +10,23 @@ import type { CmsService } from "@/hooks/useCmsData";
 import { useLongPress } from "@/hooks/useLongPress";
 import { haptic } from "@/lib/haptics";
 import { toast } from "sonner";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+
+const getStaticBaseUrl = () => {
+  try {
+    return new URL(INDIVIDUAL_API_BASE_URL).origin;
+  } catch {
+    return INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+};
+const STATIC_BASE_URL = getStaticBaseUrl();
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${STATIC_BASE_URL}${path}`;
+};
 
 interface ServiceItem {
   title: string;
@@ -53,26 +70,22 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
 
     const cardCenterX = anchorRect.left + window.scrollX + anchorRect.width / 2;
 
-    let top = anchorRect.top + window.scrollY + anchorRect.height / 2 + 68; // 8px below the card
+    let top = anchorRect.top + window.scrollY + anchorRect.height / 2 + 68;
     let left = cardCenterX - tooltipWidth / 2;
 
-    // Clamp horizontally within viewport
     const margin = 12;
     if (left < window.scrollX + margin) left = window.scrollX + margin;
     if (left + tooltipWidth > window.scrollX + window.innerWidth - margin) {
       left = window.scrollX + window.innerWidth - tooltipWidth - margin;
     }
 
-    // If the tooltip goes off the bottom of the viewport, push it up just enough to fit
     if (top + tooltipHeight > window.scrollY + window.innerHeight - margin) {
       top = window.scrollY + window.innerHeight - tooltipHeight - margin;
     }
 
-    // Calculate arrow position relative to the tooltip to point at the card center
     const arrowWidth = 8;
     let arrowLeft = cardCenterX - left - arrowWidth / 2;
     
-    // Clamp arrow so it doesn't escape the tooltip bounds
     if (arrowLeft < 8) arrowLeft = 8;
     if (arrowLeft > tooltipWidth - arrowWidth - 8) arrowLeft = tooltipWidth - arrowWidth - 8;
 
@@ -91,7 +104,6 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
       role="tooltip"
     >
       {description}
-      {/* Arrow pointing up */}
       <span
         className="absolute -top-1 h-2 w-2 rotate-45 border-t border-l border-border bg-blue-300"
         style={{ left: position.arrowLeft }}
@@ -106,7 +118,7 @@ const ServiceCardWrapper = ({
   service,
   onOpen,
   onLongPress,
-  disableHover, // Prevents tooltip from showing while dragging
+  disableHover,
   children,
 }: {
   service: ServiceItem;
@@ -121,7 +133,7 @@ const ServiceCardWrapper = ({
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const showTooltip = (e: React.MouseEvent<HTMLDivElement> | React.FocusEvent<HTMLDivElement>) => {
-    if (disableHover) return; // Don't show tooltip if dragging
+    if (disableHover) return;
     if (!service.description) return;
     if (hideTimer.current) {
       clearTimeout(hideTimer.current);
@@ -152,7 +164,7 @@ const ServiceCardWrapper = ({
         onClick={onOpen}
         {...longPress}
         tabIndex={0}
-        className="group relative cursor-pointer overflow-hidden rounded-xl border border-blue-900/60 bg-card transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px]"
+        className="group relative VITE_DEAL_API_BASE_URL active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px] rounded-md overflow-hidden border border-border"
       >
         {children}
       </div>
@@ -175,7 +187,6 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
   const text = bn ? `${title} - সেবা দেখুন` : `Check out ${title}`;
   const popupRef = useRef<HTMLDivElement>(null);
 
-  // Close on click outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       const target = e.target;
@@ -200,7 +211,6 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
     { name: "X", color: "bg-foreground", icon: "𝕏", href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` },
   ];
 
-  // Position below the share button
   const top = anchorRect.bottom + window.scrollY + 8;
   const left = Math.max(8, Math.min(anchorRect.left + window.scrollX - 100, window.innerWidth - 240));
 
@@ -259,8 +269,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const [quickMenu, setQuickMenu] = useState<ServiceItem | null>(null);
   const bn = language === "bn";
 
-  // --- Vertical Scroll Zoom Effect ---
-  // We use an internal ref for Framer Motion to avoid forwardRef initialization conflicts
   const localRef = useRef<HTMLDivElement>(null);
   
   const { scrollYProgress } = useScroll({
@@ -268,15 +276,9 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
     offset: ["start end", "end start"]
   });
   
-  // Smoothly scale from 0.8 (edges) to 1.05 (center)
-  // const scale = useTransform(scrollYProgress, [0, 0.5, 1], [0.8, 1.00, 0.8]);
-    const scale = useTransform(scrollYProgress, [1, 1, 1], [1, 1.00, 1]);
-  // Smoothly fade in from 0.3 to 1 when in the middle
-  // const opacity = useTransform(scrollYProgress, [0, 0.25, 0.75, 1], [0.3, 1, 1, 0.3]);
+  const scale = useTransform(scrollYProgress, [1, 1, 1], [1, 1.00, 1]);
   const opacity = useTransform(scrollYProgress, [1, 1, 1, 1], [1, 1, 1, 1]);
-  // -------------------------------------
 
-  // --- Desktop Drag-to-Scroll State ---
   const [isDragging, setIsDragging] = useState(false);
   const dragState = useRef({ startX: 0, startScrollLeft: 0, isDown: false, dragDistance: 0 });
 
@@ -285,7 +287,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
     if (!el) return;
 
     const handleDown = (e: MouseEvent) => {
-      if (e.button !== 0) return; // Only left click
+      if (e.button !== 0) return;
       dragState.current.isDown = true;
       dragState.current.startX = e.pageX - el.offsetLeft;
       dragState.current.startScrollLeft = el.scrollLeft;
@@ -295,7 +297,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
 
     const handleMove = (e: MouseEvent) => {
       if (!dragState.current.isDown) return;
-      e.preventDefault(); // Prevent text/image selection while dragging
+      e.preventDefault(); 
       const x = e.pageX - el.offsetLeft;
       const walk = x - dragState.current.startX;
       dragState.current.dragDistance = Math.abs(walk);
@@ -309,7 +311,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
     };
 
     el.addEventListener("mousedown", handleDown);
-    // Attach to window so dragging continues even if cursor leaves the container
     window.addEventListener("mousemove", handleMove);
     window.addEventListener("mouseup", handleUp);
 
@@ -320,14 +321,12 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
     };
   }, []);
 
-  // Prevent click events (navigation) from firing if the user was dragging
   const handleContainerClickCapture = (e: React.MouseEvent) => {
     if (dragState.current.dragDistance > 5) {
       e.preventDefault();
       e.stopPropagation();
     }
   };
-  // -------------------------------------
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
@@ -393,9 +392,8 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const closeShare = useCallback(() => setShareState(null), []);
 
   return (
-    <section ref={ref} className="py-8 md:py-12"> {/* Increased outer padding so scale doesn't clip */}
+    <section ref={ref} className="py-8 md:py-12">
       <div ref={localRef}>
-        {/* Inner wrapper that scales based on scroll position */}
         <motion.div 
           style={{ scale, opacity, transformOrigin: "center center" }} 
           className="will-change-transform"
@@ -427,7 +425,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 <ChevronRight className="h-4 w-4" />
               </button>
 
-              {/* Horizontal scroll on all screen sizes - 2 items visible on mobile, more on desktop */}
               <div 
                 ref={scrollRef} 
                 onClickCapture={handleContainerClickCapture}
@@ -447,13 +444,13 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                   >
                     <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm pointer-events-none">
                       <img 
-                        src={service.image} 
+                        src={getImageSrc(service.image)} 
                         alt={service.title} 
-                        className="aspect-[3/2] rounded-md w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                        className="aspect-[3/2] w-full rounded-md object-cover transition-transform duration-300 group-hover:scale-105" 
                         loading="lazy" 
                         decoding="async" 
                         fetchPriority="low" 
-                        draggable={false} // Prevents native browser image dragging
+                        draggable={false} 
                       />
                     </div>
                     <div className="p-3 bg-blue-300/40 md:p-4 pointer-events-none">
@@ -477,7 +474,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                             <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
                           )}
                         </p>
-                        {/* Re-enable pointer events specifically for action buttons */}
                         <div className="flex items-center gap-0.5 pointer-events-auto">
                           <button
                             onClick={(e) => handleAddToCart(e, service)}
@@ -516,7 +512,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
         </motion.div>
       </div>
 
-      {/* Share popup rendered via portal (kept outside scaling wrapper to avoid transform conflicts) */}
       <AnimatePresence>
         {shareState && (
           <SharePopup
@@ -528,7 +523,6 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
         )}
       </AnimatePresence>
 
-      {/* Long-press quick action sheet (mobile) (kept outside scaling wrapper) */}
       <AnimatePresence>
         {quickMenu && createPortal(
           <>
@@ -551,7 +545,12 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 <span className="h-1 w-10 rounded-full bg-muted-foreground/30" />
               </div>
               <div className="flex items-center gap-3 px-4 pt-1 pb-3 border-b border-border">
-                <img src={quickMenu.image} alt={quickMenu.title} className="h-12 w-12 rounded-lg object-cover" draggable={false} />
+                <img 
+                  src={getImageSrc(quickMenu.image)} 
+                  alt={quickMenu.title} 
+                  className="h-12 w-12 rounded-lg object-cover" 
+                  draggable={false} 
+                />
                 <div className="min-w-0 flex-1">
                   <h4 className="truncate text-sm font-bold text-foreground">{quickMenu.title}</h4>
                   {quickMenu.price ? (

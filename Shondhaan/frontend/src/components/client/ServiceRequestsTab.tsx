@@ -102,8 +102,8 @@ const ServiceRequestsTab = ({ userPhone }: Props) => {
     return (
       <div className="text-center py-12">
         <FileSearch className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-        <p className="text-muted-foreground text-sm">{bn ? "কোনো সেবা রিকোয়েস্ট নেই" : "No service requests"}</p>
-        <p className="text-xs text-muted-foreground/60 mt-1">{bn ? "হোমপেজ থেকে সেবা রিকোয়েস্ট পাঠান" : "Send a service request from homepage"}</p>
+        <p className="text-muted-foreground text-sm">{bn ? "কোনো সার্ভিস রিকোয়েস্ট নেই" : "No service requests"}</p>
+        <p className="text-xs text-muted-foreground/60 mt-1">{bn ? "হোমপেজ থেকে সার্ভিস রিকোয়েস্ট পাঠান" : "Send a service request from homepage"}</p>
       </div>
     );
   }

@@ -22,7 +22,7 @@ export const RESOURCE_LABELS: Record<string, string> = {
   offers: "অফার",
   banners: "ব্যানার",
   sections: "সেকশন",
-  service_requests: "সেবা রিকোয়েস্ট",
+  service_requests: "সার্ভিস রিকোয়েস্ট",
   contact_messages: "মেসেজ",
   job_applications: "আবেদন",
   reviews: "রিভিউ",

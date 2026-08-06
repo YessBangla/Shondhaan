@@ -50,8 +50,7 @@ import { useTheme } from "@/hooks/useTheme";
 
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  import.meta.env.VITE_API_BASE;
 
 const  Navbar = () => {
   const [emergencyOpen, setEmergencyOpen] = useState(false);
@@ -230,7 +229,7 @@ const  Navbar = () => {
   const L = {
     request: {
       short: bn ? "রিকোয়েস্ট" : "Request",
-      long: bn ? "সেবা রিকোয়েস্ট করুন" : "Request a service",
+      long: bn ? "সার্ভিস রিকোয়েস্ট করুন" : "Request a service",
     },
     emergency: {
       short: bn ? "জরুরি" : "Emergency",
@@ -238,7 +237,7 @@ const  Navbar = () => {
     },
     track: {
       short: bn ? "ট্র্যাক" : "Track",
-      long: bn ? "আপনার সেবা ট্র্যাক করুন" : "Track your service",
+      long: bn ? "সার্ভিস ট্র্যাক করুন" : "Track your service",
     },
     lang: {
       short: bn ? "ভাষা" : "Lang",
@@ -291,22 +290,22 @@ const  Navbar = () => {
         <PopoverTrigger asChild>
           {showLabel ? (
             <button
-              className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
-              title={bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
+              className="text-nowrap flex items-center gap-1.5 rounded-lg border border-primary/30 dark:border-white bg-primary/10 dark:text-white px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+              title={bn ? "সার্ভিস ট্র্যাক করুন" : "Track Service"}
             >
               <Route className={iconSize} />
               {mobileLabel
                 ? bn
-                  ? "সেবা ট্র্যাক"
+                  ? "সার্ভিস ট্র্যাক"
                   : "Track"
                 : bn
-                  ? "আপনার সেবা ট্র্যাক করুন"
+                  ? "সার্ভিস ট্র্যাক করুন"
                   : "Track Your Service"}
             </button>
           ) : (
             <button
               className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              title={bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
+              title={bn ? "সার্ভিস ট্র্যাক করুন" : "Track Service"}
             >
               <Route className={iconSize} />
             </button>
@@ -315,7 +314,7 @@ const  Navbar = () => {
 
         <PopoverContent className="w-72 p-3" align="end">
           <p className="text-xs font-semibold text-accent-foreground mb-2">
-            {bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
+            {bn ? "সার্ভিস ট্র্যাক করুন" : "Track Service"}
           </p>
 
           <form
@@ -601,10 +600,10 @@ const  Navbar = () => {
         )}
 
         {/* Desktop header */}
-        <div className="app-container hidden md:flex items-center gap-4 py-2.5">
+        <div className="app-container hidden md:flex items-center gap-4 py-1.5">
           {/* Brand */}
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={() => navigate("/")} className="flex items-center gap-2">
+            <button onClick={() => navigate("/")} className="flex bg-transparent dark:bg-white rounded-xl p-1 items-center gap-2">
               {settings.logo_url ? (
                 <img
                   src={settings.logo_url}
@@ -626,15 +625,15 @@ const  Navbar = () => {
           <div className="flex flex-1 items-center justify-center gap-2">
             <button
               onClick={() => setRequestOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-primary-foreground shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
+              className="flex text-nowrap items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-blue-400 hover:shadow-md"
             >
               <HelpCircle className="h-3.5 w-3.5" />
-              {bn ? "সেবা রিকোয়েস্ট" : "Request"}
+              {bn ? "সার্ভিস রিকোয়েস্ট" : "Request"}
             </button>
 
             <button
               onClick={() => setEmergencyOpen(true)}
-              className="flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 hover:shadow-md animate-pulse"
+              className="text-nowrap flex items-center gap-1.5 rounded-lg bg-destructive px-3 py-1.5 text-xs font-bold text-destructive-foreground shadow-sm transition-all hover:bg-destructive/90 hover:shadow-md animate-pulse"
             >
               <Zap className="h-3.5 w-3.5" />
               {t("emergency.btn")}
@@ -686,7 +685,7 @@ const  Navbar = () => {
               aria-label={bn ? "কার্ট" : "Cart"}
               title={bn ? "কার্ট" : "Cart"}
             >
-              <ShoppingCart className="h-4.5 w-4.5 text-primary" />
+              <ShoppingCart className="h-4.5 w-4.5 text-primary dark:text-white" />
 
               {totalItems > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold leading-none">
@@ -917,16 +916,16 @@ const  Navbar = () => {
                     <button
                       onClick={() => navigate("/auth?tab=signup")}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
-                      hover:text-primary-foreground"
+                      hover:text-white"
                     >
-                      <UserPlus className="h-4 w-4 text-forground" />
+                      <UserPlus className="h-4 w-4" />
                       {bn ? "একাউন্ট তৈরী করুন" : "Create Account"}
                     </button>
 
                     <button
                       onClick={() => navigate("/auth")}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
-                      hover:text-primary-foreground"
+                      hover:text-white"
                     >
                       <LogIn className="h-4 w-4 text-forground" />
                       {bn ? "লগইন করুন" : "Login"}

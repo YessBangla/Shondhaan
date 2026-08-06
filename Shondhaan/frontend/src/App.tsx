@@ -169,9 +169,6 @@ const queryClient = new QueryClient({
   },
 });
 
-
-
-
 function SocketInitializer() {
   const { user } = useAuth();
 
@@ -286,7 +283,6 @@ const App = () => {
             <Route path="/admin/roles" element={<AdminRoles />} />
             <Route path="/admin/roles/:role" element={<AdminRoleDetail />} />
             <Route path="/admin" element={<AdminLayout />}>
-           
               <Route index element={<Navigate to="/admin/analytics" replace />} />
               <Route path="analytics" element={<AdminAnalyticsPage />} />
               <Route path="bookings" element={<AdminBookings />} />

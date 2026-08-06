@@ -4,6 +4,24 @@ import { useCmsServices, useCmsCategories, CmsService } from "@/hooks/useCmsData
 import ImageUploader from "./ImageUploader";
 import CategoryFilterDropdown from "@/components/CategoryFilterDropdown";
 import { toast } from "sonner";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+
+// Helper to fix relative image URLs coming from the backend
+const getStaticBaseUrl = () => {
+  try {
+    return new URL(INDIVIDUAL_API_BASE_URL).origin;
+  } catch {
+    return INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "").replace(/\/api$/, "");
+  }
+};
+const STATIC_BASE_URL = getStaticBaseUrl();
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${STATIC_BASE_URL}${path}`;
+};
 
 const ServiceImageManager = () => {
   const { data: services = [], isLoading, upsert } = useCmsServices();
@@ -114,7 +132,8 @@ const ServiceImageManager = () => {
               ) : (
                 <>
                   {s.image_url ? (
-                    <img src={s.image_url} alt={s.title} className="h-full w-full object-cover" />
+                    // FIXED: Applied getImageSrc here
+                    <img src={getImageSrc(s.image_url)} alt={s.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center">
                       <div className="text-center">

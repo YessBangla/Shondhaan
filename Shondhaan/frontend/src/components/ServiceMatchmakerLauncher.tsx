@@ -54,7 +54,7 @@ export default function ServiceMatchmakerLauncher() {
           setOpen(true);
           try { localStorage.setItem(SHOWN_KEY, String(Date.now())); } catch {}
         }}
-        className="fixed right-3 z-[10] hidden md:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-green-500 px-3 py-2 text-[11px] font-semibold text-primary-foreground shadow-xl md:!bottom-[95px] md:right-4 md:text-xs"
+        className="fixed right-3 z-[10] hidden md:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-green-500 px-3 py-2 text-[11px] font-semibold text-white shadow-xl md:!bottom-[95px] md:right-4 md:text-xs"
         style={{ bottom: getMobileFloatingBottom(20) }}
         aria-label="open matchmaker"
       >

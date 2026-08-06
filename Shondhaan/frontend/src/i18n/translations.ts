@@ -75,7 +75,7 @@ export const translations = {
   // Request Service
   "request.title": { bn: "আপনার কাঙ্ক্ষিত সেবা খুঁজে পাচ্ছেন না?", en: "Can't find the service you need?" },
   "request.subtitle": { bn: "২৪/৭ আমাদের জানান, আমরা সাহায্য করবো।", en: "Let us know 24/7, we'll help you." },
-  "request.requestBtn": { bn: "সেবা রিকোয়েস্ট করুন", en: "Request Service" },
+  "request.requestBtn": { bn: "সার্ভিস রিকোয়েস্ট করুন", en: "Request Service" },
   "request.callBtn": { bn: "কল করুন", en: "Call Us" },
 
   // Footer

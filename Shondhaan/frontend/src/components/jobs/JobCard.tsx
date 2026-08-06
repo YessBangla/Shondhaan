@@ -138,9 +138,9 @@ const education = job.education_subject || null;
       <CompanyLogo
         src={job.company_logo_url}
         alt={job.company_name}
-        sizeClass="w-20 h-20 shrink-0 rounded-md bg-white border"
+        sizeClass="w-20 h-20 shrink-0 rounded-md"
         iconClass="w-8 h-8 text-gray-400"
-        fallbackBgClass="bg-white"
+        fallbackBgClass=""
       />
 
       {/* Description popup — speech-bubble, appears BELOW the card with a

@@ -1,39 +1,3 @@
-// database/createJobsTable.js
-//
-// IMPORTANT: this table has a FOREIGN KEY on `category_id` referencing
-// job_categories(id). That means createJobCategoriesTable() MUST run
-// and finish BEFORE this function runs, or the CREATE TABLE will fail
-// with "Cannot add foreign key constraint" (errno 150) because the
-// referenced table doesn't exist yet. In your server startup file:
-//
-//   const { createJobCategoriesTable } = require('./database/createJobCategoriesTable');
-//   const createJobsTable = require('./database/createJobsTable');
-//   const createJobCandidateRequirementsTable = require('./database/createJobCandidateRequirementsTable');
-//   const createJobMatchingCriteriaTable = require('./database/createJobMatchingCriteriaTable');
-//   const createJobBillingContactsTable = require('./database/createJobBillingContactsTable');
-//
-//   await createJobCategoriesTable();            // must come first
-//   await createJobsTable();                     // then this
-//   await createJobCandidateRequirementsTable();  // then these three,
-//   await createJobMatchingCriteriaTable();       // in any order relative
-//   await createJobBillingContactsTable();        // to each other
-//
-// NOTE ON SCOPE: this table now only owns Step 1 ("Job Information") data
-// from JobPostForm.tsx — basic info, description, salary, workplace,
-// location and contact. Step 2/3/4 data (candidate requirements, matching
-// criteria, billing & HR contacts) lives in three separate 1:1 satellite
-// tables, each carrying a `job_id` FK back to this table. Previously
-// education_required / gender_preference / age_min / age_max /
-// experience_min / experience_max lived here — they've moved to
-// job_candidate_requirements. Don't re-add them here. education_subject
-// also lives in job_candidate_requirements — see createJobCandidateRequirementsTable.js.
-//
-// VISIBILITY / PACKAGE COLUMNS: visibility_level, visibility_expires_at,
-// enrolled_package_id and package_id were added after this table already
-// existed in production, so `CREATE TABLE IF NOT EXISTS` alone won't add
-// them to a pre-existing table (MySQL just skips table creation entirely
-// if it's already there). The migration block below patches existing
-// tables idempotently — safe to run on every server start.
 
 const mysql = require('mysql2');
 
@@ -41,7 +5,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'yessjob_backend',
+  database: process.env.DB_NAME ,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -164,6 +128,22 @@ async function createJobsTable() {
     }
 
     console.log("✅ jobs table created (Step 1 fields only; category_id FK -> job_categories.id)");
+
+      // Add missing columns if they don't exist
+    await pool.query(`
+      ALTER TABLE jobs
+      ADD COLUMN IF NOT EXISTS visibility_level
+      ENUM('basic','standard','premium','premium_plus','hot')
+      DEFAULT 'basic'
+    `);
+
+    await pool.query(`
+      ALTER TABLE jobs
+      ADD COLUMN IF NOT EXISTS visibility_expires_at
+      DATETIME DEFAULT NULL
+    `);
+
+    console.log("✅ visibility columns checked");
 
   } catch (error) {
     console.error(error);

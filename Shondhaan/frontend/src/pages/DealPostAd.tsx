@@ -162,7 +162,7 @@ const DealPostAd = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-primary-foreground">
       <Navbar />
 
       <div className="pt-[44px] md:pt-[68px]" />
