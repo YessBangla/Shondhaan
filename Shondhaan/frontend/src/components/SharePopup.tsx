@@ -17,7 +17,7 @@ const SharePopupPortal = ({ url, title, anchorRect, onClose }: SharePopupPortalP
   const { language } = useLanguage();
   const bn = language === "bn";
   const popupRef = useRef<HTMLDivElement>(null);
-  const text = bn ? `${title} - সেবা দেখুন` : `Check out ${title}`;
+  const text = bn ? `${title} - সার্ভিস দেখুন` : `Check out ${title}`;
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {

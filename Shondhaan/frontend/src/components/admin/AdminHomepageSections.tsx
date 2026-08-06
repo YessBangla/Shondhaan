@@ -387,7 +387,7 @@ const AdminHomepageSections = () => {
                   <input
                     value={editing.title_bn || ""}
                     onChange={(e) => setEditing({ ...editing, title_bn: e.target.value })}
-                    placeholder="যেমন: জনপ্রিয় সেবা"
+                    placeholder="যেমন: জনপ্রিয় সার্ভিস"
                     className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
                   />
                 </div>
@@ -440,8 +440,8 @@ const AdminHomepageSections = () => {
                 >
                   <span className={`truncate ${editing.service_slugs?.length ? "text-foreground" : "text-muted-foreground"}`}>
                     {editing.service_slugs?.length 
-                      ? `${editing.service_slugs.length} টি সেবা নির্বাচিত`
-                      : "সেবা নির্বাচন করতে ক্লিক করুন"}
+                      ? `${editing.service_slugs.length} টি সার্ভিস নির্বাচিত`
+                      : "সার্ভিস নির্বাচন করতে ক্লিক করুন"}
                   </span>
                   <ChevronDown className={`h-4 w-4 opacity-50 transition-transform ${showSlugsDropdown ? "rotate-180" : ""}`} />
                 </button>
@@ -488,7 +488,7 @@ const AdminHomepageSections = () => {
                         s.title.toLowerCase().includes(slugSearch.toLowerCase()) || 
                         s.slug.toLowerCase().includes(slugSearch.toLowerCase())
                       ).length === 0 && (
-                        <p className="text-center text-xs text-muted-foreground py-4">কোনো সেবা পাওয়া যায়নি</p>
+                        <p className="text-center text-xs text-muted-foreground py-4">কোনো সার্ভিস পাওয়া যায়নি</p>
                       )}
                     </div>
                   </div>
@@ -554,7 +554,7 @@ const AdminHomepageSections = () => {
                 </p>
 
                 <p className="truncate text-[10px] text-muted-foreground">
-                  {section.service_slugs.length} সেবা • ক্রম: {section.sort_order ?? 0} •{" "}
+                  {section.service_slugs.length} সার্ভিস • ক্রম: {section.sort_order ?? 0} •{" "}
                   {section.is_active ? "✅ Active" : "❌ Inactive"}
                 </p>
 

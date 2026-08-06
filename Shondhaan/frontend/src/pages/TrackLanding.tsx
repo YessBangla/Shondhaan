@@ -81,13 +81,13 @@ const TrackLanding = () => {
     },
     {
       icon: Truck,
-      title: bn ? "সেবা চলমান" : "In Progress",
-      desc: bn ? "সেবাকর্মী ঘটনাস্থলে কাজ করছেন।" : "The service is being delivered.",
+      title: bn ? "সার্ভিস চলমান" : "In Progress",
+      desc: bn ? "সার্ভিসকর্মী ঘটনাস্থলে কাজ করছেন।" : "The service is being delivered.",
     },
     {
       icon: CheckCircle2,
       title: bn ? "সম্পন্ন" : "Completed",
-      desc: bn ? "সেবা সফলভাবে সম্পন্ন হয়েছে।" : "Service completed successfully.",
+      desc: bn ? "সার্ভিস সফলভাবে সম্পন্ন হয়েছে।" : "Service completed successfully.",
     },
     {
       icon: ShieldCheck,
@@ -113,7 +113,7 @@ const TrackLanding = () => {
               </div>
               <div>
                 <h1 className="text-xl md:text-2xl font-bold text-foreground">
-                  {bn ? "সেবা ট্র্যাক করুন" : "Track Your Service"}
+                  {bn ? "সার্ভিস ট্র্যাক করুন" : "Track Your Service"}
                 </h1>
                 <p className="text-xs md:text-sm text-muted-foreground">
                   {bn
@@ -188,7 +188,7 @@ const TrackLanding = () => {
             className="mt-6 rounded-2xl border border-border/70 bg-card/60 p-6 md:p-7"
           >
             <h2 className="text-sm md:text-base font-semibold text-foreground mb-5">
-              {bn ? "সেবা প্রক্রিয়া কেমন এগোয়" : "How tracking progresses"}
+              {bn ? "সার্ভিস প্রক্রিয়া কেমন এগোয়" : "How tracking progresses"}
             </h2>
             <ol className="relative space-y-5">
               <span

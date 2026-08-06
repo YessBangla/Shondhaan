@@ -279,8 +279,8 @@ const ClientDashboard = () => {
         setBookings(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b));
         const labels: Record<string, string> = {
           confirmed: bn ? "আপনার বুকিং নিশ্চিত হয়েছে!" : "Booking confirmed!",
-          in_progress: bn ? "আপনার সেবা চলছে!" : "Service in progress!",
-          completed: bn ? "আপনার সেবা সম্পন্ন!" : "Service completed!",
+          in_progress: bn ? "আপনার সার্ভিস চলছে!" : "Service in progress!",
+          completed: bn ? "আপনার সার্ভিস সম্পন্ন!" : "Service completed!",
           cancelled: bn ? "বুকিং বাতিল হয়েছে" : "Booking cancelled",
         };
         if (labels[updated.status]) toast.info(labels[updated.status]);
@@ -457,13 +457,13 @@ const ClientDashboard = () => {
     value: "bookings",
     label: bn ? "বুকিং" : "Bookings",
     icon: <ClipboardList className="h-5 w-5" />,
-    group: bn ? "সেবা" : "Services",
+    group: bn ? "সার্ভিস" : "Services",
   },
   {
     value: "messages",
     label: bn ? "ম্যাসেজ" : "Messages",
     icon: <MessageSquare className="h-5 w-5" />,
-    group: bn ? "সেবা" : "Services",
+    group: bn ? "সার্ভিস" : "Services",
   },
   {
     value: "requests",
@@ -566,7 +566,7 @@ const ClientDashboard = () => {
                     <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-base text-muted-foreground">{bn ? "কোনো বুকিং নেই" : "No bookings yet"}</p>
                     <button onClick={() => navigate("/")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
-                      {bn ? "সেবা দেখুন" : "Browse Services"}
+                      {bn ? "সার্ভিস দেখুন" : "Browse Services"}
                     </button>
                   </div>
                 ) : (
@@ -679,8 +679,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-primary/10 to-primary/5 p-4 text-left hover:border-primary/40 hover:shadow-sm transition-all group"
                   >
                     <ClipboardList className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "সেবা নিন" : "Get Service"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "১৮৬+ সেবা" : "186+ services"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "সার্ভিস নিন" : "Get Service"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "১৮৬+ সার্ভিস" : "186+ services"}</p>
                   </motion.button>
                 </div>
               )}

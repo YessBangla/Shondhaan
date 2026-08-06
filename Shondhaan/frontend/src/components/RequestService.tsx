@@ -228,7 +228,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
               {bn ? "সার্ভিস রিকোয়েস্ট সার্ভিস" : "Service Request"}
             </DialogTitle>
             <DialogDescription>
-              {bn ? "আপনার প্রয়োজনীয় সেবার বিবরণ দিন" : "Describe the service you need"}
+              {bn ? "আপনার প্রয়োজনীয় সার্ভিসর বিবরণ দিন" : "Describe the service you need"}
             </DialogDescription>
           </DialogHeader>
 
@@ -333,7 +333,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={bn ? "আপনার সমস্যা বা প্রয়োজনীয় সেবার বিবরণ লিখুন..." : "Describe your problem or required service..."}
+                placeholder={bn ? "আপনার সমস্যা বা প্রয়োজনীয় সার্ভিসর বিবরণ লিখুন..." : "Describe your problem or required service..."}
                 rows={3}
               />
 
@@ -409,7 +409,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
                 {trackingToken && (
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
-                      {bn ? "📎 নিচের লিংক দিয়ে সেবার অগ্রগতি ট্র্যাক করুন:" : "📎 Track your service progress with this link:"}
+                      {bn ? "📎 নিচের লিংক দিয়ে সার্ভিসর অগ্রগতি ট্র্যাক করুন:" : "📎 Track your service progress with this link:"}
                     </p>
                     <div className="flex items-center gap-2">
                       <a

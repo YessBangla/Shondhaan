@@ -29,7 +29,7 @@ export default function CartAbandonmentNudge() {
       haptic("light");
       toast.info(bn ? "কার্টে কিছু রয়ে গেছে 🛒" : "You left items in your cart 🛒", {
         description: bn
-          ? `${totalItems}টি সেবা চেকআউটের অপেক্ষায়`
+          ? `${totalItems}টি সার্ভিস চেকআউটের অপেক্ষায়`
           : `${totalItems} service${totalItems > 1 ? "s" : ""} waiting for checkout`,
         action: {
           label: bn ? "দেখুন" : "View",

@@ -31,10 +31,10 @@ const AdminTabs = () => (
         <BarChart3 className="h-3.5 w-3.5" /> অ্যানালিটিক্স
       </TabsTrigger>
       <TabsTrigger value="services" className="flex items-center gap-1.5 text-xs">
-        <Package className="h-3.5 w-3.5" /> সেবা
+        <Package className="h-3.5 w-3.5" /> সার্ভিস
       </TabsTrigger>
       <TabsTrigger value="service-images" className="flex items-center gap-1.5 text-xs">
-        <ImagePlus className="h-3.5 w-3.5" /> সেবার ছবি
+        <ImagePlus className="h-3.5 w-3.5" /> সার্ভিসর ছবি
       </TabsTrigger>
       <TabsTrigger value="categories" className="flex items-center gap-1.5 text-xs">
         <Grid3X3 className="h-3.5 w-3.5" /> ক্যাটেগরি

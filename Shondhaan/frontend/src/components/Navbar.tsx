@@ -233,7 +233,7 @@ const  Navbar = () => {
     },
     emergency: {
       short: bn ? "জরুরি" : "Emergency",
-      long: bn ? "জরুরি সেবা — তাৎক্ষণিক সাড়া" : "Emergency service — instant response",
+      long: bn ? "জরুরি সার্ভিস — তাৎক্ষণিক সাড়া" : "Emergency service — instant response",
     },
     track: {
       short: bn ? "ট্র্যাক" : "Track",
@@ -312,8 +312,8 @@ const  Navbar = () => {
           )}
         </PopoverTrigger>
 
-        <PopoverContent className="w-72 p-3" align="end">
-          <p className="text-xs font-semibold text-accent-foreground mb-2">
+        <PopoverContent className="w-72 p-3 bg-background border-primary" align="end">
+          <p className="text-xs font-semibold text-accent mb-2">
             {bn ? "সার্ভিস ট্র্যাক করুন" : "Track Service"}
           </p>
 
@@ -331,7 +331,7 @@ const  Navbar = () => {
             <button
               type="submit"
               disabled={!trackToken.trim()}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-primary-foreground disabled:opacity-50"
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary text-white"
             >
               <Search className="h-3.5 w-3.5" />
             </button>

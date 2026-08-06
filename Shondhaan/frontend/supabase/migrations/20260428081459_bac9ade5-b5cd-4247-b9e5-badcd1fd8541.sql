@@ -256,11 +256,11 @@ BEGIN
         _title := 'বুকিং নিশ্চিত হয়েছে ✅';
         _message := 'আপনার "' || NEW.service_title || '" বুকিংটি নিশ্চিত করা হয়েছে।';
       WHEN 'in_progress' THEN
-        _title := 'সেবা চলছে 🛠️';
-        _message := 'আপনার "' || NEW.service_title || '" সেবা প্রদান শুরু হয়েছে।';
+        _title := 'সার্ভিস চলছে 🛠️';
+        _message := 'আপনার "' || NEW.service_title || '" সার্ভিস প্রদান শুরু হয়েছে।';
       WHEN 'completed' THEN
-        _title := 'সেবা সম্পন্ন 🎉';
-        _message := '"' || NEW.service_title || '" সেবাটি সফলভাবে সম্পন্ন হয়েছে। অনুগ্রহ করে রিভিউ দিন।';
+        _title := 'সার্ভিস সম্পন্ন 🎉';
+        _message := '"' || NEW.service_title || '" সার্ভিসটি সফলভাবে সম্পন্ন হয়েছে। অনুগ্রহ করে রিভিউ দিন।';
       WHEN 'cancelled' THEN
         _title := 'বুকিং বাতিল';
         _message := '"' || NEW.service_title || '" বুকিংটি বাতিল করা হয়েছে।';

@@ -42,15 +42,15 @@ const LocationPermissionModal = ({ open, onAllow, onSkip }: LocationPermissionMo
                 আপনার লোকেশন জানতে চাই
               </h3>
               <p className="mt-2 text-sm text-muted-foreground text-center leading-relaxed">
-                আপনার এলাকায় কোন সেবাগুলো পাওয়া যায় তা দেখাতে এবং দ্রুত সেবা দিতে আমাদের আপনার বর্তমান অবস্থান জানা দরকার।
+                আপনার এলাকায় কোন সার্ভিসগুলো পাওয়া যায় তা দেখাতে এবং দ্রুত সার্ভিস দিতে আমাদের আপনার বর্তমান অবস্থান জানা দরকার।
               </p>
             </div>
 
             {/* Features */}
             <div className="px-6 pb-4 space-y-2">
               {[
-                "আপনার এলাকার সেবা দেখুন",
-                "কাছের সেবাদাতা খুঁজে পান",
+                "আপনার এলাকার সার্ভিস দেখুন",
+                "কাছের সার্ভিসদাতা খুঁজে পান",
                 "সঠিক মূল্য ও সময় জানুন",
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-2.5 text-sm text-foreground">

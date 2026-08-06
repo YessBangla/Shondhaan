@@ -55,7 +55,7 @@ export default function AIImageSearch({ open, onClose }: Props) {
           navigate(hit.route);
         }, 600);
       } else {
-        toast.info(bn ? "সেবা খুঁজছি..." : "Browsing all services...");
+        toast.info(bn ? "সার্ভিস খুঁজছি..." : "Browsing all services...");
         setTimeout(() => {
           onClose();
           navigate("/all-services");
@@ -119,7 +119,7 @@ export default function AIImageSearch({ open, onClose }: Props) {
                 <div className="space-y-3">
                   <p className="text-center text-xs text-muted-foreground">
                     {bn
-                      ? "যেকোনো সমস্যার ছবি তুলুন বা আপলোড করুন — AI সঠিক সেবা সাজেস্ট করবে"
+                      ? "যেকোনো সমস্যার ছবি তুলুন বা আপলোড করুন — AI সঠিক সার্ভিস সাজেস্ট করবে"
                       : "Snap or upload a photo — AI will suggest the right service"}
                   </p>
                   <div className="grid grid-cols-2 gap-2">

@@ -626,44 +626,6 @@ const JobDetail = () => {
                   z-20
                 "
               >
-                <div className="flex flex-wrap justify-end items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                    {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
-                    {bn ? "সংরক্ষণ" : "Save"}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-1.5">
-                        <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
-                        <Facebook className="h-4 w-4 text-blue-600" /> Facebook
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
-                        <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
-                        <Send className="h-4 w-4 text-green-600" /> WhatsApp
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                        <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
-                    <Printer className="h-4 w-4" />
-                  </Button>
-                  {!isExpired && (
-                    <Button
-                      onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                      className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
-                    >
-                      <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
-                    </Button>
-                  )}
-                </div>
               </div>
             )}
           </div>
@@ -713,15 +675,15 @@ const JobDetail = () => {
           Scrolling back up hides it again automatically. */}
       {!isExpired && (
         <div
-          className={`fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
+          className={`fixed bottom-20 md:bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
             showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
           }`}
         >
-          <div className="mx-auto max-w-7xl px-4 py-3">
+          <div className="mx-auto max-w-7xl px-4 py-3 ">
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
+                className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
               >
                 <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
               </Button>

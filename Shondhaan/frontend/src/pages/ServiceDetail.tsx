@@ -457,7 +457,7 @@ const CmsServiceDetail = ({
   const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
 
   const seoDescription = bn 
-    ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সেবা।` 
+    ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সার্ভিস।` 
     : `${serviceTitle} — professional, reliable & affordable service.`;
 
   useSEO({
@@ -581,8 +581,8 @@ const CmsServiceDetail = ({
 
   const benefits = [
     { icon: BadgeCheck, title: bn ? "প্রশিক্ষিত পেশাদার" : "Trained Professionals", desc: bn ? "আমাদের সকল টেকনিশিয়ান প্রশিক্ষিত ও অভিজ্ঞ" : "All our technicians are trained & experienced" },
-    { icon: ShieldCheck, title: bn ? "সেবা গ্যারান্টি" : "Service Guarantee", desc: bn ? "সেবায় সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সেবা" : "Free re-service if not satisfied" },
-    { icon: Clock, title: bn ? "সময়মতো সেবা" : "On-time Service", desc: bn ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে" : "Technician arrives at scheduled time" },
+    { icon: ShieldCheck, title: bn ? "সার্ভিস গ্যারান্টি" : "Service Guarantee", desc: bn ? "সার্ভিসয় সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সার্ভিস" : "Free re-service if not satisfied" },
+    { icon: Clock, title: bn ? "সময়মতো সার্ভিস" : "On-time Service", desc: bn ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে" : "Technician arrives at scheduled time" },
     { icon: Award, title: bn ? "স্বচ্ছ মূল্য" : "Transparent Pricing", desc: bn ? "কোনো লুকানো চার্জ নেই" : "No hidden charges" },
   ];
 
@@ -601,7 +601,7 @@ const CmsServiceDetail = ({
             </BreadcrumbItem>
             <BreadcrumbSeparator><ChevronRight className="h-3 w-3" /></BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbLink asChild><Link to="/all-services">{bn ? "সকল সেবা" : "All Services"}</Link></BreadcrumbLink>
+              <BreadcrumbLink asChild><Link to="/all-services">{bn ? "সকল সার্ভিস" : "All Services"}</Link></BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator><ChevronRight className="h-3 w-3" /></BreadcrumbSeparator>
             <BreadcrumbItem>
@@ -647,7 +647,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {bn ? "সেবার বিবরণ" : "Service Description"}
+                {bn ? "সার্ভিসর বিবরণ" : "Service Description"}
               </h2>
               {service.description && (
                 <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
@@ -722,7 +722,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <Award className="h-5 w-5 text-primary" />
-                {bn ? "এই সেবা নিলে যা যা পাবেন" : "What You Get"}
+                {bn ? "এই সার্ভিস নিলে যা যা পাবেন" : "What You Get"}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {benefits.map((b, i) => (
@@ -743,7 +743,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
-                {bn ? "যেসব শহরে সেবাটি পাওয়া যায়" : "Available Cities"}
+                {bn ? "যেসব শহরে সার্ভিসটি পাওয়া যায়" : "Available Cities"}
               </h2>
               {cities.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -757,7 +757,7 @@ const CmsServiceDetail = ({
                 <div className="rounded-xl border border-border bg-card p-4">
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    {bn ? "এই সেবাটি সারাদেশে পাওয়া যায়" : "Available nationwide"}
+                    {bn ? "এই সার্ভিসটি সারাদেশে পাওয়া যায়" : "Available nationwide"}
                   </p>
                 </div>
               )}

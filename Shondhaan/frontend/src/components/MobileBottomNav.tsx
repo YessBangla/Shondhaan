@@ -178,9 +178,9 @@ const MobileBottomNav = () => {
     ...(isSupervisor ? [{ icon: Eye, label: bn ? "সুপারভাইজার প্যানেল" : "Supervisor", path: "/supervisor" }] : []),
     ...(isFinance ? [{ icon: DollarSign, label: bn ? "ফিনান্স প্যানেল" : "Finance", path: "/finance" }] : []),
     ...(hasStaffRole ? [{ icon: MessageSquare, label: bn ? "ইন্টার্নাল চ্যাট" : "Internal Chat", path: "/internal" }] : []),
-    { icon: FileSearch, label: bn ? "সেবা ট্র্যাক" : "Track Service", path: "__track__" },
+    { icon: FileSearch, label: bn ? "সার্ভিস ট্র্যাক" : "Track Service", path: "__track__" },
     { icon: QrCode, label: bn ? "QR স্ক্যান" : "Scan QR", path: "__qr__" },
-    { icon: LayoutGrid, label: bn ? "সেবাসমূহ" : "All Services", path: "/all-services" },
+    { icon: LayoutGrid, label: bn ? "সার্ভিসসমূহ" : "All Services", path: "/all-services" },
     { icon: UserPlus, label: bn ? "আমাদের সাথে যোগ দিন" : "Join Us", path: "/join" },
     { icon: Info, label: bn ? "আমাদের সম্পর্কে" : "About Us", path: "/about" },
     { icon: Phone, label: bn ? "যোগাযোগ" : "Contact Us", path: "/contact" },
@@ -228,7 +228,7 @@ const MobileBottomNav = () => {
                 type="text"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder={bn ? "সেবা খুঁজুন..." : "Search services..."}
+                placeholder={bn ? "সার্ভিস খুঁজুন..." : "Search services..."}
                 className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
               />
               <button
@@ -281,7 +281,7 @@ const MobileBottomNav = () => {
                 </ul>
               ) : (
                 <div className="px-4 py-12 text-center text-sm text-muted-foreground">
-                  {bn ? "কোনো সেবা পাওয়া যায়নি" : "No services found"}
+                  {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}
                 </div>
               )}
             </div>
@@ -305,7 +305,7 @@ const MobileBottomNav = () => {
             <div className="w-full max-w-sm px-6">
               <FileSearch className="h-10 w-10 text-primary mx-auto mb-3" />
               <h3 className="text-center text-base font-bold text-foreground mb-1">
-                {bn ? "সেবা ট্র্যাক করুন" : "Track Your Service"}
+                {bn ? "সার্ভিস ট্র্যাক করুন" : "Track Your Service"}
               </h3>
               <p className="text-center text-xs text-muted-foreground mb-4">
                 {bn ? "আপনার ট্র্যাকিং টোকেন আইডি দিন" : "Enter your tracking token ID"}

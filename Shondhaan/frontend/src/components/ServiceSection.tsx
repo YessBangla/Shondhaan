@@ -184,7 +184,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
   const { language } = useLanguage();
   const bn = language === "bn";
   const url = `${window.location.origin}/service/${slug}`;
-  const text = bn ? `${title} - সেবা দেখুন` : `Check out ${title}`;
+  const text = bn ? `${title} - সার্ভিস দেখুন` : `Check out ${title}`;
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -375,7 +375,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
       toast.info(bn ? "তুলনা থেকে সরানো হয়েছে" : "Removed from compare");
     } else {
       if (compareList.length >= 3) {
-        toast.warning(bn ? "সর্বোচ্চ ৩টি সেবা তুলনা করা যাবে" : "Max 3 services to compare");
+        toast.warning(bn ? "সর্বোচ্চ ৩টি সার্ভিস তুলনা করা যাবে" : "Max 3 services to compare");
         return;
       }
       addToCompare(service.cmsService);

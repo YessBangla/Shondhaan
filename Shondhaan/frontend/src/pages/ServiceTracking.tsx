@@ -39,7 +39,7 @@ interface TrackingData {
 const statusSteps = [
   { key: "pending", label: "রিকোয়েস্ট গৃহীত", icon: FileText },
   { key: "contacted", label: "যোগাযোগ হয়েছে", icon: Phone },
-  { key: "resolved", label: "সেবা সম্পন্ন", icon: CheckCircle },
+  { key: "resolved", label: "সার্ভিস সম্পন্ন", icon: CheckCircle },
 ];
 
 const paymentStatusMap: Record<string, { label: string; className: string }> = {
@@ -94,7 +94,7 @@ const ServiceTracking = () => {
         },
         (payload: any) => {
           setData(payload.new as TrackingData);
-          toast.info("📢 সেবার তথ্য আপডেট হয়েছে!");
+          toast.info("📢 সার্ভিসর তথ্য আপডেট হয়েছে!");
         }
       )
       .subscribe();
@@ -164,7 +164,7 @@ const ServiceTracking = () => {
             <div className="mt-5 flex flex-col gap-2 sm:flex-row sm:justify-center">
               <button
                 onClick={() => navigate("/track")}
-                className="press inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+                className="press inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold border border-primary text-white hover:text-accent shadow-md hover:bg-primary/90"
               >
                 <Search className="h-4 w-4" />
                 {bn ? "অন্য টোকেন/ফোন দিন" : "Try another token/phone"}
@@ -209,7 +209,7 @@ const ServiceTracking = () => {
           className="rounded-2xl border border-border bg-card p-5 mb-4">
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
-              <h1 className="font-heading text-lg md:text-xl font-bold text-foreground">📋 সেবা ট্র্যাকিং</h1>
+              <h1 className="font-heading text-lg md:text-xl font-bold text-foreground">📋 সার্ভিস ট্র্যাকিং</h1>
               <p className="text-xs text-muted-foreground mt-0.5">
                 আইডি: #{data.id.slice(0, 8).toUpperCase()}
               </p>
@@ -230,7 +230,7 @@ const ServiceTracking = () => {
             }`}>
               {data.status === "pending" ? "অপেক্ষমাণ" :
                data.status === "contacted" ? "যোগাযোগ হয়েছে" :
-               data.status === "resolved" ? "সেবা সম্পন্ন" : "বাতিল"}
+               data.status === "resolved" ? "সার্ভিস সম্পন্ন" : "বাতিল"}
             </span>
             <span className={`rounded-full px-3 py-1 text-xs font-semibold ${paymentInfo.className}`}>
               💰 {paymentInfo.label}
@@ -270,7 +270,7 @@ const ServiceTracking = () => {
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
           className="rounded-2xl border border-border bg-card p-5 mb-4">
           <h2 className="text-sm font-bold text-foreground mb-3 flex items-center gap-1.5">
-            <FileText className="h-4 w-4 text-primary" /> সেবার বিবরণ
+            <FileText className="h-4 w-4 text-primary" /> সার্ভিসর বিবরণ
           </h2>
           <p className="text-sm text-foreground bg-secondary/50 rounded-lg p-3 leading-relaxed mb-3">
             {data.service_description}
@@ -291,7 +291,7 @@ const ServiceTracking = () => {
           {/* Assigned Representative */}
           {data.area_representatives && (
             <div className="mt-4 pt-3 border-t border-border/50">
-              <h3 className="text-xs font-semibold text-muted-foreground mb-2">🧑‍💼 সেবা প্রদানকারী প্রতিনিধি</h3>
+              <h3 className="text-xs font-semibold text-muted-foreground mb-2">🧑‍💼 সার্ভিস প্রদানকারী প্রতিনিধি</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
                 <span className="flex items-center gap-1.5 text-foreground">
                   <User className="h-3.5 w-3.5 shrink-0 text-primary" /> {data.area_representatives.name}
@@ -313,7 +313,7 @@ const ServiceTracking = () => {
 
           {data.payment_amount > 0 && (
             <div className="rounded-xl bg-secondary/50 p-3 mb-3">
-              <p className="text-xs text-muted-foreground">সেবার মূল্য</p>
+              <p className="text-xs text-muted-foreground">সার্ভিসর মূল্য</p>
               <p className="text-xl font-bold text-foreground">৳{data.payment_amount.toLocaleString("bn-BD")}</p>
             </div>
           )}
@@ -331,7 +331,7 @@ const ServiceTracking = () => {
             )}
             {data.service_completed_at && (
               <div className="flex items-center justify-between py-1.5 border-b border-border/50">
-                <span className="text-muted-foreground flex items-center gap-1.5"><CheckCircle className="h-3 w-3" /> সেবা সম্পন্ন</span>
+                <span className="text-muted-foreground flex items-center gap-1.5"><CheckCircle className="h-3 w-3" /> সার্ভিস সম্পন্ন</span>
                 <span className="text-foreground font-medium">{new Date(data.service_completed_at).toLocaleString("bn-BD")}</span>
               </div>
             )}
@@ -349,8 +349,8 @@ const ServiceTracking = () => {
           <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
             className="rounded-2xl border border-green-200 bg-green-50 p-5 text-center dark:border-green-900/40 dark:bg-green-900/10">
             <CheckCircle className="h-10 w-10 mx-auto text-green-600 mb-2" />
-            <h3 className="text-sm font-bold text-green-800 dark:text-green-200">সেবা ও পেমেন্ট সম্পন্ন!</h3>
-            <p className="text-xs text-green-700 dark:text-green-300 mt-1">আপনার সেবা সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ!</p>
+            <h3 className="text-sm font-bold text-green-800 dark:text-green-200">সার্ভিস ও পেমেন্ট সম্পন্ন!</h3>
+            <p className="text-xs text-green-700 dark:text-green-300 mt-1">আপনার সার্ভিস সফলভাবে সম্পন্ন হয়েছে। ধন্যবাদ!</p>
           </motion.div>
         )}
 
@@ -358,7 +358,7 @@ const ServiceTracking = () => {
         {!isCompleted && data.status !== "rejected" && (
           <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 text-center dark:border-blue-900/40 dark:bg-blue-900/10">
             <p className="text-xs text-blue-800 dark:text-blue-200">
-              🔴 এই পেজটি রিয়েলটাইমে আপডেট হয়। সেবা সম্পন্ন ও পেমেন্ট নিশ্চিত না হওয়া পর্যন্ত এই লিংকটি সক্রিয় থাকবে।
+              🔴 এই পেজটি রিয়েলটাইমে আপডেট হয়। সার্ভিস সম্পন্ন ও পেমেন্ট নিশ্চিত না হওয়া পর্যন্ত এই লিংকটি সক্রিয় থাকবে।
             </p>
           </div>
         )}

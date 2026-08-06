@@ -53,7 +53,7 @@ const CentralAccounts = () => {
   const netIncome = totalRevenue - withdrawnTotal;
 
   const revenueBySource = [
-    { name: "সেবা বুকিং", value: serviceRevenue },
+    { name: "সার্ভিস বুকিং", value: serviceRevenue },
     { name: "সন্ধান মার্ট", value: martRevenue },
     { name: "কমিশন", value: commissionTotal },
   ].filter(r => r.value > 0);
@@ -78,7 +78,7 @@ const CentralAccounts = () => {
   const exportCSV = () => {
     const rows = [
       ["বিভাগ", "পরিমাণ (৳)"],
-      ["সেবা বুকিং রেভিনিউ", serviceRevenue.toString()],
+      ["সার্ভিস বুকিং রেভিনিউ", serviceRevenue.toString()],
       ["মার্ট রেভিনিউ", martRevenue.toString()],
       ["মোট রেভিনিউ", totalRevenue.toString()],
       ["কমিশন আয়", commissionTotal.toString()],

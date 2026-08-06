@@ -19,6 +19,7 @@ async function createJobsTable() {
         user_id INT NOT NULL,
 
         title VARCHAR(255) NOT NULL,
+        slug VARCHAR(255) NOT NULL,
         company_name VARCHAR(255) NOT NULL,
         company_logo_url VARCHAR(500) DEFAULT NULL,
         description TEXT NOT NULL,

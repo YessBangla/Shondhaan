@@ -30,12 +30,12 @@ const TrackingSearch = () => {
         <div className="flex items-center gap-2 mb-3">
           <FileSearch className="h-5 w-5 text-primary" />
           <h3 className="text-sm font-bold text-foreground">
-            {bn ? "সেবা ট্র্যাক করুন" : "Track Your Service"}
+            {bn ? "সার্ভিস ট্র্যাক করুন" : "Track Your Service"}
           </h3>
         </div>
         <p className="text-xs text-muted-foreground mb-3">
           {bn
-            ? "আপনার ট্র্যাকিং টোকেন আইডি দিন এবং সেবার বিস্তারিত দেখুন"
+            ? "আপনার ট্র্যাকিং টোকেন আইডি দিন এবং সার্ভিসর বিস্তারিত দেখুন"
             : "Enter your tracking token ID to view service details"}
         </p>
         <form onSubmit={handleSearch} className="flex gap-2">

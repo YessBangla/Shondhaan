@@ -126,7 +126,7 @@ const ServiceRequestsTab = ({ userPhone }: Props) => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={bn ? "সেবা, জেলা বা টোকেন দিয়ে খুঁজুন..." : "Search by service, district or token..."}
+          placeholder={bn ? "সার্ভিস, জেলা বা টোকেন দিয়ে খুঁজুন..." : "Search by service, district or token..."}
           className="w-full rounded-lg border border-input bg-background pl-9 pr-8 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring"
         />
         {searchQuery && (

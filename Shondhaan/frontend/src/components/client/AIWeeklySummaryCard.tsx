@@ -57,15 +57,15 @@ export default function AIWeeklySummaryCard() {
     const bn = (localStorage.getItem("yess_lang") || "bn") === "bn";
     if (stats.total === 0)
       return bn
-        ? "এই সপ্তাহে কোনো বুকিং নেই — কী সেবা প্রয়োজন?"
+        ? "এই সপ্তাহে কোনো বুকিং নেই — কী সার্ভিস প্রয়োজন?"
         : "No bookings this week — what service do you need?";
     if (stats.completed === stats.total)
       return bn
-        ? `চমৎকার! সব ${stats.completed}টি সেবা সম্পন্ন হয়েছে ✨`
+        ? `চমৎকার! সব ${stats.completed}টি সার্ভিস সম্পন্ন হয়েছে ✨`
         : `Awesome! All ${stats.completed} services completed ✨`;
     if (stats.pending > 0)
       return bn
-        ? `${stats.pending}টি সেবা চলমান, ${stats.completed}টি সম্পন্ন।`
+        ? `${stats.pending}টি সার্ভিস চলমান, ${stats.completed}টি সম্পন্ন।`
         : `${stats.pending} in progress, ${stats.completed} completed.`;
     return bn ? "সপ্তাহের সারাংশ প্রস্তুত।" : "Your weekly summary is ready.";
   }, [stats]);
@@ -102,7 +102,7 @@ export default function AIWeeklySummaryCard() {
         </div>
         {stats.topService && (
           <p className="mt-3 line-clamp-1 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{bn ? "শীর্ষ সেবা: " : "Top service: "}</span>
+            <span className="font-medium text-foreground">{bn ? "শীর্ষ সার্ভিস: " : "Top service: "}</span>
             {stats.topService}
           </p>
         )}

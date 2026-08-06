@@ -63,7 +63,7 @@ const allOffers: Record<TabKey, any[]> = {
       expires_at: null,
     },
     {
-      title_bn: "প্লাম্বিং সেবা", title_en: "Plumbing",
+      title_bn: "প্লাম্বিং সার্ভিস", title_en: "Plumbing",
       discount_bn: "১০% ছাড়", discount_en: "10% OFF",
       description_bn: "পাইপ লিকেজ? দক্ষ প্লাম্বার!",
       description_en: "Pipe issue? Expert plumber!",
@@ -100,7 +100,7 @@ const allOffers: Record<TabKey, any[]> = {
     {
       title_bn: "ফ্রিজ সার্ভিসিং", title_en: "Fridge Service",
       discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "ফ্রিজ ঠিক করুন — দ্রুত সেবা!",
+      description_bn: "ফ্রিজ ঠিক করুন — দ্রুত সার্ভিস!",
       description_en: "Fridge repair — quick service!",
       service_slug: "fridge-service", image: offerFridge,
       gradient: "from-indigo-500/40 via-indigo-400/25 to-indigo-300/10",
@@ -133,7 +133,7 @@ const allOffers: Record<TabKey, any[]> = {
       expires_at: null,
     },
     {
-      title_bn: "পেইন্টিং সেবা", title_en: "Painting",
+      title_bn: "পেইন্টিং সার্ভিস", title_en: "Painting",
       discount_bn: "২০% ছাড়", discount_en: "20% OFF",
       description_bn: "ঘর রাঙান — সেরা দামে!",
       description_en: "Paint your home — best price!",
@@ -155,7 +155,7 @@ const allOffers: Record<TabKey, any[]> = {
       expires_at: null,
     },
     {
-      title_bn: "শিফটিং সেবা", title_en: "Home Shifting",
+      title_bn: "শিফটিং সার্ভিস", title_en: "Home Shifting",
       discount_bn: "১৫% ছাড়", discount_en: "15% OFF",
       description_bn: "বাসা বদলান সহজেই!",
       description_en: "Shift your home easily!",
@@ -170,7 +170,7 @@ const allOffers: Record<TabKey, any[]> = {
     {
       title_bn: "এসি সার্ভিসিং", title_en: "AC Servicing",
       discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "সর্বাধিক জনপ্রিয় সেবা!",
+      description_bn: "সর্বাধিক জনপ্রিয় সার্ভিস!",
       description_en: "Most popular service!",
       service_slug: "ac-service", image: offerAc,
       gradient: "from-orange-500/40 via-orange-400/25 to-orange-300/10",
@@ -181,7 +181,7 @@ const allOffers: Record<TabKey, any[]> = {
     {
       title_bn: "ইলেকট্রিশিয়ান", title_en: "Electrician",
       discount_bn: "১০% ছাড়", discount_en: "10% OFF",
-      description_bn: "সবচেয়ে বেশি অর্ডার হওয়া সেবা!",
+      description_bn: "সবচেয়ে বেশি অর্ডার হওয়া সার্ভিস!",
       description_en: "Most ordered service!",
       service_slug: "electrician", image: offerElectric,
       gradient: "from-amber-500/40 via-amber-400/25 to-amber-300/10",
@@ -203,7 +203,7 @@ const allOffers: Record<TabKey, any[]> = {
     {
       title_bn: "সেলুন কেয়ার", title_en: "Salon Care",
       discount_bn: "২৫% ছাড়", discount_en: "25% OFF",
-      description_bn: "কাস্টমার ফেভারিট সেবা!",
+      description_bn: "কাস্টমার ফেভারিট সার্ভিস!",
       description_en: "Customer favorite!",
       service_slug: "salon", image: offerSalon,
       gradient: "from-pink-500/40 via-pink-400/25 to-pink-300/10",
