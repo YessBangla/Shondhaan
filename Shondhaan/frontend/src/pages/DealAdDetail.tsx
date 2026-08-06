@@ -365,7 +365,7 @@ const DealAdDetail = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <div className="pt-[44px] md:pt-[68px]" />
+        <div className="pt-[14px] md:pt-[28px]" />
         <div className="app-container py-20 text-center">
           <p className="text-5xl mb-4">😔</p>
           <p className="text-lg font-medium text-muted-foreground mb-6">{bn ? "বিজ্ঞাপনটি পাওয়া যায়নি" : "Ad not found"}</p>
@@ -381,7 +381,7 @@ const DealAdDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[68px]" />
+      <div className="pt-[14px] md:pt-[28px]" />
       <div className="app-container py-6 pb-28 md:pb-12">
         {/* Breadcrumb */}
         <motion.div className="flex items-center gap-2 text-xs text-muted-foreground mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -552,6 +552,7 @@ const DealAdDetail = () => {
                       <Phone className="h-4 w-4" />
                       <span>{bn ? "নাম্বার দেখুন" : "Show Phone"}</span>
                     </Button>
+                    
                   ) : (
                     <a href={`tel:${listing.phone}`} className="block w-full">
                       <Button className="w-full gap-2 bg-primary hover:bg-green-800 text-white">
@@ -560,7 +561,6 @@ const DealAdDetail = () => {
                       </Button>
                     </a>
                   )}
-
                   <Button
                     className="w-full gap-2 border-primary text-primary hover:bg-green-800"
                     variant="outline"

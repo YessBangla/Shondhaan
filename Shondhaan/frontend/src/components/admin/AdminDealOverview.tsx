@@ -1,9 +1,27 @@
 import { useState, useEffect, useCallback } from "react";
 import { Handshake, AlertTriangle, Eye, CheckCircle, Ban, Search, RefreshCw, Flag } from "lucide-react";
 import { motion } from "framer-motion";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
-// Same base URL / helper convention as AdminDealManagement.tsx
-const API_BASE = "VITE_DEAL_API_BASE_URL/api";
+// Helper to fix relative image URLs coming from the backend
+const getStaticBaseUrl = () => {
+  const baseUrl = (import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "");
+  try {
+    return new URL(baseUrl).origin;
+  } catch {
+    return baseUrl.replace(/\/api$/, "");
+  }
+};
+const STATIC_BASE_URL = getStaticBaseUrl();
+
+const getImageSrc = (url?: string) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const path = url.startsWith("/") ? url : `/${url}`;
+  return `${STATIC_BASE_URL}${path}`;
+};
+
+const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "")}/api`;
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -36,9 +54,6 @@ const AdminDealOverview = () => {
       all = [...all].sort((a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
       let allReports: any[] = reportData.data || reportData;
 
-      // API doesn't embed the listing title on the report the way the old
-      // Supabase `select("*, deal_listings(title)")` did, so stitch it in
-      // client-side from the listings we just fetched.
       const listingMap = new Map(all.map((l: any) => [l.id, l]));
       allReports = allReports.map((r: any) => ({
         ...r,
@@ -101,27 +116,27 @@ const AdminDealOverview = () => {
   if (loading) return <div className="py-8 text-center text-muted-foreground">লোড হচ্ছে...</div>;
 
   return (
-    <div className="p-4 space-y-6">
+    <div className="p-4 md:p-6 space-y-6">
       <div className="flex items-center justify-between">
         <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
           <Handshake className="h-5 w-5 text-primary" /> সন্ধান ডিল ম্যানেজমেন্ট
         </h3>
-        <button onClick={fetchData} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
+        <button onClick={fetchData} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary transition-colors">
           <RefreshCw className="h-3.5 w-3.5" /> রিফ্রেশ
         </button>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         {statCards.map((s, i) => (
           <motion.div key={s.label} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
-            className="rounded-xl border border-border bg-card p-3 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className={`flex h-9 w-9 items-center justify-center rounded-lg ${s.bg}`}>
-                <s.icon className={`h-4 w-4 ${s.color}`} />
+            className="rounded-2xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition-shadow">
+            <div className="flex items-center gap-4">
+              <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${s.bg}`}>
+                <s.icon className={`h-6 w-6 ${s.color}`} />
               </div>
               <div>
-                <p className="text-lg font-bold text-foreground">{s.value}</p>
-                <p className="text-[10px] text-muted-foreground">{s.label}</p>
+                <p className="text-3xl font-bold text-foreground">{s.value}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
               </div>
             </div>
           </motion.div>
@@ -148,7 +163,7 @@ const AdminDealOverview = () => {
                 className="w-full pl-9 pr-3 py-2 rounded-lg border border-input bg-background text-sm outline-none focus:ring-1 focus:ring-ring" />
             </div>
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-              className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none">
+              className="rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring cursor-pointer">
               <option value="all">সব</option>
               <option value="active">অ্যাক্টিভ</option>
               <option value="pending">অপেক্ষমাণ</option>
@@ -158,35 +173,35 @@ const AdminDealOverview = () => {
           </div>
 
           {filteredListings.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">কোনো বিজ্ঞাপন পাওয়া যায়নি</div>
+            <div className="text-center py-12 text-muted-foreground text-sm border border-dashed rounded-xl">কোনো বিজ্ঞাপন পাওয়া যায়নি</div>
           ) : (
-            <div className="space-y-3">
+            <div className="space-y-4">
               {filteredListings.slice(0, 50).map(l => {
                 const images = Array.isArray(l.images) ? l.images : [];
                 return (
-                  <div key={l.id} className="rounded-xl border border-border bg-card p-4 shadow-sm">
-                    <div className="flex gap-3">
+                  <div key={l.id} className="rounded-xl border border-border bg-card p-4 shadow-sm hover:border-primary/30 transition-colors">
+                    <div className="flex gap-4">
                       {images[0] && (
-                        <img src={images[0] as string} alt="" className="h-16 w-16 rounded-lg object-cover shrink-0" />
+                        <img src={getImageSrc(images[0])} alt={l.title} className="h-16 w-16 rounded-lg object-cover shrink-0 border border-border" />
                       )}
                       <div className="flex-1 min-w-0">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <p className="text-sm font-semibold text-foreground truncate">{l.title}</p>
-                            <p className="text-xs text-primary font-bold">৳{l.price.toLocaleString("bn-BD")}</p>
+                            <p className="text-xs text-primary font-bold">৳{Number(l.price || 0).toLocaleString("bn-BD")}</p>
                           </div>
                           <select value={l.status} onChange={e => handleListingStatus(l.id, e.target.value)}
-                            className="rounded-lg border border-input bg-background px-2 py-1 text-xs outline-none">
+                            className="rounded-lg border border-input bg-background px-2 py-1 text-xs outline-none cursor-pointer focus:ring-1 focus:ring-ring">
                             <option value="active">অ্যাক্টিভ</option>
                             <option value="pending">অপেক্ষমাণ</option>
                             <option value="sold">বিক্রিত</option>
                             <option value="inactive">নিষ্ক্রিয়</option>
                           </select>
                         </div>
-                        <div className="mt-1 flex gap-3 text-[10px] text-muted-foreground">
-                          <span>{l.location_division} • {l.location_district}</span>
-                          <span>👀 {l.views_count || 0}</span>
-                          <span>{new Date(l.created_at).toLocaleDateString("bn-BD")}</span>
+                        <div className="mt-2 flex flex-wrap gap-3 text-[10px] text-muted-foreground">
+                          <span className="flex items-center gap-1">📍 {l.location_division} • {l.location_district}</span>
+                          <span className="flex items-center gap-1">👀 {l.views_count || 0}</span>
+                          <span className="flex items-center gap-1">🕒 {new Date(l.created_at).toLocaleDateString("bn-BD")}</span>
                         </div>
                       </div>
                     </div>
@@ -201,7 +216,7 @@ const AdminDealOverview = () => {
       {tab === "reports" && (
         <div className="space-y-3">
           {reports.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground text-sm">কোনো রিপোর্ট নেই</div>
+            <div className="text-center py-12 text-muted-foreground text-sm border border-dashed rounded-xl">কোনো রিপোর্ট নেই</div>
           ) : reports.map(r => (
             <div key={r.id} className={`rounded-xl border p-4 shadow-sm ${r.status === "pending" ? "border-red-200 bg-red-50/50 dark:border-red-900 dark:bg-red-950/20" : "border-border bg-card"}`}>
               <div className="flex items-start justify-between gap-2 mb-2">
@@ -215,13 +230,13 @@ const AdminDealOverview = () => {
                 </span>
               </div>
               {r.status === "pending" && (
-                <div className="flex gap-2 mt-2">
+                <div className="flex gap-2 mt-3">
                   <button onClick={() => handleReportResolve(r.id, "পর্যালোচনা করা হয়েছে")}
-                    className="rounded-lg bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200">
+                    className="rounded-lg bg-green-100 px-3 py-1.5 text-xs font-medium text-green-700 hover:bg-green-200 transition-colors">
                     সমাধান করুন
                   </button>
                   <button onClick={() => { handleReportResolve(r.id, "বিজ্ঞাপন সরানো হয়েছে"); handleListingStatus(r.listing_id, "inactive"); }}
-                    className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200">
+                    className="rounded-lg bg-red-100 px-3 py-1.5 text-xs font-medium text-red-700 hover:bg-red-200 transition-colors">
                     বিজ্ঞাপন সরান
                   </button>
                 </div>

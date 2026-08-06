@@ -354,7 +354,7 @@ const ServiceDetail = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[60px] md:pt-[80px]" />
+      <div className="pt-[22px] md:pt-[42px]" />
       
       <div className="app-container py-4">
         <Breadcrumb>
@@ -591,7 +591,7 @@ const CmsServiceDetail = ({
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[60px] md:pt-[80px]" />
+      <div className="pt-[20px] md:pt-[20px]" />
 
       <div className="app-container py-3">
         <Breadcrumb>
@@ -612,8 +612,8 @@ const CmsServiceDetail = ({
       </div>
 
       {/* Hero Section - Aligned with app-container padding */}
-      <div className="app-container pt-4 md:pt-6">
-        <div className="relative h-[100px] md:h-[150px] w-full overflow-hidden rounded-2xl shadow-sm">
+      <div className="app-container">
+        <div className="relative h-[150px] md:h-[250px] w-full overflow-hidden rounded-2xl shadow-sm">
           <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover" />
           <div className={`absolute inset-0 bg-gradient-to-t ${category?.color_overlay || "from-foreground/80 to-foreground/20"}`} />
           <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">

@@ -707,7 +707,7 @@ const DealAllAds = () => {
     <div className="min-h-screen bg-muted/30">
       <Navbar />
 
-      <div className="pt-[44px] md:pt-[68px]" />
+      <div className="pt-[14px] md:pt-[28px]" />
 
       <div className="bg-background border-b border-border/50">
         <div className="app-container py-3">
