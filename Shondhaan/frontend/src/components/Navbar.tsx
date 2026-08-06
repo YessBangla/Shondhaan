@@ -291,7 +291,7 @@ const  Navbar = () => {
         <PopoverTrigger asChild>
           {showLabel ? (
             <button
-              className="flex items-center gap-1.5 rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
+              className="flex items-center gap-1.5 overflow-hidden rounded-lg border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-bold text-primary transition-colors hover:bg-primary/20"
               title={bn ? "সেবা ট্র্যাক করুন" : "Track Service"}
             >
               <Route className={iconSize} />

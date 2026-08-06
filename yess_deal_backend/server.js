@@ -92,9 +92,9 @@ app.get("/", (req, res) => {
   });
 });
 
-//
+
 // HEALTH CHECK
-//
+
 app.get("/api/health", async (req, res) => {
   try {
     await dealDb.query("SELECT 1");
