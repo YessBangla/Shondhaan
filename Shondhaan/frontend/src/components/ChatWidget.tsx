@@ -430,7 +430,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                     <div className="flex items-center gap-2 px-3 py-0.5">
                       <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
                       <Input
-                        placeholder={bn ? "ইমেইল (ঐচ্ছিক)" : "Email (optional)"}
+                        placeholder={bn ? "ইমেইল (অপশনাল)" : "Email (optional)"}
                         type="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}

@@ -363,7 +363,7 @@ const DescriptionBlock = () => (
                   alt={job.company_name}
                   sizeClass="w-16 h-16"
                   iconClass="h-8 w-8 text-blue-600"
-                  fallbackBgClass="bg-blue-50 dark:bg-blue-900/30"
+                  fallbackBgClass="rounded"
                 />
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold text-foreground">{job.company_name}</p>
