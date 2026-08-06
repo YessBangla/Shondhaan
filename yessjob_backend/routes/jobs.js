@@ -103,6 +103,13 @@ const JOB_SELECT_WITH_CATEGORY = `
   LEFT JOIN employer_profiles ep ON ep.user_id = jobs.user_id
 `;
 
+// FIXED: this select (used by GET /:id, the job-detail endpoint) was
+// missing the LEFT JOIN to employer_profiles entirely, so it always fell
+// back to the raw jobs.company_logo_url column and ignored any logo set
+// on the employer's profile — that's why the logo showed on listing pages
+// (which use JOB_SELECT_WITH_CATEGORY, below) but not on the detail page.
+// Also now surfaces the employer's website_url for the Company Information
+// section on the detail page.
 const JOB_SELECT_FULL = `
   SELECT
     jobs.*,
@@ -116,12 +123,16 @@ const JOB_SELECT_FULL = `
     cr.prefer_video_resume, cr.additional_requirements,
     mc.industry_experience, mc.skills,
     bc.billing_contact_name, bc.billing_designation, bc.billing_email, bc.billing_mobile,
-    bc.hr_contact_name, bc.hr_designation, bc.hr_email, bc.hr_mobile
+    bc.hr_contact_name, bc.hr_designation, bc.hr_email, bc.hr_mobile,
+    COALESCE(ep.company_logo_url, jobs.company_logo_url) AS company_logo_url,
+    ep.website_url,
+    ep.is_verified AS company_is_verified
   FROM jobs
   LEFT JOIN job_categories jc ON jc.id = jobs.category_id
   LEFT JOIN job_candidate_requirements cr ON cr.job_id = jobs.id
   LEFT JOIN job_matching_criteria mc ON mc.job_id = jobs.id
   LEFT JOIN job_billing_contacts bc ON bc.job_id = jobs.id
+  LEFT JOIN employer_profiles ep ON ep.user_id = jobs.user_id
 `;
 
 // Sort clause shared by the two public/browsable listing routes: jobs whose
@@ -426,6 +437,23 @@ router.patch('/:id/featured', requireAdmin, async (req, res) => {
     res.json(rows[0]);
   } catch (err) {
     console.error('Admin toggle featured error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// NEW: increments jobs.views_count for the given job. This was missing
+// entirely, which is why useIncrementJobView() in useJobData.ts was
+// getting a 404 on every job-detail page load. Intentionally left
+// unauthenticated (view counters generally track anonymous traffic too)
+// and fire-and-forget from the frontend's perspective — it always
+// responds 200 even if the id doesn't exist, since a failed view-count
+// bump shouldn't surface as an error to the visitor.
+router.post('/:id/view', async (req, res) => {
+  try {
+    await pool.query('UPDATE jobs SET views_count = views_count + 1 WHERE id = ?', [req.params.id]);
+    res.status(200).json({ ok: true });
+  } catch (err) {
+    console.error('Increment job view error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 });

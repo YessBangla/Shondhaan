@@ -1723,7 +1723,8 @@ const EmployerPanel = () => {
     <JobsPageTransition>
       <PanelSidebarTabs
         panelTitle="এমপ্লয়ার প্যানেল"
-        panelIcon={<Building2 />}
+       panelIcon={<img src={profile.company_logo_url} className="" />}
+        
         hero={{
           title: "নিয়োগ ও ক্যান্ডিডেট ম্যানেজমেন্ট",
           subtitle: "চাকরি পোস্ট, পাইপলাইন ও হায়ারিং অ্যানালিটিক্স — Linear-class রিক্রুটার ওয়ার্কফ্লো।",
