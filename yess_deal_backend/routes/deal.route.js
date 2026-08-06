@@ -8,6 +8,7 @@ import {
   addDealFavorite,
   removeDealFavorite,
   createDealListing,
+  updateDealListing,
 } from "../controller/deal.controller.js";
 
 import { getDealReports, resolveDealReport } from "../controller/reports.controller.js";
@@ -19,6 +20,7 @@ router.get("/listings/:id", getDealListingById);
 router.post("/listings", createDealListing);
 router.delete("/listings", deleteDealListing);
 router.delete("/listings/:id", deleteDealListing);
+router.put("/listings/:id", updateDealListing);
 
 // Reports
 router.get("/reports", getDealReports);

@@ -19,6 +19,7 @@ const DEAL_API_BASE_URL = (
 
 interface DealListing {
   id: string;
+  user_id?: string | null; 
   title: string;
   price: number;
   status: string | null;
@@ -63,6 +64,7 @@ const normalizeImages = (images: any): string[] => {
 
 const normalizeListing = (listing: any): DealListing => ({
   id: String(listing.id),
+  user_id: listing.user_id ? String(listing.user_id) : null, 
   title: listing.title || "",
   price: Number(listing.price || 0),
   status: listing.status || "active",
@@ -118,14 +120,19 @@ const DealMyAds = () => {
 
   const getLoggedInUserId = () => {
     const authUser = user as any;
-
-    return String(
+    const userId = String(
       authUser?.id ||
         authUser?.user_id ||
         authUser?.user?.id ||
         authUser?.user?.user_id ||
         ""
     );
+    
+    // LOG 1: Check what ID we are extracting from the AuthContext
+    console.log("[DealMyAds] Logged in user object:", authUser);
+    console.log("[DealMyAds] Extracted Logged-in User ID:", userId);
+    
+    return userId;
   };
 
   const fetchListings = async () => {
@@ -146,6 +153,9 @@ const DealMyAds = () => {
 
       const payload = await response.json().catch(() => null);
 
+      // LOG 2: Check what the backend is actually returning
+      console.log("[DealMyAds] API Raw Payload for listings:", payload);
+
       if (!response.ok || payload?.success === false) {
         throw new Error(payload?.message || payload?.error || "Failed to load ads");
       }
@@ -155,6 +165,9 @@ const DealMyAds = () => {
       const ownListings = rows
         .filter((listing) => !hasUserIds || String(listing.user_id) === userId)
         .map(normalizeListing);
+
+      // LOG 3: Check what the normalized listings look like (specifically user_id)
+      console.log("[DealMyAds] Normalized Listings being set to state:", ownListings);
 
       setListings(ownListings);
     } catch (error) {
@@ -221,6 +234,22 @@ const DealMyAds = () => {
     if (Array.isArray(images) && images.length > 0) return images[0];
     return null;
   };
+
+  // Helper function to handle edit click and log the data
+  const handleEditClick = (listing: DealListing) => {
+    const currentUserId = getLoggedInUserId();
+    
+    // LOG 4: Check exactly what is being compared when Edit is clicked
+    console.log(`[DealMyAds] Edit Clicked! 
+      Listing ID: ${listing.id}
+      Listing's user_id from state: ${listing.user_id} (Type: ${typeof listing.user_id})
+      Logged-in user_id: ${currentUserId} (Type: ${typeof currentUserId})
+      Do they match? ${String(listing.user_id) === String(currentUserId)}
+    `);
+
+    navigate(`/deal/edit/${listing.id}`);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -333,7 +362,7 @@ const DealMyAds = () => {
                               variant="outline"
                               size="sm"
                               className="h-7 text-xs gap-1 rounded-lg"
-                              onClick={() => navigate(`/deal/edit/${listing.id}`)}
+                              onClick={() => handleEditClick(listing)} // <-- Updated to trigger logs
                             >
                               <Edit className="h-3 w-3" /> {bn ? "সম্পাদনা" : "Edit"}
                             </Button>
