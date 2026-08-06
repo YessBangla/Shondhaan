@@ -659,10 +659,10 @@ const HeroSection = () => {
             {/* <p className="text-[10px] font-medium uppercase tracking-widest text-white mb-1"> */}
               {/* {bn ? "স্বাগতম" : "Welcome back"}
             </p> */}
-            <h1 className="font-serif text-3xl font-light text-amber-50 mb-1">
+            <h1 className="text-3xl font-light text-amber-50 mb-1">
               {heroTitle}
             </h1>
-            <p className="text-sm text-amber-200/50 font-light">
+            <p className="text-sm text-amber-200 font-light">
               {heroSubtitle}
             </p>
           </motion.div>

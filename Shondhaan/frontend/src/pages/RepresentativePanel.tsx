@@ -149,7 +149,7 @@ const RepresentativePanel = () => {
         if (isMyArea) {
           setRequests(prev => [newReq, ...prev]);
           setNewRequestCount(c => c + 1);
-          toast.success("🔔 নতুন সেবা রিকোয়েস্ট এসেছে!", {
+          toast.success("🔔 নতুন সার্ভিস রিকোয়েস্ট এসেছে!", {
             description: `${newReq.customer_name} - ${newReq.service_description.slice(0, 50)}`,
           });
           try {

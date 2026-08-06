@@ -1,13 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Hind+Siliguri:wght@300;400;500;600;700&family=Pacifico&family=Hind+Siliguri:wght@700&display=swap');
-
+@import url('https://fonts.googleapis.com/css2?family=Anek+Bangla:wght@100..800&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 210 11% 15%;
+    --background: 210 20% 98%; /* white */
+    --foreground: 210 11% 15%; /* black */
 
     --card: 0 0% 100%;
     --card-foreground: 210 11% 15%;
@@ -18,7 +17,7 @@
 
     /* --primary: 152 60% 38%; */
     --primary: 208, 79%, 28%;
-    --primary-foreground: 0 0% 100%;
+    --primary-foreground: 180, 80, 97%;
 
     --secondary: 150 20% 95%;
     --secondary-foreground: 210 11% 15%;

@@ -79,7 +79,7 @@ const sidebarItems = [
   // ড্যাশবোর্ড
   { value: "analytics", label: "অ্যানালিটিক্স", icon: <BarChart3 />, group: "ড্যাশবোর্ড" },
   { value: "bookings", label: "বুকিং", icon: <Calendar />, group: "ড্যাশবোর্ড" },
-  { value: "requests", label: "সেবা রিকোয়েস্ট", icon: <FileText />, group: "ড্যাশবোর্ড" },
+  { value: "requests", label: "সার্ভিস রিকোয়েস্ট", icon: <FileText />, group: "ড্যাশবোর্ড" },
   { value: "accounts", label: "একাউন্টস", icon: <Wallet />, group: "ড্যাশবোর্ড" },
 
   // সেবা CMS

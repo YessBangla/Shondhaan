@@ -223,7 +223,7 @@ const JoinUs = () => {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="app-container relative pt-10 pb-8 text-center md:pt-16 md:pb-10"
+          className="app-container relative pt-2 pb-2 text-center"
         >
           <div className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary mb-4">
             <Sparkles className="h-3 w-3" />
@@ -240,7 +240,7 @@ const JoinUs = () => {
         </motion.div>
       </div>
 
-      <div className="app-container py-8 md:py-12">
+      <div className="app-container py-8 md:py-2 mb-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -291,7 +291,7 @@ const JoinUs = () => {
                         name="email"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{bn ? "ইমেইল (ঐচ্ছিক)" : "Email (optional)"}</FormLabel>
+                            <FormLabel>{bn ? "ইমেইল (অপশনাল)" : "Email (optional)"}</FormLabel>
                             <FormControl>
                               <Input type="email" placeholder={bn ? "আপনার ইমেইল" : "Your email"} {...field} />
                             </FormControl>
@@ -391,7 +391,7 @@ const JoinUs = () => {
                   <Button
                     type="submit"
                     disabled={submitting}
-                    className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99] mt-6 bg-primary text-primary-foreground "
+                    className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99] mt-6 bg-primary text-white "
                   >
                     <Send className="h-4 w-4" />
                     {submitting

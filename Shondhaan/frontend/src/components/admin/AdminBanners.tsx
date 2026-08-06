@@ -248,7 +248,7 @@ const AdminBanners = () => {
           <h3 className="font-heading text-lg font-bold text-foreground">
             হিরো ব্যানার ({banners.length})
           </h3>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
+          <p className="hidden mt-0.5 text-[10px] text-muted-foreground">
             API: {API_BASE_URL}/api/hero-banners
           </p>
         </div>
@@ -418,7 +418,11 @@ const AdminBanners = () => {
               <div className="flex min-w-0 items-center gap-3">
                 {banner.image_url ? (
                   <img
-                    src={banner.image_url}
+                    src={
+                        banner.image_url?.startsWith("http")
+                          ? banner.image_url
+                          : `${API_BASE_URL}${banner.image_url}`
+                      }
                     alt={banner.title_bn}
                     className="h-12 w-20 rounded-lg object-cover"
                   />

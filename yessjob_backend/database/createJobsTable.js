@@ -1,32 +1,3 @@
-// database/createJobsTable.js
-//
-// IMPORTANT: this table has a FOREIGN KEY on `category_id` referencing
-// job_categories(id). That means createJobCategoriesTable() MUST run
-// and finish BEFORE this function runs, or the CREATE TABLE will fail
-// with "Cannot add foreign key constraint" (errno 150) because the
-// referenced table doesn't exist yet. In your server startup file:
-//
-//   const { createJobCategoriesTable } = require('./database/createJobCategoriesTable');
-//   const createJobsTable = require('./database/createJobsTable');
-//   const createJobCandidateRequirementsTable = require('./database/createJobCandidateRequirementsTable');
-//   const createJobMatchingCriteriaTable = require('./database/createJobMatchingCriteriaTable');
-//   const createJobBillingContactsTable = require('./database/createJobBillingContactsTable');
-//
-//   await createJobCategoriesTable();            // must come first
-//   await createJobsTable();                     // then this
-//   await createJobCandidateRequirementsTable();  // then these three,
-//   await createJobMatchingCriteriaTable();       // in any order relative
-//   await createJobBillingContactsTable();        // to each other
-//
-// NOTE ON SCOPE: this table now only owns Step 1 ("Job Information") data
-// from JobPostForm.tsx — basic info, description, salary, workplace,
-// location and contact. Step 2/3/4 data (candidate requirements, matching
-// criteria, billing & HR contacts) lives in three separate 1:1 satellite
-// tables, each carrying a `job_id` FK back to this table. Previously
-// education_required / gender_preference / age_min / age_max /
-// experience_min / experience_max lived here — they've moved to
-// job_candidate_requirements. Don't re-add them here. education_subject
-// also lives in job_candidate_requirements — see createJobCandidateRequirementsTable.js.
 
 const mysql = require('mysql2');
 
@@ -34,7 +5,7 @@ const pool = mysql.createPool({
   host: process.env.DB_HOST || 'localhost',
   user: process.env.DB_USER || 'root',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'yessjob_backend',
+  database: process.env.DB_NAME ,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0
@@ -91,6 +62,20 @@ async function createJobsTable() {
         hired_count INT NOT NULL DEFAULT 0,
         views_count INT NOT NULL DEFAULT 0,
 
+        -- Visibility tier, driven by an enrolled package. 'basic' = default
+        -- for jobs with no active/paid enrollment. Set by consumeJobSlot()
+        -- in routes/enrolledPackages.js when a job is created with an
+        -- enrolled_package_id.
+        visibility_level VARCHAR(20) NOT NULL DEFAULT 'basic',
+        visibility_expires_at DATETIME DEFAULT NULL,
+
+        -- Links back to the enrolled_packages row this job's slot/credit
+        -- was consumed from, and the package it belongs to. NULL if the
+        -- job was posted without an enrolled package (falls back to basic
+        -- visibility with no expiry).
+        enrolled_package_id INT DEFAULT NULL,
+        package_id INT DEFAULT NULL,
+
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
@@ -102,6 +87,7 @@ async function createJobsTable() {
         INDEX idx_jobs_district (district),
         INDEX idx_jobs_deadline (deadline),
         INDEX idx_jobs_featured (is_featured),
+        INDEX idx_jobs_visibility (visibility_level, visibility_expires_at),
 
         CONSTRAINT fk_jobs_category_id
           FOREIGN KEY (category_id) REFERENCES job_categories(id)
@@ -109,7 +95,55 @@ async function createJobsTable() {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
 
+    // Migration: jobs table may already exist from before visibility
+    // columns were introduced. IF NOT EXISTS above won't add columns to
+    // an existing table, so patch it here idempotently on every startup.
+    const [existingCols] = await pool.query(`
+      SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'jobs'
+        AND COLUMN_NAME IN
+          ('visibility_level', 'visibility_expires_at', 'enrolled_package_id', 'package_id')
+    `);
+    const have = new Set(existingCols.map(r => r.COLUMN_NAME));
+
+    const alterStatements = [];
+    if (!have.has('visibility_level')) {
+      alterStatements.push("ADD COLUMN visibility_level VARCHAR(20) NOT NULL DEFAULT 'basic'");
+    }
+    if (!have.has('visibility_expires_at')) {
+      alterStatements.push("ADD COLUMN visibility_expires_at DATETIME DEFAULT NULL");
+    }
+    if (!have.has('enrolled_package_id')) {
+      alterStatements.push("ADD COLUMN enrolled_package_id INT DEFAULT NULL");
+    }
+    if (!have.has('package_id')) {
+      alterStatements.push("ADD COLUMN package_id INT DEFAULT NULL");
+    }
+
+    if (alterStatements.length > 0) {
+      await pool.query(`ALTER TABLE jobs ${alterStatements.join(', ')}`);
+      console.log(`✅ jobs table migrated: added [${alterStatements.length}] visibility/package column(s)`);
+    } else {
+      console.log("✓ jobs table already has visibility/package columns");
+    }
+
     console.log("✅ jobs table created (Step 1 fields only; category_id FK -> job_categories.id)");
+
+      // Add missing columns if they don't exist
+    await pool.query(`
+      ALTER TABLE jobs
+      ADD COLUMN IF NOT EXISTS visibility_level
+      ENUM('basic','standard','premium','premium_plus','hot')
+      DEFAULT 'basic'
+    `);
+
+    await pool.query(`
+      ALTER TABLE jobs
+      ADD COLUMN IF NOT EXISTS visibility_expires_at
+      DATETIME DEFAULT NULL
+    `);
+
+    console.log("✅ visibility columns checked");
 
   } catch (error) {
     console.error(error);
