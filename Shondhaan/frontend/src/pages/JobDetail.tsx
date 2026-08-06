@@ -7,7 +7,7 @@ import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useJobDetail, useApplyJob, useRelatedJobs, useIncrementJobView, useSaveJob, useSavedJobs, useJobSeekerProfile, JOB_TYPES, JOB_CATEGORIES, EDUCATION_LEVELS, GENDER_OPTIONS, COMPANY_TYPES } from "@/hooks/useJobData";
-import { Briefcase, MapPin, Clock, Building2, Banknote, Users, Calendar, Phone, Mail, ArrowLeft, Send, Eye, GraduationCap, User2, Building, AlertCircle, Share2, Bookmark, BookmarkCheck, Printer, CheckCircle2, ChevronRight, Video, Facebook, Linkedin } from "lucide-react";
+import { Briefcase, MapPin, Clock, Building2, Banknote, Users, Calendar, Phone, Mail, ArrowLeft, Send, Eye, GraduationCap, User2, Building, AlertCircle, Share2, Bookmark, BookmarkCheck, Printer, CheckCircle2, ChevronRight, Video, Facebook, Linkedin, Globe } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +64,36 @@ const JobDetail = () => {
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // The action bar starts inline (inside the header card, normal position
+  // at the top). Once it scrolls out of the viewport, we switch to showing
+  // a second copy fixed to the bottom of the screen instead.
+  const inlineActionBarRef = useRef<HTMLDivElement>(null);
+  const [showStickyBottomBar, setShowStickyBottomBar] = useState(false);
+
+  // NOTE: this effect used to run once on mount with `[]` as its
+  // dependency array. That meant it could fire BEFORE `job` finished
+  // loading (while the component is still rendering the loading
+  // skeleton / "not found" branch, which don't contain
+  // `inlineActionBarRef` in the DOM at all). When that happened,
+  // `inlineActionBarRef.current` was null, the observer was never
+  // attached, and `showStickyBottomBar` stayed false forever — so the
+  // bottom bar never appeared no matter how far you scrolled.
+  //
+  // Depending on `job` makes the effect re-run once the real header
+  // card (containing the ref) actually mounts, so the observer gets
+  // attached to the real DOM node.
+  useEffect(() => {
+    const el = inlineActionBarRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowStickyBottomBar(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [job]);
 
   // The only two fields the modal actually collects. Everything else
   // (name, phone, email, cv, video cv) comes straight from the
@@ -236,7 +266,7 @@ const JobDetail = () => {
   const SubHeading = ({ children }: { children: React.ReactNode }) => (
     <h3 className="text-xs font-semibold text-foreground mt-3 mb-1">{children}</h3>
   );
-const DescriptionBlock = () => (
+  const DescriptionBlock = () => (
     <div
       className="job-description-content text-sm text-muted-foreground leading-relaxed"
       dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(job.description) }}
@@ -305,6 +335,19 @@ const DescriptionBlock = () => (
           )}
         </div>
       </div>
+      {job.website_url && (
+        <p className="flex items-center gap-2 text-sm mb-2">
+          <Globe className="h-4 w-4 text-blue-600 shrink-0" />
+          <a
+            href={job.website_url.startsWith("http") ? job.website_url : `https://${job.website_url}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline text-blue-600 truncate"
+          >
+            {job.website_url.replace(/^https?:\/\//, "").replace(/\/$/, "")}
+          </a>
+        </p>
+      )}
       {user && (job.contact_phone || job.contact_email) ? (
         <div className="space-y-2 text-sm mt-3">
           {job.contact_phone && <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-blue-600" /> <a href={`tel:${job.contact_phone}`} className="hover:underline">{job.contact_phone}</a></p>}
@@ -384,45 +427,47 @@ const DescriptionBlock = () => (
                 </div>
               </div>
 
-              {/* ── Action bar ────────────────────────────────────── */}
-              <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
-                {!isExpired && (
+              {/* ── Action bar (inline, normal position at top) ────────
+                  Once this scrolls out of view, the fixed bottom bar
+                  below takes over. */}
+              {!isExpired && (
+                <div ref={inlineActionBarRef} className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
                   <Button
                     onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
                     className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
                   >
                     <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
                   </Button>
-                )}
-                <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                  {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
-                  {bn ? "সংরক্ষণ" : "Save"}
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
-                      <Facebook className="h-4 w-4 text-blue-600" /> Facebook
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
-                      <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
-                      <Send className="h-4 w-4 text-green-600" /> WhatsApp
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                      <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
-                  <Printer className="h-4 w-4" />
-                </Button>
-              </div>
+                  <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+                    {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+                    {bn ? "সংরক্ষণ" : "Save"}
+                  </Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="start">
+                      <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                        <Facebook className="h-4 w-4 text-blue-600" /> Facebook
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                        <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                        <Send className="h-4 w-4 text-green-600" /> WhatsApp
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
+                        <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                  <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+                    <Printer className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
 
             {/* ── Tabs (bdjobs style) ─────────────────────────────── */}
@@ -661,6 +706,58 @@ const DescriptionBlock = () => (
         </div>
       </div>
 
+      {/* ── Fixed bottom action bar ────────────────────────────────────
+          Hidden by default. Slides up into view only once the inline
+          action bar above has scrolled out of the viewport, then stays
+          pinned to the bottom of the screen for the rest of the scroll.
+          Scrolling back up hides it again automatically. */}
+      {!isExpired && (
+        <div
+          className={`fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
+            showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 py-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
+              >
+                <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+                {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+                {bn ? "সংরক্ষণ" : "Save"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                    <Facebook className="h-4 w-4 text-blue-600" /> Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                    <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                    <Send className="h-4 w-4 text-green-600" /> WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
+                    <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+                <Printer className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Apply Modal — only Age & Expected Salary are collected here.
           Name, phone, email, CV, and video CV all come from the
           jobseeker's profile automatically at submit time. */}
@@ -714,7 +811,8 @@ const DescriptionBlock = () => (
       </Dialog>
 
       <Footer />
-      <div className="h-16 md:hidden" />
+      {/* Reserves space so the fixed bottom bar never covers Footer content */}
+      {/* <div className={showStickyBottomBar ? "" : "h-16 md:hidden"} /> */}
     </JobsPageTransition>
   );
 };
