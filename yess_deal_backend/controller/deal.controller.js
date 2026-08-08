@@ -764,6 +764,146 @@ export const addDealFavorite = async (req, res) => {
   }
 };
 
+export const updateDealListing = async (req, res) => {
+  const connection = await dealDb.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const { id } = req.params;
+    const {
+      user_id,
+      category_id,
+      title,
+      title_en = "",
+      description = "",
+      price = 0,
+      is_negotiable = false,
+      condition = "used",
+      location_division = "",
+      location_district = "",
+      location_area = "",
+      address = "",
+      seller_name = "",
+      phone = "",
+      hide_phone = false,
+      status = "active",
+      images = [],
+    } = req.body;
+
+    // 1. Verify ownership
+    if (!user_id) {
+      return res.status(400).json({
+        success: false,
+        message: "user_id is required",
+      });
+    }
+
+    const [ownerCheck] = await connection.query(
+      `SELECT user_id FROM deal_listings WHERE id = ? LIMIT 1`,
+      [id]
+    );
+
+    if (ownerCheck.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Listing not found",
+      });
+    }
+
+    if (String(ownerCheck[0].user_id) !== String(user_id)) {
+      return res.status(403).json({
+        success: false,
+        message: "This is not your ad",
+      });
+    }
+
+    // 2. Update the listing
+    await connection.query(
+      `
+      UPDATE deal_listings SET
+        category_id = ?,
+        title = ?,
+        title_en = ?,
+        description = ?,
+        price = ?,
+        is_negotiable = ?,
+        product_condition = ?,
+        location_division = ?,
+        location_district = ?,
+        location_area = ?,
+        address = ?,
+        seller_name = ?,
+        phone = ?,
+        hide_phone = ?,
+        status = ?
+      WHERE id = ?
+      `,
+      [
+        category_id || null,
+        String(title || "").trim(),
+        String(title_en || "").trim(),
+        String(description || "").trim(),
+        Number(price || 0),
+        isTrue(is_negotiable) ? 1 : 0,
+        condition || "used",
+        location_division || null,
+        location_district || null,
+        location_area || null,
+        address || null,
+        seller_name || null,
+        phone || null,
+        isTrue(hide_phone) ? 1 : 0,
+        status || "active",
+        id
+      ]
+    );
+
+    // 3. Update images (Delete old ones and insert new ones)
+    const cleanImages = parseImages(images);
+    
+    if (cleanImages.length > 0) {
+      // Delete existing images for this listing
+      await connection.query(
+        `DELETE FROM deal_listing_images WHERE listing_id = ?`,
+        [id]
+      );
+
+      // Insert new images
+      for (let i = 0; i < cleanImages.length; i++) {
+        await connection.query(
+          `
+          INSERT INTO deal_listing_images (listing_id, image_url, sort_order)
+          VALUES (?, ?, ?)
+          `,
+          [id, cleanImages[i], i]
+        );
+      }
+    }
+
+    await connection.commit();
+
+    res.json({
+      success: true,
+      message: "Listing updated successfully",
+      data: {
+        id: String(id),
+      },
+    });
+  } catch (error) {
+    await connection.rollback();
+
+    console.error("Update deal listing error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to update listing",
+      error: error.message,
+    });
+  } finally {
+    connection.release();
+  }
+};
+
 export const removeDealFavorite = async (req, res) => {
   try {
     const user_id = req.body?.user_id || req.query.user_id;
