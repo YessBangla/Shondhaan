@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area
 } from "recharts";
-import { RefreshCw, TrendingUp, DollarSign, ShoppingCart, MapPin, Users, Calendar, ArrowUpRight, ArrowDownRight, Wallet, Receipt, Download, Package, Handshake, Eye } from "lucide-react";
+import { RefreshCw, TrendingUp, DollarSign, ShoppingCart, MapPin, Users, Calendar, ArrowUpRight, ArrowDownRight, Wallet, Receipt, Download, Package, Handshake, Eye, Briefcase, UserCheck, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -69,6 +70,29 @@ interface DealListingStat {
   price: number;
 }
 
+// ── সন্ধান জব: served by the separate jobs backend (MySQL), not Supabase ──
+interface PackageTransaction {
+  id: number;
+  package_id: number;
+  amount: number;
+  status: string; // pending | success | failed | cancelled
+  created_at: string;
+  employer_user_id: number;
+}
+
+interface JobProfileRecord {
+  id: number;
+  created_at: string;
+}
+
+interface JobStatsResponse {
+  packageTransactions: PackageTransaction[];
+  jobseekerProfiles: JobProfileRecord[];
+  employerProfiles: JobProfileRecord[];
+}
+
+const JOBS_API_URL = (import.meta.env.VITE_JOBS_API_URL || "http://localhost:5050").replace(/\/+$/, "");
+
 const COLORS = [
   "hsl(var(--primary))", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
   "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)",
@@ -79,7 +103,8 @@ const statusLabels: Record<string, string> = {
   pending: "অপেক্ষমাণ", confirmed: "নিশ্চিত", completed: "সম্পন্ন",
   cancelled: "বাতিল", contacted: "যোগাযোগ", resolved: "সমাধান", rejected: "বাতিল",
   processing: "প্রসেসিং", shipped: "শিপড", delivered: "ডেলিভার্ড",
-  active: "সক্রিয়", sold: "বিক্রিত", expired: "মেয়াদোত্তীর্ণ"
+  active: "সক্রিয়", sold: "বিক্রিত", expired: "মেয়াদোত্তীর্ণ",
+  success: "সফল", failed: "ব্যর্থ"
 };
 
 const bnMonths = ["জানু", "ফেব্রু", "মার্চ", "এপ্রিল", "মে", "জুন", "জুলাই", "আগ", "সেপ্টে", "অক্টো", "নভে", "ডিসে"];
@@ -107,6 +132,10 @@ const AdminAnalytics = () => {
   const [areaReps, setAreaReps] = useState<AreaRep[]>([]);
   const [martOrders, setMartOrders] = useState<MartOrder[]>([]);
   const [dealListings, setDealListings] = useState<DealListingStat[]>([]);
+  const [packageTransactions, setPackageTransactions] = useState<PackageTransaction[]>([]);
+  const [jobseekerProfiles, setJobseekerProfiles] = useState<JobProfileRecord[]>([]);
+  const [employerProfiles, setEmployerProfiles] = useState<JobProfileRecord[]>([]);
+  const [jobStatsError, setJobStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "6m" | "1y">("30d");
 
@@ -126,6 +155,26 @@ const AdminAnalytics = () => {
     if (repData) setAreaReps(repData as any);
     if (mData) setMartOrders(mData as MartOrder[]);
     if (dData) setDealListings(dData as DealListingStat[]);
+
+    // সন্ধান জব — separate backend, so fetched independently and its
+    // failure shouldn't block the rest of the dashboard from rendering.
+    try {
+      setJobStatsError(null);
+      const auth = getMySqlAuth();
+      const token = auth?.token || null;
+      const res = await fetch(`${JOBS_API_URL}/api/admin/job-stats`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!res.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${res.status})`);
+      const jobData: JobStatsResponse = await res.json();
+      setPackageTransactions(jobData.packageTransactions || []);
+      setJobseekerProfiles(jobData.jobseekerProfiles || []);
+      setEmployerProfiles(jobData.employerProfiles || []);
+    } catch (err: any) {
+      console.error("Job stats fetch failed:", err);
+      setJobStatsError(err?.message || "জব স্ট্যাটস লোড করা যায়নি");
+    }
+
     setLoading(false);
   }, []);
 
@@ -144,6 +193,9 @@ const AdminAnalytics = () => {
   const filteredEarnings = useMemo(() => repEarnings.filter(e => new Date(e.created_at) >= cutoff), [repEarnings, cutoff]);
   const filteredMartOrders = useMemo(() => martOrders.filter(o => new Date(o.created_at) >= cutoff), [martOrders, cutoff]);
   const filteredDealListings = useMemo(() => dealListings.filter(d => d.created_at && new Date(d.created_at) >= cutoff), [dealListings, cutoff]);
+  const filteredPackageTxns = useMemo(() => packageTransactions.filter(t => new Date(t.created_at) >= cutoff), [packageTransactions, cutoff]);
+  const filteredJobseekers = useMemo(() => jobseekerProfiles.filter(p => new Date(p.created_at) >= cutoff), [jobseekerProfiles, cutoff]);
+  const filteredEmployers = useMemo(() => employerProfiles.filter(p => new Date(p.created_at) >= cutoff), [employerProfiles, cutoff]);
 
   // Summary stats
   const stats = useMemo(() => {
@@ -187,6 +239,16 @@ const AdminAnalytics = () => {
     const featuredCount = filteredDealListings.filter(d => d.is_featured).length;
     return { totalListings, activeListings, totalViews, totalInquiries, featuredCount };
   }, [filteredDealListings]);
+
+  // সন্ধান জব stats — package income only counts successful payments
+  const jobStats = useMemo(() => {
+    const successTxns = filteredPackageTxns.filter(t => t.status === "success");
+    const packageIncome = successTxns.reduce((s, t) => s + Number(t.amount || 0), 0);
+    const totalPurchases = successTxns.length;
+    const jobseekerCount = filteredJobseekers.length;
+    const employerCount = filteredEmployers.length;
+    return { packageIncome, totalPurchases, jobseekerCount, employerCount };
+  }, [filteredPackageTxns, filteredJobseekers, filteredEmployers]);
 
   // Commission trend
   const commissionTrend = useMemo(() => {
@@ -275,6 +337,55 @@ const AdminAnalytics = () => {
     });
   }, [filteredDealListings, period]);
 
+  // সন্ধান জব — package income & purchase count trend
+  const jobPackageTrend = useMemo(() => {
+    const useMonthly = period === "6m" || period === "1y";
+    const map = new Map<string, { income: number; count: number }>();
+    filteredPackageTxns.filter(t => t.status === "success").forEach(t => {
+      const d = new Date(t.created_at);
+      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
+      const entry = map.get(key) || { income: 0, count: 0 };
+      entry.income += Number(t.amount || 0);
+      entry.count++;
+      map.set(key, entry);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
+      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
+      return { name: label, আয়: val.income, ক্রয়: val.count };
+    });
+  }, [filteredPackageTxns, period]);
+
+  // সন্ধান জব — jobseeker vs employer signup trend
+  const jobUserTrend = useMemo(() => {
+    const useMonthly = period === "6m" || period === "1y";
+    const map = new Map<string, { jobseeker: number; employer: number }>();
+    filteredJobseekers.forEach(p => {
+      const d = new Date(p.created_at);
+      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
+      const entry = map.get(key) || { jobseeker: 0, employer: 0 };
+      entry.jobseeker++;
+      map.set(key, entry);
+    });
+    filteredEmployers.forEach(p => {
+      const d = new Date(p.created_at);
+      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
+      const entry = map.get(key) || { jobseeker: 0, employer: 0 };
+      entry.employer++;
+      map.set(key, entry);
+    });
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
+      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
+      return { name: label, জবসিকার: val.jobseeker, নিয়োগকর্তা: val.employer };
+    });
+  }, [filteredJobseekers, filteredEmployers, period]);
+
+  // সন্ধান জব — package transaction status distribution
+  const jobTxnStatusDist = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredPackageTxns.forEach(t => map.set(t.status, (map.get(t.status) || 0) + 1));
+    return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
+  }, [filteredPackageTxns]);
+
   // Booking status distribution
   const statusDist = useMemo(() => {
     const map = new Map<string, number>();
@@ -347,6 +458,10 @@ const AdminAnalytics = () => {
     অর্ডার_আইডি: o.id.slice(0, 8), মোট: o.total, স্ট্যাটাস: o.status, পেমেন্ট_মেথড: o.payment_method, পেমেন্ট_স্ট্যাটাস: o.payment_status, তারিখ: o.created_at.slice(0, 10)
   })), "mart_order_report");
 
+  const exportJobPackageReport = () => exportCSV(filteredPackageTxns.map(t => ({
+    লেনদেন_আইডি: t.id, প্যাকেজ_আইডি: t.package_id, পরিমাণ: t.amount, স্ট্যাটাস: statusLabels[t.status] || t.status, নিয়োগকর্তা_আইডি: t.employer_user_id, তারিখ: t.created_at.slice(0, 10)
+  })), "job_package_report");
+
   if (loading) return <div className="py-12 text-center text-muted-foreground">অ্যানালিটিক্স লোড হচ্ছে...</div>;
 
   return (
@@ -375,6 +490,7 @@ const AdminAnalytics = () => {
           <TabsTrigger value="commission" className="text-xs"><Wallet className="h-3.5 w-3.5 mr-1" /> কমিশন ও আয়</TabsTrigger>
           <TabsTrigger value="mart" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> সন্ধান মার্ট</TabsTrigger>
           <TabsTrigger value="deal" className="text-xs"><Handshake className="h-3.5 w-3.5 mr-1" /> সন্ধান ডিল</TabsTrigger>
+          <TabsTrigger value="job" className="text-xs"><Briefcase className="h-3.5 w-3.5 mr-1" /> সন্ধান জব</TabsTrigger>
         </TabsList>
 
         {/* ── সার্ভিস ও বুকিং ── */}
@@ -619,6 +735,79 @@ const AdminAnalytics = () => {
               </ResponsiveContainer>
             ) : <EmptyChart />}
           </ChartCard>
+        </TabsContent>
+
+        {/* ── সন্ধান জব ── */}
+        <TabsContent value="job" className="space-y-4">
+          {jobStatsError ? (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+              জব স্ট্যাটস লোড করা যায়নি: {jobStatsError}। ({JOBS_API_URL}/api/admin/job-stats থেকে ডেটা আনার চেষ্টা করা হয়েছে)
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-end">
+                <Button variant="outline" size="sm" onClick={exportJobPackageReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <SummaryCard icon={DollarSign} label="প্যাকেজ আয়" value={`৳${toBnNum(jobStats.packageIncome)}`} color="text-primary" bgColor="bg-primary/10" />
+                <SummaryCard icon={Package} label="প্যাকেজ ক্রয়" value={toBnNum(jobStats.totalPurchases)} color="text-green-600" bgColor="bg-green-500/10" />
+                <SummaryCard icon={UserCheck} label="জব সিকার প্রোফাইল" value={toBnNum(jobStats.jobseekerCount)} color="text-blue-600" bgColor="bg-blue-500/10" />
+                <SummaryCard icon={Building2} label="নিয়োগকর্তা" value={toBnNum(jobStats.employerCount)} color="text-orange-600" bgColor="bg-orange-500/10" />
+              </div>
+
+              <ChartCard title="প্যাকেজ আয় ও ক্রয়ের ট্রেন্ড" icon={TrendingUp}>
+                {jobPackageTrend.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <AreaChart data={jobPackageTrend}>
+                      <defs>
+                        <linearGradient id="colorJobIncome" x1="0" y1="0" x2="0" y2="1">
+                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: "11px" }} />
+                      <Area type="monotone" dataKey="আয়" stroke="hsl(var(--primary))" fill="url(#colorJobIncome)" strokeWidth={2} />
+                      <Line type="monotone" dataKey="ক্রয়" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </ChartCard>
+
+              <ChartCard title="জবসিকার ও নিয়োগকর্তা নিবন্ধন ট্রেন্ড" icon={Users}>
+                {jobUserTrend.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={jobUserTrend}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Legend wrapperStyle={{ fontSize: "11px" }} />
+                      <Bar dataKey="জবসিকার" fill="hsl(199, 89%, 48%)" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="নিয়োগকর্তা" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </ChartCard>
+
+              <ChartCard title="প্যাকেজ লেনদেন স্ট্যাটাস" icon={Receipt}>
+                {jobTxnStatusDist.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={240}>
+                    <PieChart>
+                      <Pie data={jobTxnStatusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
+                        {jobTxnStatusDist.map((_, i) => <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={tooltipStyle} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </ChartCard>
+            </>
+          )}
         </TabsContent>
       </Tabs>
     </div>
