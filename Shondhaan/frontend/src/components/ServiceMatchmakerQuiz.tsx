@@ -17,7 +17,7 @@ const QUESTIONS: Question[] = [
     options: [
       { label: { bn: "ঘরের মেরামত", en: "Home repair" }, tag: "repair" },
       { label: { bn: "পরিচ্ছন্নতা", en: "Cleaning" }, tag: "cleaning" },
-      { label: { bn: "স্বাস্থ্যসেবা", en: "Healthcare" }, tag: "health" },
+      { label: { bn: "স্বাস্থ্যসার্ভিস", en: "Healthcare" }, tag: "health" },
       { label: { bn: "অন্য কিছু", en: "Something else" }, tag: "other" },
     ],
   },

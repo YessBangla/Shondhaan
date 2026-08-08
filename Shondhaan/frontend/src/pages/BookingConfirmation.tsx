@@ -385,11 +385,11 @@ const BookingConfirmation = () => {
       </div>
 
       <div class="lh-section">
-        <div class="lh-section-title">${bn ? "সেবা বিবরণ" : "Service Details"}</div>
+        <div class="lh-section-title">${bn ? "সার্ভিস বিবরণ" : "Service Details"}</div>
         <table class="lh-table">
           <thead>
             <tr>
-              <th>${bn ? "সেবা" : "Service"}</th>
+              <th>${bn ? "সার্ভিস" : "Service"}</th>
               <th>${bn ? "প্যাকেজ" : "Package"}</th>
               <th style="text-align:end;">${bn ? "মূল্য" : "Price"}</th>
             </tr>
@@ -428,7 +428,7 @@ const BookingConfirmation = () => {
       </div>
 
       <p style="text-align:center;margin-top:8mm;color:#64748b;font-size:9.5pt;">
-        ${bn ? "ধন্যবাদ! আমাদের সেবা ব্যবহার করার জন্য।" : "Thank you for using our service."}
+        ${bn ? "ধন্যবাদ! আমাদের সার্ভিস ব্যবহার করার জন্য।" : "Thank you for using our service."}
       </p>
     `;
 

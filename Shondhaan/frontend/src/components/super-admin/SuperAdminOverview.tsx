@@ -334,7 +334,7 @@ const SuperAdminOverview = () => {
         {/* Top services */}
         <div className="rounded-2xl border border-border/60 bg-card p-4">
           <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-bold text-foreground">টপ সেবা</h3>
+            <h3 className="text-sm font-bold text-foreground">টপ সার্ভিস</h3>
             <span className="text-[10px] text-muted-foreground">অর্ডার অনুসারে</span>
           </div>
           <div className="space-y-2">

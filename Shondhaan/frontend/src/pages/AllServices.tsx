@@ -50,7 +50,7 @@ type ApiService = {
   price?: string | number;
 };
 
-const API_BASE = import.meta.env.VITE_SERVICE_API_BASE_URL + "/api";
+export const API_BASE = import.meta.env.VITE_SERVICE_API_BASE_URL + "/api";
 
 const parseJsonArray = (value: unknown): string[] => {
   if (!value) return [];
@@ -127,7 +127,7 @@ const AllServices = () => {
   const initialScrollDone = useRef(false);
 
   useSEO({
-    title: bn ? "সকল সেবা" : "All Services",
+    title: bn ? "সকল সার্ভিস" : "All Services",
     description: bn
       ? "সন্ধানের সকল হোম সার্ভিস ব্রাউজ করুন।"
       : "Browse all home services on Shondhaan.",

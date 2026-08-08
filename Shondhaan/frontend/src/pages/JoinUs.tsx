@@ -327,7 +327,7 @@ const JoinUs = () => {
                         name="service_category"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>{bn ? "সেবার ক্যাটেগরি" : "Service Category"} *</FormLabel>
+                            <FormLabel>{bn ? "সার্ভিসর ক্যাটেগরি" : "Service Category"} *</FormLabel>
                             <Select onValueChange={field.onChange} value={field.value}>
                               <FormControl>
                                 <SelectTrigger>

@@ -55,7 +55,7 @@ const SmartReplyChips = ({ lastMessage, isFromOther, disabled, onPick }: Props) 
         : ["Sorry about that, fixing it", "Could you share more details?", "I'll escalate to support"];
     } else if (has("ধন্যবাদ", "thank", "thanks", "appreciat")) {
       s = bn
-        ? ["আপনাকেও ধন্যবাদ 🙏", "স্বাগতম!", "আবার সেবা নিতে ভুলবেন না"]
+        ? ["আপনাকেও ধন্যবাদ 🙏", "স্বাগতম!", "আবার সার্ভিস নিতে ভুলবেন না"]
         : ["You're welcome 🙏", "Thank you too!", "Hope to serve you again"];
     } else if (has("hi", "hello", "হাই", "হ্যালো", "salam", "সালাম", "আসসালামু")) {
       s = bn

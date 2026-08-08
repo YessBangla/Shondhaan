@@ -234,7 +234,7 @@ const SupervisorPanel = () => {
             panelIcon={<Eye className="h-4 w-4" />}
             hero={{
               title: "মাঠ পর্যায়ের সুপারভিশন",
-              subtitle: "সেবা ও দল তত্ত্বাবধান, কোয়ালিটি অডিট ও পারফরম্যান্স মনিটরিং।",
+              subtitle: "সার্ভিস ও দল তত্ত্বাবধান, কোয়ালিটি অডিট ও পারফরম্যান্স মনিটরিং।",
               badge: { label: "সুপারভাইজার প্যানেল" },
               gradient: "from-sky-500 via-blue-600 to-cyan-700",
             }}

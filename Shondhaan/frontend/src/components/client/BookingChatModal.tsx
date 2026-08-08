@@ -230,7 +230,7 @@ const BookingChatModal = ({ open, onClose, bookingId, serviceTitle, providerName
                   {bn ? "এখনো কোনো মেসেজ নেই" : "No messages yet"}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
-                  {bn ? "সেবা প্রদানকারীর সাথে কথা বলুন" : "Start a conversation with the provider"}
+                  {bn ? "সার্ভিস প্রদানকারীর সাথে কথা বলুন" : "Start a conversation with the provider"}
                 </p>
               </div>
             ) : (

@@ -130,9 +130,9 @@ const AdminServices = () => {
   return (
     <div className="relative">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading text-lg font-bold text-foreground">সেবা ম্যানেজমেন্ট ({services.length})</h3>
+        <h3 className="font-heading text-lg font-bold text-foreground">সার্ভিস ম্যানেজমেন্ট ({services.length})</h3>
         <button onClick={() => startEdit()} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
-          <Plus className="h-3.5 w-3.5" /> নতুন সেবা
+          <Plus className="h-3.5 w-3.5" /> নতুন সার্ভিস
         </button>
       </div>
 
@@ -145,7 +145,7 @@ const AdminServices = () => {
             {/* Modal Header */}
             <div className="shrink-0 flex items-center justify-between bg-card p-4 border-b border-border">
               <h3 className="font-heading text-lg font-bold text-foreground">
-                {editing.id ? "সেবা এডিট করুন" : "নতুন সেবা যোগ করুন"}
+                {editing.id ? "সার্ভিস এডিট করুন" : "নতুন সার্ভিস যোগ করুন"}
               </h3>
               <button onClick={() => setEditing(null)} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground">
                 <X className="h-5 w-5" />
@@ -190,11 +190,11 @@ const AdminServices = () => {
                 </div>
               </div>
 
-              <ImageUploader value={editing.image_url || ""} onChange={(v) => setEditing({...editing, image_url: v})} folder="services" label="সেবার ছবি" />
+              <ImageUploader value={editing.image_url || ""} onChange={(v) => setEditing({...editing, image_url: v})} folder="services" label="সার্ভিসর ছবি" />
               
               <div>
                 <label className={labelClass}>বিবরণ</label>
-                <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="সেবার সংক্ষিপ্ত বিবরণ লিখুন" rows={3} className={inputClass} />
+                <textarea value={editing.description || ""} onChange={e => setEditing({...editing, description: e.target.value})} placeholder="সার্ভিসর সংক্ষিপ্ত বিবরণ লিখুন" rows={3} className={inputClass} />
               </div>
               
               <div className="grid grid-cols-2 sm:grid-cols-6 gap-3">
@@ -283,7 +283,7 @@ const AdminServices = () => {
               
               {/* Multi-select Cities Dropdown */}
               <div className="relative" ref={cityDropdownRef}>
-                <label className={labelClass}>সেবা পাওয়া যাবে যে শহরে</label>
+                <label className={labelClass}>সার্ভিস পাওয়া যাবে যে শহরে</label>
                 <button
                   type="button"
                   onClick={() => setShowCitiesDropdown(!showCitiesDropdown)}

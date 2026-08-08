@@ -123,7 +123,7 @@ export const MOBILE_NAV_PRESETS: Record<string, MobileNavTabConfig[]> = {
       id: "search",
       icon: Search,
       label: { bn: "অনুসন্ধান", en: "Search" },
-      describe: { bn: "সেবা খুঁজুন", en: "Find a service" },
+      describe: { bn: "সার্ভিস খুঁজুন", en: "Find a service" },
       action: { kind: "modal", modal: "search" },
     },
     MOBILE_NAV_TABS[3],
@@ -136,7 +136,7 @@ export const MOBILE_NAV_PRESETS: Record<string, MobileNavTabConfig[]> = {
       id: "track",
       icon: FileSearch,
       label: { bn: "ট্র্যাক", en: "Track" },
-      describe: { bn: "সেবা ট্র্যাক করুন", en: "Track your service" },
+      describe: { bn: "সার্ভিস ট্র্যাক করুন", en: "Track your service" },
       action: { kind: "modal", modal: "track" },
     },
     {
@@ -149,8 +149,8 @@ export const MOBILE_NAV_PRESETS: Record<string, MobileNavTabConfig[]> = {
     {
       id: "all-services",
       icon: LayoutGrid,
-      label: { bn: "সেবা", en: "Services" },
-      describe: { bn: "সব সেবা দেখুন", en: "Browse all services" },
+      label: { bn: "সার্ভিস", en: "Services" },
+      describe: { bn: "সব সার্ভিস দেখুন", en: "Browse all services" },
       action: { kind: "navigate", to: "/all-services" },
       activeRoutes: ["/all-services"],
     },

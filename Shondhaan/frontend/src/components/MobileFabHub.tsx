@@ -94,7 +94,7 @@ const MobileFabHub = () => {
     },
     {
       key: "matchmaker",
-      label: bn ? "সঠিক সেবা" : "Match",
+      label: bn ? "সঠিক সার্ভিস" : "Match",
       icon: <Sparkles className="h-[20px] w-[20px]" strokeWidth={2.2} />,
       bg: "bg-gradient-to-br from-fuchsia-500 to-pink-500",
       onClick: fire("yess:open-matchmaker"),

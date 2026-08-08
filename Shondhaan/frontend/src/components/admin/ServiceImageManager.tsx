@@ -76,7 +76,7 @@ const ServiceImageManager = () => {
       <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
         <div>
           <h3 className="font-heading text-lg font-bold text-foreground flex items-center gap-2">
-            <Image className="h-5 w-5 text-primary" /> সেবার ছবি ম্যানেজমেন্ট
+            <Image className="h-5 w-5 text-primary" /> সার্ভিসর ছবি ম্যানেজমেন্ট
           </h3>
           <p className="text-xs text-muted-foreground mt-0.5">
             ✅ ছবি আছে: {withImage} • ❌ ছবি নেই: {withoutImage} • মোট: {services.length}
@@ -91,7 +91,7 @@ const ServiceImageManager = () => {
           <input
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
-            placeholder="সেবা খুঁজুন..."
+            placeholder="সার্ভিস খুঁজুন..."
             className="w-full rounded-lg border border-input bg-background pl-9 pr-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
           />
         </div>
@@ -165,7 +165,7 @@ const ServiceImageManager = () => {
       {filtered.length === 0 && (
         <div className="text-center py-12">
           <Image className="h-10 w-10 mx-auto text-muted-foreground/30 mb-2" />
-          <p className="text-sm text-muted-foreground">কোনো সেবা পাওয়া যায়নি</p>
+          <p className="text-sm text-muted-foreground">কোনো সার্ভিস পাওয়া যায়নি</p>
         </div>
       )}
     </div>

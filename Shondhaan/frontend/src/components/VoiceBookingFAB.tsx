@@ -73,7 +73,7 @@ const VoiceBookingFAB = () => {
       { keys: ["বুকিং", "booking", "অর্ডার", "order"], path: "/bookings", label: bn ? "বুকিং" : "Bookings" },
       { keys: ["প্রোফাইল", "profile", "একাউন্ট", "account"], path: "/profile", label: bn ? "প্রোফাইল" : "Profile" },
       { keys: ["হোম", "home", "প্রথম"], path: "/", label: bn ? "হোম" : "Home" },
-      { keys: ["সব সেবা", "all service", "services", "সেবাসমূহ"], path: "/all-services", label: bn ? "সব সেবা" : "All services" },
+      { keys: ["সব সার্ভিস", "all service", "services", "সার্ভিসসমূহ"], path: "/all-services", label: bn ? "সব সার্ভিস" : "All services" },
     ];
     for (const cmd of navMap) {
       if (cmd.keys.some((k) => q.includes(k))) {
@@ -147,7 +147,7 @@ const VoiceBookingFAB = () => {
             >
               <div className="mb-4 flex items-center justify-between">
                 <h3 className="text-base font-bold text-foreground">
-                  {bn ? "ভয়েসে সেবা বুক করুন" : "Book a service by voice"}
+                  {bn ? "ভয়েসে সার্ভিস বুক করুন" : "Book a service by voice"}
                 </h3>
                 <button
                   onClick={() => { stop(); setOpen(false); }}
@@ -170,7 +170,7 @@ const VoiceBookingFAB = () => {
                 </motion.button>
                 <p className="text-center text-xs text-muted-foreground">
                   {listening
-                    ? bn ? "শুনছি… বলুন কোন সেবা চান" : "Listening… say the service you want"
+                    ? bn ? "শুনছি… বলুন কোন সার্ভিস চান" : "Listening… say the service you want"
                     : bn ? "মাইক চেপে বলুন (যেমন: এসি সার্ভিস)" : "Tap mic and say a service (e.g. AC service)"}
                 </p>
 
@@ -186,7 +186,7 @@ const VoiceBookingFAB = () => {
                 disabled={!transcript || listening}
                 className="mt-2 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition disabled:opacity-50"
               >
-                {bn ? "সেবা খুঁজুন" : "Find service"}
+                {bn ? "সার্ভিস খুঁজুন" : "Find service"}
               </button>
             </motion.div>
           </motion.div>

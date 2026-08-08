@@ -34,8 +34,7 @@ const COURIER_FEE_MAX = 70;
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  import.meta.env.VITE_API_BASE;
 
 type ProductOrderStats = {
   order_count: number;

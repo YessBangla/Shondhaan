@@ -106,7 +106,7 @@ const ModeratorPanel = () => {
 
   // CSV export
   const exportReviewsCSV = () => {
-    const headers = ["নাম", "সেবা", "রেটিং", "মন্তব্য", "তারিখ"];
+    const headers = ["নাম", "সার্ভিস", "রেটিং", "মন্তব্য", "তারিখ"];
     const rows = filteredReviews.map(r => [
       r.reviewer_name, r.service_slug, r.rating.toString(),
       `"${(r.comment || "").replace(/"/g, '""')}"`,
@@ -188,7 +188,7 @@ const ModeratorPanel = () => {
             items={[
               { value: "reviews", label: "রিভিউ মডারেশন", icon: <Star className="h-4 w-4" />, group: "কন্টেন্ট" },
               { value: "messages", label: "কন্টাক্ট মেসেজ", icon: <MessageSquare className="h-4 w-4" /> },
-              { value: "images", label: "সেবার ছবি", icon: <Image className="h-4 w-4" />, group: "CMS" },
+              { value: "images", label: "সার্ভিসর ছবি", icon: <Image className="h-4 w-4" />, group: "CMS" },
             ]}
             defaultValue="reviews"
             panelTitle="মডারেটর"

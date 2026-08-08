@@ -444,7 +444,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Wrench className="h-3.5 w-3.5" />
-                    {bn ? "সেবা নির্বাচন" : "Select Service"}
+                    {bn ? "সার্ভিস নির্বাচন" : "Select Service"}
                   </p>
                   <div className="rounded-xl border border-border bg-card p-1.5">
                     <div className="grid grid-cols-2 gap-1">
@@ -468,7 +468,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                           onClick={() => setShowMoreCats(true)}
                           className="rounded-lg px-2 py-1.5 text-[10px] font-medium text-left transition-all active:scale-[0.97] text-primary hover:bg-primary/10 flex items-center gap-1 col-span-2 justify-center border border-dashed border-primary/30"
                         >
-                          📋 {bn ? "সকল সেবা দেখুন..." : "All Services..."}
+                          📋 {bn ? "সকল সার্ভিস দেখুন..." : "All Services..."}
                         </button>
                       )}
                     </div>
@@ -493,7 +493,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                       >
                         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                           <p className="text-xs font-bold text-foreground">
-                            {bn ? "সকল সেবা" : "All Services"}
+                            {bn ? "সকল সার্ভিস" : "All Services"}
                           </p>
                           <button
                             type="button"
@@ -631,11 +631,11 @@ If the customer didn't ask for any specific service, set needs_service to false.
                     <div className="flex flex-wrap gap-1.5">
                       {(promptLang === "bn"
                         ? [
-                            "আপনাদের সেবার মূল্য কত?",
+                            "আপনাদের সার্ভিসর মূল্য কত?",
                             "আমার বুকিংয়ের স্ট্যাটাস জানতে চাই",
-                            "একটি সেবা বুকিং করতে চাই",
+                            "একটি সার্ভিস বুকিং করতে চাই",
                             "সার্ভিস রিকোয়েস্ট করতে চাই",
-                            "কোন কোন এলাকায় সেবা পাওয়া যায়?",
+                            "কোন কোন এলাকায় সার্ভিস পাওয়া যায়?",
                           ]
                         : [
                             "What are your service prices?",

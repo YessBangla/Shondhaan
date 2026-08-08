@@ -27,7 +27,7 @@ const PLATFORMS: Platform[] = [
     icon: Wrench,
     titleBn: "সন্ধান",
     titleEn: "Shondhaan",
-    subtitleBn: "১৮৬+ সেবা",
+    subtitleBn: "১৮৬+ সার্ভিস",
     subtitleEn: "186+ Services",
     gradient: "from-blue-500 via-indigo-500 to-violet-600",
     glow: "shadow-[0_8px_32px_-8px_rgba(99,102,241,0.6)]",

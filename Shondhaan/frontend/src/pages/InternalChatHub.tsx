@@ -181,7 +181,7 @@ export default function InternalChatHub() {
                 <MessageSquare className="h-5 w-5 text-primary" />
                 ইন্টার্নাল চ্যাট হাব
               </h1>
-              <p className="text-xs text-muted-foreground">সেবা অনুযায়ী টিম চ্যানেল</p>
+              <p className="text-xs text-muted-foreground">সার্ভিস অনুযায়ী টিম চ্যানেল</p>
             </div>
           </div>
           <NotificationBell />
@@ -194,7 +194,7 @@ export default function InternalChatHub() {
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="সেবা খুঁজুন..."
+              placeholder="সার্ভিস খুঁজুন..."
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="pl-9"
@@ -248,7 +248,7 @@ export default function InternalChatHub() {
         {/* Stats for admin */}
         {isAdmin && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            <StatMini label="মোট সেবা" value={services.length} />
+            <StatMini label="মোট সার্ভিস" value={services.length} />
             <StatMini label="ক্যাটেগরি" value={categories.length} />
             <StatMini label="সক্রিয় চ্যাট" value={msgCounts.filter(m => m.count > 0).length} />
             <StatMini label="মোট মেসেজ" value={msgCounts.reduce((s, m) => s + m.count, 0)} />
@@ -280,7 +280,7 @@ export default function InternalChatHub() {
         {filteredServices.length === 0 && (
           <div className="text-center py-16 text-muted-foreground">
             <Search className="h-12 w-12 mx-auto mb-3 opacity-30" />
-            <p>কোনো সেবা পাওয়া যায়নি</p>
+            <p>কোনো সার্ভিস পাওয়া যায়নি</p>
           </div>
         )}
       </div>
