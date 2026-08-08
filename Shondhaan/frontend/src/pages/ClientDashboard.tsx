@@ -28,7 +28,16 @@ import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 
-const MART_API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+// Use the same env-var fallback chain as MartStore.tsx / MartProductDetail.tsx
+// so this dashboard hits the same mart backend. Previously this only checked
+// VITE_API_BASE and defaulted to port 8080, which doesn't match the mart
+// backend (VITE_MART_API_BASE_URL, port 8081) and silently failed every
+// mart-orders fetch.
+const MART_API_BASE =
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "http://localhost:8081";
 const PROFILE_API_BASE = MART_API_BASE;
 const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
 
@@ -128,9 +137,30 @@ const ClientDashboard = () => {
 
   const fetchMartOrders = useCallback(async () => {
     if (!user) return;
+
+    // /api/orders is a MySQL-backed endpoint (same family as /api/profile/:id),
+    // so it expects the numeric MySQL user id — not the Supabase auth UUID in
+    // user.id. Resolve it the same way the bookings/profile fetches do below.
+    const mysqlAuth = getMySqlAuth();
+    const localUser = user as unknown as { id?: string | number };
+    const userId = Number(mysqlAuth?.user?.id ?? localUser.id);
+
+    if (!Number.isInteger(userId) || userId <= 0) {
+      console.warn("No valid MySQL user id found for mart orders", {
+        mysqlUser: mysqlAuth?.user,
+        localUser,
+      });
+      setMartOrders([]);
+      return;
+    }
+
     try {
-      const res = await fetch(`${MART_API_BASE}/api/orders?user_id=${encodeURIComponent(user.id)}`);
-      const data = await res.json();
+      const res = await fetch(`${MART_API_BASE}/api/orders?user_id=${encodeURIComponent(String(userId))}`, {
+        headers: {
+          ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+        },
+      });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) {
         throw new Error(data?.message || "Failed to fetch mart orders");
       }
