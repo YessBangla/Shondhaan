@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import JobsMenuBar from "@/components/jobs/JobsMenuBar";
@@ -68,21 +69,41 @@ const JobDetail = () => {
   // The action bar starts inline (inside the header card, normal position
   // at the top). Once it scrolls out of the viewport, we switch to showing
   // a second copy fixed to the bottom of the screen instead.
+  //
+  // NOTE: there is exactly ONE bottom bar. It is rendered through a
+  // React Portal straight into document.body (see the
+  // `createPortal(...)` call near the bottom of this component) instead
+  // of inline in the normal JSX tree. This is deliberate:
+  //
+  // `position: fixed` is only fixed relative to the *viewport* as long
+  // as none of its ancestors have a CSS `transform` (or `filter` /
+  // `will-change: transform`) applied. `JobsPageTransition` wraps this
+  // whole page and animates it in/out (a typical framer-motion
+  // page-transition pattern), which applies a `transform` to its
+  // wrapper. Once that happens, any `position: fixed` descendant
+  // — including our bottom action bar — silently becomes fixed relative
+  // to *that transformed wrapper* instead of the real viewport. If
+  // `JobsPageTransition` also does anything scroll-linked (e.g. a
+  // `useScroll`/`useTransform` x-offset for a parallax/slide effect),
+  // the bar visibly drifts sideways as you scroll, since it's now
+  // tracking the wrapper's transform instead of staying put.
+  //
+  // Portaling the bar to `document.body` removes it from
+  // `JobsPageTransition`'s DOM subtree entirely, so it can never be
+  // affected by that wrapper's transforms again, regardless of what
+  // animation logic lives inside `JobsPageTransition`, `Navbar`, or
+  // `JobsMenuBar`. Don't move this bar back inline without removing
+  // this comment.
   const inlineActionBarRef = useRef<HTMLDivElement>(null);
   const [showStickyBottomBar, setShowStickyBottomBar] = useState(false);
 
-  // NOTE: this effect used to run once on mount with `[]` as its
-  // dependency array. That meant it could fire BEFORE `job` finished
-  // loading (while the component is still rendering the loading
-  // skeleton / "not found" branch, which don't contain
-  // `inlineActionBarRef` in the DOM at all). When that happened,
-  // `inlineActionBarRef.current` was null, the observer was never
-  // attached, and `showStickyBottomBar` stayed false forever — so the
-  // bottom bar never appeared no matter how far you scrolled.
-  //
-  // Depending on `job` makes the effect re-run once the real header
-  // card (containing the ref) actually mounts, so the observer gets
-  // attached to the real DOM node.
+  // This effect depends on `job` (not `[]`) because the inline action
+  // bar div only exists in the DOM once `job` has loaded — while
+  // `isLoading` is true, the component returns an early skeleton that
+  // doesn't render `inlineActionBarRef` at all. With an empty dependency
+  // array this effect would run once on mount, find `inlineActionBarRef
+  // .current` still null, and never attach an observer at all, leaving
+  // `showStickyBottomBar` stuck at false forever.
   useEffect(() => {
     const el = inlineActionBarRef.current;
     if (!el) return;
@@ -371,6 +392,57 @@ const JobDetail = () => {
     ) : null
   );
 
+  // Extracted so it can be rendered twice: once (implicitly) as the
+  // inline bar's button row, and once portaled to document.body as the
+  // fixed bottom bar. Keeping the JSX for the bottom bar in its own
+  // variable makes the createPortal call below easy to read.
+  const stickyBottomBar = !isExpired ? (
+    <div
+      className={`fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
+        showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+      }`}
+    >
+      <div className="mx-auto max-w-7xl px-4 py-3">
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <Button
+            onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+            className="bg-primary hover:bg-emerald-700 text-white gap-1.5 h-11 sm:h-9"
+          >
+            <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
+          </Button>
+          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+            {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+            {bn ? "সংরক্ষণ" : "Save"}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                <Facebook className="h-4 w-4 text-blue-600" /> Facebook
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                <Send className="h-4 w-4 text-green-600" /> WhatsApp
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
+                <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+            <Printer className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  ) : null;
+
   return (
     <JobsPageTransition>
       <Navbar />
@@ -428,13 +500,14 @@ const JobDetail = () => {
               </div>
 
               {/* ── Action bar (inline, normal position at top) ────────
-                  Once this scrolls out of view, the fixed bottom bar
-                  below takes over. */}
+                  Once this scrolls out of view, the portaled bottom bar
+                  below takes over. `justify-start` is explicit and the
+                  Apply Now button does NOT use flex-1/flex-grow. */}
               {!isExpired && (
-                <div ref={inlineActionBarRef} className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
+                <div ref={inlineActionBarRef} className="flex flex-wrap items-center justify-start gap-2 mt-4 pt-4 border-t">
                   <Button
                     onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                    className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
+                    className="bg-primary hover:bg-emerald-700 text-white gap-1.5"
                   >
                     <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
                   </Button>
@@ -614,58 +687,6 @@ const JobDetail = () => {
               <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {job.views_count} {bn ? "বার দেখা হয়েছে" : "views"}</span>
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {job.applications_count} {bn ? "জন আবেদন করেছেন" : "applications"}</span>
             </div>
-            {!isExpired && (
-              <div
-                className="
-                  sticky
-                  bottom-16 md:bottom-0
-                  bg-background/90
-                  backdrop-blur-sm
-                  border-t
-                  py-3 md:py-4
-                  z-20
-                "
-              >
-                <div className="flex flex-wrap justify-end items-center gap-2">
-                  <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                    {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
-                    {bn ? "সংরক্ষণ" : "Save"}
-                  </Button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="outline" size="sm" className="gap-1.5">
-                        <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
-                        <Facebook className="h-4 w-4 text-blue-600" /> Facebook
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
-                        <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
-                        <Send className="h-4 w-4 text-green-600" /> WhatsApp
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                        <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
-                    <Printer className="h-4 w-4" />
-                  </Button>
-                  {!isExpired && (
-                    <Button
-                      onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                      className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none"
-                    >
-                      <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
-                    </Button>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Sidebar - Related Jobs */}
@@ -706,57 +727,19 @@ const JobDetail = () => {
         </div>
       </div>
 
-      {/* ── Fixed bottom action bar ────────────────────────────────────
+      {/* ── Fixed bottom action bar, rendered via Portal ─────────────
           Hidden by default. Slides up into view only once the inline
           action bar above has scrolled out of the viewport, then stays
           pinned to the bottom of the screen for the rest of the scroll.
-          Scrolling back up hides it again automatically. */}
-      {!isExpired && (
-        <div
-          className={`fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
-            showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
-          }`}
-        >
-          <div className="mx-auto max-w-7xl px-4 py-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <Button
-                onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
-              >
-                <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
-              </Button>
-              <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
-                {bn ? "সংরক্ষণ" : "Save"}
-              </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="gap-1.5">
-                    <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
-                    <Facebook className="h-4 w-4 text-blue-600" /> Facebook
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
-                    <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
-                    <Send className="h-4 w-4 text-green-600" /> WhatsApp
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                    <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
-                <Printer className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
+          Scrolling back up hides it again automatically.
+
+          IMPORTANT: this is portaled to document.body (see
+          `createPortal` below) specifically so it sits OUTSIDE
+          JobsPageTransition's DOM subtree and can't be affected by any
+          transform that wrapper applies. Don't move this block back
+          inline into the normal render tree above — that's what caused
+          the button to visibly drift right while scrolling. */}
+      {typeof document !== "undefined" && createPortal(stickyBottomBar, document.body)}
 
       {/* Apply Modal — only Age & Expected Salary are collected here.
           Name, phone, email, CV, and video CV all come from the
@@ -812,7 +795,7 @@ const JobDetail = () => {
 
       <Footer />
       {/* Reserves space so the fixed bottom bar never covers Footer content */}
-      {/* <div className={showStickyBottomBar ? "" : "h-16 md:hidden"} /> */}
+      <div className={showStickyBottomBar ? "h-20" : "h-16 md:hidden"} />
     </JobsPageTransition>
   );
 };

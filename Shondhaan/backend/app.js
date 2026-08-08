@@ -26,6 +26,7 @@ app.get("/", (req, res) => {
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+
 // app.use("/api/catalog", serviceCatalogRoutes);
 
 export default app;

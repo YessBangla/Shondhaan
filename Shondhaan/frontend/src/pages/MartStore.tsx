@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, MessageCircle, Play, UserPlus } from "lucide-react";
 import {
@@ -54,11 +54,24 @@ const fetchProducts = async (sellerId: number) => {
 const ProductCard = ({
   product,
   onAddToCart,
+  onOpen,
 }: {
   product: any;
   onAddToCart: (product: any) => void;
+  onOpen: (product: any) => void;
 }) => (
-  <div className="rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group">
+  <div
+    role="button"
+    tabIndex={0}
+    onClick={() => onOpen(product)}
+    onKeyDown={(e) => {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        onOpen(product);
+      }
+    }}
+    className="rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
+  >
     {product.image ? (
       <img
         src={product.image}
@@ -134,6 +147,7 @@ const SkeletonCard = () => (
 const MartStore = () => {
   const { vendorId } = useParams<{ vendorId: string }>();
   const { addItem }  = useMartCart();
+  const navigate = useNavigate();
 
   const [filterCategory,    setFilterCategory]    = useState<string>("all");
   const [filterSubCategory, setFilterSubCategory] = useState<string>("all");
@@ -240,6 +254,16 @@ const MartStore = () => {
     };
     addItem(cartProduct, 1);
     toast.success(`"${product.name_bn}" added to cart`);
+  };
+
+  // Navigate to the product detail page. Falls back to the legacy
+  // "mysql-product-<id>" route (which MartProductDetail auto-upgrades to the
+  // readable slug URL) when the product payload doesn't include a slug.
+  const handleOpenProduct = (product: any) => {
+    const target = product.slug
+      ? `/mart/product/${product.slug}`
+      : `/mart/product/mysql-product-${product.id}`;
+    navigate(target);
   };
 
   // ── Guards ────────────────────────────────────────────────────────────────────
@@ -722,6 +746,7 @@ const MartStore = () => {
                   key={product.id}
                   product={product}
                   onAddToCart={handleAddToCart}
+                  onOpen={handleOpenProduct}
                 />
               ))}
             </div>
