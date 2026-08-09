@@ -454,7 +454,7 @@ const AllServices = () => {
                       onClick={() => setFilterCategory("all")}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
                         filterCategory === "all"
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-primary bg-primary text-white"
                           : "border-border bg-background text-foreground hover:bg-secondary"
                       }`}
                     >
@@ -471,7 +471,7 @@ const AllServices = () => {
                         }}
                         className={`rounded-full border px-3 py-1 text-xs font-medium ${
                           filterCategory === cat.id
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-primary bg-primary text-white"
                             : "border-border bg-background text-foreground hover:bg-secondary"
                         }`}
                       >
