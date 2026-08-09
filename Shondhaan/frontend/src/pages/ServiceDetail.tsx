@@ -793,7 +793,7 @@ const CmsServiceDetail = ({
                 <label className="text-xs font-semibold text-foreground">{t("sd.selectDate")}</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
+                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2.5 text-sm text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
                       <CalendarIcon className="h-4 w-4 text-primary" />
                       {bookingDate ? format(bookingDate, "dd MMM yyyy") : bn ? "তারিখ বেছে নিন" : "Pick a date"}
                     </button>
@@ -813,7 +813,7 @@ const CmsServiceDetail = ({
                       onClick={() => setBookingTime(slot.value)}
                       className={cn(
                         "rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all",
-                        bookingTime === slot.value ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/40"
+                        bookingTime === slot.value ? "border-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/40"
                       )}
                     >
                       {slot.label}
@@ -829,7 +829,7 @@ const CmsServiceDetail = ({
                     if (!bookingDate || !bookingTime) return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+                  className="w-full rounded-lg py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
                 >
                   <CalendarCheck className="h-4 w-4" /> {t("sd.bookingConfirmBtn")}
                 </button>

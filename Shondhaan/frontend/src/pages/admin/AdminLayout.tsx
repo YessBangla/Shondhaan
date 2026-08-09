@@ -696,7 +696,7 @@ const AdminLayout = () => {
         </header>
 
         <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
-          <div className="mx-auto w-full max-w-[1440px] px-3 md:px-6 lg:px-8 py-5 md:py-6">
+          <div className="mx-auto w-full max-w-[1440px] px-1 py-1">
             {/* Page header — Laravel Nova-style */}
             <BackendPageHeader
               fallbackTitle={currentLabel}
@@ -866,8 +866,8 @@ const BackendPageHeader = ({
   const title = meta.title ?? fallbackTitle;
 
   return (
-    <div className="mb-4 md:mb-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="">
+      {/* <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           {eyebrow && (
             <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground/70">
@@ -905,7 +905,7 @@ const BackendPageHeader = ({
             </div>
           )}
         </div>
-      </div>
+      </div> */}
       {meta.toolbar && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-2.5 py-2">
           {meta.toolbar}

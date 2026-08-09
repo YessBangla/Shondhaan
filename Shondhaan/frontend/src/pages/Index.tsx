@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { useSEO } from "@/hooks/useSEO";
 import Navbar from "@/components/Navbar";
 import { getServiceImage } from "@/data/serviceImages";
@@ -24,6 +25,7 @@ import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import ForYouSection from "@/components/ForYouSection";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { Button } from "@/components/ui/button";
 
 type Service = {
   id: string;
@@ -145,7 +147,7 @@ const isActiveSection = (section: HomepageSection) =>
 const extractArray = <T,>(payload: any, keys: string[] = []): T[] => {
   if (Array.isArray(payload)) return payload;
 
-  for (const key of keys) {
+  for (const key in keys) {
     if (Array.isArray(payload?.[key])) return payload[key];
   }
 
@@ -197,29 +199,15 @@ const Index = () => {
       try {
         setLoading(true);
 
-        console.log(" Fetching homepage data...");
-        console.log(" Services URL:", `${API_BASE}/services`);
-        console.log(" Categories URL:", `${API_BASE}/categories`);
-        console.log(
-          "Homepage sections URL:",
-          `${API_BASE}/homepage-sections?active=1`
-        );
         const [servicesRes, categoriesRes, sectionsRes] = await Promise.all([
           fetch(`${API_BASE}/services`),
           fetch(`${API_BASE}/categories`),
           fetch(`${API_BASE}/homepage-sections?active=1`),
         ]);
-        console.log(" Services status:", servicesRes.status);
-        console.log(" Categories status:", categoriesRes.status);
-        console.log(" Homepage sections status:", sectionsRes.status);
 
         const servicesData = await servicesRes.json().catch(() => ({}));
         const categoriesData = await categoriesRes.json().catch(() => ({}));
         const sectionsData = await sectionsRes.json().catch(() => ({}));
-
-        console.log(" Raw services response:", servicesData);
-        console.log(" Raw categories response:", categoriesData);
-        console.log(" Raw homepage sections response:", sectionsData);
 
         const safeServices = extractArray<Service>(servicesData, ["services"]);
         const safeCategories = extractArray<Category>(categoriesData, [
@@ -229,10 +217,6 @@ const Index = () => {
           "sections",
           "homepage_sections",
         ]);
-
-        console.log("✅ Safe services:", safeServices);
-        console.log("✅ Safe categories:", safeCategories);
-        console.log("✅ Safe homepage sections:", safeSections);
 
         setServices(safeServices);
         setCategories(safeCategories);
@@ -244,7 +228,6 @@ const Index = () => {
         setHomepageSections([]);
       } finally {
         setLoading(false);
-        console.log("✅ Homepage loading finished");
       }
     };
     fetchData();
@@ -275,10 +258,6 @@ const Index = () => {
   });
 
   const groupedServices = useMemo(() => {
-    console.log("🧮 Grouping services by category...");
-    console.log("📍 Selected city:", selectedCity);
-    console.log("📁 Selected category:", selectedCategoryId);
-
     const visibleCategories =
       selectedCategoryId === "all"
         ? categories
@@ -295,10 +274,6 @@ const Index = () => {
         .filter(cityMatched)
         .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
         .map(formatService);
-
-      console.log("📁 Category:", category.name || category.title);
-      console.log("➡️ Category ID:", category.id);
-      console.log("➡️ Services:", filteredServices);
 
       return {
         category,
@@ -325,7 +300,6 @@ const Index = () => {
       .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
       .map(formatService);
 
-    console.log("📌 Uncategorized services:", items);
     return items;
   }, [services, categories, selectedCity, language, selectedCategoryId]);
 
@@ -344,42 +318,20 @@ const Index = () => {
       cityActiveServices.map((service) => [normalizeSlug(service.slug), service])
     );
 
-    console.log("✅ Homepage sections from API:", homepageSections);
-    console.log(
-      "✅ All service slugs:",
-      allActiveServices.map((service) => service.slug)
-    );
-    console.log(
-      "✅ City filtered service slugs:",
-      cityActiveServices.map((service) => service.slug)
-    );
-
     const sections = homepageSections
       .filter(isActiveSection)
       .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0))
       .map((section) => {
         const slugs = parseJsonArray(section.service_slugs).map(normalizeSlug);
 
-        console.log(`🔎 Section "${section.section_key}" slugs:`, slugs);
-
         const sectionServices = slugs
           .map((slug) => {
             const cityMatchedService = cityServiceBySlug.get(slug);
             const fallbackService = allServiceBySlug.get(slug);
-
-            if (!cityMatchedService && !fallbackService) {
-              console.warn(`❌ No service found for slug: ${slug}`);
-            }
-
             return cityMatchedService || fallbackService;
           })
           .filter(Boolean)
           .map((service) => formatService(service as Service));
-
-        console.log(
-          `✅ Section "${section.section_key}" matched services:`,
-          sectionServices
-        );
 
         return {
           section,
@@ -388,7 +340,6 @@ const Index = () => {
       })
       .filter((group) => group.services.length > 0);
 
-    console.log("🏠 Dynamic homepage sections:", sections);
     return sections;
   }, [homepageSections, services, selectedCity, language, selectedCategoryId]);
 
@@ -397,119 +348,134 @@ const Index = () => {
     groupedServices.some((group) => group.services.length > 0) ||
     uncategorizedServices.length > 0;
 
-return (
-  <div className="min-h-screen flex flex-col bg-background">
-    <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
+  // Limit to exactly 5 sections for the homepage display
+  const visibleHomepageSections = dynamicHomepageSections.slice(0, 5);
+  
+  // ✅ Limit to exactly 4 categories for the homepage display
+  const visibleGroupedServices = groupedServices.slice(0, 4);
 
-    {/* ✅ MAIN CONTENT WRAPPER */}
-    <div className="flex-1 flex flex-col">
-      <Navbar />
-      <HeroSection />
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
 
-      <CategoryBar
-        categories={categories}
-        selectedCategoryId={selectedCategoryId}
-        onCategorySelect={(id) => {
-          console.log("Category clicked:", id);
-          setSelectedCategoryId(id);
-        }}
-      />
+      {/* ✅ MAIN CONTENT WRAPPER */}
+      <div className="flex-1 flex flex-col">
+        <Navbar />
+        <HeroSection />
 
-      <MobilePromoBanner />
+        <CategoryBar
+          categories={categories}
+          selectedCategoryId={selectedCategoryId}
+          onCategorySelect={(id) => {
+            setSelectedCategoryId(id);
+          }}
+        />
 
-      {/* Service Section */}
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" />
+        <MobilePromoBanner />
 
-        <div className="app-container relative z-10">
-          <ForYouSection />
+        {/* Service Section */}
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" />
 
-          {loading ? (
-            <>
-              <MobileServiceSkeleton />
-              <div className="mt-6 hidden md:block">
-                <ServiceCardSkeleton count={8} />
-              </div>
-            </>
-          ) : (
-            <>
-              {selectedCategoryId === "all" &&
-                dynamicHomepageSections.map(({ section, services }) => {
+          <div className="app-container relative z-10">
+            <ForYouSection />
+
+            {loading ? (
+              <>
+                <MobileServiceSkeleton />
+                <div className="mt-6 hidden md:block">
+                  <ServiceCardSkeleton count={8} />
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Dynamic Homepage Sections (Limited to 5) */}
+                {selectedCategoryId === "all" && (
+                  visibleHomepageSections.map(({ section, services }) => {
+                    const heading = bn
+                      ? section.title_bn || "সার্ভিস"
+                      : section.title_en || section.title_bn || "Services";
+
+                    return (
+                      <ServiceSection
+                        key={`dynamic-${section.id}`}
+                        heading={heading}
+                        services={services}
+                        viewAllLink="/all-services"
+                      />
+                    );
+                  })
+                )}
+
+                {/* Category Grouped Sections (Limited to 4) */}
+                {visibleGroupedServices.map(({ category, services }) => {
+                  if (!services.length) return null;
+
                   const heading = bn
-                    ? section.title_bn || "সার্ভিস"
-                    : section.title_en || section.title_bn || "Services";
+                    ? category.name || category.title || "সার্ভিস"
+                    : category.name_en ||
+                      category.title_en ||
+                      category.name ||
+                      category.title ||
+                      "Services";
 
                   return (
                     <ServiceSection
-                      key={`dynamic-${section.id}`}
+                      key={`category-${category.id}`}
                       heading={heading}
                       services={services}
-                      viewAllLink="/all-services"
+                      viewAllLink={`/all-services?category=${category.id}`}
                     />
                   );
                 })}
 
-              {groupedServices.map(({ category, services }) => {
-                if (!services.length) return null;
+                {/* ✅ SEE MORE BUTTON (Only shows if viewing 'all' and there are more than 4 categories) */}
+                {selectedCategoryId === "all" && groupedServices.length > 4 && (
+                  <div className="flex justify-center my-8">
+                    <Link to="/all-services">
+                      <Button variant="outline" className="rounded-xl px-8">
+                        {bn ? "আরও দেখুন" : "See More"}
+                      </Button>
+                    </Link>
+                  </div>
+                )}
 
-                const heading = bn
-                  ? category.name || category.title || "সার্ভিস"
-                  : category.name_en ||
-                    category.title_en ||
-                    category.name ||
-                    category.title ||
-                    "Services";
-
-                return (
+                {/* Uncategorized Sections */}
+                {uncategorizedServices.length > 0 && (
                   <ServiceSection
-                    key={`category-${category.id}`}
-                    heading={heading}
-                    services={services}
-                    viewAllLink={`/all-services?category=${category.id}`}
+                    heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}
+                    services={uncategorizedServices}
+                    viewAllLink="/all-services"
                   />
-                );
-              })}
+                )}
 
-              {uncategorizedServices.length > 0 && (
-                <ServiceSection
-                  heading={bn ? "অন্যান্য সার্ভিস" : "Other Services"}
-                  services={uncategorizedServices}
-                  viewAllLink="/all-services"
-                />
-              )}
-
-              {!hasAnyService && (
-                <div className="py-16 text-center">
-                  <p className="text-muted-foreground">
-                    {bn
-                      ? "কোনো সার্ভিস পাওয়া যায়নি"
-                      : "No services available"}
-                  </p>
-                </div>
-              )}
-            </>
-          )}
+                {!hasAnyService && (
+                  <div className="py-16 text-center">
+                    <p className="text-muted-foreground">
+                      {bn
+                        ? "কোনো সার্ভিস পাওয়া যায়নি"
+                        : "No services available"}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
+
+        <WhyChooseUs />
+        <HowItWorks />
+        <Testimonials />
       </div>
 
-      <WhyChooseUs />
-      <HowItWorks />
-      <Testimonials />
+      {/* FOOTER (ALWAYS AT BOTTOM) */}
+      <Footer />
+
+      {/* Floating UI (doesn’t affect layout) */}
+      <ScrollButtons />
+      <ServiceChatFloatingButton />
     </div>
-
-    {/* FOOTER (ALWAYS AT BOTTOM) */}
-    <Footer />
-
-    {/* Floating UI (doesn’t affect layout) */}
-    <ScrollButtons />
-    <ServiceChatFloatingButton />
-   
-    {/* <div
-      className="md:hidden lg:hidden"
-      style={{ height: "calc(96px + env(safe-area-inset-bottom, 0px))" }}
-    /> */}
-  </div>
-);
+  );
 };
 
 export default Index;
