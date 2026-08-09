@@ -127,7 +127,7 @@ const VideoProviderPreview = ({ providerName, providerRole, rating = 4.8, totalJ
 
       {/* Provider meta */}
       <div className="flex items-center gap-3 px-3 py-2.5">
-        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-xs font-bold text-primary-foreground">
+        <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-xs font-bold text-white">
           {name.charAt(0).toUpperCase()}
           <BadgeCheck className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 rounded-full bg-card text-primary" />
         </div>

@@ -106,7 +106,7 @@ const AdminDisputes = () => {
             key={s}
             onClick={() => setFilter(s)}
             className={`text-xs rounded-full px-3 py-1 transition ${
-              filter === s ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"
+              filter === s ? "bg-primary text-white" : "bg-muted hover:bg-muted/70"
             }`}
           >
             {s === "active" ? "সক্রিয়" : s === "all" ? "সব" : s}

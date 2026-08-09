@@ -568,7 +568,7 @@ const MartProductDetail = () => {
                 <button
                   onClick={() => requireAuthForPurchase(() => { addItem(product, qty); navigate("/mart/checkout"); })}
                   disabled={product.stock <= 0}
-                  className="flex-1 h-11 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white rounded-sm text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
+                  className="flex-1 h-11 flex items-center justify-center gap-2 bg-primary hover:bg-emerald-800 text-white rounded-sm text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                 >
                   <Zap className="h-4 w-4" />
                   {bn ? "এখনই কিনুন" : "Buy Now"}

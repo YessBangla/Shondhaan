@@ -191,7 +191,7 @@ const SuperAdminOverview = () => {
       {/* === Premium gradient hero === */}
       <motion.div
         initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary via-emerald-600 to-teal-700 text-primary-foreground p-5 md:p-6 shadow-lg"
+        className="relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-to-br from-primary via-emerald-600 to-teal-700 text-white p-5 md:p-6 shadow-lg"
       >
         <div aria-hidden className="absolute inset-0 opacity-30" style={{
           backgroundImage:
@@ -205,10 +205,10 @@ const SuperAdminOverview = () => {
             <h2 className="text-xl md:text-2xl font-heading font-bold leading-tight">
               স্বাগতম, পুরো সিস্টেম এক নজরে
             </h2>
-            <p className="text-[13px] text-primary-foreground/85 mt-1.5 max-w-xl">
+            <p className="text-[13px] text-white/85 mt-1.5 max-w-xl">
               রিয়েল-টাইম মেট্রিক, ট্রেন্ড, এবং প্রতিটি প্ল্যাটফর্মের অ্যাকটিভিটি — Linear-class কন্ট্রোল।
             </p>
-            {/* <div className="flex items-center gap-1.5 mt-3 text-[11px] text-primary-foreground/85">
+            {/* <div className="flex items-center gap-1.5 mt-3 text-[11px] text-white/85">
               <span className="inline-flex items-center gap-1">
                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
                 লাইভ

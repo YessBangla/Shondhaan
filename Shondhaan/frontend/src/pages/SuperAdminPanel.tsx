@@ -185,7 +185,7 @@ const SuperAdminPanel = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary"><Crown className="h-8 w-8 text-muted-foreground" /></div>
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সুপার অ্যাডমিনদের জন্য।</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
         </div>
       </div>
     );

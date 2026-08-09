@@ -352,7 +352,7 @@ const AdminHomepageSections = () => {
 
           <button
             onClick={() => startEdit()}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground"
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             নতুন সেকশন
@@ -519,7 +519,7 @@ const AdminHomepageSections = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saving ? "সেভ হচ্ছে..." : "সেভ করুন"}
@@ -536,7 +536,7 @@ const AdminHomepageSections = () => {
             <p className="text-sm text-muted-foreground">এখনো কোনো হোমপেজ সেকশন নেই</p>
             <button
               onClick={() => startEdit()}
-              className="mt-3 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground"
+              className="mt-3 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white"
             >
               প্রথম সেকশন যোগ করুন
             </button>

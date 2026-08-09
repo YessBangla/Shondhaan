@@ -173,7 +173,7 @@ const AdminChatHistory = () => {
         )}
         <div className={`max-w-[80%] rounded-xl px-3 py-1.5 text-xs leading-relaxed ${
           msg.role === "user"
-            ? "bg-primary text-primary-foreground rounded-br-sm"
+            ? "bg-primary text-white rounded-br-sm"
             : "bg-background text-foreground rounded-bl-sm border border-border"
         }`}>
           {msg.content}

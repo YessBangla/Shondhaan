@@ -175,7 +175,7 @@ const RepLeaderboard = ({ currentUserId, compact = false }: LeaderboardProps) =>
                 key={p}
                 onClick={() => setPeriod(p)}
                 className={`rounded-md px-2.5 py-1 text-[10px] font-medium transition-all ${
-                  period === p ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  period === p ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {p === "all" ? "সর্বকালীন" : p === "month" ? "এই মাস" : "এই সপ্তাহ"}

@@ -118,7 +118,7 @@ const ReviewModal = ({ open, onClose, serviceSlug, serviceTitle, onSubmitted }: 
           <button
             onClick={handleSubmit}
             disabled={submitting || rating === 0}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "পাঠানো হচ্ছে..." : "Submitting..."}</>

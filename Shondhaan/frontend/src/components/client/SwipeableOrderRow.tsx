@@ -42,7 +42,7 @@ const SwipeableOrderRow = ({ children, canCancel, onCancel, onReorder, cancelLab
       </motion.div>
       <motion.div
         style={{ opacity: reorderOpacity }}
-        className="pointer-events-none absolute inset-0 flex items-center justify-start rounded-xl bg-primary/90 pl-5 text-primary-foreground md:hidden"
+        className="pointer-events-none absolute inset-0 flex items-center justify-start rounded-xl bg-primary/90 pl-5 text-white md:hidden"
       >
         <motion.div style={{ scale: reorderScale }} className="flex flex-col items-center gap-1">
           <RotateCcw className="h-5 w-5" />

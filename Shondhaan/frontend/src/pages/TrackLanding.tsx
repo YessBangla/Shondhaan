@@ -166,7 +166,7 @@ const TrackLanding = () => {
               <button
                 type="submit"
                 disabled={!value.trim() || loading}
-                className="flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-primary-foreground disabled:opacity-50 transition-opacity"
+                className="flex h-11 items-center gap-1.5 rounded-md bg-primary px-4 text-sm font-semibold text-white disabled:opacity-50 transition-opacity"
               >
                 <Search className="h-4 w-4" />
                 {bn ? "খুঁজুন" : "Track"}

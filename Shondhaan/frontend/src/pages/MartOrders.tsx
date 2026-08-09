@@ -119,7 +119,7 @@ const OrderTracker = ({ status, bn }: { status: string; bn: boolean }) => {
                 transition={{ duration: 0.6, repeat: isActive ? Infinity : 0, repeatDelay: 1.5 }}
                 className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
                   isDone || isActive
-                    ? "bg-primary border-primary text-primary-foreground"
+                    ? "bg-primary border-primary text-white"
                     : "bg-background border-muted-foreground/30 text-muted-foreground/40"
                 }`}
               >
@@ -361,7 +361,7 @@ const MartOrders = () => {
               onClick={() => setFilter(tab.key)}
               className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
                 filter === tab.key
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-white"
                   : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >

@@ -98,7 +98,7 @@ const AdminSiteSettings = () => {
       <button
         onClick={handleSave}
         disabled={updateMultiple.isPending}
-        className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+        className="flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white disabled:opacity-50"
       >
         {updateMultiple.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         সব সেটিংস সেভ করুন

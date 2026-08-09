@@ -211,7 +211,7 @@ const DocumentScanner = ({ open, onClose, onCapture, title }: Props) => {
               </button>
               <button
                 onClick={accept}
-                className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg ring-4 ring-primary/30"
+                className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-white shadow-lg ring-4 ring-primary/30"
               >
                 <Check className="h-8 w-8" />
               </button>

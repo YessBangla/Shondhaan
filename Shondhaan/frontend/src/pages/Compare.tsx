@@ -166,7 +166,7 @@ const MobileSideBySide = ({
               <div className="h-[60px] flex items-center justify-center px-2 border-b border-border">
                 <button
                   onClick={() => navigate(`/service/${s.slug}`)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-white"
                 >
                   <ShoppingBag className="h-3 w-3" />
                   {bn ? "অর্ডার" : "Order"}
@@ -396,7 +396,7 @@ const Compare = () => {
                   <td key={s.slug} className="p-3 text-center">
                     <button
                       onClick={() => navigate(`/service/${s.slug}`)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white"
                     >
                       <ShoppingBag className="h-3.5 w-3.5" />
                       {bn ? "অর্ডার করুন" : "Order Now"}

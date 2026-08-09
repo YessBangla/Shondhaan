@@ -73,7 +73,7 @@ const BookingTimelineLive = ({ bookingId, initialStatus = "pending" }: Props) =>
                 transition={current ? { repeat: Infinity, duration: 1.6 } : {}}
                 className={`flex h-7 w-7 items-center justify-center rounded-full border-2 transition-colors ${
                   done
-                    ? "border-primary bg-primary text-primary-foreground"
+                    ? "border-primary bg-primary text-white"
                     : "border-border bg-card text-muted-foreground"
                 }`}
               >

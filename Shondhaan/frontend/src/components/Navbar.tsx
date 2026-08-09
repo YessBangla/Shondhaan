@@ -688,7 +688,7 @@ const  Navbar = () => {
               <ShoppingCart className="h-4.5 w-4.5 text-primary dark:text-white" />
 
               {totalItems > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 bg-primary text-primary-foreground text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold leading-none">
+                <span className="absolute -top-0.5 -right-0.5 bg-primary text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold leading-none">
                   {totalItems}
                 </span>
               )}

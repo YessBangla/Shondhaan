@@ -158,7 +158,7 @@ const PaymentHistoryTab = ({ bookings, martOrders = [] }: Props) => {
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filter === tab.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                filter === tab.key ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               <Icon className="h-3 w-3" /> {tab.label}

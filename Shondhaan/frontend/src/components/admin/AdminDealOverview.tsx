@@ -145,11 +145,11 @@ const AdminDealOverview = () => {
 
       <div className="flex gap-2 border-b border-border pb-2">
         <button onClick={() => setTab("listings")}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === "listings" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === "listings" ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
           বিজ্ঞাপন ({stats.total})
         </button>
         <button onClick={() => setTab("reports")}
-          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === "reports" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+          className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === "reports" ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
           রিপোর্ট ({stats.reported})
         </button>
       </div>

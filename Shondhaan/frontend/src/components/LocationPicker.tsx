@@ -119,7 +119,7 @@ const LocationPicker = ({
       <div className="rounded-xl border border-border bg-card overflow-hidden">
         {/* Division */}
         <div className="flex items-center gap-2 px-3 py-0.5 border-b border-border/50">
-          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(division) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>১</span>
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(division) ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>১</span>
           <Select value={division} onValueChange={handleDivisionChange}>
             <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
               <SelectValue placeholder={bn ? "বিভাগ নির্বাচন করুন" : "Select Division"} />
@@ -138,7 +138,7 @@ const LocationPicker = ({
 
         {/* District */}
         <div className={`flex items-center gap-2 px-3 py-0.5 border-b border-border/50 transition-opacity ${division ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(district) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>২</span>
+          <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(district) ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>২</span>
           <Select value={district} onValueChange={handleDistrictChange} disabled={!division}>
             <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
               <SelectValue placeholder={bn ? "জেলা নির্বাচন করুন" : "Select District"} />
@@ -158,7 +158,7 @@ const LocationPicker = ({
         {/* Thana */}
         {thanaList.length > 0 && (
           <div className={`flex items-center gap-2 px-3 py-0.5 border-b border-border/50 transition-opacity ${district ? "opacity-100" : "opacity-40 pointer-events-none"}`}>
-            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(thana) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>৩</span>
+            <span className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-bold ${done(thana) ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>৩</span>
             <Select value={thana} onValueChange={onThanaChange} disabled={!district}>
               <SelectTrigger className="border-0 shadow-none px-0 h-9 text-xs font-medium focus:ring-0 bg-transparent">
                 <SelectValue placeholder={bn ? "থানা/এলাকা নির্বাচন" : "Select Thana"} />

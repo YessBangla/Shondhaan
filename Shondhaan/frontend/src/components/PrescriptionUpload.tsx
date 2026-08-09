@@ -130,7 +130,7 @@ const PrescriptionUpload = ({ bn, onUploadComplete }: PrescriptionUploadProps) =
         <div className="flex items-center justify-center gap-2 mt-3">
           <button
             onClick={() => setScannerOpen(true)}
-            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-primary/80 px-4 py-2 text-xs font-semibold text-primary-foreground shadow-sm transition-transform hover:scale-[1.02]"
+            className="flex items-center gap-1.5 rounded-lg bg-gradient-to-br from-primary to-primary/80 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-transform hover:scale-[1.02]"
           >
             <ScanLine className="h-3.5 w-3.5" />
             {bn ? "স্মার্ট স্ক্যান" : "Smart Scan"}
@@ -216,7 +216,7 @@ const PrescriptionUpload = ({ bn, onUploadComplete }: PrescriptionUploadProps) =
               <button
                 onClick={uploadAll}
                 disabled={files.some(f => f.uploading)}
-                className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
+                className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50 flex items-center justify-center gap-2"
               >
                 <Upload className="h-4 w-4" />
                 {bn ? `প্রেসক্রিপশন আপলোড করুন (${files.filter(f => !f.uploaded).length}টি)` : `Upload Prescription (${files.filter(f => !f.uploaded).length})`}

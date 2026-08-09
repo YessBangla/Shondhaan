@@ -31,7 +31,7 @@ const DateRangeToggle = ({
         className={cn(
           "px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all",
           value === k
-            ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-sm"
+            ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-sm"
             : "text-muted-foreground hover:text-foreground hover:bg-secondary"
         )}
       >

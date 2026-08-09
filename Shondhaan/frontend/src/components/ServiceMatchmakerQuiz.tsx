@@ -110,7 +110,7 @@ export default function ServiceMatchmakerQuiz({ open, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md overflow-hidden rounded-3xl bg-card shadow-2xl"
           >
-            <div className="bg-gradient-to-br from-primary to-pink-500 p-5 text-primary-foreground">
+            <div className="bg-gradient-to-br from-primary to-pink-500 p-5 text-white">
               <button
                 onClick={close}
                 className="absolute right-3 top-3 rounded-full bg-primary-foreground/20 p-1.5 hover:bg-primary-foreground/30"

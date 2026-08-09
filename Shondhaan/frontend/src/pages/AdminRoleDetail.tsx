@@ -198,7 +198,7 @@ const AdminRoleDetail = () => {
                         onClick={() => setAssignFor(assignFor === u.user_id ? null : u.user_id)}
                         className={`px-2.5 py-1.5 rounded-lg text-xs font-medium border transition ${
                           assignFor === u.user_id
-                            ? "bg-primary text-primary-foreground border-primary"
+                            ? "bg-primary text-white border-primary"
                             : "border-border hover:bg-muted"
                         }`}
                       >

@@ -92,7 +92,7 @@ export default function AIImageSearch({ open, onClose }: Props) {
             onClick={(e) => e.stopPropagation()}
             className="w-full max-w-sm overflow-hidden rounded-3xl bg-card shadow-2xl"
           >
-            <div className="flex items-center justify-between bg-gradient-to-br from-primary to-pink-500 p-4 text-primary-foreground">
+            <div className="flex items-center justify-between bg-gradient-to-br from-primary to-pink-500 p-4 text-white">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4" />
                 <h3 className="text-sm font-bold">{bn ? "AI ছবি দিয়ে খুঁজুন" : "AI Image Search"}</h3>

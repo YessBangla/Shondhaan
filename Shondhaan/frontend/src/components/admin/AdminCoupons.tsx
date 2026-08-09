@@ -168,7 +168,7 @@ const AdminCoupons = () => {
           </div>
         </div>
 
-        <button onClick={handleAdd} disabled={adding} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        <button onClick={handleAdd} disabled={adding} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
           {adding ? "তৈরি হচ্ছে..." : "কুপন তৈরি করুন"}
         </button>
       </div>

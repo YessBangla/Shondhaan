@@ -373,7 +373,7 @@ const AdminRepresentatives = () => {
           <span className="text-[10px] text-muted-foreground">ফাঁকা রাখলে সার্ভিসের কমিশন % ব্যবহার হবে</span>
         </div>
 
-        <button onClick={handleAdd} disabled={adding} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        <button onClick={handleAdd} disabled={adding} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
           {adding ? "যোগ হচ্ছে..." : "প্রতিনিধি যোগ করুন"}
         </button>
       </div>

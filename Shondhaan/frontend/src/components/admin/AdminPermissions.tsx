@@ -115,7 +115,7 @@ const AdminPermissions = () => {
             onClick={() => setSelectedRole(role)}
             className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
               selectedRole === role
-                ? "bg-primary text-primary-foreground shadow-md"
+                ? "bg-primary text-white shadow-md"
                 : "bg-secondary text-muted-foreground hover:bg-secondary/80"
             }`}
           >

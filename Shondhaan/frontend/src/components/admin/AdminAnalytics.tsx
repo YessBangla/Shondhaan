@@ -473,7 +473,7 @@ const AdminAnalytics = () => {
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["7d", "30d", "6m", "1y"] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
                 {p === "7d" ? "৭ দিন" : p === "30d" ? "৩০ দিন" : p === "6m" ? "৬ মাস" : "১ বছর"}
               </button>
             ))}
