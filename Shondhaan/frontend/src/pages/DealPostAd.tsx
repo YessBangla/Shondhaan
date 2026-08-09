@@ -92,22 +92,18 @@ const DealPostAd = () => {
       toast.error(bn ? "লগইন তথ্য পাওয়া যায়নি" : "Login user not found");
       return;
     }
-
     if (!form.title.trim()) {
       toast.error(bn ? "শিরোনাম দিন" : "Title required");
       return;
     }
-
     if (!form.category_id) {
       toast.error(bn ? "ক্যাটাগরি নির্বাচন করুন" : "Select category");
       return;
     }
-
     if (!form.location_division) {
       toast.error(bn ? "বিভাগ নির্বাচন করুন" : "Select division");
       return;
     }
-
     try {
       setSubmitting(true);
 
