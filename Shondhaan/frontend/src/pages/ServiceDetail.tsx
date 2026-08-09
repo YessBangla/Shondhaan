@@ -688,7 +688,7 @@ const CmsServiceDetail = ({
                         )}
                       >
                         {isSelected && (
-                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-primary-foreground">
+                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-white">
                             {bn ? "নির্বাচিত" : "Selected"}
                           </span>
                         )}
@@ -838,7 +838,7 @@ const CmsServiceDetail = ({
                   <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
                     {submitting ? "Submitting..." : bn ? "নিশ্চিত করে বুক করুন" : "Confirm & Book"}
                   </button>
                 </motion.div>

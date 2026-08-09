@@ -241,7 +241,7 @@ const Compare = () => {
           <p className="text-muted-foreground text-sm mb-5 max-w-xs">
             {bn ? "যেকোনো সার্ভিস কার্ডে তুলনা আইকনে ট্যাপ করে ২-৩টি সার্ভিস যোগ করুন" : "Tap the compare icon on any service card to add 2-3 services"}
           </p>
-          <button onClick={() => navigate("/all-services")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/all-services")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
             {bn ? "সার্ভিস দেখুন" : "Browse Services"}
           </button>
         </div>

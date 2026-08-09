@@ -97,7 +97,7 @@ const MartCategoryPage = () => {
     <div className="min-h-screen bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[30px]" />
 
       <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
         <div className="app-container py-4">
@@ -124,11 +124,26 @@ const MartCategoryPage = () => {
         {/* Sub-categories */}
         {subCats.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
-            <Button variant={!slug || slug === currentCat?.slug ? "default" : "outline"} size="sm" className="shrink-0 text-xs" onClick={() => navigate(`/mart/category/${currentCat?.slug}`)}>
+            <Button
+              variant={!slug || slug === currentCat?.slug ? "default" : "outline"}
+              size="sm"
+              className={`shrink-0 text-xs ${
+                !slug || slug === currentCat?.slug ? "text-white" : "text-muted-foreground"
+              }`}
+              onClick={() => navigate(`/mart/category/${currentCat?.slug}`)}
+            >
               {bn ? "সকল" : "All"}
             </Button>
             {subCats.map((sub) => (
-              <Button key={sub.id} variant={slug === sub.slug ? "default" : "outline"} size="sm" className="shrink-0 text-xs" onClick={() => navigate(`/mart/category/${sub.slug}`)}>
+              <Button
+                key={sub.id}
+                variant={slug === sub.slug ? "default" : "outline"}
+                size="sm"
+                className={`shrink-0 text-xs ${
+                  slug === sub.slug ? "text-white" : "text-muted-foreground"
+                }`}
+                onClick={() => navigate(`/mart/category/${sub.slug}`)}
+              >
                 {bn ? sub.name : (sub.name_en || sub.name)}
               </Button>
             ))}
@@ -169,8 +184,22 @@ const MartCategoryPage = () => {
             </SelectContent>
           </Select>
           <div className="hidden sm:flex border border-border rounded-lg">
-            <Button variant={viewMode === "grid" ? "default" : "ghost"} size="icon" className="h-9 w-9" onClick={() => setViewMode("grid")}><LayoutGrid className="h-4 w-4" /></Button>
-            <Button variant={viewMode === "list" ? "default" : "ghost"} size="icon" className="h-9 w-9" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
+            <Button
+              variant={viewMode === "grid" ? "default" : "ghost"}
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setViewMode("grid")}
+            >
+              <LayoutGrid className={`h-4 w-4 ${viewMode === "grid" ? "text-white" : "text-muted-foreground"}`} />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="icon"
+              className="h-9 w-9"
+              onClick={() => setViewMode("list")}
+            >
+              <List className={`h-4 w-4 ${viewMode === "list" ? "text-white" : "text-muted-foreground"}`} />
+            </Button>
           </div>
         </div>
 
@@ -191,7 +220,13 @@ const MartCategoryPage = () => {
               <label className="text-xs font-medium text-muted-foreground">{bn ? "ন্যূনতম রেটিং" : "Min Rating"}</label>
               <div className="flex gap-2 mt-1">
                 {[0, 3, 3.5, 4, 4.5].map((r) => (
-                  <Button key={r} variant={ratingFilter === r ? "default" : "outline"} size="sm" className="text-xs" onClick={() => setRatingFilter(r)}>
+                  <Button
+                    key={r}
+                    variant={ratingFilter === r ? "default" : "outline"}
+                    size="sm"
+                    className={`text-xs ${ratingFilter === r ? "text-white" : "text-muted-foreground"}`}
+                    onClick={() => setRatingFilter(r)}
+                  >
                     {r === 0 ? (bn ? "সকল" : "All") : `${r}+⭐`}
                   </Button>
                 ))}

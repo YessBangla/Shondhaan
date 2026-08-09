@@ -119,13 +119,13 @@ const CartSidebar = () => {
               </div>
               <button
                 onClick={handleCheckout}
-                className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 active:scale-[0.98]"
+                className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-800 active:scale-[0.98]"
               >
                 {t("cart.checkout")}
               </button>
               <button
                 onClick={() => { haptic("warning"); clearCart(); }}
-                className="w-full rounded-lg border border-border py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-secondary"
+                className="w-full rounded-lg border border-gray-500 py-2.5 text-sm font-medium text-black transition-colors hover:bg-secondary"
               >
                 {t("cart.clear")}
               </button>
