@@ -184,7 +184,7 @@ const AssignmentList = ({ grouped, onRevoke, onUpdatePerms }: ListProps) => {
                         ) : (
                           <>
                             <button onClick={() => saveEdit(it.id)}
-                              className="p-1.5 rounded-lg bg-primary text-primary-foreground" title="সেভ">
+                              className="p-1.5 rounded-lg bg-primary text-white" title="সেভ">
                               <Check className="h-3.5 w-3.5" />
                             </button>
                             <button onClick={() => setEditingId(null)}
@@ -609,7 +609,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
               type="button"
               onClick={() => setFilterScopeType(t)}
               className={`h-8 px-2.5 rounded-lg text-[11px] font-medium border flex items-center gap-1.5 transition ${
-                active ? "bg-primary text-primary-foreground border-primary" : "bg-card hover:bg-muted border-border"
+                active ? "bg-primary text-white border-primary" : "bg-card hover:bg-muted border-border"
               }`}
             >
               {Icon && <Icon className="h-3 w-3" />}
@@ -633,7 +633,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
             return (
               <button key={t} type="button" onClick={() => setScopeType(t)}
                 className={`flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-3 text-xs font-medium transition ${
-                  active ? "bg-primary text-primary-foreground border-primary shadow-md scale-105" : "bg-card hover:bg-muted border-border"
+                  active ? "bg-primary text-white border-primary shadow-md scale-105" : "bg-card hover:bg-muted border-border"
                 }`}>
                 <Icon className="h-4 w-4" />
                 {SCOPE_META[t].label}
@@ -911,24 +911,24 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
             return (
               <button key={u.user_id} onClick={() => setSelectedUserId(u.user_id)}
                 className={`w-full flex items-center gap-2.5 p-2.5 rounded-xl text-left transition ${
-                  active ? "bg-primary text-primary-foreground shadow-md" : "hover:bg-muted/60"
+                  active ? "bg-primary text-white shadow-md" : "hover:bg-muted/60"
                 }`}>
                 <div className={`h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 ${
                   active ? "bg-primary-foreground/20" : "bg-primary/10 text-primary"
                 }`}>{initials}</div>
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-semibold truncate">{u.full_name || u.email?.split("@")[0] || "নামহীন"}</div>
-                  <div className={`text-[10px] truncate ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                  <div className={`text-[10px] truncate ${active ? "text-white/70" : "text-muted-foreground"}`}>
                     {ROLE_LABELS[u.type] || u.type}
                   </div>
                   {u.mobile && (
-                    <div className={`text-[10px] truncate ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    <div className={`text-[10px] truncate ${active ? "text-white/70" : "text-muted-foreground"}`}>
                       {u.mobile}
                     </div>
                   )}
                 </div>
                 {count > 0 && (
-                  <Badge className={`text-[10px] flex-shrink-0 ${active ? "bg-primary-foreground/20 text-primary-foreground" : ""}`}>
+                  <Badge className={`text-[10px] flex-shrink-0 ${active ? "bg-primary-foreground/20 text-white" : ""}`}>
                     {count}
                   </Badge>
                 )}

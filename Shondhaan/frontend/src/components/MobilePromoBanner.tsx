@@ -20,7 +20,7 @@ const MobilePromoBanner = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}
-      className="md:hidden mt-4 mx-4 w-[calc(100%-2rem)] flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 px-4 py-3 text-left text-primary-foreground shadow-md active:scale-[0.98] transition-transform"
+      className="md:hidden mt-4 mx-4 w-[calc(100%-2rem)] flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 px-4 py-3 text-left text-white shadow-md active:scale-[0.98] transition-transform"
     >
       <div className="flex-1 min-w-0">
         <p className="text-sm font-bold leading-tight">

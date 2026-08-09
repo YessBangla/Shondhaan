@@ -199,7 +199,7 @@ const AdminDashboard = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary"><LayoutDashboard className="h-8 w-8 text-muted-foreground" /></div>
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র অ্যাডমিনদের জন্য।</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -368,7 +368,7 @@ const AdminDashboard = () => {
             className="w-full flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition text-left"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow">
+              <div className="p-2.5 rounded-xl bg-primary text-white shadow">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div className="min-w-0">

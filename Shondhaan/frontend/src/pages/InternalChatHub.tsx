@@ -367,7 +367,7 @@ function ServiceGrid({
                   </div>
                 )}
                 {count > 0 && (
-                  <Badge className="absolute top-1.5 right-1.5 bg-primary text-primary-foreground text-[10px] h-5">
+                  <Badge className="absolute top-1.5 right-1.5 bg-primary text-white text-[10px] h-5">
                     {count}
                   </Badge>
                 )}

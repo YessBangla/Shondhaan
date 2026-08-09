@@ -230,7 +230,7 @@ const AdminWithdrawals = () => {
                   <button
                     onClick={() => updateStatus(w.id, "completed")}
                     disabled={processingId === w.id}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary/90 disabled:opacity-50"
                   >
                     <CheckCircle className="h-3.5 w-3.5" /> পেমেন্ট সম্পন্ন চিহ্নিত করুন
                   </button>

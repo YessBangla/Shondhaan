@@ -1274,7 +1274,7 @@ ${filtered
     <div className="p-4 md:p-6 max-w-3xl mx-auto space-y-6">
       {/* Profile Header */}
       <div className="flex items-center gap-4 p-5 rounded-2xl bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-        <div className="h-14 w-14 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow">
+        <div className="h-14 w-14 rounded-full bg-primary text-white flex items-center justify-center shadow">
           <Crown className="h-6 w-6" />
         </div>
         <div className="min-w-0">
@@ -1678,7 +1678,7 @@ ${filtered
                         onClick={() => setReasonMode(opt.id)}
                         className={`px-2 py-0.5 font-semibold transition ${
                           reasonMode === opt.id
-                            ? "bg-primary text-primary-foreground"
+                            ? "bg-primary text-white"
                             : "bg-muted/40 text-muted-foreground hover:bg-muted"
                         }`}
                         aria-pressed={reasonMode === opt.id}
@@ -1706,7 +1706,7 @@ ${filtered
                       onClick={() => setMatchFilter(opt.id)}
                       className={`px-2 py-0.5 rounded-full border transition ${
                         matchFilter === opt.id
-                          ? "bg-primary text-primary-foreground border-primary"
+                          ? "bg-primary text-white border-primary"
                           : "bg-muted/40 text-muted-foreground border-border hover:bg-muted"
                       }`}
                       aria-pressed={matchFilter === opt.id}
@@ -2238,7 +2238,7 @@ ${filtered
                               onClick={() => setTimelineMode(m)}
                               className={`rounded-full border px-2 py-0.5 font-semibold transition-colors ${
                                 timelineMode === m
-                                  ? "border-primary bg-primary text-primary-foreground"
+                                  ? "border-primary bg-primary text-white"
                                   : "border-border bg-card hover:bg-muted"
                               }`}
                             >
@@ -2260,7 +2260,7 @@ ${filtered
                               onClick={() => setTimelineStatus(s.id)}
                               className={`rounded-full border px-2 py-0.5 font-semibold transition-colors ${
                                 timelineStatus === s.id
-                                  ? "border-primary bg-primary text-primary-foreground"
+                                  ? "border-primary bg-primary text-white"
                                   : "border-border bg-card hover:bg-muted"
                               }`}
                             >
@@ -2615,7 +2615,7 @@ ${filtered
                     onClick={() => setDetailsFilter(f.id)}
                     className={`rounded-full border px-2 py-0.5 font-semibold transition-colors ${
                       detailsFilter === f.id
-                        ? "border-primary bg-primary text-primary-foreground"
+                        ? "border-primary bg-primary text-white"
                         : "border-border bg-card hover:bg-muted"
                     }`}
                   >

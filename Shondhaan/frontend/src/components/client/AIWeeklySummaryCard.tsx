@@ -87,7 +87,7 @@ export default function AIWeeklySummaryCard() {
       <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
       <div className="relative">
         <div className="mb-2 flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-white">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
           <h3 className="text-sm font-semibold text-foreground">

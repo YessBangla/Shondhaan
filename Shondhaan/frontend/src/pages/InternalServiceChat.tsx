@@ -445,7 +445,7 @@ export default function InternalServiceChat() {
                         </div>
                         <div className={`rounded-xl px-3 py-2 text-sm ${
                           isMe
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            ? "bg-primary text-white rounded-br-sm"
                             : "bg-muted text-foreground rounded-bl-sm"
                         }`}>
                           {msg.message}

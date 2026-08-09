@@ -27,7 +27,7 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[30px]" />
 
       <div className="app-container py-8 md:py-14">
         <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground text-center">

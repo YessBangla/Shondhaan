@@ -700,7 +700,7 @@ const CategorySidebar = ({
               onClick={() => scrollToCategory(cat.id)}
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
                 activeCategory === cat.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-white"
                   : "bg-secondary text-muted-foreground"
               }`}
             >
@@ -922,7 +922,7 @@ const CmsServiceCard = ({
             disabled={!inCompare && compareList.length >= 3}
             className={`flex h-7 w-7 items-center justify-center rounded-full border ${
               inCompare
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-white"
                 : "border-border bg-background/80 text-muted-foreground disabled:opacity-30"
             }`}
           >

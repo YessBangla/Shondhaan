@@ -36,7 +36,7 @@ const OrderTimelineStepper = ({ steps, currentIndex }: Props) => {
               transition={{ delay: i * 0.08 }}
               className={`relative z-10 w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
                 done
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-white"
                   : active
                   ? "bg-primary/20 text-primary ring-2 ring-primary"
                   : "bg-muted text-muted-foreground"

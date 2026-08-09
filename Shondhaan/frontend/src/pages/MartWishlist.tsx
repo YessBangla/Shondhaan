@@ -34,18 +34,18 @@ const MartWishlist = () => {
       <div className="pt-[44px] md:pt-[104px]" />
 
       {/* Header */}
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
         <div className="app-container py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="text-primary-foreground hover:bg-primary-foreground/10" onClick={() => navigate("/mart/home")}>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-primary-foreground/10" onClick={() => navigate("/mart/home")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
                 <h1 className="text-xl font-bold flex items-center gap-2">
                   <Heart className="h-5 w-5 fill-current" /> {bn ? "আমার উইশলিস্ট" : "My Wishlist"}
                 </h1>
-                <p className="text-xs text-primary-foreground/70">
+                <p className="text-xs text-white/70">
                   {items.length} {bn ? "টি পণ্য সেভ করা আছে" : "items saved"}
                 </p>
               </div>

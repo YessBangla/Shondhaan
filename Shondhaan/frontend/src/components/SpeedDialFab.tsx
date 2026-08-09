@@ -37,7 +37,7 @@ export default function SpeedDialFab({ actions, className }: Props) {
               </span>
               <span
                 className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-full text-primary-foreground shadow-lg",
+                  "flex h-11 w-11 items-center justify-center rounded-full text-white shadow-lg",
                   a.color ?? "bg-primary"
                 )}
               >
@@ -49,7 +49,7 @@ export default function SpeedDialFab({ actions, className }: Props) {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={() => { haptic("medium"); setOpen((v) => !v); }}
-        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-xl"
+        className="flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-xl"
         aria-label="Quick actions"
       >
         <motion.span animate={{ rotate: open ? 45 : 0 }} transition={{ type: "spring", stiffness: 300 }}>

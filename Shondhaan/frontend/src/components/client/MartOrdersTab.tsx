@@ -143,7 +143,7 @@ const OrderTracker = ({ status, bn }: { status: string; bn: boolean }) => {
                 transition={{ duration: 0.8, repeat: active ? Infinity : 0, repeatDelay: 2 }}
                 className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-colors ${
                   done
-                    ? "bg-primary border-primary text-primary-foreground"
+                    ? "bg-primary border-primary text-white"
                     : "bg-background border-muted text-muted-foreground/40"
                 }`}
               >
@@ -309,7 +309,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
         <p className="text-sm text-muted-foreground mt-1">
           {bn ? "সন্ধান মার্ট থেকে পণ্য কিনুন" : "Shop from Shondhaan Mart"}
         </p>
-        <Button className="mt-4 gap-2" onClick={() => navigate("/mart/home")}>
+        <Button className="mt-4 gap-2 text-white" onClick={() => navigate("/mart/home")}>
           <ShoppingBag className="h-4 w-4" />
           {bn ? "শপিং শুরু করুন" : "Start Shopping"}
         </Button>
@@ -348,7 +348,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
             onClick={() => setFilter(tab.key)}
             className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               filter === tab.key
-                ? "bg-primary text-primary-foreground"
+                ? "bg-primary text-white"
                 : "bg-muted text-muted-foreground hover:bg-muted/80"
             }`}
           >

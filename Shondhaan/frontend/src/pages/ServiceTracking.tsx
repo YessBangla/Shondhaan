@@ -248,7 +248,7 @@ const ServiceTracking = () => {
                   <div key={step.key} className="flex items-center flex-1">
                     <div className="flex flex-col items-center flex-1">
                       <div className={`flex h-9 w-9 items-center justify-center rounded-full border-2 transition-colors ${
-                        isActive ? "border-primary bg-primary text-primary-foreground" : "border-muted bg-background text-muted-foreground"
+                        isActive ? "border-primary bg-primary text-white" : "border-muted bg-background text-muted-foreground"
                       }`}>
                         <StepIcon className="h-4 w-4" />
                       </div>

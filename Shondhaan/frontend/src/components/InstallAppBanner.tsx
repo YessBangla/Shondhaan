@@ -57,7 +57,7 @@ const InstallAppBanner = () => {
       aria-label="Install app"
     >
       <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white">
           <Download className="h-5 w-5" />
         </div>
         <div className="flex-1 min-w-0">
@@ -70,7 +70,7 @@ const InstallAppBanner = () => {
         </div>
         <button
           onClick={install}
-          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground active:scale-95"
+          className="shrink-0 rounded-lg bg-primary px-3 py-2 text-xs font-bold text-white active:scale-95"
         >
           {bn ? "ইনস্টল" : "Install"}
         </button>

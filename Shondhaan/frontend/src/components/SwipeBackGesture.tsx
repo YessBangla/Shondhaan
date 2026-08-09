@@ -97,7 +97,7 @@ const SwipeBackGesture = () => {
         }}
       >
         <ChevronLeft
-          className={`h-5 w-5 transition-colors ${ready ? "text-primary-foreground" : "text-foreground"}`}
+          className={`h-5 w-5 transition-colors ${ready ? "text-white" : "text-foreground"}`}
           style={{ opacity: 0.4 + progress * 0.6 }}
         />
       </div>

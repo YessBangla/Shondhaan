@@ -376,13 +376,13 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
             <button
               onClick={() => setChartPeriod("weekly")}
               className={`px-3 py-1 text-[10px] font-medium transition-colors ${
-                chartPeriod === "weekly" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                chartPeriod === "weekly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
               }`}
             >সাপ্তাহিক</button>
             <button
               onClick={() => setChartPeriod("monthly")}
               className={`px-3 py-1 text-[10px] font-medium transition-colors ${
-                chartPeriod === "monthly" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                chartPeriod === "monthly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
               }`}
             >মাসিক</button>
           </div>
@@ -460,7 +460,7 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           <Filter className="h-3.5 w-3.5" /> ফিল্টার <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button onClick={exportCSV}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary/90">
           <Download className="h-3.5 w-3.5" /> CSV এক্সপোর্ট
         </button>
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length}টি লেনদেন</span>

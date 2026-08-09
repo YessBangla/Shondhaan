@@ -60,7 +60,7 @@ const CartSidebar = () => {
             <p className="text-sm text-muted-foreground">{t("cart.empty")}</p>
             <button
               onClick={() => setIsOpen(false)}
-              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+              className="rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white"
             >
               {t("cart.continueShopping")}
             </button>

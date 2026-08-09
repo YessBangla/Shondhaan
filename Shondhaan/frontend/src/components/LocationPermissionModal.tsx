@@ -64,7 +64,7 @@ const LocationPermissionModal = ({ open, onAllow, onSkip }: LocationPermissionMo
             <div className="flex flex-col gap-2 px-6 pb-6 pt-2">
               <button
                 onClick={onAllow}
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
               >
                 <Navigation className="h-4 w-4" />
                 লোকেশন অনুমতি দিন

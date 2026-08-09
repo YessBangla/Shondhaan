@@ -148,7 +148,7 @@ const ServiceRequestsTab = ({ userPhone }: Props) => {
               onClick={() => setStatusFilter(fb.key)}
               className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium border transition-all ${
                 statusFilter === fb.key
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-primary text-white border-primary"
                   : "bg-card text-muted-foreground border-border hover:border-primary/40"
               }`}
             >

@@ -96,7 +96,7 @@ const AuthHeroPanel = () => {
   }, [slides.length]);
 
   return (
-    <div className="hidden lg:flex flex-col justify-between relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground p-8 min-h-[600px]">
+    <div className="hidden lg:flex flex-col justify-between relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary to-primary/80 text-white p-8 min-h-[600px]">
       {/* Background pattern */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute bottom-20 right-10 w-48 h-48 rounded-full border-2 border-primary-foreground" />

@@ -145,7 +145,7 @@ const AdminStaffWorkload = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-2 flex-wrap">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center">
+        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center">
           <Users className="h-4 w-4" />
         </div>
         <div>
@@ -160,7 +160,7 @@ const AdminStaffWorkload = () => {
             { v: "name", l: "নাম" },
           ] as const).map((s) => (
             <button key={s.v} onClick={() => setSortBy(s.v as any)}
-              className={`text-[11px] rounded-full px-2.5 py-1 transition ${sortBy === s.v ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}>
+              className={`text-[11px] rounded-full px-2.5 py-1 transition ${sortBy === s.v ? "bg-primary text-white" : "bg-muted hover:bg-muted/70"}`}>
               {s.l}
             </button>
           ))}
@@ -170,7 +170,7 @@ const AdminStaffWorkload = () => {
       <div className="flex items-center gap-1.5 flex-wrap">
         {ROLE_FILTERS.map((r) => (
           <button key={r.value} onClick={() => setRoleFilter(r.value)}
-            className={`text-xs rounded-full px-3 py-1 transition ${roleFilter === r.value ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70"}`}>
+            className={`text-xs rounded-full px-3 py-1 transition ${roleFilter === r.value ? "bg-primary text-white" : "bg-muted hover:bg-muted/70"}`}>
             {r.label}
           </button>
         ))}

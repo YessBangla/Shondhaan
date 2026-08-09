@@ -244,7 +244,7 @@ const StaffLoginPage = ({
                           type="button"
                           disabled={submitting}
                           onClick={() => handleDemoLogin(role, demoEmail!)}
-                          className="flex items-center gap-1.5 rounded-md border border-primary/20 bg-background px-2 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                          className="flex items-center gap-1.5 rounded-md border border-primary/20 bg-background px-2 py-1.5 text-[11px] font-medium text-foreground transition-colors hover:bg-primary hover:text-white disabled:opacity-50"
                         >
                           <Icon className="h-3 w-3 shrink-0" />
                           <span className="truncate">{bn ? role.labelBn : role.labelEn}</span>

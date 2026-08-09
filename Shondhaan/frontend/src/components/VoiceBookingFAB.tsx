@@ -122,7 +122,7 @@ const VoiceBookingFAB = () => {
       <motion.button
         whileTap={{ scale: 0.92 }}
         onClick={() => setOpen(true)}
-        className="fixed right-3 md:right-4 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground shadow-lg shadow-primary/30 md:!bottom-[228px]"
+        className="fixed right-3 md:right-4 z-40 hidden md:flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/70 text-white shadow-lg shadow-primary/30 md:!bottom-[228px]"
         style={{ bottom: getMobileFloatingBottom(236) }}
         aria-label={bn ? "ভয়েসে বুক করুন" : "Book by voice"}
       >
@@ -162,7 +162,7 @@ const VoiceBookingFAB = () => {
                   onClick={listening ? stop : start}
                   animate={listening ? { scale: [1, 1.15, 1] } : { scale: 1 }}
                   transition={listening ? { repeat: Infinity, duration: 1.2 } : {}}
-                  className={`flex h-20 w-20 items-center justify-center rounded-full text-primary-foreground shadow-xl ${
+                  className={`flex h-20 w-20 items-center justify-center rounded-full text-white shadow-xl ${
                     listening ? "bg-destructive shadow-destructive/40" : "bg-primary shadow-primary/40"
                   }`}
                 >
@@ -184,7 +184,7 @@ const VoiceBookingFAB = () => {
               <button
                 onClick={submit}
                 disabled={!transcript || listening}
-                className="mt-2 w-full rounded-xl bg-primary py-3 text-sm font-bold text-primary-foreground shadow-md transition disabled:opacity-50"
+                className="mt-2 w-full rounded-xl bg-primary py-3 text-sm font-bold text-white shadow-md transition disabled:opacity-50"
               >
                 {bn ? "সার্ভিস খুঁজুন" : "Find service"}
               </button>

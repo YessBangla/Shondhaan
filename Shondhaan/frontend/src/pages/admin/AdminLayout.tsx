@@ -409,7 +409,7 @@ const AdminLayout = () => {
         </div>
         <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
         <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র অ্যাডমিনদের জন্য।</p>
-        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
       </div>
     );
   }
@@ -447,7 +447,7 @@ const AdminLayout = () => {
                   data-group={item.group}
                   className={({ isActive }) =>
                   `group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
+                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
                   }`}>
                   <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
                   <span className="truncate flex-1">{item.label}</span>
@@ -547,7 +547,7 @@ const AdminLayout = () => {
         }`}
       >
         <div className={`flex items-center gap-2.5 border-b border-border/40 px-3.5 h-14 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-primary-foreground shadow-md ring-1 ring-primary/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-primary/30">
             <Sparkles className="h-4 w-4" />
           </div>
           {!collapsed && (
@@ -578,7 +578,7 @@ const AdminLayout = () => {
           <aside className="absolute inset-y-0 left-0 w-[78%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
             <div className="flex items-center justify-between border-b border-border/40 px-3.5 h-14">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground shadow-md"><Sparkles className="h-4 w-4" /></div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md"><Sparkles className="h-4 w-4" /></div>
                 <p className="text-[13px] font-bold">অ্যাডমিন প্যানেল</p>
               </div>
               <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary"><X className="h-4 w-4" /></button>
@@ -667,7 +667,7 @@ const AdminLayout = () => {
               {/* Role badge — sheba.xyz inspired */}
               <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-2.5 py-0.5 hover:ring-primary/40 transition-all">
                 <div className="relative">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center text-[11px] font-bold shadow-inner">
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shadow-inner">
                     {initials}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />

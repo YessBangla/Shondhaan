@@ -263,7 +263,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <Megaphone className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "কোনো বিজ্ঞাপন পোস্ট করেননি" : "No ads posted yet"}</p>
-          <button onClick={() => navigate("/deal/post")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/deal/post")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "বিজ্ঞাপন দিন" : "Post an Ad"}
           </button>
         </div>
@@ -277,7 +277,7 @@ const DealSection = ({ activeTab }: Props) => {
           initial={{ opacity: 0, y: -5 }}
           animate={{ opacity: 1, y: 0 }}
           onClick={() => navigate("/deal/post")}
-          className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 py-3.5 text-base font-bold text-primary-foreground shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all"
+          className="w-full flex items-center justify-center gap-2.5 rounded-xl bg-gradient-to-r from-primary to-primary/80 px-5 py-3.5 text-base font-bold text-white shadow-lg shadow-primary/20 hover:shadow-primary/30 hover:scale-[1.01] active:scale-[0.99] transition-all"
         >
           <Megaphone className="h-5 w-5" />
           {bn ? "নতুন বিজ্ঞাপন পোস্ট করুন" : "Post a New Ad"}
@@ -351,7 +351,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <Heart className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "No favorites yet" : "No favorites yet"}</p>
-          <button onClick={() => navigate("/deal/ads")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/deal/ads")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "Browse Ads" : "Browse Ads"}
           </button>
         </div>
@@ -441,7 +441,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "কোনো মেসেজ নেই" : "No messages"}</p>
-          <button onClick={() => navigate("/deal")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/deal")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "সন্ধান ডিল দেখুন" : "Browse Deals"}
           </button>
         </div>
@@ -482,7 +482,7 @@ const DealSection = ({ activeTab }: Props) => {
                 </div>
               </div>
               {conv.unread_count > 0 && (
-                <span className="bg-primary text-primary-foreground rounded-full text-xs font-bold h-5 w-5 flex items-center justify-center shrink-0">
+                <span className="bg-primary text-white rounded-full text-xs font-bold h-5 w-5 flex items-center justify-center shrink-0">
                   {conv.unread_count}
                 </span>
               )}

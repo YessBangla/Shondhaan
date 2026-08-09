@@ -140,7 +140,7 @@ const AdminMartOverview = () => {
       <div className="flex gap-2 border-b border-border pb-2">
         {([["orders", "অর্ডার"], ["shops", "শপ"], ["products", "পণ্য"]] as const).map(([key, label]) => (
           <button key={key} onClick={() => setTab(key)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${tab === key ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
             {label} {key === "orders" && `(${stats.totalOrders})`}
             {key === "shops" && `(${stats.totalShops})`}
             {key === "products" && `(${stats.totalProducts})`}

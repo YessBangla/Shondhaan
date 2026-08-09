@@ -241,7 +241,7 @@ const OnboardingScreen = ({ onFinish }: { onFinish: () => void }) => {
         </div>
         <button
           onClick={next}
-          className="w-full max-w-xs rounded-full bg-primary py-3.5 text-base font-bold text-primary-foreground shadow-lg active:scale-95 transition-transform"
+          className="w-full max-w-xs rounded-full bg-primary py-3.5 text-base font-bold text-white shadow-lg active:scale-95 transition-transform"
         >
           {last ? "শুরু করুন" : "পরের ধাপ"}
         </button>

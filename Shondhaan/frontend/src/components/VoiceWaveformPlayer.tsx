@@ -48,7 +48,7 @@ export default function VoiceWaveformPlayer({ src, bars = 28, className }: Props
     <div className={cn("flex items-center gap-3 rounded-2xl bg-muted px-3 py-2", className)}>
       <button
         onClick={toggle}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground"
+        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-white"
       >
         {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 translate-x-px" />}
       </button>

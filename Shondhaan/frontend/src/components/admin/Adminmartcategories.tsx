@@ -242,7 +242,7 @@ const AdminMartCategories = () => {
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-1.5 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add Category
@@ -373,7 +373,7 @@ const AdminMartCategories = () => {
             <button
               onClick={handleSave}
               disabled={saving || uploading}
-              className="flex items-center gap-2 bg-primary text-primary-foreground px-5 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editId ? "Update Category" : "Save Category"}
@@ -422,7 +422,7 @@ const AdminMartCategories = () => {
                   <button
                     onClick={() => openEdit(cat)}
                     title="Edit"
-                    className="h-8 w-8 rounded-lg bg-white text-foreground flex items-center justify-center hover:bg-primary hover:text-primary-foreground transition-colors"
+                    className="h-8 w-8 rounded-lg bg-white text-foreground flex items-center justify-center hover:bg-primary hover:text-white transition-colors"
                   >
                     <Pencil className="h-3.5 w-3.5" />
                   </button>
@@ -495,7 +495,7 @@ const AdminMartCategories = () => {
               <button
                 onClick={handleSubSave}
                 disabled={subSaving}
-                className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
               >
                 {subSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {subEditId ? "Update" : "Add"}

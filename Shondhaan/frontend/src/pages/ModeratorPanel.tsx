@@ -211,7 +211,7 @@ const ModeratorPanel = () => {
                         <div className="flex flex-wrap gap-1.5">
                           {["all", "5", "4", "3", "2", "1"].map(v => (
                             <button key={v} onClick={() => setFilterRating(v)}
-                              className={`rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors ${filterRating === v ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-secondary"}`}>
+                              className={`rounded-lg px-3 py-1.5 text-[11px] font-medium transition-colors ${filterRating === v ? "bg-primary text-white" : "border border-border text-foreground hover:bg-secondary"}`}>
                               {v === "all" ? `সব (${reviews.length})` : `${v} ⭐ (${reviews.filter(r => r.rating === parseInt(v)).length})`}
                             </button>
                           ))}
