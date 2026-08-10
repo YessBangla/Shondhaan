@@ -47,7 +47,7 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 const corsOrigin = [
   ...new Set(
     [
-      ...(process.env.CORS_ORIGIN || "")
+      ...(process.env.CORS_ORIGIN || "https://www.shondhaan.com")
         .split(",")
         .map((o) => o.trim())
         .filter(Boolean),

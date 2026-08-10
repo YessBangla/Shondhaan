@@ -63,7 +63,11 @@ const io = new Server(server, {
 app.set("io", io);
 registerMartMessageSocket(io);
 
-const corsOrigins = [process.env.FRONTEND_URL, process.env.CORS_ORIGIN]
+const corsOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+  "https://www.shondhaan.com",
+]
   .flatMap((value) => String(value || "").split(","))
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -113,7 +117,7 @@ app.use(validateSignupPassword);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "YService Mart Backend is running successfully!",
+    message: "yMart Backend is running successfully!",
   });
 });
 

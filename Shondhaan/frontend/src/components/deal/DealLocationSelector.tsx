@@ -52,7 +52,7 @@ interface DealLocationSelectorProps {
    bgImage?: string;
 }
 
-const DEFAULT_BG_IMAGE = "/deal/hero_deal-3.png";
+const DEFAULT_BG_IMAGE = "/deal_assets/hero_deal-3.png";
 
 const DealLocationSelector = ({
   value,
