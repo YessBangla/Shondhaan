@@ -5,7 +5,7 @@ import {
 } from "lucide-react";
 
 export type RoleKey =
-  | "super_admin" | "admin" | "moderator" | "call_center" | "provider"
+  | "super_admin" | "admin" | "service_admin" | "moderator" | "call_center" | "provider"
   | "representative" | "supervisor" | "finance" | "mart_vendor"
   | "mart_delivery" | "mart_cs" | "yessdeal_seller" | "employer" | "user";
 
@@ -23,6 +23,7 @@ export interface RoleConfig {
 export const ROLES: RoleConfig[] = [
   { key: "super_admin", labelBn: "সুপার অ্যাডমিন", labelEn: "Super Admin", descriptionBn: "পুরো সিস্টেমের কেন্দ্রীয় নিয়ন্ত্রণ — POS, SAAS, ফাইন্যান্স।", panelPath: "/super-admin", icon: Crown, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
   { key: "admin", labelBn: "অ্যাডমিন", labelEn: "Admin", descriptionBn: "সেবা, অর্ডার, ইউজার ও কনটেন্ট ম্যানেজমেন্ট।", panelPath: "/admin", icon: Shield, gradient: "from-red-500 to-rose-600", accent: "text-red-700" },
+  { key: "service_admin", labelBn: "সার্ভিস অ্যাডমিন", labelEn: "Service Admin", descriptionBn: "সেবা CMS, বুকিং, রিকোয়েস্ট ও সার্ভিস কমিউনিকেশন।", panelPath: "/admin/service", icon: Wrench, gradient: "from-sky-500 to-blue-600", accent: "text-sky-700" },
   { key: "moderator", labelBn: "মডারেটর", labelEn: "Moderator", descriptionBn: "রিভিউ, রিপোর্ট ও কনটেন্ট মডারেশন।", panelPath: "/moderator", icon: ShieldCheck, gradient: "from-purple-500 to-violet-600", accent: "text-purple-700" },
   { key: "call_center", labelBn: "কল সেন্টার", labelEn: "Call Center", descriptionBn: "কল গ্রহণ, বুকিং তৈরি ও কাস্টমার সাপোর্ট।", panelPath: "/call-center", icon: Headphones, gradient: "from-blue-500 to-indigo-600", accent: "text-blue-700" },
   { key: "provider", labelBn: "প্রোভাইডার", labelEn: "Provider", descriptionBn: "অ্যাসাইন বুকিং ও সেবা সম্পন্নকরণ।", panelPath: "/provider", icon: Wrench, gradient: "from-emerald-500 to-green-600", accent: "text-emerald-700" },

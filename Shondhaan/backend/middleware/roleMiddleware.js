@@ -1,17 +1,20 @@
 // middleware/roleMiddleware.js
+import { ADMIN_PANEL_ROLES } from "../config/constants.js";
+
+const getAuthRole = (auth) => auth?.type || auth?.role;
 
 /**
  * Allow only ADMIN and SUPER_ADMIN
  */
 export const requireAdmin = (req, res, next) => {
   try {
-    const role = req.user?.role;
+    const role = getAuthRole(req.user);
 
     if (!role) {
       return res.status(401).json({ message: "Unauthorized" });
     }
 
-    if (role !== "admin" && role !== "super_admin") {
+    if (!ADMIN_PANEL_ROLES.has(role)) {
       return res.status(403).json({
         message: "Forbidden - Admin access required",
       });
@@ -28,7 +31,7 @@ export const requireAdmin = (req, res, next) => {
  */
 export const requireSuperAdmin = (req, res, next) => {
   try {
-    const role = req.user?.role;
+    const role = getAuthRole(req.user);
 
     if (!role) {
       return res.status(401).json({ message: "Unauthorized" });

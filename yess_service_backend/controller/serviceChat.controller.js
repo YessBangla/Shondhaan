@@ -9,7 +9,7 @@ if (JWT_SECRET === "fallback_dev_secret") {
   console.warn("[ChatController] WARNING: JWT_SECRET is not found in .env! Falling back to insecure default.");
 }
 
-const STAFF_ROLES = new Set(["call_center", "admin", "super_admin"]);
+const STAFF_ROLES = new Set(["call_center", "admin", "super_admin", "service_admin"]);
 
 const clean = (value, fallback = "") => String(value ?? fallback).trim();
 

@@ -1,5 +1,5 @@
 import { useEffect, useState, Suspense, useMemo, useRef } from "react";
-import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, BarChart3, Calendar, FileText, Wallet, Package, ImagePlus,
   Grid3X3, Percent, Image as ImageIcon, LayoutList, ShoppingCart, Handshake,
@@ -8,7 +8,7 @@ import {
   RefreshCw, Menu, X, LogOut, Home, ChevronRight as ChevRight, Search, Sparkles,
   ScrollText, BookOpenCheck, Inbox, LifeBuoy,
   UserPlus, Sun, Moon, Monitor, Languages, Pin, PinOff, Command as CommandIcon,
-  ChevronDown,
+  ChevronDown, Wrench,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -29,13 +29,13 @@ import {
 
 type NavItem = { to: string; label: string; icon: React.ReactNode };
 type NavGroup = { label: string; items: NavItem[]; accent: string; dot: string };
-
 const NAV: NavGroup[] = [
   {
     label: "ড্যাশবোর্ড",
     accent: "from-emerald-500 to-emerald-600",
     dot: "bg-emerald-500",
     items: [
+      { to: "/admin/service", label: "সার্ভিস ড্যাশবোর্ড", icon: <Wrench className="h-4 w-4" /> },
       { to: "/admin/smart-dashboard", label: "স্মার্ট ড্যাশবোর্ড", icon: <Sparkles className="h-4 w-4" /> },
       { to: "/admin/analytics", label: "অ্যানালিটিক্স", icon: <BarChart3 className="h-4 w-4" /> },
       { to: "/admin/bookings", label: "বুকিং", icon: <Calendar className="h-4 w-4" /> },
@@ -131,6 +131,31 @@ const NAV: NavGroup[] = [
   },
 ];
 
+const SERVICE_ADMIN_ALLOWED_PATHS = new Set([
+  "/admin/service",
+  "/admin/bookings",
+  "/admin/requests",
+  "/admin/services",
+  "/admin/service-images",
+  "/admin/categories",
+  "/admin/offers",
+  "/admin/banners",
+  "/admin/sections",
+  "/admin/contacts",
+  "/admin/chat-history",
+  "/admin/notifications",
+  "/admin/reviews",
+]);
+
+const isSameOrChildPath = (pathname: string, basePath: string) =>
+  pathname === basePath || pathname.startsWith(`${basePath}/`);
+
+const canServiceAdminAccessPath = (pathname: string) => {
+  const hasAccess = Array.from(SERVICE_ADMIN_ALLOWED_PATHS).some((path) => isSameOrChildPath(pathname, path));
+  console.log(`🛡️ Checking access for path: ${pathname} -> Allowed: ${hasAccess}`);
+  return hasAccess;
+};
+
 const AdminLayout = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -138,6 +163,7 @@ const AdminLayout = () => {
   const { mode, cycle } = useTheme();
   const { language, setLanguage } = useLanguage();
   const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [now, setNow] = useState(() => new Date());
@@ -150,7 +176,6 @@ const AdminLayout = () => {
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const sidebarNavRef = useRef<HTMLElement | null>(null);
 
-  // Bengali a11y vocabulary — keep all sidebar/route announcements consistent
   const A11Y = {
     group: "গ্রুপ",
     item: "আইটেম",
@@ -160,36 +185,28 @@ const AdminLayout = () => {
     pageLoaded: "পেজ লোড হয়েছে",
   } as const;
 
-  // Convert a Western digit string ("3") into Bengali digits ("৩")
   const toBnDigits = (n: number | string) =>
     String(n).replace(/[0-9]/g, (d) => "০১২৩৪৫৬৭৮৯"[Number(d)]);
 
-  // Normalize a focusable element's accessible label:
-  // 1) Prefer aria-label, else textContent
-  // 2) Strip stray digits / kbd-style chars, collapse whitespace
-  // 3) Remove a trailing numeric badge (group item count)
   const normalizeLabel = (el: HTMLElement) => {
     const raw = el.getAttribute("aria-label") || el.textContent || "";
     return raw
       .replace(/\s+/g, " ")
-      .replace(/[\u200B-\u200D\uFEFF]/g, "") // zero-width chars
+      .replace(/[\u200B-\u200D\uFEFF]/g, "") 
       .trim()
-      .replace(/\s+\d+$/, "") // strip trailing count (e.g. "ফিনান্স 3")
+      .replace(/\s+\d+$/, "") 
       .trim();
   };
 
-  // ARIA live announcements for keyboard nav (group expand/collapse, focus, route)
   const [announcement, setAnnouncement] = useState("");
   const announceTimer = useRef<number | null>(null);
   const announce = (msg: string) => {
     if (announceTimer.current) window.clearTimeout(announceTimer.current);
-    // Toggle to empty first so identical consecutive messages still re-fire SR output
     setAnnouncement("");
     announceTimer.current = window.setTimeout(() => setAnnouncement(msg), 30);
   };
   useEffect(() => () => { if (announceTimer.current) window.clearTimeout(announceTimer.current); }, []);
 
-  // Pinned favorites (persisted)
   const PIN_KEY = "admin_panel_pins";
   const [pinned, setPinned] = useState<string[]>(() => {
     try { return JSON.parse(localStorage.getItem(PIN_KEY) || "[]"); } catch { return []; }
@@ -197,11 +214,24 @@ const AdminLayout = () => {
   useEffect(() => { localStorage.setItem(PIN_KEY, JSON.stringify(pinned)); }, [pinned]);
   const togglePin = (path: string) => setPinned((p) => p.includes(path) ? p.filter(x => x !== path) : [...p, path]);
 
-  // Flat item list for palette / pinned lookup
-  const flatItems = useMemo(() => NAV.flatMap(g => g.items.map(i => ({ ...i, group: g.label }))), []);
+  const filteredNav = useMemo(() => {
+    console.log("🔄 Filtering Nav. Current Role:", userRole);
+    if (userRole === "service_admin") {
+      const filtered = NAV
+        .map((group) => ({
+          ...group,
+          items: group.items.filter((item) => SERVICE_ADMIN_ALLOWED_PATHS.has(item.to)),
+        }))
+        .filter((group) => group.items.length > 0);
+      console.log("✅ Filtered Nav for service_admin:", filtered);
+      return filtered;
+    }
+    return NAV;
+  }, [userRole]);
+
+  const flatItems = useMemo(() => filteredNav.flatMap(g => g.items.map(i => ({ ...i, group: g.label }))), [filteredNav]);
   const pinnedItems = useMemo(() => flatItems.filter(i => pinned.includes(i.to)), [flatItems, pinned]);
 
-  // Roving keyboard navigation inside the sidebar
   const focusableSidebarLinks = () => {
     const root = sidebarNavRef.current;
     if (!root) return [] as HTMLElement[];
@@ -209,6 +239,7 @@ const AdminLayout = () => {
       root.querySelectorAll<HTMLElement>('a[data-sidebar-link], button[data-sidebar-group]')
     ).filter((el) => !el.hasAttribute('data-disabled'));
   };
+  
   const handleSidebarKeyDown = (e: React.KeyboardEvent) => {
     const items = focusableSidebarLinks();
     if (!items.length) return;
@@ -243,7 +274,6 @@ const AdminLayout = () => {
     else if (e.key === "Home") { e.preventDefault(); items[0]?.focus(); announceFocused(items[0]); }
     else if (e.key === "End") { e.preventDefault(); items[items.length - 1]?.focus(); announceFocused(items[items.length - 1]); }
     else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-      // Expand/collapse the group of the focused item or button
       const groupLabel = active?.getAttribute("data-group");
       if (groupLabel) {
         e.preventDefault();
@@ -252,7 +282,6 @@ const AdminLayout = () => {
         announce(`${groupLabel} ${A11Y.group} ${willCollapse ? A11Y.collapsed : A11Y.expanded}`);
       }
     } else if (e.key === "[" || e.key === "]") {
-      // Jump to previous/next group header
       const headers = items.filter((el) => el.hasAttribute("data-sidebar-group"));
       if (!headers.length) return;
       e.preventDefault();
@@ -266,7 +295,6 @@ const AdminLayout = () => {
     }
   };
 
-  // ⌘K palette + g-prefix backend jumps + Shift+? help
   useEffect(() => {
     let lastG = 0;
     const isTyping = (el: EventTarget | null) => {
@@ -275,9 +303,11 @@ const AdminLayout = () => {
       const tag = t.tagName;
       return tag === "INPUT" || tag === "TEXTAREA" || (t as HTMLElement).isContentEditable;
     };
-    // g+key → backend section jump
     const jumpMap: Record<string, { to: string; label: string }> = {
-      d: { to: "/admin/smart-dashboard", label: "ড্যাশবোর্ড" },
+      d: {
+        to: userRole === "service_admin" ? "/admin/service" : "/admin/smart-dashboard",
+        label: userRole === "service_admin" ? "সার্ভিস ড্যাশবোর্ড" : "ড্যাশবোর্ড",
+      },
       a: { to: "/admin/analytics", label: "অ্যানালিটিক্স" },
       b: { to: "/admin/bookings", label: "বুকিং" },
       r: { to: "/admin/requests", label: "সার্ভিস রিকোয়েস্ট" },
@@ -308,6 +338,11 @@ const AdminLayout = () => {
         const target = jumpMap[e.key.toLowerCase()];
         if (target) {
           e.preventDefault();
+          if (userRole === "service_admin" && !canServiceAdminAccessPath(target.to)) {
+            toast.error("এই রোলে শুধু সার্ভিস সম্পর্কিত পেজ দেখা যাবে");
+            lastG = 0;
+            return;
+          }
           navigate(target.to);
           toast.success(target.label, { duration: 900 });
           lastG = 0;
@@ -316,7 +351,7 @@ const AdminLayout = () => {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [navigate]);
+  }, [navigate, userRole]);
 
   useEffect(() => { if (paletteOpen) { setPaletteQuery(""); setPaletteHi(0); setTimeout(() => paletteInputRef.current?.focus(), 50); } }, [paletteOpen]);
 
@@ -335,39 +370,66 @@ const AdminLayout = () => {
     if (!authLoading && !user) navigate("/main-login", { replace: true });
   }, [user, authLoading, navigate]);
 
+  // Auth Check and Role Setting
   useEffect(() => {
     if (!user) return;
 
     const mysqlAuth = getMySqlAuth();
+    console.log("🔑 MySQL Auth Data:", mysqlAuth);
+    
     if (mysqlAuth) {
-      setIsAdmin(mysqlAuth.user.type === "admin" || mysqlAuth.user.type === "super_admin");
+      const type = mysqlAuth.user.type;
+      console.log("👤 User Type from MySQL:", type);
+      
+      if (type === "admin" || type === "super_admin" || type === "service_admin") {
+        console.log(`✅ Access granted. Role set to: ${type}`);
+        setIsAdmin(true);
+        setUserRole(type);
+      } else {
+        console.warn(`❌ Access denied. Type '${type}' is not an admin role.`);
+        setIsAdmin(false);
+      }
       return;
     }
 
+    console.log("🔄 MySQL Auth not found, falling back to Supabase...");
     supabase
       .from("user_roles")
       .select("role")
       .eq("user_id", user.id)
-      .eq("role", "admin")
+      .eq("role", "admin") // Note: This specifically queries for role="admin", it will NOT find "service_admin"
       .maybeSingle()
-      .then(({ data }) => setIsAdmin(!!data));
+      .then(({ data }) => {
+        console.log("📦 Supabase User Roles Data:", data);
+        if (data) {
+          setIsAdmin(true);
+          setUserRole(data.role || "admin");
+        } else {
+          setIsAdmin(false);
+        }
+      });
   }, [user]);
 
-  // Close mobile drawer on route change
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
+  useEffect(() => {
+    if (userRole !== "service_admin") return;
+    if (canServiceAdminAccessPath(location.pathname)) return;
+    console.warn(`🚫 Path ${location.pathname} is not allowed for service_admin. Redirecting...`);
+    navigate("/admin/service", { replace: true });
+  }, [location.pathname, navigate, userRole]);
+
   const { currentLabel, currentGroup, currentIcon } = useMemo(() => {
-    for (const g of NAV) {
-      const hit = g.items.find((i) => location.pathname.startsWith(i.to));
+    for (const g of filteredNav) {
+      const hit = g.items.find((i) => isSameOrChildPath(location.pathname, i.to));
       if (hit) return { currentLabel: hit.label, currentGroup: g.label, currentIcon: hit.icon };
     }
     return { currentLabel: "অ্যাডমিন প্যানেল", currentGroup: "ড্যাশবোর্ড", currentIcon: <LayoutDashboard className="h-4 w-4" /> };
-  }, [location.pathname]);
+  }, [location.pathname, filteredNav]);
 
-  // Announce active page changes (route → live region)
   const lastPathRef = useRef<string>("");
   useEffect(() => {
-    if (!groupsInit) return; // skip first render hydration
+    if (!groupsInit) return; 
     if (lastPathRef.current && lastPathRef.current !== location.pathname) {
       announce(`${currentLabel} ${A11Y.pageLoaded}, ${currentGroup} ${A11Y.group}`);
     }
@@ -375,14 +437,13 @@ const AdminLayout = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.pathname, currentLabel, currentGroup]);
 
-  // Auto-collapse non-active groups on first load for cleaner sidebar
   useEffect(() => {
     if (groupsInit) return;
     const initial: Record<string, boolean> = {};
-    NAV.forEach((g) => { if (g.label !== currentGroup) initial[g.label] = true; });
+    filteredNav.forEach((g) => { if (g.label !== currentGroup) initial[g.label] = true; });
     setCollapsedGroups(initial);
     setGroupsInit(true);
-  }, [currentGroup, groupsInit]);
+  }, [currentGroup, groupsInit, filteredNav]);
 
   const initials = useMemo(() => {
     const src = user?.user_metadata?.full_name || user?.email || "অ্যাডমিন";
@@ -392,6 +453,8 @@ const AdminLayout = () => {
   const dateStr = now.toLocaleDateString("bn-BD", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
+  
+  const roleBadgeText = userRole === "service_admin" ? "সার্ভিস অ্যাডমিন" : "সুপার অ্যাডমিন";
 
   if (authLoading || isAdmin === null) {
     return (
@@ -414,6 +477,11 @@ const AdminLayout = () => {
     );
   }
 
+  if (userRole === "service_admin" && location.pathname === "/admin") {
+    console.log("➡️ Redirecting service_admin from /admin to /admin/service");
+    return <Navigate to="/admin/service" replace />;
+  }
+
   const SidebarBody = (
     <nav
       ref={sidebarNavRef}
@@ -421,7 +489,6 @@ const AdminLayout = () => {
       aria-label="ব্যাকএন্ড নেভিগেশন"
       className="flex-1 overflow-y-auto py-3 focus:outline-none"
     >
-      {/* Search trigger */}
       {!collapsed && (
         <div className="px-3 mb-2">
           <button
@@ -460,7 +527,7 @@ const AdminLayout = () => {
           </ul>
         </div>
       )}
-      {NAV.map((group) => (
+      {filteredNav.map((group) => (
         <div key={group.label} className="mb-1">
           {!collapsed && (
             <button
@@ -540,7 +607,6 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/30">
-      {/* Desktop sidebar */}
       <aside
         className={`hidden md:flex flex-col border-r border-border/50 bg-card/70 backdrop-blur-2xl transition-[width] duration-200 ${
           collapsed ? "w-[68px]" : "w-64"
@@ -571,7 +637,6 @@ const AdminLayout = () => {
         </div>
       </aside>
 
-      {/* Mobile drawer */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
@@ -588,14 +653,10 @@ const AdminLayout = () => {
         </div>
       )}
 
-      {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         <header className="sticky top-0 z-30 border-b border-border/40 bg-card/70 backdrop-blur-2xl">
-          {/* Accent gradient line */}
           <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary" />
-
           <div className="flex items-center justify-between gap-2 px-3 md:px-5 py-2">
-            {/* Left: mobile menu + breadcrumb + title */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <button
                 onClick={() => setMobileOpen(true)}
@@ -604,14 +665,10 @@ const AdminLayout = () => {
               >
                 <Menu className="h-5 w-5" />
               </button>
-
-              {/* Section icon tile */}
               <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
                 {currentIcon}
               </div>
-
               <div className="min-w-0">
-                {/* Breadcrumb */}
                 <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[10px] text-muted-foreground/80 leading-none">
                   <button
                     onClick={() => navigate("/")}
@@ -625,14 +682,12 @@ const AdminLayout = () => {
                   <ChevRight className="h-2.5 w-2.5 opacity-50" />
                   <span className="text-foreground/80 font-medium truncate max-w-[100px] md:max-w-none">{currentLabel}</span>
                 </nav>
-                {/* Title */}
                 <h1 className="font-heading text-[14px] md:text-[15px] font-bold text-foreground truncate mt-0.5 leading-tight">
                   {currentLabel}
                 </h1>
               </div>
             </div>
 
-            {/* Center: command palette trigger */}
             <button
               onClick={() => setPaletteOpen(true)}
               className="hidden lg:flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-[11px] text-muted-foreground"
@@ -641,7 +696,6 @@ const AdminLayout = () => {
               <kbd className="ml-1 rounded border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
             </button>
 
-            {/* Right: date/time + actions + role badge */}
             <div className="flex items-center gap-1">
               <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title="খুঁজুন">
                 <Search className="h-4 w-4" />
@@ -656,15 +710,11 @@ const AdminLayout = () => {
               >
                 <Languages className="h-3.5 w-3.5" />{language.toUpperCase()}
               </button>
-              {/* Date / time pill */}
               <div className="hidden md:flex flex-col items-end leading-tight px-2 border-l border-border/40 ml-1">
                 <span className="text-[11px] font-semibold text-foreground">{timeStr}</span>
                 <span className="text-[10px] text-muted-foreground">{dateStr}</span>
               </div>
-
               <NotificationBell />
-
-              {/* Role badge — sheba.xyz inspired */}
               <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-2.5 py-0.5 hover:ring-primary/40 transition-all">
                 <div className="relative">
                   <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center text-[11px] font-bold shadow-inner">
@@ -675,14 +725,13 @@ const AdminLayout = () => {
                 <div className="hidden xl:flex flex-col leading-tight">
                   <span className="text-[10px] font-semibold text-foreground inline-flex items-center gap-1">
                     <Sparkles className="h-2.5 w-2.5 text-primary" />
-                    সুপার অ্যাডমিন
+                    {roleBadgeText}
                   </span>
                   <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">
                     {user?.email || "admin"}
                   </span>
                 </div>
               </div>
-
               <button
                 onClick={async () => { await signOut(); navigate("/main-login", { replace: true }); }}
                 className="flex items-center justify-center h-9 w-9 rounded-xl border border-border/60 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
@@ -697,12 +746,10 @@ const AdminLayout = () => {
 
         <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
           <div className="mx-auto w-full max-w-[1440px] px-1 py-1">
-            {/* Page header — Laravel Nova-style */}
             <BackendPageHeader
               fallbackTitle={currentLabel}
               fallbackEyebrow={currentGroup}
             />
-
             <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_1px_0_0_hsl(var(--border)),0_8px_24px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
               <Suspense fallback={<div className="p-8"><PageLoader /></div>}>
                 <AnimatePresence mode="wait" initial={false}>
@@ -718,8 +765,6 @@ const AdminLayout = () => {
                 </AnimatePresence>
               </Suspense>
             </div>
-
-            {/* Workspace footer */}
             <footer className="mt-5 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
               <div className="inline-flex items-center gap-2">
                 <span className="inline-flex items-center gap-1">
@@ -740,7 +785,6 @@ const AdminLayout = () => {
         </main>
       </div>
 
-      {/* Command Palette */}
       <AnimatePresence>
         {paletteOpen && (
           <motion.div
@@ -836,7 +880,6 @@ const AdminLayout = () => {
         ]}
       />
 
-      {/* ARIA live region — announces sidebar group/state and route changes for screen readers */}
       <div
         role="status"
         aria-live="polite"
@@ -849,11 +892,6 @@ const AdminLayout = () => {
   );
 };
 
-/**
- * Page header that consumes the BackendPageActions context.
- * Renders a Laravel Nova-style header with eyebrow, title, description,
- * primary/secondary action slots and an optional toolbar row underneath.
- */
 const BackendPageHeader = ({
   fallbackTitle,
   fallbackEyebrow,
@@ -867,45 +905,6 @@ const BackendPageHeader = ({
 
   return (
     <div className="">
-      {/* <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="min-w-0 flex-1">
-          {eyebrow && (
-            <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground/70">
-              {eyebrow}
-            </p>
-          )}
-          <h2 className="font-heading text-lg md:text-xl font-bold text-foreground truncate leading-tight">
-            {title}
-          </h2>
-          {meta.description && (
-            <p className="mt-0.5 text-[12px] text-muted-foreground line-clamp-2 max-w-2xl">
-              {meta.description}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          {meta.secondary && (
-            <div className="flex items-center gap-1.5 [&_button]:h-9 [&_a]:h-9">
-              {meta.secondary}
-            </div>
-          )}
-          {meta.primary && (
-            <div className="flex items-center gap-1.5 [&_button]:h-9 [&_a]:h-9">
-              {meta.primary}
-            </div>
-          )}
-          {!meta.primary && !meta.secondary && (
-            <div className="hidden md:flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-card border border-border/60 px-2.5 py-1">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-card border border-border/60 px-2.5 py-1 font-mono">
-                <kbd className="text-[9px]">⌘K</kbd>
-              </span>
-            </div>
-          )}
-        </div>
-      </div> */}
       {meta.toolbar && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-2.5 py-2">
           {meta.toolbar}

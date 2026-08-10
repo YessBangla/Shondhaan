@@ -88,6 +88,8 @@ import {
 } from "./pages/admin/AdminPages";
 import MartStore from "./pages/MartStore";
 import ServiceMessage from "./pages/ServiceMessage";
+import AdminServices from "./components/admin/AdminServices";
+import ServiceAdminDashboard from "./components/admin/serviceAdmin/ServiceAdminDashboard";
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -319,6 +321,7 @@ const App = () => {
               <Route path="staff-assignments" element={<AdminStaffAssignments />} />
               <Route path="staff-workload" element={<AdminStaffWorkload />} />
               <Route path="notification-rules" element={<AdminNotificationRules />} />
+               <Route path="service" element={<ServiceAdminDashboard />} />
             </Route>
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/faq" element={<FAQ />} />
