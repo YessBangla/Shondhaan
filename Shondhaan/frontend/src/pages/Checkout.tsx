@@ -87,7 +87,7 @@ const Checkout = () => {
         <div className="pt-[44px] md:pt-[104px] flex flex-col items-center justify-center min-h-[60vh] px-4">
           <ShoppingBag className="h-12 w-12 text-muted-foreground/30 mb-3" />
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">{t("cart.empty")}</h1>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">
             {t("cart.continueShopping")}
           </button>
         </div>
@@ -271,7 +271,7 @@ const Checkout = () => {
                     if (c.min_order_amount && totalAmount < c.min_order_amount) { toast.error(`${t("coupon.minOrder")}${c.min_order_amount}`); return; }
                     setAppliedCoupon({ code: c.code, discount_type: c.discount_type, discount_value: c.discount_value, max_discount_amount: c.max_discount_amount });
                     toast.success(t("coupon.applied"));
-                  }} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  }} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
                     {couponLoading ? "..." : t("coupon.apply")}
                   </button>
                 </div>
@@ -318,7 +318,7 @@ const Checkout = () => {
               {!user && (
                 <div className="mb-4 rounded-lg bg-secondary p-3 text-center">
                   <p className="text-xs text-muted-foreground mb-2">{t("sd.loginToBook")}</p>
-                  <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground">
+                  <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">
                     {t("sd.loginRegister")}
                   </button>
                 </div>
@@ -352,7 +352,7 @@ const Checkout = () => {
                 <input type="time" value={bookingTime} onChange={(e) => setBookingTime(e.target.value)}
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-ring" />
                 <button type="submit" disabled={submitting}
-                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50">
+                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50">
                   {submitting ? t("sd.submitting") : t("sd.confirmBooking")}
                 </button>
               </form>

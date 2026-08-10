@@ -299,7 +299,7 @@ const FinancePanel = () => {
           <Wallet className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">{t.noAccess}</h1>
           <p className="text-muted-foreground text-sm mb-4">{t.noAccessDesc}</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">{t.backHome}</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">{t.backHome}</button>
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -364,7 +364,7 @@ const FinancePanel = () => {
                   key={p}
                   onClick={() => { setPreset(p); setFromDate(""); setToDate(""); }}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors ${
-                    preset === p ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+                    preset === p ? "bg-primary text-white" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
                   }`}
                 >
                   {presetLabels[p]}

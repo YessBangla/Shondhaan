@@ -77,7 +77,7 @@ const StaffHeroPanel = () => {
   const ActiveIcon = slides[activeSlide].icon;
 
   return (
-    <div className="hidden lg:flex flex-col justify-between relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-primary/90 text-primary-foreground p-8 min-h-[640px] shadow-2xl">
+    <div className="hidden lg:flex flex-col justify-between relative overflow-hidden rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-primary/90 text-white p-8 min-h-[640px] shadow-2xl">
       {/* Decorative background pattern */}
       <div className="absolute inset-0 opacity-[0.08] pointer-events-none">
         <div className="absolute -top-12 -right-12 w-72 h-72 rounded-full border-2 border-primary-foreground" />

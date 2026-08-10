@@ -203,7 +203,7 @@ const Notifications = () => {
             </p>
             <Link
               to="/auth"
-              className="press mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground shadow-md hover:bg-primary/90"
+              className="press mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary/90"
             >
               <LogIn className="h-4 w-4" />
               {bn ? "লগইন করুন" : "Sign in"}

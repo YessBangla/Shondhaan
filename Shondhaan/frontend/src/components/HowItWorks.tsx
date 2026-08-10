@@ -71,7 +71,7 @@ const HowItWorks = () => {
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl glass-subtle text-primary">
                   <item.icon className="h-6 w-6" />
                 </div>
-                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs font-bold text-white">
                   {item.step}
                 </span>
               </div>

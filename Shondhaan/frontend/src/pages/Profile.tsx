@@ -505,7 +505,7 @@ const Profile = () => {
           {!editMode && !isMartVendor && (
             <button
               onClick={() => setEditMode(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition"
             >
               <Edit2 className="h-4 w-4" />
               {bn ? "সম্পাদনা" : "Edit"}
@@ -537,7 +537,7 @@ const Profile = () => {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingAvatar}
-                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+                  className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
                 >
                   {uploadingAvatar ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
@@ -721,7 +721,7 @@ const Profile = () => {
               <button
                 type="submit"
                 disabled={saving}
-                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-primary-foreground font-semibold hover:bg-primary/90 transition disabled:opacity-50"
+                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition disabled:opacity-50"
               >
                 {saving ? (
                   <>
@@ -879,7 +879,7 @@ const Profile = () => {
                   <button
                     onClick={handlePasswordChange}
                     disabled={changingPassword}
-                    className="flex-1 px-4 py-2 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition font-medium disabled:opacity-50"
+                    className="flex-1 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition font-medium disabled:opacity-50"
                   >
                     {changingPassword ? (
                       <Loader2 className="h-4 w-4 animate-spin mx-auto" />

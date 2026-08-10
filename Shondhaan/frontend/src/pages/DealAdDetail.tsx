@@ -139,7 +139,7 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
               <p className="text-[10px] text-muted-foreground font-medium">{bn ? "রেটিং" : "Rating"}</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" className="w-full text-xs font-medium hover:bg-primary/5" onClick={() => navigate(`/deal/seller/${sellerId}`)}>
+          <Button variant="outline" size="sm" className="w-full text-xs font-medium hover:bg-primary" onClick={() => navigate(`/deal/seller/${sellerId}`)}>
             {bn ? "প্রোফাইল দেখুন" : "View Profile"}
           </Button>
         </CardContent>

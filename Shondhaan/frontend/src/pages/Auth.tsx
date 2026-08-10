@@ -676,7 +676,7 @@ const Auth = () => {
                               setLoading(false);
                             }
                           }}
-                          className="rounded-md border border-primary/20 bg-background px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                          className="rounded-md border border-primary/20 bg-background px-2 py-2 text-xs font-semibold text-foreground transition-colors hover:bg-primary hover:text-white disabled:opacity-50"
                         >
                           {demo.label}
                         </button>

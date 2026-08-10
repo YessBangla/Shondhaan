@@ -101,7 +101,7 @@ const BookingHistory = () => {
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16">
             <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
             <p className="text-muted-foreground">{t("bh.noBookings")}</p>
-            <button onClick={() => navigate("/")} className="mt-4 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
+            <button onClick={() => navigate("/")} className="mt-4 rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">
               {t("bh.viewServices")}
             </button>
           </motion.div>

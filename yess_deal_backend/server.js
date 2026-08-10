@@ -52,13 +52,7 @@ const corsOrigin = [
         .map((o) => o.trim())
         .filter(Boolean),
 
-      process.env.FRONTEND_BASE_URL,
-
-      "http://localhost:5173",
-      "http://localhost:8080",
-      "http://localhost:4000",
-      "https://shondhaan.com",
-      "https://www.shondhaan.com",
+      process.env.FRONTEND_BASE_URL
     ].filter(Boolean)
   ),
 ];

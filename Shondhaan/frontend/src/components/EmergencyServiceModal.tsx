@@ -212,7 +212,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                   ))}
                   {filteredServices.length === 0 && (
                     <p className="col-span-2 py-6 text-center text-xs text-muted-foreground">
-                      {language === "bn" ? "কোনো সেবা পাওয়া যায়নি" : "No services found"}
+                      {language === "bn" ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}
                     </p>
                   )}
                 </div>

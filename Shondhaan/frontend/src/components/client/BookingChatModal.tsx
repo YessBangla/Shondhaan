@@ -230,7 +230,7 @@ const BookingChatModal = ({ open, onClose, bookingId, serviceTitle, providerName
                   {bn ? "এখনো কোনো মেসেজ নেই" : "No messages yet"}
                 </p>
                 <p className="text-xs text-muted-foreground/70 mt-1">
-                  {bn ? "সেবা প্রদানকারীর সাথে কথা বলুন" : "Start a conversation with the provider"}
+                  {bn ? "সার্ভিস প্রদানকারীর সাথে কথা বলুন" : "Start a conversation with the provider"}
                 </p>
               </div>
             ) : (
@@ -252,7 +252,7 @@ const BookingChatModal = ({ open, onClose, bookingId, serviceTitle, providerName
                       </div>
                       <div className={`rounded-2xl px-3 py-2 ${
                         isMe
-                          ? "bg-primary text-primary-foreground rounded-br-md"
+                          ? "bg-primary text-white rounded-br-md"
                           : "bg-secondary text-foreground rounded-bl-md"
                       }`}>
                         {/* File attachment */}
@@ -294,7 +294,7 @@ const BookingChatModal = ({ open, onClose, bookingId, serviceTitle, providerName
                           <p className="text-xs leading-relaxed whitespace-pre-wrap">{msg.message}</p>
                         )}
                         <p className={`text-[9px] mt-1 ${
-                          isMe ? "text-primary-foreground/60" : "text-muted-foreground"
+                          isMe ? "text-white/60" : "text-muted-foreground"
                         }`}>
                           {new Date(msg.created_at).toLocaleTimeString("bn-BD", {
                             hour: "2-digit",
@@ -376,7 +376,7 @@ const BookingChatModal = ({ open, onClose, bookingId, serviceTitle, providerName
             <button
               type="submit"
               disabled={(!newMessage.trim() && !previewFile) || sending}
-              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-40 transition-all hover:opacity-90 shrink-0"
+              className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-white disabled:opacity-40 transition-all hover:opacity-90 shrink-0"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>

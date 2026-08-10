@@ -217,7 +217,7 @@ const MartShopPanel = () => {
                   className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" placeholder="01XXXXXXXXX" />
               </div>
               <button onClick={createShop} disabled={saving}
-                className="w-full rounded-lg bg-primary py-3 text-base font-bold text-primary-foreground disabled:opacity-50 flex items-center justify-center gap-2">
+                className="w-full rounded-lg bg-primary py-3 text-base font-bold text-white disabled:opacity-50 flex items-center justify-center gap-2">
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Store className="h-4 w-4" />}
                 {bn ? "শপ তৈরি করুন" : "Create Shop"}
               </button>
@@ -281,7 +281,7 @@ const MartShopPanel = () => {
                         <ExternalLink className="h-3.5 w-3.5" /> {bn ? "শপ দেখুন" : "View Shop"}
                       </button>
                       <button onClick={() => { setEditingProduct(null); setShowAddProduct(true); }}
-                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-primary-foreground">
+                        className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-semibold text-white">
                         <Plus className="h-4 w-4" /> {bn ? "পণ্য যোগ" : "Add Product"}
                       </button>
                     </div>
@@ -388,7 +388,7 @@ const MartShopPanel = () => {
                             <Store className="h-6 w-6 text-muted-foreground/50" />
                           </div>
                         )}
-                        <label className="absolute -bottom-1 -right-1 bg-primary text-primary-foreground rounded-full p-1 cursor-pointer">
+                        <label className="absolute -bottom-1 -right-1 bg-primary text-white rounded-full p-1 cursor-pointer">
                           <ImageIcon className="h-3 w-3" />
                           <input type="file" accept="image/*" className="hidden" onChange={handleLogoUpload} />
                         </label>
@@ -433,7 +433,7 @@ const MartShopPanel = () => {
                       </a>
                     </div>
                     <button onClick={updateShop} disabled={saving}
-                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50">
                       {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                       {bn ? "সেভ করুন" : "Save Changes"}
                     </button>

@@ -212,7 +212,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
             >
               {t("request.requestBtn")}
             </button>
-            <a href="tel:+8801700000000" className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">
+            <a href="tel:+8801700000000" className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary/90">
               <Phone className="h-4 w-4" />
               {t("request.callBtn")}
             </a>
@@ -228,7 +228,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
               {bn ? "সার্ভিস রিকোয়েস্ট সার্ভিস" : "Service Request"}
             </DialogTitle>
             <DialogDescription>
-              {bn ? "আপনার প্রয়োজনীয় সেবার বিবরণ দিন" : "Describe the service you need"}
+              {bn ? "আপনার প্রয়োজনীয় সার্ভিসর বিবরণ দিন" : "Describe the service you need"}
             </DialogDescription>
           </DialogHeader>
 
@@ -333,7 +333,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
               <Textarea
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={bn ? "আপনার সমস্যা বা প্রয়োজনীয় সেবার বিবরণ লিখুন..." : "Describe your problem or required service..."}
+                placeholder={bn ? "আপনার সমস্যা বা প্রয়োজনীয় সার্ভিসর বিবরণ লিখুন..." : "Describe your problem or required service..."}
                 rows={3}
               />
 
@@ -409,7 +409,7 @@ const RequestService = ({ externalOpen, onExternalOpenChange, hideCard }: Reques
                 {trackingToken && (
                   <div className="space-y-2">
                     <p className="text-xs text-muted-foreground">
-                      {bn ? "📎 নিচের লিংক দিয়ে সেবার অগ্রগতি ট্র্যাক করুন:" : "📎 Track your service progress with this link:"}
+                      {bn ? "📎 নিচের লিংক দিয়ে সার্ভিসর অগ্রগতি ট্র্যাক করুন:" : "📎 Track your service progress with this link:"}
                     </p>
                     <div className="flex items-center gap-2">
                       <a

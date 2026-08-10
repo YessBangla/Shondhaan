@@ -126,7 +126,7 @@ const MartInbox = () => {
                     <div className="flex items-center justify-between mt-0.5">
                       <p className="text-xs text-muted-foreground truncate">{conv.last_message}</p>
                       {conv.unread_count > 0 && (
-                        <Badge className="bg-primary text-primary-foreground text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full shrink-0 ml-2">
+                        <Badge className="bg-primary text-white text-[10px] h-5 min-w-5 flex items-center justify-center rounded-full shrink-0 ml-2">
                           {conv.unread_count}
                         </Badge>
                       )}

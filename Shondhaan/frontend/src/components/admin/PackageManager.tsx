@@ -529,7 +529,7 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-[11px] font-medium text-primary-foreground disabled:opacity-50"
+              className="flex items-center gap-1 rounded-lg bg-primary px-3 py-2 text-[11px] font-medium text-white disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="h-3 w-3 animate-spin" />

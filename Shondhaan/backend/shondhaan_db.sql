@@ -93,7 +93,7 @@ INSERT INTO `categories` (`id`, `name`, `name_en`, `icon`, `color_key`, `is_acti
 ('d37630ec-dfbd-4233-849b-dbdb79cf04b3', 'ট্রাক ও পরিবহন', 'Truck & Transport', 'https://jsofjjymcbdllzsuomzp.supabase.co/storage/v1/object/public/cms-images/categories/icon-truck.png', 'blue', 1, '2026-07-04 09:17:43', '2026-07-04 09:17:43'),
 ('d441eb6e-255b-4333-a338-93ef32b852dd', 'বাইক ও সাইকেল রেন্টাল', 'Bike & Cycle Rental', 'https://jsofjjymcbdllzsuomzp.supabase.co/storage/v1/object/public/cms-images/categories/icon-bike.png', 'cyan', 1, '2026-07-04 09:17:43', '2026-07-04 09:17:43'),
 ('d80e5b3b-adef-48ac-a845-2bddf79ae7d7', 'জেনারেটর ও আইপিএস', 'Generator & IPS', 'https://jsofjjymcbdllzsuomzp.supabase.co/storage/v1/object/public/cms-images/categories/icon-generator.png', 'orange', 1, '2026-07-04 09:17:43', '2026-07-04 09:17:43'),
-('fbac423d-2628-4cb7-9edc-dda2f0c0e0dd', 'আইনি সেবা', 'Legal Service', 'https://jsofjjymcbdllzsuomzp.supabase.co/storage/v1/object/public/cms-images/categories/icon-legal.png', 'stone', 1, '2026-07-04 09:17:43', '2026-07-04 09:17:43');
+('fbac423d-2628-4cb7-9edc-dda2f0c0e0dd', 'আইনি সার্ভিস', 'Legal Service', 'https://jsofjjymcbdllzsuomzp.supabase.co/storage/v1/object/public/cms-images/categories/icon-legal.png', 'stone', 1, '2026-07-04 09:17:43', '2026-07-04 09:17:43');
 
 -- --------------------------------------------------------
 

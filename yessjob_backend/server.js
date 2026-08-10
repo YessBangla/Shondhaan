@@ -48,6 +48,7 @@ app.use('/api/notifications', require('./routes/notifications'));
 app.use('/api/packages', require('./routes/packages'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/enrolled-packages', require('./routes/enrolledPackages'));
+app.use('/api/admin', require('./routes/adminJobStats'));
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });

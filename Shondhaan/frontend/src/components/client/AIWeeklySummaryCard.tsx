@@ -57,15 +57,15 @@ export default function AIWeeklySummaryCard() {
     const bn = (localStorage.getItem("yess_lang") || "bn") === "bn";
     if (stats.total === 0)
       return bn
-        ? "এই সপ্তাহে কোনো বুকিং নেই — কী সেবা প্রয়োজন?"
+        ? "এই সপ্তাহে কোনো বুকিং নেই — কী সার্ভিস প্রয়োজন?"
         : "No bookings this week — what service do you need?";
     if (stats.completed === stats.total)
       return bn
-        ? `চমৎকার! সব ${stats.completed}টি সেবা সম্পন্ন হয়েছে ✨`
+        ? `চমৎকার! সব ${stats.completed}টি সার্ভিস সম্পন্ন হয়েছে ✨`
         : `Awesome! All ${stats.completed} services completed ✨`;
     if (stats.pending > 0)
       return bn
-        ? `${stats.pending}টি সেবা চলমান, ${stats.completed}টি সম্পন্ন।`
+        ? `${stats.pending}টি সার্ভিস চলমান, ${stats.completed}টি সম্পন্ন।`
         : `${stats.pending} in progress, ${stats.completed} completed.`;
     return bn ? "সপ্তাহের সারাংশ প্রস্তুত।" : "Your weekly summary is ready.";
   }, [stats]);
@@ -87,7 +87,7 @@ export default function AIWeeklySummaryCard() {
       <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-primary/10 blur-2xl" />
       <div className="relative">
         <div className="mb-2 flex items-center gap-2">
-          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-primary-foreground">
+          <span className="grid h-7 w-7 place-items-center rounded-full bg-primary text-white">
             <Sparkles className="h-3.5 w-3.5" />
           </span>
           <h3 className="text-sm font-semibold text-foreground">
@@ -102,7 +102,7 @@ export default function AIWeeklySummaryCard() {
         </div>
         {stats.topService && (
           <p className="mt-3 line-clamp-1 text-xs text-muted-foreground">
-            <span className="font-medium text-foreground">{bn ? "শীর্ষ সেবা: " : "Top service: "}</span>
+            <span className="font-medium text-foreground">{bn ? "শীর্ষ সার্ভিস: " : "Top service: "}</span>
             {stats.topService}
           </p>
         )}

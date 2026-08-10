@@ -145,7 +145,7 @@ const FALLBACK_JOB_CATEGORIES: JobCategory[] = [
   { value: "sales", labelBn: "সেলস", labelEn: "Sales" },
   { value: "accounting", labelBn: "একাউন্টিং", labelEn: "Accounting" },
   { value: "engineering", labelBn: "ইঞ্জিনিয়ারিং", labelEn: "Engineering" },
-  { value: "healthcare", labelBn: "স্বাস্থ্যসেবা", labelEn: "Healthcare" },
+  { value: "healthcare", labelBn: "স্বাস্থ্যসার্ভিস", labelEn: "Healthcare" },
   { value: "education", labelBn: "শিক্ষা", labelEn: "Education" },
   { value: "garments", labelBn: "গার্মেন্টস", labelEn: "Garments" },
   { value: "banking", labelBn: "ব্যাংকিং", labelEn: "Banking" },

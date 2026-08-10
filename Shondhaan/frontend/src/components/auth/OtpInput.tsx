@@ -98,7 +98,7 @@ const OtpInput = ({ onComplete, loading, t }: OtpInputProps) => {
           if (fullOtp.length === 6) onComplete(fullOtp);
         }}
         disabled={loading || otp.join("").length < 6}
-        className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
       >
         {loading ? t("auth.loading") : t("auth.verifyOtp")}
       </button>

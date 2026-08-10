@@ -369,8 +369,8 @@ const ProviderPanel = () => {
         <div className="pt-[44px] md:pt-[104px] flex flex-col items-center justify-center min-h-[60vh] px-4">
           <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
-          <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সেবা প্রদানকারীদের জন্য।</p>
-          <button onClick={() => navigate("/join")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">আবেদন করুন</button>
+          <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সার্ভিস প্রদানকারীদের জন্য।</p>
+          <button onClick={() => navigate("/join")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">আবেদন করুন</button>
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -462,7 +462,7 @@ const ProviderPanel = () => {
             panelTitle="প্রোভাইডার"
             panelIcon={<Briefcase className="h-4 w-4" />}
             hero={{
-              title: "আপনার সেবা ম্যানেজমেন্ট",
+              title: "আপনার সার্ভিস ম্যানেজমেন্ট",
               subtitle: "অ্যাসাইন বুকিং দেখুন, কাজ সম্পন্ন করুন এবং রিয়েল-টাইম আয় ট্র্যাক করুন।",
               badge: { label: "প্রোভাইডার প্যানেল" },
               gradient: "from-emerald-500 via-green-600 to-teal-700",
@@ -534,7 +534,7 @@ const ProviderPanel = () => {
                       <div>
                         <p className="text-sm font-medium text-foreground">{profile.display_name || "প্রোভাইডার"}</p>
                         <p className="text-xs text-muted-foreground">{user?.email}</p>
-                        <span className="inline-block mt-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">সেবা প্রদানকারী</span>
+                        <span className="inline-block mt-0.5 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">সার্ভিস প্রদানকারী</span>
                       </div>
                     </div>
                     <form onSubmit={handleSaveProfile} className="space-y-4">
@@ -566,7 +566,7 @@ const ProviderPanel = () => {
                         </div>
                       </div>
                       <button type="submit" disabled={saving}
-                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+                        className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50">
                         {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> সেভ হচ্ছে...</> : <><Save className="h-4 w-4" /> সেভ করুন</>}
                       </button>
                     </form>

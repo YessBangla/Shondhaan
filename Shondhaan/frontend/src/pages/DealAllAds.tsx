@@ -577,7 +577,7 @@ const DealAllAds = () => {
               key={item.label}
               type="button"
               onClick={() => setPriceRange(item.value)}
-              className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+              className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background hover:bg-primary hover:text-white hover:border-primary transition-colors"
             >
               {item.label}
             </button>

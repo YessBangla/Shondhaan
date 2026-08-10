@@ -20,11 +20,11 @@ const slides: Slide[] = [
   {
     image: workersImg,
     title: "ভেরিফাইড প্রোভাইডার\nনিরাপদ ও মানসম্মত",
-    desc: "প্রতিটি সার্ভিস প্রোভাইডার যাচাইকৃত। মানসম্মত সেবার নিশ্চয়তা।",
+    desc: "প্রতিটি সার্ভিস প্রোভাইডার যাচাইকৃত। মানসম্মত সার্ভিসর নিশ্চয়তা।",
   },
   {
     image: bookingImg,
-    title: "ঘরে বসেই বুকিং\nদরজায় পৌঁছে যাবে সেবা",
+    title: "ঘরে বসেই বুকিং\nদরজায় পৌঁছে যাবে সার্ভিস",
     desc: "কয়েক ট্যাপে বুকিং দিন। সময়মতো ঘরে পৌঁছে যাবে আপনার পছন্দের সার্ভিস।",
   },
 ];
@@ -241,7 +241,7 @@ const OnboardingScreen = ({ onFinish }: { onFinish: () => void }) => {
         </div>
         <button
           onClick={next}
-          className="w-full max-w-xs rounded-full bg-primary py-3.5 text-base font-bold text-primary-foreground shadow-lg active:scale-95 transition-transform"
+          className="w-full max-w-xs rounded-full bg-primary py-3.5 text-base font-bold text-white shadow-lg active:scale-95 transition-transform"
         >
           {last ? "শুরু করুন" : "পরের ধাপ"}
         </button>

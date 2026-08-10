@@ -58,7 +58,7 @@ const ResetPassword = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="w-full max-w-md text-center">
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">লিংক যাচাই হচ্ছে...</h1>
           <p className="text-sm text-muted-foreground mb-4">রিসেট লিংক সঠিক না হলে আবার চেষ্টা করুন।</p>
-          <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
+          <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">
             লগইন পেজে যান
           </button>
         </motion.div>
@@ -104,7 +104,7 @@ const ResetPassword = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+              className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90 disabled:opacity-50"
             >
               {loading ? "অপেক্ষা করুন..." : "পাসওয়ার্ড আপডেট করুন"}
             </button>

@@ -103,7 +103,7 @@ const ServiceMessage = () => {
 
           <h1 className="text-xl font-bold flex items-center gap-2">
             <MessageCircle className="h-5 w-5" />
-            {bn ? "সেবা ইনবক্স" : "Service Inbox"}
+            {bn ? "সার্ভিস ইনবক্স" : "Service Inbox"}
           </h1>
         </div>
 

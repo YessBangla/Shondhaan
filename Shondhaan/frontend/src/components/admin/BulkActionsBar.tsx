@@ -52,7 +52,7 @@ const BulkActionsBar = ({
             className="rounded-2xl border border-border/60 bg-card/95 backdrop-blur-xl shadow-2xl ring-1 ring-primary/20 px-3 py-2.5 flex items-center gap-2"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
-              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center shrink-0">
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center shrink-0">
                 <CheckSquare className="h-4 w-4" aria-hidden="true" />
               </div>
               <div className="min-w-0">
@@ -83,7 +83,7 @@ const BulkActionsBar = ({
                       : a.variant === "destructive"
                         ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         : a.variant === "primary"
-                          ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-sm hover:shadow-md"
+                          ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-sm hover:shadow-md"
                           : "bg-secondary text-foreground hover:bg-secondary/80"
                   )}
                 >

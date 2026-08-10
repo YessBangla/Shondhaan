@@ -122,7 +122,7 @@ $$;
 
 -- Seed assignable modules
 INSERT INTO public.assignable_modules (module_key, label_bn, label_en, category, icon, applicable_roles, sort_order) VALUES
-('services', 'সেবা ম্যানেজমেন্ট', 'Services', 'platform', 'Wrench', ARRAY['admin','moderator','supervisor'], 1),
+('services', 'সার্ভিস ম্যানেজমেন্ট', 'Services', 'platform', 'Wrench', ARRAY['admin','moderator','supervisor'], 1),
 ('mart', 'সন্ধান মার্ট', 'Yess Mart', 'platform', 'ShoppingCart', ARRAY['admin','moderator','mart_support'], 2),
 ('deal', 'সন্ধান ডিল', 'Yess Deal', 'platform', 'Handshake', ARRAY['admin','moderator'], 3),
 ('jobs', 'সন্ধান জবস', 'Yess Jobs', 'platform', 'Briefcase', ARRAY['admin','moderator'], 4),

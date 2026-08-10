@@ -65,13 +65,13 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           txns.push({
             id: r.id,
             date: r.created_at,
-            description: r.service_description?.slice(0, 60) || "সেবা",
+            description: r.service_description?.slice(0, 60) || "সার্ভিস",
             amount: r.payment_amount || 0,
             commission: r.commission_amount || 0,
             netAmount: (r.payment_amount || 0) - (r.commission_amount || 0),
             status: r.payment_status,
             customerName: r.customer_name,
-            category: r.service_description?.split(" ")[0] || "সেবা",
+            category: r.service_description?.split(" ")[0] || "সার্ভিস",
             type: "earning",
           });
         });
@@ -112,14 +112,14 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           txns.push({
             id: e.id,
             date: e.created_at,
-            description: e.service_requests?.service_description?.slice(0, 60) || "সেবা",
+            description: e.service_requests?.service_description?.slice(0, 60) || "সার্ভিস",
             amount: e.total_amount,
             commission: e.commission_amount,
             netAmount: e.rep_earning,
             status: e.status,
             receiptNumber: e.receipt_number,
             customerName: e.service_requests?.customer_name || "—",
-            category: e.service_requests?.service_description?.split(" ")[0] || "সেবা",
+            category: e.service_requests?.service_description?.split(" ")[0] || "সার্ভিস",
             type: "earning",
           });
         });
@@ -137,13 +137,13 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           txns.push({
             id: r.id,
             date: r.created_at,
-            description: r.service_description?.slice(0, 60) || "সেবা",
+            description: r.service_description?.slice(0, 60) || "সার্ভিস",
             amount: r.payment_amount || 0,
             commission: r.commission_amount || 0,
             netAmount: r.rep_earning || 0,
             status: r.payment_status,
             customerName: r.customer_name,
-            category: r.service_description?.split(" ")[0] || "সেবা",
+            category: r.service_description?.split(" ")[0] || "সার্ভিস",
             type: "earning",
           });
         });
@@ -279,12 +279,12 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
       .total{font-weight:bold;font-size:16px;margin-top:10px;padding-top:10px;border-top:2px solid #000}
       @media print{button{display:none}}</style></head><body>
       <div class="header">
-        <h2 style="margin:0">সেবা রশিদ</h2>
+        <h2 style="margin:0">সার্ভিস রশিদ</h2>
         <p style="margin:4px 0;color:#666">${txn.receiptNumber || "RCP-" + txn.id.slice(0, 8).toUpperCase()}</p>
         <p style="margin:4px 0;color:#666">${new Date(txn.date).toLocaleDateString("bn-BD")}</p>
       </div>
       <div class="row"><span>গ্রাহক:</span><span>${txn.customerName}</span></div>
-      <div class="row"><span>সেবা:</span><span>${txn.description}</span></div>
+      <div class="row"><span>সার্ভিস:</span><span>${txn.description}</span></div>
       <div class="row"><span>মোট টাকা:</span><span>৳${txn.amount.toLocaleString("bn-BD")}</span></div>
       <div class="row"><span>কমিশন (${role === "admin" ? "কোম্পানি" : "কর্তন"}):</span><span>৳${txn.commission.toLocaleString("bn-BD")}</span></div>
       <div class="row total"><span>নেট ${role === "representative" ? "প্রাপ্তি" : "আয়"}:</span><span>৳${txn.netAmount.toLocaleString("bn-BD")}</span></div>
@@ -312,7 +312,7 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
       return [
         { label: "মোট আয়", value: summary.totalNet, icon: Wallet, color: "text-primary" },
         { label: "মোট কমিশন কর্তন", value: summary.totalCommission, icon: TrendingDown, color: "text-red-500" },
-        { label: "মোট সেবামূল্য", value: summary.totalRevenue, icon: TrendingUp, color: "text-green-600" },
+        { label: "মোট সার্ভিসমূল্য", value: summary.totalRevenue, icon: TrendingUp, color: "text-green-600" },
         { label: "মোট লেনদেন", value: summary.paidCount, icon: Receipt, color: "text-blue-600", isCount: true },
       ];
     }
@@ -376,13 +376,13 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
             <button
               onClick={() => setChartPeriod("weekly")}
               className={`px-3 py-1 text-[10px] font-medium transition-colors ${
-                chartPeriod === "weekly" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                chartPeriod === "weekly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
               }`}
             >সাপ্তাহিক</button>
             <button
               onClick={() => setChartPeriod("monthly")}
               className={`px-3 py-1 text-[10px] font-medium transition-colors ${
-                chartPeriod === "monthly" ? "bg-primary text-primary-foreground" : "bg-background text-muted-foreground hover:bg-secondary"
+                chartPeriod === "monthly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"
               }`}
             >মাসিক</button>
           </div>
@@ -460,7 +460,7 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           <Filter className="h-3.5 w-3.5" /> ফিল্টার <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button onClick={exportCSV}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground hover:bg-primary/90">
+          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary/90">
           <Download className="h-3.5 w-3.5" /> CSV এক্সপোর্ট
         </button>
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length}টি লেনদেন</span>

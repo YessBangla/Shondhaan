@@ -82,7 +82,7 @@ const PushNotificationPrompt = () => {
               <div className="mt-2.5 flex gap-2">
                 <button
                   onClick={handleEnable}
-                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground active:scale-95 transition-transform"
+                  className="rounded-lg bg-primary px-3 py-1.5 text-xs font-semibold text-white active:scale-95 transition-transform"
                 >
                   {bn ? "চালু করুন" : "Enable"}
                 </button>

@@ -82,13 +82,13 @@ const sidebarItems = [
   { value: "requests", label: "সার্ভিস রিকোয়েস্ট", icon: <FileText />, group: "ড্যাশবোর্ড" },
   { value: "accounts", label: "একাউন্টস", icon: <Wallet />, group: "ড্যাশবোর্ড" },
 
-  // সেবা CMS
-  { value: "services", label: "সেবা", icon: <Package />, group: "সেবা CMS" },
-  { value: "service-images", label: "সেবার ছবি", icon: <ImagePlus />, group: "সেবা CMS" },
-  { value: "categories", label: "ক্যাটেগরি", icon: <Grid3X3 />, group: "সেবা CMS" },
-  { value: "offers", label: "অফার", icon: <Percent />, group: "সেবা CMS" },
-  { value: "banners", label: "ব্যানার", icon: <Image />, group: "সেবা CMS" },
-  { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সেবা CMS" },
+  // সার্ভিস CMS
+  { value: "services", label: "সার্ভিস", icon: <Package />, group: "সার্ভিস CMS" },
+  { value: "service-images", label: "সার্ভিসর ছবি", icon: <ImagePlus />, group: "সার্ভিস CMS" },
+  { value: "categories", label: "ক্যাটেগরি", icon: <Grid3X3 />, group: "সার্ভিস CMS" },
+  { value: "offers", label: "অফার", icon: <Percent />, group: "সার্ভিস CMS" },
+  { value: "banners", label: "ব্যানার", icon: <Image />, group: "সার্ভিস CMS" },
+  { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সার্ভিস CMS" },
 
   // সন্ধান মার্ট
   { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "সন্ধান মার্ট" },
@@ -199,7 +199,7 @@ const AdminDashboard = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary"><LayoutDashboard className="h-8 w-8 text-muted-foreground" /></div>
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র অ্যাডমিনদের জন্য।</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -368,7 +368,7 @@ const AdminDashboard = () => {
             className="w-full flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition text-left"
           >
             <div className="flex items-center gap-3 min-w-0">
-              <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow">
+              <div className="p-2.5 rounded-xl bg-primary text-white shadow">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div className="min-w-0">
@@ -431,7 +431,7 @@ const AdminDashboard = () => {
             panelIcon={<LayoutDashboard className="h-4 w-4" />}
             hero={{
               title: "অ্যাডমিন কন্ট্রোল সেন্টার",
-              subtitle: "সেবা, অর্ডার, ইউজার ও কনটেন্ট — একটি ইউনিফাইড ওয়ার্কস্পেস থেকে নিয়ন্ত্রণ করুন।",
+              subtitle: "সার্ভিস, অর্ডার, ইউজার ও কনটেন্ট — একটি ইউনিফাইড ওয়ার্কস্পেস থেকে নিয়ন্ত্রণ করুন।",
               badge: { label: "অ্যাডমিন ড্যাশবোর্ড" },
               gradient: "from-rose-500 via-red-600 to-rose-700",
             }}

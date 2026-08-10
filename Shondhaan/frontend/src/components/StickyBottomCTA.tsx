@@ -97,7 +97,7 @@ const StickyBottomCTA = ({
             type="button"
             onClick={() => { haptic("medium"); onAddToCart(); }}
             disabled={disabled}
-            className="press flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-bold text-primary-foreground shadow-lg shadow-primary/25 disabled:opacity-50"
+            className="press flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary px-5 text-[13px] font-bold text-white shadow-lg shadow-primary/25 disabled:opacity-50"
           >
             <ShoppingBag className="h-[18px] w-[18px]" />
             {bn ? "বুক করুন" : "Book Now"}

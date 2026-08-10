@@ -53,7 +53,7 @@ const CentralAccounts = () => {
   const netIncome = totalRevenue - withdrawnTotal;
 
   const revenueBySource = [
-    { name: "সেবা বুকিং", value: serviceRevenue },
+    { name: "সার্ভিস বুকিং", value: serviceRevenue },
     { name: "সন্ধান মার্ট", value: martRevenue },
     { name: "কমিশন", value: commissionTotal },
   ].filter(r => r.value > 0);
@@ -78,7 +78,7 @@ const CentralAccounts = () => {
   const exportCSV = () => {
     const rows = [
       ["বিভাগ", "পরিমাণ (৳)"],
-      ["সেবা বুকিং রেভিনিউ", serviceRevenue.toString()],
+      ["সার্ভিস বুকিং রেভিনিউ", serviceRevenue.toString()],
       ["মার্ট রেভিনিউ", martRevenue.toString()],
       ["মোট রেভিনিউ", totalRevenue.toString()],
       ["কমিশন আয়", commissionTotal.toString()],
@@ -108,7 +108,7 @@ const CentralAccounts = () => {
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["7d", "30d", "90d", "1y"] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p ? "bg-primary text-white" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
                 {p === "7d" ? "৭ দিন" : p === "30d" ? "৩০ দিন" : p === "90d" ? "৯০ দিন" : "১ বছর"}
               </button>
             ))}

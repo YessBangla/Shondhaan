@@ -62,7 +62,7 @@ const CouponWallet = ({ open, onOpenChange, coupons = FALLBACK }: Props) => {
               transition={{ delay: i * 0.05 }}
               className="relative flex items-center gap-3 p-3 rounded-xl border-2 border-dashed border-primary/40 bg-primary/5"
             >
-              <div className="w-14 h-14 rounded-lg bg-primary text-primary-foreground flex flex-col items-center justify-center flex-shrink-0">
+              <div className="w-14 h-14 rounded-lg bg-primary text-white flex flex-col items-center justify-center flex-shrink-0">
                 <span className="text-base font-bold leading-none">{c.discount}</span>
                 <span className="text-[9px] mt-0.5 opacity-80">OFF</span>
               </div>

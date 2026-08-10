@@ -517,7 +517,7 @@ const CallCenterPanel = () => {
               { value: "search", label: "কাস্টমার সার্চ", icon: <Search className="h-4 w-4" />, group: "সার্চ" },
               { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
               { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
-              { value: "requests", label: "সেবা অনুরোধ", icon: <FileText className="h-4 w-4" /> },
+              { value: "requests", label: "সার্ভিস অনুরোধ", icon: <FileText className="h-4 w-4" /> },
               { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
             ]}
             defaultValue="search"
@@ -707,7 +707,7 @@ const CallCenterPanel = () => {
                               disabled={updatingId === b.id}
                               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-50 transition-all"
                             >
-                              <option value="">সেবা প্রদানকারী নির্ধারণ করুন</option>
+                              <option value="">সার্ভিস প্রদানকারী নির্ধারণ করুন</option>
                               {providers.map(provider => (
                                 <option key={provider.id} value={provider.id}>
                                   {provider.full_name || provider.name || provider.shop_name || `প্রদানকারী ${provider.id}`}
@@ -954,7 +954,7 @@ const CallCenterPanel = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                         <input
                           type="text"
-                          placeholder="সেবা সার্চ করুন..."
+                          placeholder="সার্ভিস সার্চ করুন..."
                           value={newBooking.service_id ? newBooking.service_title : serviceSearch}
                           onChange={e => {
                             setServiceSearch(e.target.value);
@@ -996,7 +996,7 @@ const CallCenterPanel = () => {
                                 </button>
                               ))}
                             {services.filter(s => (s.title || s.name || "").toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
-                              <p className="px-3 py-2 text-xs text-slate-500">কোনো সেবা পাওয়া যায়নি</p>
+                              <p className="px-3 py-2 text-xs text-slate-500">কোনো সার্ভিস পাওয়া যায়নি</p>
                             )}
                           </div>
                         )}
@@ -1007,7 +1007,7 @@ const CallCenterPanel = () => {
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                         <input
                           type="text"
-                          placeholder={newBooking.service_id ? "প্যাকেজ সার্চ করুন..." : "প্রথমে সেবা নির্বাচন করুন"}
+                          placeholder={newBooking.service_id ? "প্যাকেজ সার্চ করুন..." : "প্রথমে সার্ভিস নির্বাচন করুন"}
                           disabled={!newBooking.service_id}
                           value={newBooking.package_id ? `${newBooking.package_name} - ৳${newBooking.package_price}` : packageSearch}
                           onChange={e => {

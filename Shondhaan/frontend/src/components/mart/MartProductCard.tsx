@@ -219,7 +219,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
           <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-500"}`} />
         </button>
         <button
-          className={`absolute top-10 right-2 h-7 w-7 rounded-full flex items-center justify-center transition-colors ${compared ? "bg-primary text-primary-foreground" : "bg-white/80 hover:bg-white text-gray-500"}`}
+          className={`absolute top-10 right-2 h-7 w-7 rounded-full flex items-center justify-center transition-colors ${compared ? "bg-primary text-white" : "bg-white/80 hover:bg-white text-gray-500"}`}
           onClick={(e) => { e.stopPropagation(); compared ? removeFromCompare(product.id) : addToCompare(product); }}
         >
           <GitCompareArrows className="h-3.5 w-3.5" />

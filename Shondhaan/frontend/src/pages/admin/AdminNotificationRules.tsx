@@ -1048,7 +1048,7 @@ const AdminNotificationRules = () => {
       initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
       className={`rounded-2xl border p-4 transition ${enabled ? "border-primary/40 bg-card shadow-sm" : "border-border bg-muted/20"}`}>
       <div className="flex items-start gap-3">
-        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${enabled ? "bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${enabled ? "bg-gradient-to-br from-primary to-emerald-600 text-white" : "bg-muted text-muted-foreground"}`}>
           {icon}
         </div>
         <div className="flex-1 min-w-0">
@@ -1080,7 +1080,7 @@ const AdminNotificationRules = () => {
   return (
     <div className="space-y-4">
       <div className="flex items-center gap-3 flex-wrap">
-        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center">
+        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center">
           <Bell className="h-4 w-4" />
         </div>
         <div className="min-w-0">
@@ -1124,10 +1124,10 @@ const AdminNotificationRules = () => {
           </button>
           <button onClick={() => setHistoryOpen((v) => !v)}
             title="ভার্সন হিস্ট্রি"
-            className={`inline-flex items-center gap-1 rounded-xl px-3 h-9 text-xs font-semibold transition ${historyOpen ? "bg-primary text-primary-foreground" : "bg-muted hover:bg-muted/70 text-foreground"}`}>
+            className={`inline-flex items-center gap-1 rounded-xl px-3 h-9 text-xs font-semibold transition ${historyOpen ? "bg-primary text-white" : "bg-muted hover:bg-muted/70 text-foreground"}`}>
             <History className="h-3.5 w-3.5" /> হিস্ট্রি
             {history.length > 0 && (
-              <span className={`ml-1 rounded-full px-1.5 text-[10px] ${historyOpen ? "bg-primary-foreground/20" : "bg-primary text-primary-foreground"}`}>
+              <span className={`ml-1 rounded-full px-1.5 text-[10px] ${historyOpen ? "bg-primary-foreground/20" : "bg-primary text-white"}`}>
                 {history.length}
               </span>
             )}
@@ -1137,7 +1137,7 @@ const AdminNotificationRules = () => {
             <RotateCcw className="h-3.5 w-3.5" /> রিসেট
           </button>
           <button onClick={save} disabled={!dirty}
-            className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground px-3 h-9 text-xs font-semibold disabled:opacity-50 shadow-sm">
+            className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-white px-3 h-9 text-xs font-semibold disabled:opacity-50 shadow-sm">
             <Save className="h-3.5 w-3.5" /> সংরক্ষণ
           </button>
         </div>
@@ -1754,7 +1754,7 @@ const AdminNotificationRules = () => {
                                   <button
                                     type="button"
                                     onClick={(e) => { e.stopPropagation(); toggleRevertField(d.field as string); }}
-                                    className={`inline-flex items-center gap-1 rounded-lg px-2 h-6 text-[10.5px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ${isReverted ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border border-border hover:bg-muted"}`}
+                                    className={`inline-flex items-center gap-1 rounded-lg px-2 h-6 text-[10.5px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ${isReverted ? "bg-primary text-white hover:bg-primary/90" : "bg-card border border-border hover:bg-muted"}`}
                                     title={isReverted ? "এই ফিল্ড আবার ইমপোর্টে যোগ করুন" : "এই ফিল্ডের পরিবর্তন বাদ দিন"}
                                     aria-pressed={isReverted}
                                   >
@@ -1769,7 +1769,7 @@ const AdminNotificationRules = () => {
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); toggleRevertField(d.field as string); }}
-                                  className={`inline-flex items-center gap-1 rounded-md px-1.5 h-5 text-[10px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ${isReverted ? "bg-primary text-primary-foreground hover:bg-primary/90" : "bg-card border border-border hover:bg-muted text-muted-foreground"}`}
+                                  className={`inline-flex items-center gap-1 rounded-md px-1.5 h-5 text-[10px] font-semibold transition focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 ${isReverted ? "bg-primary text-white hover:bg-primary/90" : "bg-card border border-border hover:bg-muted text-muted-foreground"}`}
                                   title={isReverted ? "এই ফিল্ড আবার ইমপোর্টে যোগ করুন" : "এই ফিল্ডের পরিবর্তন বাদ দিন"}
                                   aria-pressed={isReverted}
                                 >
@@ -1796,7 +1796,7 @@ const AdminNotificationRules = () => {
               <button
                 onClick={confirmImport}
                 disabled={!importPreview.validation.ok}
-                className="ml-auto inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground px-3 h-9 text-xs font-semibold disabled:opacity-50 shadow-sm">
+                className="ml-auto inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-primary to-emerald-600 text-white px-3 h-9 text-xs font-semibold disabled:opacity-50 shadow-sm">
                 <CheckCircle2 className="h-3.5 w-3.5" />
                 {importMode === "overwrite" ? "ওভাররাইট নিশ্চিত" : "মার্জ নিশ্চিত"}
               </button>
@@ -1868,7 +1868,7 @@ const AdminNotificationRules = () => {
                     <button
                       onClick={() => restoreFromHistory(h)}
                       disabled={diff.length === 0}
-                      className="inline-flex items-center gap-1 rounded-lg bg-card border border-border hover:bg-primary hover:text-primary-foreground hover:border-primary px-2.5 h-7 text-[11px] font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed">
+                      className="inline-flex items-center gap-1 rounded-lg bg-card border border-border hover:bg-primary hover:text-white hover:border-primary px-2.5 h-7 text-[11px] font-semibold transition disabled:opacity-40 disabled:cursor-not-allowed">
                       <RotateCcw className="h-3 w-3" /> রোলব্যাক
                     </button>
                   </div>
@@ -1927,7 +1927,7 @@ const AdminNotificationRules = () => {
               </label>
             ) : (
               <button onClick={requestDesktop}
-                className="text-[11px] font-semibold rounded-lg bg-muted hover:bg-primary hover:text-primary-foreground px-2.5 py-1 transition shrink-0">
+                className="text-[11px] font-semibold rounded-lg bg-muted hover:bg-primary hover:text-white px-2.5 py-1 transition shrink-0">
                 চালু করুন
               </button>
             )}
@@ -1967,7 +1967,7 @@ const AdminNotificationRules = () => {
           <p className="text-[11px] text-muted-foreground">এক্সপোর্ট করে JSON পাঠান, অথবা পেস্ট করে অন্যজনের সেটিংস ব্যবহার করুন (প্রিভিউ যাচাই করে নিশ্চিত হবে)</p>
         </div>
         <button onClick={importFromClipboard}
-          className="inline-flex items-center gap-1 rounded-xl bg-card hover:bg-primary hover:text-primary-foreground text-foreground px-3 h-8 text-xs font-semibold border border-border transition">
+          className="inline-flex items-center gap-1 rounded-xl bg-card hover:bg-primary hover:text-white text-foreground px-3 h-8 text-xs font-semibold border border-border transition">
           <Upload className="h-3.5 w-3.5" /> ক্লিপবোর্ড থেকে পেস্ট
         </button>
       </div>

@@ -16,12 +16,12 @@ interface CartItem {
 }
 
 const sampleProducts = [
-  { id: "1", name: "এসি সার্ভিসিং", price: 1500, category: "সেবা" },
-  { id: "2", name: "ইলেকট্রিক মেরামত", price: 800, category: "সেবা" },
-  { id: "3", name: "প্লাম্বিং", price: 600, category: "সেবা" },
-  { id: "4", name: "পেইন্টিং (১ রুম)", price: 3500, category: "সেবা" },
-  { id: "5", name: "ক্লিনিং সার্ভিস", price: 1200, category: "সেবা" },
-  { id: "6", name: "কম্পিউটার মেরামত", price: 1000, category: "সেবা" },
+  { id: "1", name: "এসি সার্ভিসিং", price: 1500, category: "সার্ভিস" },
+  { id: "2", name: "ইলেকট্রিক মেরামত", price: 800, category: "সার্ভিস" },
+  { id: "3", name: "প্লাম্বিং", price: 600, category: "সার্ভিস" },
+  { id: "4", name: "পেইন্টিং (১ রুম)", price: 3500, category: "সার্ভিস" },
+  { id: "5", name: "ক্লিনিং সার্ভিস", price: 1200, category: "সার্ভিস" },
+  { id: "6", name: "কম্পিউটার মেরামত", price: 1000, category: "সার্ভিস" },
 ];
 
 const POSSystem = () => {
@@ -105,7 +105,7 @@ const POSSystem = () => {
 
   const downloadCSV = () => {
     const rows = [
-      ["পণ্য/সেবা", "দাম", "পরিমাণ", "মোট"],
+      ["পণ্য/সার্ভিস", "দাম", "পরিমাণ", "মোট"],
       ...cart.map(i => [i.name, i.price.toString(), i.quantity.toString(), (i.price * i.quantity).toString()]),
       ["", "", "সাবটোটাল", subtotal.toString()],
       ["", "", "ডিসকাউন্ট", (-discountAmount).toString()],
@@ -204,7 +204,7 @@ const POSSystem = () => {
           <div className="md:col-span-3 space-y-3">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input placeholder="সেবা / পণ্য খুঁজুন..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
+              <Input placeholder="সার্ভিস / পণ্য খুঁজুন..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} className="pl-10" />
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
               {filteredProducts.map(p => (
