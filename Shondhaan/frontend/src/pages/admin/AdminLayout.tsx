@@ -10,7 +10,6 @@ import {
   UserPlus, Sun, Moon, Monitor, Languages, Pin, PinOff, Command as CommandIcon,
   ChevronDown, Wrench,
 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import NotificationBell from "@/components/NotificationBell";
@@ -26,7 +25,7 @@ import {
   BackendPageActionsProvider,
   useBackendPageMeta,
 } from "@/contexts/BackendPageActionsContext";
-
+import WorkspaceDashboard from "./WorkspaceDashboard";
 type NavItem = { to: string; label: string; icon: React.ReactNode };
 type NavGroup = { label: string; items: NavItem[]; accent: string; dot: string };
 const NAV: NavGroup[] = [
@@ -131,29 +130,25 @@ const NAV: NavGroup[] = [
   },
 ];
 
-const SERVICE_ADMIN_ALLOWED_PATHS = new Set([
-  "/admin/service",
-  "/admin/bookings",
-  "/admin/requests",
-  "/admin/services",
-  "/admin/service-images",
-  "/admin/categories",
-  "/admin/offers",
-  "/admin/banners",
-  "/admin/sections",
-  "/admin/contacts",
-  "/admin/chat-history",
-  "/admin/notifications",
-  "/admin/reviews",
-]);
+const ROLE_ALLOWED_PATHS: Record<string, Set<string>> = {
+  service_admin: new Set([
+    "/admin/service", "/admin/bookings", "/admin/requests", "/admin/services",
+    "/admin/service-images", "/admin/categories", "/admin/offers", "/admin/banners",
+    "/admin/sections", "/admin/contacts", "/admin/chat-history", "/admin/notifications", "/admin/reviews",
+  ]),
+  deal_admin: new Set([
+    "/admin/deal-overview", "/admin/deal-categories", "/admin/contacts",
+    "/admin/chat-history", "/admin/notifications", "/admin/reviews",
+  ]),
+};
 
 const isSameOrChildPath = (pathname: string, basePath: string) =>
   pathname === basePath || pathname.startsWith(`${basePath}/`);
 
-const canServiceAdminAccessPath = (pathname: string) => {
-  const hasAccess = Array.from(SERVICE_ADMIN_ALLOWED_PATHS).some((path) => isSameOrChildPath(pathname, path));
-  console.log(`🛡️ Checking access for path: ${pathname} -> Allowed: ${hasAccess}`);
-  return hasAccess;
+const canRoleAccessPath = (role: string | null, pathname: string) => {
+  if (!role || !ROLE_ALLOWED_PATHS[role]) return true;
+  const allowed = ROLE_ALLOWED_PATHS[role];
+  return Array.from(allowed).some((path) => isSameOrChildPath(pathname, path));
 };
 
 const AdminLayout = () => {
@@ -177,12 +172,8 @@ const AdminLayout = () => {
   const sidebarNavRef = useRef<HTMLElement | null>(null);
 
   const A11Y = {
-    group: "গ্রুপ",
-    item: "আইটেম",
-    expanded: "এক্সপ্যান্ড করা হয়েছে",
-    collapsed: "কোলাপ্স করা হয়েছে",
-    of: "এর মধ্যে",
-    pageLoaded: "পেজ লোড হয়েছে",
+    group: "গ্রুপ", item: "আইটেম", expanded: "এক্সপ্যান্ড করা হয়েছে",
+    collapsed: "কোলাপ্স করা হয়েছে", of: "এর মধ্যে", pageLoaded: "পেজ লোড হয়েছে",
   } as const;
 
   const toBnDigits = (n: number | string) =>
@@ -190,12 +181,7 @@ const AdminLayout = () => {
 
   const normalizeLabel = (el: HTMLElement) => {
     const raw = el.getAttribute("aria-label") || el.textContent || "";
-    return raw
-      .replace(/\s+/g, " ")
-      .replace(/[\u200B-\u200D\uFEFF]/g, "") 
-      .trim()
-      .replace(/\s+\d+$/, "") 
-      .trim();
+    return raw.replace(/\s+/g, " ").replace(/[\u200B-\u200D\uFEFF]/g, "").trim().replace(/\s+\d+$/, "").trim();
   };
 
   const [announcement, setAnnouncement] = useState("");
@@ -215,16 +201,11 @@ const AdminLayout = () => {
   const togglePin = (path: string) => setPinned((p) => p.includes(path) ? p.filter(x => x !== path) : [...p, path]);
 
   const filteredNav = useMemo(() => {
-    console.log("🔄 Filtering Nav. Current Role:", userRole);
-    if (userRole === "service_admin") {
-      const filtered = NAV
-        .map((group) => ({
-          ...group,
-          items: group.items.filter((item) => SERVICE_ADMIN_ALLOWED_PATHS.has(item.to)),
-        }))
+    if (userRole && ROLE_ALLOWED_PATHS[userRole]) {
+      const allowedPaths = ROLE_ALLOWED_PATHS[userRole];
+      return NAV
+        .map((group) => ({ ...group, items: group.items.filter((item) => allowedPaths.has(item.to)) }))
         .filter((group) => group.items.length > 0);
-      console.log("✅ Filtered Nav for service_admin:", filtered);
-      return filtered;
     }
     return NAV;
   }, [userRole]);
@@ -235,9 +216,7 @@ const AdminLayout = () => {
   const focusableSidebarLinks = () => {
     const root = sidebarNavRef.current;
     if (!root) return [] as HTMLElement[];
-    return Array.from(
-      root.querySelectorAll<HTMLElement>('a[data-sidebar-link], button[data-sidebar-group]')
-    ).filter((el) => !el.hasAttribute('data-disabled'));
+    return Array.from(root.querySelectorAll<HTMLElement>('a[data-sidebar-link], button[data-sidebar-group]')).filter((el) => !el.hasAttribute('data-disabled'));
   };
   
   const handleSidebarKeyDown = (e: React.KeyboardEvent) => {
@@ -257,16 +236,13 @@ const AdminLayout = () => {
       } else {
         const pos = linkItems.indexOf(el);
         const total = linkItems.length;
-        const positional = pos >= 0
-          ? ` (${A11Y.item} ${toBnDigits(pos + 1)} ${A11Y.of} ${toBnDigits(total)})`
-          : "";
+        const positional = pos >= 0 ? ` (${A11Y.item} ${toBnDigits(pos + 1)} ${A11Y.of} ${toBnDigits(total)})` : "";
         announce(`${label}${groupLabel ? `, ${groupLabel} ${A11Y.group}` : ""}${positional}`);
       }
     };
     const focusAt = (i: number) => {
       const el = items[(i + items.length) % items.length];
-      el?.focus();
-      announceFocused(el);
+      el?.focus(); announceFocused(el);
     };
 
     if (e.key === "ArrowDown") { e.preventDefault(); focusAt(idx + 1); }
@@ -290,8 +266,7 @@ const AdminLayout = () => {
       if (hIdx === -1) hIdx = 0;
       const next = e.key === "]" ? hIdx + 1 : hIdx - 1;
       const target = headers[(next + headers.length) % headers.length];
-      target?.focus();
-      announceFocused(target);
+      target?.focus(); announceFocused(target);
     }
   };
 
@@ -304,10 +279,7 @@ const AdminLayout = () => {
       return tag === "INPUT" || tag === "TEXTAREA" || (t as HTMLElement).isContentEditable;
     };
     const jumpMap: Record<string, { to: string; label: string }> = {
-      d: {
-        to: userRole === "service_admin" ? "/admin/service" : "/admin/smart-dashboard",
-        label: userRole === "service_admin" ? "সার্ভিস ড্যাশবোর্ড" : "ড্যাশবোর্ড",
-      },
+      d: { to: userRole === "service_admin" ? "/admin/service" : userRole === "deal_admin" ? "/admin/deal-overview" : "/admin/smart-dashboard", label: userRole === "service_admin" ? "সার্ভিস ড্যাশবোর্ড" : userRole === "deal_admin" ? "ডিল ড্যাশবোর্ড" : "ড্যাশবোর্ড" },
       a: { to: "/admin/analytics", label: "অ্যানালিটিক্স" },
       b: { to: "/admin/bookings", label: "বুকিং" },
       r: { to: "/admin/requests", label: "সার্ভিস রিকোয়েস্ট" },
@@ -323,29 +295,17 @@ const AdminLayout = () => {
       g: { to: "/admin/settings", label: "সেটিংস" },
     };
     const onKey = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault(); setPaletteOpen(o => !o); return;
-      }
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") { e.preventDefault(); setPaletteOpen(o => !o); return; }
       if (e.key === "Escape") { setPaletteOpen(false); setShortcutsHelpOpen(false); return; }
       if (isTyping(e.target)) return;
-      if (e.key === "?" && e.shiftKey) {
-        e.preventDefault(); setShortcutsHelpOpen(o => !o); return;
-      }
-      if (e.key === "g" && !e.metaKey && !e.ctrlKey && !e.altKey) {
-        lastG = Date.now(); return;
-      }
+      if (e.key === "?" && e.shiftKey) { e.preventDefault(); setShortcutsHelpOpen(o => !o); return; }
+      if (e.key === "g" && !e.metaKey && !e.ctrlKey && !e.altKey) { lastG = Date.now(); return; }
       if (Date.now() - lastG < 900) {
         const target = jumpMap[e.key.toLowerCase()];
         if (target) {
           e.preventDefault();
-          if (userRole === "service_admin" && !canServiceAdminAccessPath(target.to)) {
-            toast.error("এই রোলে শুধু সার্ভিস সম্পর্কিত পেজ দেখা যাবে");
-            lastG = 0;
-            return;
-          }
-          navigate(target.to);
-          toast.success(target.label, { duration: 900 });
-          lastG = 0;
+          if (!canRoleAccessPath(userRole, target.to)) { toast.error("এই রোলে শুধু নির্দিষ্ট পেজ দেখা যাবে"); lastG = 0; return; }
+          navigate(target.to); toast.success(target.label, { duration: 900 }); lastG = 0;
         }
       }
     };
@@ -361,62 +321,32 @@ const AdminLayout = () => {
     return flatItems.filter(i => i.label.toLowerCase().includes(q) || i.group.toLowerCase().includes(q));
   }, [flatItems, paletteQuery]);
 
-  useEffect(() => {
-    const id = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(id);
-  }, []);
+  useEffect(() => { const id = setInterval(() => setNow(new Date()), 60_000); return () => clearInterval(id); }, []);
+  useEffect(() => { if (!authLoading && !user) navigate("/main-login", { replace: true }); }, [user, authLoading, navigate]);
 
-  useEffect(() => {
-    if (!authLoading && !user) navigate("/main-login", { replace: true });
-  }, [user, authLoading, navigate]);
-
-  // Auth Check and Role Setting
   useEffect(() => {
     if (!user) return;
-
     const mysqlAuth = getMySqlAuth();
-    console.log("🔑 MySQL Auth Data:", mysqlAuth);
-    
     if (mysqlAuth) {
       const type = mysqlAuth.user.type;
-      console.log("👤 User Type from MySQL:", type);
-      
-      if (type === "admin" || type === "super_admin" || type === "service_admin") {
-        console.log(`✅ Access granted. Role set to: ${type}`);
-        setIsAdmin(true);
-        setUserRole(type);
-      } else {
-        console.warn(`❌ Access denied. Type '${type}' is not an admin role.`);
-        setIsAdmin(false);
-      }
+      if (["admin", "super_admin", "service_admin", "deal_admin"].includes(type)) { setIsAdmin(true); setUserRole(type); } 
+      else { setIsAdmin(false); }
       return;
     }
-
-    console.log("🔄 MySQL Auth not found, falling back to Supabase...");
-    supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", user.id)
-      .eq("role", "admin") // Note: This specifically queries for role="admin", it will NOT find "service_admin"
-      .maybeSingle()
-      .then(({ data }) => {
-        console.log("📦 Supabase User Roles Data:", data);
-        if (data) {
-          setIsAdmin(true);
-          setUserRole(data.role || "admin");
-        } else {
-          setIsAdmin(false);
-        }
-      });
+    setIsAdmin(false);
   }, [user]);
 
   useEffect(() => { setMobileOpen(false); }, [location.pathname]);
 
   useEffect(() => {
-    if (userRole !== "service_admin") return;
-    if (canServiceAdminAccessPath(location.pathname)) return;
-    console.warn(`🚫 Path ${location.pathname} is not allowed for service_admin. Redirecting...`);
-    navigate("/admin/service", { replace: true });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!userRole || !ROLE_ALLOWED_PATHS[userRole]) return;
+    if (canRoleAccessPath(userRole, location.pathname)) return;
+    const redirectPath = userRole === "service_admin" ? "/admin/service" : userRole === "deal_admin" ? "/admin/deal-overview" : "/admin";
+    navigate(redirectPath, { replace: true });
   }, [location.pathname, navigate, userRole]);
 
   const { currentLabel, currentGroup, currentIcon } = useMemo(() => {
@@ -434,15 +364,13 @@ const AdminLayout = () => {
       announce(`${currentLabel} ${A11Y.pageLoaded}, ${currentGroup} ${A11Y.group}`);
     }
     lastPathRef.current = location.pathname;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname, currentLabel, currentGroup]);
+  }, [location.pathname, currentLabel, currentGroup, groupsInit]);
 
   useEffect(() => {
     if (groupsInit) return;
     const initial: Record<string, boolean> = {};
     filteredNav.forEach((g) => { if (g.label !== currentGroup) initial[g.label] = true; });
-    setCollapsedGroups(initial);
-    setGroupsInit(true);
+    setCollapsedGroups(initial); setGroupsInit(true);
   }, [currentGroup, groupsInit, filteredNav]);
 
   const initials = useMemo(() => {
@@ -454,7 +382,7 @@ const AdminLayout = () => {
   const timeStr = now.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
   
-  const roleBadgeText = userRole === "service_admin" ? "সার্ভিস অ্যাডমিন" : "সুপার অ্যাডমিন";
+  const roleBadgeText = userRole === "service_admin" ? "সার্ভিস অ্যাডমিন" : userRole === "deal_admin" ? "ডিল অ্যাডমিন" : "সুপার অ্যাডমিন";
 
   if (authLoading || isAdmin === null) {
     return (
@@ -477,58 +405,65 @@ const AdminLayout = () => {
     );
   }
 
-  if (userRole === "service_admin" && location.pathname === "/admin") {
-    console.log("➡️ Redirecting service_admin from /admin to /admin/service");
-    return <Navigate to="/admin/service" replace />;
+  if (location.pathname === "/admin") {
+    if (userRole === "service_admin") return <Navigate to="/admin/service" replace />;
+    if (userRole === "deal_admin") return <Navigate to="/admin/deal-overview" replace />;
   }
 
+  // Sidebar Body (Clean, Light POS-style)
   const SidebarBody = (
     <nav
       ref={sidebarNavRef}
       onKeyDown={handleSidebarKeyDown}
       aria-label="ব্যাকএন্ড নেভিগেশন"
-      className="flex-1 overflow-y-auto py-3 focus:outline-none"
+      className="flex-1 overflow-y-auto py-4 px-3 focus:outline-none scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent"
     >
       {!collapsed && (
-        <div className="px-3 mb-2">
+        <div className="mb-4">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors px-2.5 py-2 text-[12px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            className="w-full flex items-center gap-2 rounded-xl border border-border/60 bg-card pl-3 pr-2 py-2 text-[12.5px] outline-none focus:border-primary/50 transition-colors hover:shadow-sm"
           >
-            <Search className="h-3.5 w-3.5" />
-            <span className="flex-1 text-left">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
+            <Search className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="flex-1 text-left text-muted-foreground">খুঁজুন…</span>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground">⌘K</kbd>
           </button>
         </div>
       )}
       {pinnedItems.length > 0 && !collapsed && (
-        <div className="px-2 mb-2">
-          <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1">
-            <Pin className="h-2.5 w-2.5" /> পিন করা
+        <div className="mb-4">
+          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1.5">
+            <Pin className="h-3 w-3" /> পিন করা
           </p>
-          <ul className="space-y-0.5 px-0">
+          <ul className="space-y-1">
             {pinnedItems.map(item => (
-              <li key={`pin-${item.to}`}>
+              <li key={`pin-${item.to}`} className="group relative">
                 <NavLink to={item.to} end
-                  data-sidebar-link
-                  data-group={item.group}
-                  className={({ isActive }) =>
-                  `group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
-                  }`}>
-                  <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
-                  <span className="truncate flex-1">{item.label}</span>
-                  <button onClick={(e) => { e.preventDefault(); togglePin(item.to); }}
-                    aria-label={`${item.label} আনপিন করুন`}
-                    className="opacity-60 hover:opacity-100 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"><PinOff className="h-3 w-3" /></button>
+                  data-sidebar-link data-group={item.group}
+                  className={({ isActive }) => cn(
+                    "relative flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-[14px] font-semibold transition-all duration-200 outline-none",
+                    "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-card",
+                    isActive 
+                      ? "bg-primary/10 text-primary border-primary/20 shadow-sm" 
+                      : "text-foreground/70 hover:bg-card hover:shadow-sm hover:text-foreground border-transparent"
+                  )}>
+                  {({ isActive }) => (
+                    <>
+                      <span className={cn("shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]", isActive ? "text-primary" : "text-foreground/70 group-hover:text-primary")}>{item.icon}</span>
+                      <span className="truncate flex-1 text-left tracking-tight">{item.label}</span>
+                    </>
+                  )}
                 </NavLink>
+                <button onClick={(e) => { e.preventDefault(); togglePin(item.to); }} aria-label={`${item.label} আনপিন করুন`} className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all opacity-0 group-hover:opacity-60 hover:opacity-100 text-muted-foreground hover:bg-secondary">
+                  <PinOff className="h-3.5 w-3.5" />
+                </button>
               </li>
             ))}
           </ul>
         </div>
       )}
       {filteredNav.map((group) => (
-        <div key={group.label} className="mb-1">
+        <div key={group.label} className="mb-2">
           {!collapsed && (
             <button
               onClick={() => {
@@ -536,25 +471,23 @@ const AdminLayout = () => {
                 setCollapsedGroups(c => ({ ...c, [group.label]: willCollapse }));
                 announce(`${group.label} ${A11Y.group} ${willCollapse ? A11Y.collapsed : A11Y.expanded}`);
               }}
-              data-sidebar-group
-              data-group={group.label}
-              aria-expanded={!collapsedGroups[group.label]}
-              aria-controls={`sidebar-group-${group.label}`}
+              data-sidebar-group data-group={group.label}
+              aria-expanded={!collapsedGroups[group.label]} aria-controls={`sidebar-group-${group.label}`}
               className={cn(
-                "w-full flex items-center justify-between px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 group.label === currentGroup ? "text-foreground" : "text-muted-foreground/70"
               )}
             >
-              <span className="inline-flex items-center gap-2">
+              <span className="inline-flex items-center gap-1.5">
                 <span className={cn("h-1.5 w-1.5 rounded-full", group.dot)} />
                 {group.label}
                 <span className="ml-1 text-[9px] font-mono text-muted-foreground/60 normal-case tracking-normal">{group.items.length}</span>
               </span>
-              <ChevronDown className={`h-3 w-3 transition-transform ${collapsedGroups[group.label] ? "-rotate-90" : ""}`} />
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", collapsedGroups[group.label] && "-rotate-90")} />
             </button>
           )}
           {collapsed && (
-            <div className="px-2 pt-2 pb-1 flex justify-center">
+            <div className="px-2 pt-3 pb-1 flex justify-center">
               <span className={cn("h-1 w-6 rounded-full opacity-70", group.dot)} />
             </div>
           )}
@@ -563,36 +496,44 @@ const AdminLayout = () => {
               <motion.ul
                 id={`sidebar-group-${group.label}`}
                 initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
-                className="overflow-hidden space-y-0.5 px-2"
+                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
               >
                 {group.items.map((item) => (
                   <li key={item.to} className="group relative">
                     <NavLink
-                      to={item.to}
-                      end
-                      data-sidebar-link
-                      data-group={group.label}
-                      className={({ isActive }) =>
-                        `relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                          isActive
-                            ? `bg-gradient-to-r ${group.accent} text-white font-semibold shadow-md`
-                            : "text-foreground/75 hover:bg-secondary hover:text-foreground"
-                        } ${collapsed ? "justify-center" : ""}`
-                      }
+                      to={item.to} end
+                      data-sidebar-link data-group={group.label}
+                      className={({ isActive }) => cn(
+                        "relative flex items-center gap-3 rounded-2xl border px-3 py-2.5 text-[14px] font-semibold transition-all duration-200 outline-none",
+                        "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-card",
+                        collapsed ? "justify-center px-0 py-3 h-12 w-12 mx-auto" : "px-3 py-2.5",
+                        isActive
+                          ? "bg-primary/10 text-primary border-primary/20 shadow-sm"
+                          : "text-foreground/70 hover:bg-card hover:shadow-sm hover:text-foreground border-transparent"
+                      )}
                       title={collapsed ? item.label : undefined}
                     >
-                      <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
-                      {!collapsed && <span className="truncate flex-1">{item.label}</span>}
+                      {({ isActive }) => (
+                        <>
+                          <span className={cn("shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]", isActive ? "text-primary" : "text-foreground/70 group-hover:text-primary")}>
+                            {item.icon}
+                          </span>
+                          {!collapsed && <span className="truncate flex-1 text-left tracking-tight">{item.label}</span>}
+                        </>
+                      )}
                     </NavLink>
                     {!collapsed && (
                       <button
                         onClick={() => togglePin(item.to)}
                         aria-label={pinned.includes(item.to) ? `${item.label} আনপিন করুন` : `${item.label} পিন করুন`}
-                        className={`absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${pinned.includes(item.to) ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:opacity-100 focus-visible:opacity-100 text-muted-foreground"}`}
+                        className={cn(
+                          "absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all [&>svg]:h-3.5 [&>svg]:w-3.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                          pinned.includes(item.to) ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:opacity-100 focus-visible:opacity-100 text-muted-foreground hover:bg-secondary"
+                        )}
                         title={pinned.includes(item.to) ? "পিন সরান" : "পিন করুন"}
                       >
-                        {pinned.includes(item.to) ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                        {pinned.includes(item.to) ? <PinOff /> : <Pin />}
                       </button>
                     )}
                   </li>
@@ -606,169 +547,164 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/30">
+    <div className="flex min-h-screen w-full bg-background">
+      {/* Desktop Sidebar */}
       <aside
-        className={`hidden md:flex flex-col border-r border-border/50 bg-card/70 backdrop-blur-2xl transition-[width] duration-200 ${
-          collapsed ? "w-[68px]" : "w-64"
-        }`}
+        className={cn(
+          "hidden md:flex flex-col border-r border-border/60 bg-primary/[0.03] backdrop-blur-xl transition-[width] duration-300 ease-in-out z-30 sticky top-0 h-screen",
+          collapsed ? "w-[76px]" : "w-[270px]"
+        )}
       >
-        <div className={`flex items-center gap-2.5 border-b border-border/40 px-3.5 h-14 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-primary/30">
-            <Sparkles className="h-4 w-4" />
+        <div className={cn("flex items-center gap-3 border-b border-border/60 px-4 h-16", collapsed && "justify-center px-0")}>
+          <div className="h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-md ring-1 ring-primary/30 shrink-0">
+            <Sparkles className="h-5 w-5" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-[13px] font-bold text-foreground truncate leading-tight">অ্যাডমিন প্যানেল</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">Yess Workspace</p>
+              <p className="text-[15px] font-bold text-foreground leading-tight truncate tracking-tight">অ্যাডমিন প্যানেল</p>
+              <p className="text-[11px] font-medium text-muted-foreground leading-tight">Shondhaan Workspace</p>
             </div>
           )}
         </div>
         {SidebarBody}
-        <div className="border-t border-border/40 p-2">
+        <div className="border-t border-border/60 p-3">
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors ${
-              collapsed ? "justify-center" : ""
-            }`}
+            className={cn(
+              "hidden md:flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-card hover:text-foreground transition-colors",
+              collapsed ? "justify-center" : "justify-start"
+            )}
           >
-            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-            {!collapsed && <span>সংকুচিত</span>}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : (<><ChevronLeft className="h-4 w-4" /> সংকুচিত</>)}
           </button>
         </div>
       </aside>
 
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 md:hidden">
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[78%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-border/40 px-3.5 h-14">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md"><Sparkles className="h-4 w-4" /></div>
-                <p className="text-[13px] font-bold">অ্যাডমিন প্যানেল</p>
+      {/* Mobile Drawer */}
+      <AnimatePresence>
+        {mobileOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              onClick={() => setMobileOpen(false)}
+              className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
+            />
+            <motion.aside
+              initial={{ x: -320 }} animate={{ x: 0 }} exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col"
+            >
+              <div className="flex items-center justify-between border-b border-border/60 px-4 h-16">
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-2xl bg-primary text-white flex items-center justify-center shadow-md ring-1 ring-primary/30">
+                    <Sparkles className="h-5 w-5" />
+                  </div>
+                  <p className="text-[15px] font-bold">অ্যাডমিন প্যানেল</p>
+                </div>
+                <button onClick={() => setMobileOpen(false)} className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary transition-colors">
+                  <X className="h-5 w-5" />
+                </button>
               </div>
-              <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary"><X className="h-4 w-4" /></button>
-            </div>
-            {SidebarBody}
-          </aside>
-        </div>
-      )}
+              {SidebarBody}
+            </motion.aside>
+          </>
+        )}
+      </AnimatePresence>
 
-      <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 border-b border-border/40 bg-card/70 backdrop-blur-2xl">
-          <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary" />
-          <div className="flex items-center justify-between gap-2 px-3 md:px-5 py-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <button
-                onClick={() => setMobileOpen(true)}
-                className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary"
-                aria-label="মেনু খুলুন"
-              >
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col min-w-0 bg-background">
+        <header className="sticky top-0 z-40 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+          <div className="flex items-center justify-between gap-4 px-4 md:px-8 h-16">
+           
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <button onClick={() => setMobileOpen(true)} className="md:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-foreground transition-colors" aria-label="মেনু খুলুন">
                 <Menu className="h-5 w-5" />
               </button>
-              <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
+              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-5 [&>*]:w-5 shadow-sm">
                 {currentIcon}
               </div>
               <div className="min-w-0">
-                <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[10px] text-muted-foreground/80 leading-none">
-                  <button
-                    onClick={() => navigate("/")}
-                    className="inline-flex items-center gap-1 hover:text-primary transition-colors"
-                  >
-                    <Home className="h-2.5 w-2.5" />
-                    <span className="hidden xs:inline">হোম</span>
+                <nav aria-label="Breadcrumb" className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground/80 leading-none font-medium">
+                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                    <Home className="h-3 w-3" /> হোম
                   </button>
-                  <ChevRight className="h-2.5 w-2.5 opacity-50" />
+                  <ChevRight className="h-3 w-3 opacity-50" />
                   <span className="hover:text-primary cursor-default">{currentGroup}</span>
-                  <ChevRight className="h-2.5 w-2.5 opacity-50" />
+                  <ChevRight className="h-3 w-3 opacity-50" />
                   <span className="text-foreground/80 font-medium truncate max-w-[100px] md:max-w-none">{currentLabel}</span>
                 </nav>
-                <h1 className="font-heading text-[14px] md:text-[15px] font-bold text-foreground truncate mt-0.5 leading-tight">
-                  {currentLabel}
-                </h1>
+                <h1 className="text-[16px] md:text-[18px] font-bold text-foreground truncate leading-tight mt-1 tracking-tight">{currentLabel}</h1>
               </div>
             </div>
 
-            <button
-              onClick={() => setPaletteOpen(true)}
-              className="hidden lg:flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-[11px] text-muted-foreground"
-            >
-              <Search className="h-3.5 w-3.5" /> খুঁজুন
-              <kbd className="ml-1 rounded border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
-            </button>
-
-            <div className="flex items-center gap-1">
-              <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title="খুঁজুন">
-                <Search className="h-4 w-4" />
-              </button>
-              <button onClick={cycle} className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title={`Theme: ${mode}`}>
-                <ThemeIcon className="h-4 w-4" />
-              </button>
-              <button
-                onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-                className="h-9 px-2 rounded-xl hover:bg-secondary text-[11px] font-bold text-muted-foreground inline-flex items-center gap-1"
-                title="ভাষা"
-              >
-                <Languages className="h-3.5 w-3.5" />{language.toUpperCase()}
-              </button>
-              <div className="hidden md:flex flex-col items-end leading-tight px-2 border-l border-border/40 ml-1">
-                <span className="text-[11px] font-semibold text-foreground">{timeStr}</span>
-                <span className="text-[10px] text-muted-foreground">{dateStr}</span>
+            <div className="flex items-center gap-1.5">
+              <div className="relative hidden lg:flex items-center w-full md:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                <input
+                  onClick={() => setPaletteOpen(true)}
+                  readOnly
+                  placeholder="খুঁজুন…"
+                  aria-label="মডিউল খুঁজুন"
+                  className="w-full rounded-xl border border-border/60 bg-card pl-9 pr-3 py-2 text-[12.5px] outline-none focus:border-primary/50 cursor-pointer hover:shadow-sm transition-shadow"
+                />
               </div>
+              <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground transition-colors" title="খুঁজুন (⌘K)">
+                <Search className="h-5 w-5" />
+              </button>
+              <button onClick={cycle} className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title={`Theme: ${mode}`}>
+                <ThemeIcon className="h-5 w-5" />
+              </button>
+              <button onClick={() => setLanguage(language === "bn" ? "en" : "bn")} className="h-10 px-3 rounded-xl hover:bg-secondary text-[12px] font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors" title="ভাষা পরিবর্তন">
+                <Languages className="h-4 w-4" />{language.toUpperCase()}
+              </button>
+              <div className="h-6 w-px bg-border/60 hidden sm:block mx-1"></div>
               <NotificationBell />
-              <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-2.5 py-0.5 hover:ring-primary/40 transition-all">
+              <div className="flex items-center gap-2 rounded-full bg-card border border-border/60 pl-1 pr-2 md:pr-2.5 py-0.5 hover:shadow-sm transition-shadow">
                 <div className="relative">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shadow-inner">
+                  <div className="h-8 w-8 rounded-full bg-primary text-white flex items-center justify-center text-[12px] font-bold shadow-inner">
                     {initials}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                 </div>
                 <div className="hidden xl:flex flex-col leading-tight">
                   <span className="text-[10px] font-semibold text-foreground inline-flex items-center gap-1">
-                    <Sparkles className="h-2.5 w-2.5 text-primary" />
-                    {roleBadgeText}
+                    <Sparkles className="h-2.5 w-2.5 text-primary" /> {roleBadgeText}
                   </span>
-                  <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">
-                    {user?.email || "admin"}
-                  </span>
+                  <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">{user?.email || "admin"}</span>
                 </div>
               </div>
               <button
                 onClick={async () => { await signOut(); navigate("/main-login", { replace: true }); }}
-                className="flex items-center justify-center h-9 w-9 rounded-xl border border-border/60 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
-                title="লগআউট"
-                aria-label="লগআউট"
+                className="flex items-center justify-center h-10 w-10 rounded-xl border border-border/60 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                title="লগআউট" aria-label="লগআউট"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </button>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
-          <div className="mx-auto w-full max-w-[1440px] px-1 py-1">
-            <BackendPageHeader
-              fallbackTitle={currentLabel}
-              fallbackEyebrow={currentGroup}
-            />
-            <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_1px_0_0_hsl(var(--border)),0_8px_24px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
+        <main className="flex-1 min-w-0">
+          {/* POS-style Main Content Container */}
+          <div className="mx-auto w-full max-w-[1440px] px-4 md:px-8 lg:px-12 py-6 md:py-8 space-y-6">
+            <BackendPageHeader fallbackTitle={currentLabel} fallbackEyebrow={currentGroup} userRole={userRole} />
+            <section className="rounded-3xl border border-border/60 bg-primary/[0.04] p-4 md:p-6">
               <Suspense fallback={<div className="p-8"><PageLoader /></div>}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={location.pathname}
-                    initial={{ opacity: 0, y: 6, filter: "blur(2px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
-                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <Outlet />
                   </motion.div>
                 </AnimatePresence>
               </Suspense>
-            </div>
+            </section>
             <footer className="mt-5 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
               <div className="inline-flex items-center gap-2">
                 <span className="inline-flex items-center gap-1">
-                  <Sparkles className="h-3 w-3 text-primary" /> Yess Workspace
+                  <Sparkles className="h-3 w-3 text-primary" /> Shondhaan Workspace
                 </span>
                 <span className="opacity-50">•</span>
                 <span>v2026.04</span>
@@ -785,139 +721,110 @@ const AdminLayout = () => {
         </main>
       </div>
 
+      {/* Command Palette (Restyled to match POS Workspace) */}
       <AnimatePresence>
         {paletteOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/50 backdrop-blur-md"
             onClick={() => setPaletteOpen(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: -10 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: -10 }}
-              transition={{ duration: 0.15 }}
-              className="w-full max-w-xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden"
+              initial={{ scale: 0.98, opacity: 0, y: -10 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.98, opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+              className="w-full max-w-2xl rounded-3xl border border-border/60 bg-card/95 backdrop-blur-2xl shadow-2xl overflow-hidden ring-1 ring-black/5"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-                <CommandIcon className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
+                <Search className="h-5 w-5 text-muted-foreground" />
                 <input
-                  ref={paletteInputRef}
-                  value={paletteQuery}
+                  ref={paletteInputRef} value={paletteQuery}
                   onChange={(e) => setPaletteQuery(e.target.value)}
                   onKeyDown={(e) => {
                     if (e.key === "ArrowDown") { e.preventDefault(); setPaletteHi(h => Math.min(h + 1, filteredPalette.length - 1)); }
                     else if (e.key === "ArrowUp") { e.preventDefault(); setPaletteHi(h => Math.max(h - 1, 0)); }
-                    else if (e.key === "Enter" && filteredPalette[paletteHi]) {
-                      navigate(filteredPalette[paletteHi].to); setPaletteOpen(false);
-                    }
+                    else if (e.key === "Enter" && filteredPalette[paletteHi]) { navigate(filteredPalette[paletteHi].to); setPaletteOpen(false); }
                   }}
                   placeholder="পেজ, সেকশন বা একশন খুঁজুন…"
-                  className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+                  className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/70 font-medium"
                 />
-                <kbd className="rounded-md border border-border bg-card px-1.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
+                <kbd className="rounded-full border border-border bg-secondary px-2 py-1 text-[10px] font-mono text-muted-foreground">ESC</kbd>
               </div>
-              <div className="max-h-[50vh] overflow-y-auto p-2">
+              <div className="max-h-[50vh] overflow-y-auto p-3 space-y-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
                 {filteredPalette.length === 0 ? (
-                  <p className="text-center py-8 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
+                  <p className="text-center py-10 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
                 ) : filteredPalette.map((item, i) => (
                   <button
-                    key={item.to}
-                    onMouseEnter={() => setPaletteHi(i)}
+                    key={item.to} onMouseEnter={() => setPaletteHi(i)}
                     onClick={() => { navigate(item.to); setPaletteOpen(false); }}
                     className={cn(
-                      "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors text-left",
-                      i === paletteHi ? "bg-primary/10 text-foreground" : "text-foreground/80 hover:bg-secondary"
+                      "w-full flex items-center gap-3 rounded-2xl border px-4 py-3 text-sm transition-all text-left",
+                      i === paletteHi ? "bg-primary/10 text-primary border-primary/20" : "text-foreground/80 hover:bg-card hover:shadow-sm border-transparent"
                     )}
                   >
-                    <span className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-primary [&>svg]:h-4 [&>svg]:w-4 shrink-0">{item.icon}</span>
+                    <span className={cn(
+                      "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 [&>svg]:h-4 [&>svg]:w-4 transition-colors",
+                      i === paletteHi ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                    )}>{item.icon}</span>
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium truncate">{item.label}</p>
+                      <p className="font-semibold truncate">{item.label}</p>
                       <p className="text-[10px] text-muted-foreground truncate">{item.group}</p>
                     </div>
                     {i === paletteHi && <kbd className="rounded border border-border bg-card px-1.5 text-[9px] font-mono text-muted-foreground">↵</kbd>}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center justify-between px-4 py-2 border-t border-border/50 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-3">
-                  <span><kbd className="font-mono">↑↓</kbd> নেভিগেট</span>
-                  <span><kbd className="font-mono">↵</kbd> খুলুন</span>
-                </span>
-                <span>Yess Workspace</span>
+              <div className="flex items-center justify-between px-5 py-2.5 border-t border-border/60 text-[10px] text-muted-foreground bg-primary/[0.02]">
+                <span className="font-medium">Shondhaan Workspace</span>
+                <div className="flex items-center gap-4">
+                  <span>Theme: <b className="text-foreground">{mode}</b></span>
+                  <span>Lang: <b className="text-foreground">{language}</b></span>
+                </div>
               </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
-
       <BackendShortcutsHelp
-        open={shortcutsHelpOpen}
-        onClose={() => setShortcutsHelpOpen(false)}
+        open={shortcutsHelpOpen} onClose={() => setShortcutsHelpOpen(false)}
         shortcuts={[
-          { keys: "⌘K / Ctrl+K", label: "কমান্ড প্যালেট" },
-          { keys: "Shift + ?", label: "এই হেল্প" },
-          { keys: "↑ / ↓", label: "সাইডবারে নেভিগেট" },
-          { keys: "← / →", label: "গ্রুপ কোলাপ্স / এক্সপ্যান্ড" },
-          { keys: "[ / ]", label: "আগের / পরের গ্রুপ" },
-          { keys: "Home / End", label: "প্রথম / শেষ আইটেম" },
-          { keys: "g d", label: "ড্যাশবোর্ড" },
-          { keys: "g a", label: "অ্যানালিটিক্স" },
-          { keys: "g b", label: "বুকিং" },
-          { keys: "g r", label: "সার্ভিস রিকোয়েস্ট" },
-          { keys: "g u", label: "ইউজার ম্যানেজমেন্ট" },
-          { keys: "g s", label: "সার্ভিস CMS" },
-          { keys: "g m", label: "সন্ধান মার্ট" },
-          { keys: "g l", label: "সন্ধান ডিল" },
-          { keys: "g j", label: "সন্ধান জবস" },
-          { keys: "g n", label: "নোটিফিকেশন" },
-          { keys: "g p", label: "পারমিশন" },
-          { keys: "g t", label: "স্টাফ অ্যাসাইনমেন্ট" },
-          { keys: "g f", label: "ফিনান্স / লেজার" },
-          { keys: "g g", label: "সেটিংস" },
+          { keys: "⌘K / Ctrl+K", label: "কমান্ড প্যালেট" }, { keys: "Shift + ?", label: "এই হেল্প" },
+          { keys: "↑/↓", label: "সাইডবারে নেভিগেট" }, { keys: "←/→", label: "গ্রুপ কোলাপ্স / এক্সপ্যান্ড" },
+          { keys: "[ / ]", label: "আগের / পরের গ্রুপ" }, { keys: "Home / End", label: "প্রথম / শেষ আইটেম" },
+          { keys: "g d", label: "ড্যাশবোর্ড" }, { keys: "g a", label: "অ্যানালিটিক্স" },
+          { keys: "g b", label: "বুকিং" }, { keys: "g r", label: "সার্ভিস রিকোয়েস্ট" },
+          { keys: "g u", label: "ইউজার ম্যানেজমেন্ট" }, { keys: "g s", label: "সার্ভিস CMS" },
+          { keys: "g m", label: "সন্ধান মার্ট" }, { keys: "g l", label: "সন্ধান ডিল" },
+          { keys: "g j", label: "সন্ধান জবস" }, { keys: "g n", label: "নোটিফিকেশন" },
+          { keys: "g p", label: "পারমিশন" }, { keys: "g t", label: "স্টাফ অ্যাসাইনমেন্ট" },
+          { keys: "g f", label: "ফিনান্স / লেজার" }, { keys: "g g", label: "সেটিংস" },
           { keys: "Esc", label: "বন্ধ করুন" },
         ]}
       />
-
-      <div
-        role="status"
-        aria-live="polite"
-        aria-atomic="true"
-        className="sr-only"
-      >
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
         {announcement}
       </div>
     </div>
   );
 };
-
-const BackendPageHeader = ({
-  fallbackTitle,
-  fallbackEyebrow,
-}: {
-  fallbackTitle: React.ReactNode;
-  fallbackEyebrow: React.ReactNode;
-}) => {
+const BackendPageHeader = ({ fallbackTitle, fallbackEyebrow, userRole }: { fallbackTitle: React.ReactNode; fallbackEyebrow: React.ReactNode; userRole?: string }) => {
   const meta = useBackendPageMeta();
   const eyebrow = meta.eyebrow ?? fallbackEyebrow;
   const title = meta.title ?? fallbackTitle;
-
   return (
     <div className="">
+      <WorkspaceDashboard userRole={userRole} />
       {meta.toolbar && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-2.5 py-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card px-2.5 py-2">
           {meta.toolbar}
         </div>
       )}
     </div>
   );
 };
-
 const AdminLayoutWithProviders = () => (
   <BackendPageActionsProvider>
     <AdminLayout />
   </BackendPageActionsProvider>
 );
-
 export default AdminLayoutWithProviders;

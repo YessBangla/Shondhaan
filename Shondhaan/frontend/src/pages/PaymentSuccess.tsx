@@ -44,7 +44,6 @@ const PaymentSuccess = () => {
     },
     [params]
   );
-
   useEffect(() => {
     let cancelled = false;
 
