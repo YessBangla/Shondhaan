@@ -3,7 +3,9 @@ import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { Shield, Users, Clock, Award } from "lucide-react";
 import { useSEO } from "@/hooks/useSEO";
-import aboutUsImage from "/hero1.png";
+import aboutUsImage from "/images/about_section.png";
+import simpleIdeaImage from "/images/simple_idea.png";
+import home from "/images/3d-house.png";
 
 const values = [
   { icon: Shield, title_bn: "বিশ্বস্ততা", title_en: "Trust", desc_bn: "প্রতিটি সার্ভিসম্যান ভেরিফাইড ও ব্যাকগ্রাউন্ড-চেকড।", desc_en: "Every service provider is verified and background-checked." },
@@ -42,7 +44,7 @@ const AboutUs = () => {
               {/* Text */}
               <div className="flex flex-col justify-center p-6 sm:p-8 md:p-12 lg:p-14">
 
-                <span className="mb-4 inline-flex w-fit items-center rounded-full bg-primary/10 px-4 py-1.5 text-xs font-semibold text-primary">
+                <span className="mb-4 inline-flex w-fit items-center rounded-full bg-primary px-4 py-1.5 text-xs font-semibold text-white">
                   {bn ? "Shondhaan সম্পর্কে" : "About Shondhaan"}
                 </span>
 
@@ -92,10 +94,10 @@ const AboutUs = () => {
                 />
 
                 {/* Overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
+                <div className="absolute hidden inset-0 bg-gradient-to-t from-black/50 via-black/10 to-transparent" />
 
                 {/* Image caption */}
-                <div className="absolute bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 sm:right-7">
+                <div className="absolute hidden bottom-5 left-5 right-5 sm:bottom-7 sm:left-7 sm:right-7">
                   <div className="rounded-2xl border border-white/20 bg-black/30 p-4 backdrop-blur-md">
                     <p className="text-sm font-semibold text-white sm:text-base">
                       {bn
@@ -127,7 +129,7 @@ const AboutUs = () => {
               {/* Mission Content */}
               <div>
 
-                <span className="text-xs font-semibold uppercase tracking-wider text-primary">
+                <span className="text-xs font-semibold uppercase tracking-wider bg-primary rounded-full px-4 py-1 text-white">
                   {bn ? "আমাদের লক্ষ্য" : "Our Mission"}
                 </span>
 
@@ -215,8 +217,8 @@ const AboutUs = () => {
 
                 <div className="relative">
 
-                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-2xl text-primary-foreground shadow-lg">
-                    🏠
+                  <div className="flex h-14 w-14 items-center justify-center">
+                    <img src={home} alt="" />
                   </div>
 
                   <h3 className="mt-6 font-heading text-xl font-bold text-foreground sm:text-2xl">
@@ -293,7 +295,7 @@ const AboutUs = () => {
                   className="group rounded-2xl border border-border bg-card p-5 text-center transition-all duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-lg"
                 >
 
-                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 transition-colors group-hover:bg-primary">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 transition-colors group-hover:bg-primary group-hover:text-white">
                     <v.icon className="h-6 w-6 text-primary transition-colors group-hover:text-primary-foreground" />
                   </div>
 
@@ -326,7 +328,7 @@ const AboutUs = () => {
                 <div className="relative min-h-[280px] lg:min-h-full">
 
                   <img
-                    src="/about-us.jpg"
+                    src={simpleIdeaImage}
                     alt={bn ? "Shondhaan এর গল্প" : "Our Story"}
                     className="absolute inset-0 h-full w-full object-cover"
                   />
@@ -416,7 +418,7 @@ const AboutUs = () => {
           ========================== */}
           <section className="mt-10 md:mt-14">
 
-            <div className="relative overflow-hidden rounded-lg bg-primary px-6 py-10 text-center sm:px-10 md:py-14">
+            <div className="relative overflow-hidden rounded-lg bg-gradient-to-br from-blue-900 via-green-700 to-green-800 px-6 py-10 text-center sm:px-10 md:py-14">
 
               <div className="absolute -left-20 -top-20 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
               <div className="absolute -bottom-20 -right-20 h-48 w-48 rounded-full bg-white/10 blur-2xl" />
@@ -435,12 +437,14 @@ const AboutUs = () => {
                     : "Find the service you need and book it easily from Shondhaan."}
                 </p>
 
-                <button
-                  type="button"
-                  className="mt-6 rounded-xl bg-background px-6 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:scale-[1.02] hover:shadow-md"
-                >
-                  {bn ? "সার্ভিস দেখুন" : "Explore Services"}
-                </button>
+                  <a href="/all-services">
+                    <button
+                      type="button"
+                      className="mt-6 rounded-xl bg-background px-6 py-3 text-sm font-semibold text-foreground shadow-sm transition hover:scale-[1.02] hover:shadow-md hover:bg-primary hover:text-white"
+                      >
+                      {bn ? "সার্ভিস দেখুন" : "Explore Services"}
+                    </button>
+                  </a>
 
               </div>
 
