@@ -1,8 +1,10 @@
 import { pool } from "../db/pool.js";
-import { ALLOWED_ROLES } from "../config/constants.js";
+import { ALLOWED_ROLES, getRoleAccess, getRoleConfigs } from "../config/constants.js";
 import { hashPassword } from "../utils/crypto.js";
 import { normalizeEmail, normalizeMobile } from "../utils/normalize.js";
 import { safeAdminUser } from "../utils/users.js";
+
+const getAuthRole = (auth) => auth?.type || auth?.role;
 
 export const createUser = async (req, res) => {
   try {
@@ -90,6 +92,19 @@ export const listUsers = async (req, res) => {
 
 export const getTypes = (req, res) => {
   res.json({ types: Array.from(ALLOWED_ROLES) });
+};
+
+export const getRoles = (req, res) => {
+  res.json({ roles: getRoleConfigs() });
+};
+
+export const getMyAdminAccess = (req, res) => {
+  const role = getAuthRole(req.user);
+  res.json({
+    role,
+    isAdmin: getRoleAccess(role).length > 0,
+    access: getRoleAccess(role),
+  });
 };
 
 export const updateUserType = async (req, res) => {

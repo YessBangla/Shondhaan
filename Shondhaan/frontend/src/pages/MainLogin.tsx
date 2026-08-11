@@ -30,6 +30,7 @@ const MainLogin = () => {
         roleKeys={[
           "super_admin",
           "admin",
+          "service_admin",
           "moderator",
           "supervisor",
           "finance",

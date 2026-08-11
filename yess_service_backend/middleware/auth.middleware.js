@@ -34,7 +34,8 @@ export const authMiddleware = (req, res, next) => {
 
 export const requireSuperAdmin = (req, res, next) => {
   authMiddleware(req, res, () => {
-    if (req.user?.type !== "super_admin") {
+    const role = req.user?.type || req.user?.role;
+    if (role !== "super_admin") {
       return res.status(403).json({ message: "Forbidden" });
     }
 

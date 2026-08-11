@@ -40,9 +40,9 @@ export const createBooking = async (req, res) => {
     const {
       user_id,
       service_id,
-        booked_by,      
-  booker_name,         
-  booker_phone,
+      booked_by,      
+      booker_name,         
+      booker_phone,
       package_id,
       service_slug,
       service_title,
@@ -98,30 +98,34 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    if (platformFeeAmount === 0 && service_id) {
-      const [serviceRows] = await pool.execute(
-        `
-        SELECT platform_fee
-        FROM services
-        WHERE id = ?
-        LIMIT 1
-        `,
-        [service_id]
-      );
-      platformFeeAmount = Number(serviceRows[0]?.platform_fee || 0);
-    }
+    // Fallback logic: Calculate fee from DB if not provided by frontend
+    if (platformFeeAmount === 0) {
+      let serviceRows = [];
+      if (service_id) {
+        [serviceRows] = await pool.execute(
+          `SELECT platform_fee, commission_percent FROM services WHERE id = ? LIMIT 1`,
+          [service_id]
+        );
+      } else if (service_slug) {
+        [serviceRows] = await pool.execute(
+          `SELECT platform_fee, commission_percent FROM services WHERE slug = ? LIMIT 1`,
+          [service_slug]
+        );
+      }
 
-    if (platformFeeAmount === 0 && service_slug) {
-      const [serviceRows] = await pool.execute(
-        `
-        SELECT platform_fee
-        FROM services
-        WHERE slug = ?
-        LIMIT 1
-        `,
-        [service_slug]
-      );
-      platformFeeAmount = Number(serviceRows[0]?.platform_fee || 0);
+      if (serviceRows.length) {
+        const dbService = serviceRows[0];
+        const flatFee = Number(dbService.platform_fee || 0);
+        
+        if (flatFee > 0) {
+          // Use flat fee if it exists in DB
+          platformFeeAmount = flatFee;
+        } else {
+          // Calculate from commission_percent
+          const commission = Number(dbService.commission_percent || 0);
+          platformFeeAmount = price * (commission / 100);
+        }
+      }
     }
 
     platformFeeAmount = money(platformFeeAmount);
@@ -130,57 +134,57 @@ export const createBooking = async (req, res) => {
     const finalStatus = "pending";
     const finalPaymentStatus = "unpaid";
 
-await pool.execute(
-  `
-  INSERT INTO bookings (
-    id,
-    user_id,
-    booked_by,
-    service_id,
-    package_id,
-    service_slug,
-    service_title,
-    package_name,
-    package_price,
-    customer_name,
-    customer_phone,
-    customer_address,
-    booker_name,
-    booker_phone,
-    booking_date,
-    booking_time,
-    status,
-    payment_status,
-    platform_fee_amount,
-    payment_amount,
-    note
-  )
-  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-  `,
-  [
-    id,
-    user_id,
-    booked_by || user_id || null,   // fallback to user_id if not provided
-    service_id || null,
-    package_id || null,
-    service_slug,
-    service_title,
-    package_name,
-    price,
-    customer_name,
-    customer_phone,
-    customer_address,
-    booker_name || null,
-    booker_phone || null,
-    booking_date,
-    booking_time,
-    finalStatus,
-    finalPaymentStatus,
-    platformFeeAmount,
-    platformFeeAmount,
-    note || null,
-  ]
-);
+    await pool.execute(
+      `
+      INSERT INTO bookings (
+        id,
+        user_id,
+        booked_by,
+        service_id,
+        package_id,
+        service_slug,
+        service_title,
+        package_name,
+        package_price,
+        customer_name,
+        customer_phone,
+        customer_address,
+        booker_name,
+        booker_phone,
+        booking_date,
+        booking_time,
+        status,
+        payment_status,
+        platform_fee_amount,
+        payment_amount,
+        note
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
+      [
+        id,
+        user_id,
+        booked_by || user_id || null,
+        service_id || null,
+        package_id || null,
+        service_slug,
+        service_title,
+        package_name,
+        price,
+        customer_name,
+        customer_phone,
+        customer_address,
+        booker_name || null,
+        booker_phone || null,
+        booking_date,
+        booking_time,
+        finalStatus,
+        finalPaymentStatus,
+        platformFeeAmount,
+        platformFeeAmount,
+        note || null,
+      ]
+    );
 
     const [rows] = await pool.execute(
       `
@@ -270,13 +274,10 @@ export const getBookings = async (req, res) => {
       query += ` AND assigned_to = ?`;
       values.push(assigned_to);
     }
-
     query += `
       ORDER BY booking_date DESC, booking_time DESC, created_at DESC
     `;
-
     const [rows] = await pool.execute(query, values);
-
     return res.json({
       data: rows.map(formatBooking),
     });

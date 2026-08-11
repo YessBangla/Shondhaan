@@ -3,14 +3,16 @@ import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Zap, ShoppingBag, Search, Droplet, Stethoscope, Pill, FileCheck, UploadCloud, ScanLine } from "lucide-react";
 import { toast } from "sonner";
-import { allServices } from "@/data/services";
 import { useLocation } from "@/contexts/LocationContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCart } from "@/contexts/CartContext";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const EMERGENCY_SURCHARGE = 1.3; // 30% extra
+const EMERGENCY_SURCHARGE = 1.3;
 const PRESCRIPTION_MODAL_KEY = "prescriptionModalOpen";
-
+const SERVICE_API_BASE_URL = (
+  import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 interface ScanResult {
   medicine_name: string;
   dosage: string | null;
@@ -23,6 +25,9 @@ interface Props {
   onClose: () => void;
 }
 
+const getPayload = (raw: any) =>
+  raw?.data ?? raw?.services ?? raw?.item ?? raw?.result ?? raw;
+
 const EmergencyServiceModal = ({ open, onClose }: Props) => {
   const { selectedCity } = useLocation();
   const { t, language } = useLanguage();
@@ -30,12 +35,87 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const bn = language === "bn";
 
-  const cityServices = allServices.filter((s) => s.availableCities.includes(selectedCity));
+  const [apiServices, setApiServices] = useState<any[]>([]);
+  const [isLoadingServices, setIsLoadingServices] = useState(false);
+
+  // Fetch services from API
+  useEffect(() => {
+    if (!open) return;
+
+    const fetchServices = async () => {
+      setIsLoadingServices(true);
+      try {
+        const auth = getMySqlAuth();
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+          ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+        };
+
+        const response = await fetch(`${SERVICE_API_BASE_URL}/api/services`, { headers });
+        const json = await response.json();
+
+        
+        if (!response.ok) throw new Error(json?.message || "Failed to fetch services");
+        const payload = getPayload(json);
+        const list = Array.isArray(payload) ? payload : (payload?.services || []);
+        if (Array.isArray(list)) {
+          const mapped = list.map((s: any) => {
+            // Parse cities
+            let cities: string[] = [];
+            if (Array.isArray(s.available_cities)) {
+              cities = s.available_cities.map(String);
+            } else if (typeof s.available_cities === "string" && s.available_cities) {
+              try {
+                const parsed = JSON.parse(s.available_cities);
+                if (Array.isArray(parsed)) cities = parsed.map(String);
+                else cities = s.available_cities.split(",").map((c: string) => c.trim());
+              } catch {
+                cities = s.available_cities.split(",").map((c: string) => c.trim());
+              }
+            }
+
+            // Parse packages
+            let packages = Array.isArray(s.packages) ? s.packages : [];
+            if (packages.length === 0 && Number(s.price) > 0) {
+              packages = [{ name: "Basic Service", price: Number(s.price) }];
+            }
+
+            return {
+              ...s,
+              image: s.image_url || s.image || "",
+              availableCities: cities,
+              packages: packages,
+            };
+          }).filter((s: any) => s.slug && s.title); // Filter out invalid items
+
+          setApiServices(mapped);
+        } else {
+          setApiServices([]);
+        }
+      } catch (error) {
+        console.error("Error fetching emergency services:", error);
+        toast.error(bn ? "সার্ভিস লোড করতে সমস্যা হয়েছে" : "Failed to load services");
+      } finally {
+        setIsLoadingServices(false);
+      }
+    };
+
+    fetchServices();
+  }, [open, bn]);
+
+  // Filter by city (case-insensitive) or show if service has no city restrictions
+  const cityServices = apiServices.filter((s) => {
+    if (!selectedCity || s.availableCities.length === 0) return true;
+    return s.availableCities.some(
+      (c) => c.toLowerCase() === selectedCity.toLowerCase()
+    );
+  });
+  
   const [searchQuery, setSearchQuery] = useState("");
   const filteredServices = cityServices.filter((s) =>
-    s.title.toLowerCase().includes(searchQuery.toLowerCase())
+    s.title?.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  const selectedService = cityServices.find((s) => s.slug === selectedSlug);
+  const selectedService = apiServices.find((s) => s.slug === selectedSlug);
 
   // Prescription modal state — persisted so it survives a page reload
   const [prescriptionOpen, setPrescriptionOpen] = useState(() => {
@@ -98,7 +178,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
     setIsScanning(true);
     setScanResults(null);
     try {
-      const response = await fetch(`${import.meta.env.VITE_SERVICE_API_BASE_URL}/api/prescription/scan`, {
+      const response = await fetch(`${SERVICE_API_BASE_URL}/api/prescription/scan`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ image: prescriptionImage }),
@@ -197,23 +277,31 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
 
                 <p className="mb-3 text-xs text-muted-foreground">{t("emergency.selectService")}</p>
                 <div className="grid grid-cols-2 gap-3">
-                  {filteredServices.map((s) => (
-                    <button
-                      key={s.slug}
-                      onClick={() => setSelectedSlug(s.slug)}
-                      className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/50 hover:shadow-md"
-                    >
-                      <img src={s.image} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
-                      <span className="text-xs font-medium text-foreground text-center leading-tight">{s.title}</span>
-                      <span className="text-[10px] text-muted-foreground">
-                        ৳{Math.round(s.packages[0].price * EMERGENCY_SURCHARGE).toLocaleString("bn-BD")} {t("hero.from")}
-                      </span>
-                    </button>
-                  ))}
-                  {filteredServices.length === 0 && (
-                    <p className="col-span-2 py-6 text-center text-xs text-muted-foreground">
-                      {language === "bn" ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}
-                    </p>
+                  {isLoadingServices ? (
+                    <div className="col-span-2 py-6 text-center text-xs text-muted-foreground animate-pulse">
+                      {bn ? "লোড হচ্ছে..." : "Loading services..."}
+                    </div>
+                  ) : (
+                    <>
+                      {filteredServices.map((s) => (
+                        <button
+                          key={s.slug}
+                          onClick={() => setSelectedSlug(s.slug)}
+                          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/50 hover:shadow-md"
+                        >
+                          <img src={s.image} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
+                          <span className="text-xs font-medium text-foreground text-center leading-tight">{s.title}</span>
+                          <span className="text-[10px] text-muted-foreground">
+                            ৳{Math.round((s.packages[0]?.price || 0) * EMERGENCY_SURCHARGE).toLocaleString("bn-BD")} {t("hero.from")}
+                          </span>
+                        </button>
+                      ))}
+                      {filteredServices.length === 0 && (
+                        <p className="col-span-2 py-6 text-center text-xs text-muted-foreground">
+                          {language === "bn" ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}
+                        </p>
+                      )}
+                    </>
                   )}
                 </div>
               </>
@@ -234,7 +322,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
 
                 <p className="mb-3 text-xs font-semibold text-foreground">{t("sd.packages")}</p>
                 <div className="space-y-2">
-                  {selectedService!.packages.map((pkg) => {
+                  {selectedService!.packages.map((pkg: any) => {
                     const emergencyPrice = Math.round(pkg.price * EMERGENCY_SURCHARGE);
                     return (
                       <div key={pkg.name} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">

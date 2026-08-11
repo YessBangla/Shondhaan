@@ -468,7 +468,7 @@ CREATE TABLE `users` (
   `password` varchar(255) NOT NULL,
   `shop_name` varchar(255) DEFAULT NULL,
   `shop_type` varchar(50) DEFAULT NULL,
-  `type` enum('super_admin','admin','moderator','supervisor','finance','call_center','provider','representative','mart_vendor','mart_delivery','mart_cs','yessdeal_seller','employer','user') NOT NULL DEFAULT 'user',
+  `type` enum('super_admin','admin','service_admin','moderator','supervisor','finance','call_center','provider','representative','mart_vendor','mart_delivery','mart_cs','yessdeal_seller','employer','user') NOT NULL DEFAULT 'user',
   `email_verified` tinyint(1) NOT NULL DEFAULT 0,
   `otp_hash` varchar(64) DEFAULT NULL,
   `otp_expires_at` datetime DEFAULT NULL,
