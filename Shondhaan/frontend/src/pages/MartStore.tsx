@@ -7,6 +7,8 @@ import {
   Phone, ShieldCheck, ShoppingCart,
 } from "lucide-react";
 import { useMartCart } from "@/contexts/MartCartContext";
+import { useAuth } from "@/contexts/AuthContext";
+import MartChatModal from "@/components/mart/MartChatModal";
 import { toast } from "sonner";
 
 const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
@@ -15,6 +17,40 @@ type StoreMediaItem = {
   url: string;
   type: "image" | "video";
   title?: string;
+};
+
+type MartProduct = {
+  id: number;
+  vendor_id?: number;
+  slug?: string | null;
+  name_bn: string;
+  name_en?: string | null;
+  image?: string | null;
+  sale_price: number | string;
+  original_price?: number | string | null;
+  stock: number;
+  unit?: string | null;
+  rating?: number;
+  total_sold?: number;
+  discount?: number;
+  is_freedelivery?: number;
+  category_id?: number;
+  sub_category_id?: number | null;
+};
+
+type MartSeller = {
+  id: number;
+  user_id?: number;
+  shop_name?: string | null;
+  seller_name?: string | null;
+  seller_verified?: number;
+  shop_type?: string | null;
+  total_products?: number;
+  banner_url?: string | null;
+  profile_image_url?: string | null;
+  store_carousel_media?: unknown;
+  seller_mobile?: string | null;
+  seller_address?: string | null;
 };
 
 const parseStoreCarouselMedia = (value: unknown): StoreMediaItem[] => {
@@ -32,7 +68,7 @@ const parseStoreCarouselMedia = (value: unknown): StoreMediaItem[] => {
 // The store URL can be either a numeric user id (legacy /mart/store/8) or a
 // store slug (e.g. /mart/store/rabeya-shop-2). Detect which one we got and
 // query the backend accordingly.
-const fetchSeller = async (vendorId: string) => {
+const fetchSeller = async (vendorId: string): Promise<MartSeller> => {
   const isNumeric = /^\d+$/.test(vendorId);
   const query = isNumeric
     ? `user_id=${encodeURIComponent(vendorId)}`
@@ -43,7 +79,7 @@ const fetchSeller = async (vendorId: string) => {
   return json.data[0];
 };
 
-const fetchProducts = async (sellerId: number) => {
+const fetchProducts = async (sellerId: number): Promise<MartProduct[]> => {
   const res  = await fetch(`${API_BASE}/products?seller_id=${sellerId}&status=active`);
   const json = await res.json();
   if (!json.success) throw new Error(json.message || "Failed to fetch products");
@@ -56,9 +92,9 @@ const ProductCard = ({
   onAddToCart,
   onOpen,
 }: {
-  product: any;
-  onAddToCart: (product: any) => void;
-  onOpen: (product: any) => void;
+  product: MartProduct;
+  onAddToCart: (product: MartProduct) => void;
+  onOpen: (product: MartProduct) => void;
 }) => (
   <div
     role="button"
@@ -147,13 +183,16 @@ const SkeletonCard = () => (
 const MartStore = () => {
   const { vendorId } = useParams<{ vendorId: string }>();
   const { addItem }  = useMartCart();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const [filterCategory,    setFilterCategory]    = useState<string>("all");
   const [filterSubCategory, setFilterSubCategory] = useState<string>("all");
   const [activeSlide, setActiveSlide] = useState(0);
+  const [chatOpen, setChatOpen] = useState(false);
+  const [following, setFollowing] = useState(false);
 
-  // ── Categories ──────────────────────────────────────────────────────────────
+  // ── Categories (global list — filtered down below to what this seller actually stocks) ──
   const { data: categories = [] } = useQuery({
     queryKey: ["mart-categories"],
     queryFn: async () => {
@@ -195,13 +234,51 @@ const MartStore = () => {
   });
 
   const carouselMedia = useMemo(
-    () => parseStoreCarouselMedia((seller as any)?.store_carousel_media),
+    () => parseStoreCarouselMedia(seller?.store_carousel_media),
     [seller]
+  );
+
+  // ── Category scoping: only show categories/subcategories this seller has products in ──
+  const sellerCategoryIds = useMemo(
+    () => new Set(products.map((p) => p.category_id).filter((id): id is number => id != null)),
+    [products]
+  );
+
+  const availableCategories = useMemo(
+    () => categories.filter((c) => sellerCategoryIds.has(c.id)),
+    [categories, sellerCategoryIds]
+  );
+
+  const sellerSubCategoryIds = useMemo(
+    () =>
+      new Set(
+        products
+          .filter((p) => String(p.category_id) === filterCategory)
+          .map((p) => p.sub_category_id)
+          .filter((id): id is number => id != null)
+      ),
+    [products, filterCategory]
+  );
+
+  const availableSubCategories = useMemo(
+    () => subCategories.filter((sc) => sellerSubCategoryIds.has(sc.id)),
+    [subCategories, sellerSubCategoryIds]
   );
 
   useEffect(() => {
     setActiveSlide(0);
   }, [seller?.id]);
+
+  useEffect(() => {
+    if (!user?.id || !seller?.id) {
+      setFollowing(false);
+      return;
+    }
+
+    const storageKey = `mart-followed-stores-${user.id}`;
+    const followedStoreIds = JSON.parse(localStorage.getItem(storageKey) || "[]") as number[];
+    setFollowing(followedStoreIds.includes(seller.id));
+  }, [seller?.id, user?.id]);
 
   useEffect(() => {
     if (carouselMedia.length <= 1) return;
@@ -212,7 +289,7 @@ const MartStore = () => {
   }, [carouselMedia.length]);
 
   // ── Filtering ─────────────────────────────────────────────────────────────────
-  const filteredProducts = products.filter((p: any) => {
+  const filteredProducts = products.filter((p) => {
     // category filter
     if (filterCategory !== "all" && String(p.category_id) !== filterCategory) return false;
 
@@ -238,7 +315,7 @@ const MartStore = () => {
     setFilterSubCategory("all");
   };
   const [showCategories, setShowCategories] = useState(false);
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: MartProduct) => {
     const cartProduct = {
       id:             product.id,
       slug:           product.slug ?? String(product.id),
@@ -259,11 +336,60 @@ const MartStore = () => {
   // Navigate to the product detail page. Falls back to the legacy
   // "mysql-product-<id>" route (which MartProductDetail auto-upgrades to the
   // readable slug URL) when the product payload doesn't include a slug.
-  const handleOpenProduct = (product: any) => {
+  const handleOpenProduct = (product: MartProduct) => {
     const target = product.slug
       ? `/mart/product/${product.slug}`
       : `/mart/product/mysql-product-${product.id}`;
     navigate(target);
+  };
+
+  // Product-backed conversations are still used when possible. Stores without
+  // products use a negative seller id as a stable virtual product id, allowing
+  // visitors to start a live store conversation before products are listed.
+  const handleOpenChat = () => {
+    const chatProduct = products[0];
+    const sellerUserId = seller?.user_id ?? chatProduct?.vendor_id;
+
+    if (!user) {
+      setChatOpen(true);
+      return;
+    }
+
+    if (!sellerUserId) {
+      toast.error("Unable to identify this store for chat");
+      return;
+    }
+
+    if (Number(user.id) === Number(sellerUserId)) {
+      toast.info("You can't chat with your own store");
+      return;
+    }
+
+    setChatOpen(true);
+  };
+
+  const handleFollow = () => {
+    if (!user) {
+      toast.info("Login to follow this store");
+      navigate(`/auth?redirect=${encodeURIComponent(`/mart/store/${vendorId}`)}`);
+      return;
+    }
+
+    if (Number(user.id) === Number(seller.user_id)) {
+      toast.info("You can't follow your own store");
+      return;
+    }
+
+    const storageKey = `mart-followed-stores-${user.id}`;
+    const followedStoreIds = JSON.parse(localStorage.getItem(storageKey) || "[]") as number[];
+    const nextFollowing = !following;
+    const nextStoreIds = nextFollowing
+      ? [...new Set([...followedStoreIds, seller.id])]
+      : followedStoreIds.filter((storeId) => storeId !== seller.id);
+
+    localStorage.setItem(storageKey, JSON.stringify(nextStoreIds));
+    setFollowing(nextFollowing);
+    toast.success(nextFollowing ? "Store followed" : "Store unfollowed");
   };
 
   // ── Guards ────────────────────────────────────────────────────────────────────
@@ -287,6 +413,7 @@ const MartStore = () => {
 
   // ── Render ────────────────────────────────────────────────────────────────────
   return (
+    <>
     <div className="min-h-screen bg-muted/30">
 
       {/* ════ Store Header ════ */}
@@ -296,9 +423,9 @@ const MartStore = () => {
         <div
           className="h-32 md:h-40 bg-gradient-to-r from-primary via-primary/80 to-primary/50"
           style={
-            (seller as any).banner_url
+            seller.banner_url
               ? {
-                  backgroundImage:    `url(${(seller as any).banner_url})`,
+                  backgroundImage:    `url(${seller.banner_url})`,
                   backgroundSize:     "cover",
                   backgroundPosition: "center",
                 }
@@ -312,12 +439,12 @@ const MartStore = () => {
             {/* Avatar */}
             <div className="absolute -top-12 left-4">
               <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
-                {(seller as any).profile_image_url ? (
+                {seller.profile_image_url ? (
                   <img
-                    src={(seller as any).profile_image_url}
+                    src={seller.profile_image_url}
                     alt={seller.shop_name || seller.seller_name}
                     className="w-full h-full object-cover"
-                    onError={() => console.warn("Profile image failed:", (seller as any).profile_image_url)}
+                    onError={() => console.warn("Profile image failed:", seller.profile_image_url)}
                   />
                 ) : (
                   <Store className="h-10 w-10 text-primary" />
@@ -366,6 +493,8 @@ const MartStore = () => {
 
 <div className="flex items-center gap-3">
   <button
+    type="button"
+    onClick={handleFollow}
     className="
       group flex items-center gap-2
       px-5 py-2.5
@@ -380,10 +509,12 @@ const MartStore = () => {
     "
   >
     <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-    <span>Follow</span>
+    <span>{following ? "Following" : "Follow"}</span>
   </button>
 
   <button
+    type="button"
+    onClick={handleOpenChat}
     className="
       group flex items-center gap-2
       px-5 py-2.5
@@ -566,6 +697,7 @@ const MartStore = () => {
 
         {/* ── Products main area ── */}
         <main className="flex-1 min-w-0">
+          {availableCategories.length > 0 && (
           <div className="relative mb-5">
   {/* Trigger Button */}
   <button
@@ -626,8 +758,8 @@ const MartStore = () => {
 
       <div className="my-1 h-px bg-border/60" />
 
-      {/* Categories */}
-      {categories.map((cat) => (
+      {/* Categories — only the ones this seller actually has products in */}
+      {availableCategories.map((cat) => (
         <div key={cat.id} className="mb-1">
           {/* Category */}
           <button
@@ -646,10 +778,10 @@ const MartStore = () => {
             {cat.name}
           </button>
 
-          {/* Subcategories */}
+          {/* Subcategories — only the ones this seller has products in, within this category */}
           {filterCategory === String(cat.id) && (
             <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
-              {subCategories.map((sub) => (
+              {availableSubCategories.map((sub) => (
                 <button
                   key={sub.id}
                   onClick={() => {
@@ -677,6 +809,7 @@ const MartStore = () => {
     </div>
   )}
 </div>
+          )}
 {/* Category filter sidebar */}
             
          
@@ -741,7 +874,7 @@ const MartStore = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map((product: any) => (
+              {filteredProducts.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
@@ -754,6 +887,16 @@ const MartStore = () => {
         </main>
       </div>
     </div>
+      <MartChatModal
+        open={chatOpen}
+        onOpenChange={setChatOpen}
+        productId={products[0]?.id ?? -Number(seller.id)}
+        productName={products[0]?.name_bn || products[0]?.name_en || seller.shop_name || seller.seller_name || "Store"}
+        productImage={products[0]?.image || seller.profile_image_url || null}
+        productPrice={products[0]?.sale_price ?? null}
+        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}
+      />
+    </>
   );
 };
 

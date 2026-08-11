@@ -402,7 +402,7 @@ const JobDetail = () => {
         showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
       }`}
     >
-      <div className="mx-auto max-w-7xl px-4 py-3">
+      <div className="mx-auto max-w-7xl px-11 py-3">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
             onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
@@ -446,7 +446,7 @@ const JobDetail = () => {
   return (
     <JobsPageTransition>
       <Navbar />
-      <JobsMenuBar />
+      <JobsMenuBar flushWithHeader />
 
       <div className="mx-auto max-w-7xl px-2 md:px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">

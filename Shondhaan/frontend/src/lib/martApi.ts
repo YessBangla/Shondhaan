@@ -10,9 +10,11 @@ async function request<T>(path: string, options?: RequestInit): Promise<T> {
       ...(options?.headers || {}),
     },
   });
-  const data = await response.json().catch(() => ({}));
+const data = await response.json().catch(() => ({}));
   if (!response.ok || data.success === false) {
-    throw new Error(data.message || "Mart API request failed");
+    const error = new Error(data.message || "Mart API request failed") as Error & { code?: string };
+    if (data.code) (error as { code?: string }).code = data.code;
+    throw error;
   }
   return data as T;
 }
@@ -91,6 +93,37 @@ export interface MartCouponValidationItem {
   quantity: number;
   unit_price: number;
   seller_id?: string | number | null;
+}
+
+// ── Product limit / package allowance types ─────────────────────────────────
+export interface SellerProductAllowance {
+  productCount: number;
+  freeLimit: number;
+  activePackages: Array<{
+    id: number;
+    package_id: number;
+    product_limit: number | null;
+    expires_at: string | null;
+    status: string;
+    name: string;
+    name_bn: string;
+  }>;
+  hasUnlimited: boolean;
+  totalAllowed: number | null; // null means unlimited
+  canAdd: boolean;
+}
+
+export interface MartPackage {
+  id: number;
+  name: string;
+  name_bn: string;
+  price: number;
+  product_limit: number | null;
+  duration_days: number | null;
+  description: string | null;
+  description_bn: string | null;
+  is_active: 0 | 1 | boolean;
+  sort_order: number;
 }
 
 export function toPanelProduct(product: MartProduct) {
@@ -245,4 +278,62 @@ export async function validateMartCoupon(code: string, subtotal: number, items: 
     body: JSON.stringify({ code, subtotal, items }),
   });
   return data.data;
+}
+
+// ── Product allowance / package endpoints ────────────────────────────────────
+export async function getSellerProductAllowance(sellerId: number) {
+  const result = await request<{ success: true; data: SellerProductAllowance }>(
+    `/api/sellers/${sellerId}/product-allowance`
+  );
+  return result.data;
+}
+
+export async function listMartPackages() {
+  const result = await request<{ success: true; data: MartPackage[] }>("/api/mart-packages");
+  return result.data;
+}
+
+export async function purchaseMartPackage(payload: {
+  seller_id: number;
+  package_id: number;
+  payment_method?: string;
+  transaction_ref?: string;
+}) {
+  return request<{ success: true; data: { id: number; status: string } }>(
+    "/api/mart-packages/purchase",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }
+  );
+}
+
+export async function startMartPackageSurjoPayCheckout(payload: { seller_id: number; package_id: number }) {
+  return request<{ success: true; data: { purchase_id: number; checkout_url: string } }>(
+    "/api/mart-packages/purchase/surjopay",
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
+export async function listSellerPackageRequests(sellerId: number) {
+  const result = await request<{
+    success: true;
+    data: Array<{
+      id: number;
+      seller_id: number;
+      package_id: number;
+      status: "pending" | "active" | "expired" | "rejected";
+      product_limit: number | null;
+      price_paid: number;
+      payment_method: string | null;
+      transaction_ref: string | null;
+      admin_note: string | null;
+      starts_at: string | null;
+      expires_at: string | null;
+      created_at: string;
+      name: string;
+      name_bn: string;
+    }>;
+  }>(`/api/sellers/${sellerId}/package-requests`);
+  return result.data;
 }

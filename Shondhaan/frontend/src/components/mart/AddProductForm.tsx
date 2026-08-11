@@ -21,13 +21,14 @@ interface AddProductFormProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onLimitReached?: () => void;
   editProduct?: Record<string, unknown>;
   sellerId?: number | null;
 }
 
 
 
-const AddProductForm = ({ open, onClose, onSuccess, editProduct, sellerId }: AddProductFormProps) => {
+const AddProductForm = ({ open, onClose, onSuccess, onLimitReached, editProduct, sellerId }: AddProductFormProps) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const bn = language === "bn";
@@ -251,9 +252,21 @@ const filteredSubCategories = categoryId
       error = caughtError;
     }
 
-    setSaving(false);
+setSaving(false);
     if (error) {
-      toast.error(bn ? "সংরক্ষণ ব্যর্থ" : "Save failed");
+      const err = error as Error & { code?: string };
+      if (err.code === "PRODUCT_LIMIT_REACHED") {
+        // Free/paid product limit reached — show the package message and open the modal.
+        toast.error(
+          bn
+            ? "আপনি প্যাকেজ না কিনে আর পণ্য যোগ করতে পারবেন না। নতুন পণ্য যোগ করতে একটি প্যাকেজ কিনুন।"
+            : "You cannot add more products without buying a package. Buy a package to add more products."
+        );
+        onLimitReached?.();
+        onClose();
+      } else {
+        toast.error(bn ? "সংরক্ষণ ব্যর্থ" : "Save failed");
+      }
       console.error(error);
     } else {
       toast.success(bn ? (editProduct ? "পণ্য আপডেট হয়েছে" : "পণ্য যোগ হয়েছে") : (editProduct ? "Product updated" : "Product added"));

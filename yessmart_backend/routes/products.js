@@ -1,6 +1,8 @@
 const express = require("express");
 const router = express.Router();
 const pool = require("../db");
+// Enforce the free/paid product limit when a seller creates a new product.
+const { requireProductAllowance } = require("./martPackages");
 
 const normalizeGalleryUrls = (value) => {
   if (Array.isArray(value)) {
@@ -302,7 +304,8 @@ router.get("/:id", async (req, res) => {
 });
 
 // ── POST /api/products ─────────────────────────────────────────────────────────
-router.post("/", async (req, res) => {
+// Enforce the free/paid product limit (5 free products, then a package is required).
+router.post("/", requireProductAllowance, async (req, res) => {
   try {
     const {
       seller_id, category_id, sub_category_id,
