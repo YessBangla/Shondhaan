@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import AddProductForm from "@/components/mart/AddProductForm";
+import PackageLimitModal from "@/components/mart/Packagelimitmodal";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -21,7 +22,8 @@ import {
   createMartCoupon, deleteMartCoupon,
   deleteMartProduct, getCurrentMartSeller, getMartSellerById, listMartProducts,
   listSellerMartCoupons, toPanelProduct, updateMartCoupon,
-  updateMartProduct, type MartCoupon, type MartSeller,
+  updateMartProduct, getSellerProductAllowance, type MartCoupon, type MartSeller,
+  type SellerProductAllowance,
 } from "@/lib/martApi";
 import { toast } from "sonner";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -230,6 +232,10 @@ const [messagesLoading, setMessagesLoading] = useState(false);
   const [productPage, setProductPage] = useState(1);
   const [showAddProduct, setShowAddProduct] = useState(false);
 
+  // ── Package / product-limit state ──
+  const [allowance, setAllowance] = useState<SellerProductAllowance | null>(null);
+  const [showPackageModal, setShowPackageModal] = useState(false);
+
   const [sellerId, setSellerId]       = useState<number | null>(null);
   const [sellerUserId, setSellerUserId] = useState<number | null>(null);
   const [seller, setSeller]           = useState<MartSeller | null>(null);
@@ -338,7 +344,7 @@ useEffect(() => {
         message:
           payload.message.message ||
           chat.last_message ||
-          (bn ? "একজন কাস্টমার মেসেজ পাঠিয়েছেন" : "A customer sent you a message"),
+          (bn ? "একজন কাস্টমার মেসেজ পাঠিয়েছেন" : "A customer sent you a message"),
         type: "mart_customer_message",
         productId: chat.product_id,
         actionUrl: `/mart/vendor/messages/${chat.id}`,
@@ -378,6 +384,32 @@ useEffect(() => {
   }, [hasAccess]);
 
   useEffect(() => { setProductPage(1); }, [searchProduct, productStockFilter]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const paymentResult = params.get("package_payment");
+    if (!paymentResult) return;
+    if (paymentResult === "success") {
+      toast.success(bn ? "প্যাকেজ পেমেন্ট সফল হয়েছে। আপনার প্যাকেজ এখন সক্রিয়।" : "Package payment successful. Your package is now active.");
+    } else {
+      toast.error(bn ? "পেমেন্ট সম্পন্ন হয়নি। আবার চেষ্টা করুন।" : "Payment was not completed. Please try again.");
+    }
+    params.delete("package_payment");
+    params.delete("package_purchase_id");
+    const query = params.toString();
+    window.history.replaceState({}, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
+  }, [bn]);
+
+  // ── Refresh product allowance whenever the seller or product count changes ──
+  useEffect(() => {
+    if (!sellerId) return;
+    getSellerProductAllowance(sellerId)
+      .then(setAllowance)
+      .catch(() => {
+        // Non-fatal: the "Add Product" click handler re-checks live,
+        // and the backend still enforces the limit either way.
+      });
+  }, [sellerId, products.length]);
 
   // Populate KYC form when seller loads
   useEffect(() => {
@@ -434,7 +466,45 @@ useEffect(() => {
     return () => { if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; } };
   }, [pollPendingRequests]);
 
-  // ── KYC handlers ──
+  // ── Add-product gate: blocks opening the form once the free/paid limit is hit ──
+  const handleAddProductClick = async () => {
+    let current = allowance;
+    if (sellerId) {
+      try {
+        current = await getSellerProductAllowance(sellerId);
+        setAllowance(current);
+      } catch {
+        // fall back to whatever we already have in state; backend still enforces the limit
+      }
+    }
+
+if (current && !current.canAdd) {
+      toast.error(
+        bn
+          ? `প্যাকেজ না কিনে আপনি আর পণ্য যোগ করতে পারবেন না। আপনি আপনার ফ্রি ${current.freeLimit}টি পণ্যের লিমিট শেষ করেছেন। নতুন পণ্য যোগ করতে একটি প্যাকেজ কিনুন।`
+          : `You cannot add a product without buying a package. You've used your ${current.freeLimit} free product slots. Buy a package to add more products.`
+      );
+
+      if (sellerUserId) {
+        void createMartSellerNotification({
+          userId: sellerUserId,
+title: bn ? "পণ্য যোগ করার লিমিট শেষ" : "Product limit reached",
+          message: bn
+            ? "প্যাকেজ না কিনে আপনি আর পণ্য যোগ করতে পারবেন না। আপনার ফ্রি ৫টি পণ্যের লিমিট শেষ হয়ে গেছে। চালিয়ে যেতে একটি প্যাকেজ কিনুন।"
+            : "You cannot add more products without buying a package. You've used your 5 free product slots. Buy a package to keep adding products.",
+          type: "mart_product_limit_reached",
+        });
+      }
+
+      setShowPackageModal(true);
+      return;
+    }
+
+setEditingProduct(null);
+    setShowAddProduct(true);
+  };
+
+// ── KYC handlers ──
   const handleKycImageUpload = async (field: string, file: File) => {
     setKycUploading(prev => ({ ...prev, [field]: true }));
     try {
@@ -755,11 +825,28 @@ useEffect(() => {
                       <LayoutGrid className="h-4 w-4" />
                     </button>
                   </div>
-                  <Button onClick={() => { setEditingProduct(null); setShowAddProduct(true); }}
+                  <Button onClick={handleAddProductClick}
                     className="h-9 gap-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:opacity-90 text-white rounded-xl border-0 shadow-sm text-sm">
                     <Plus className="h-4 w-4" />{bn ? "পণ্য যোগ" : "Add Product"}
                   </Button>
                 </div>
+
+                {allowance && !allowance.hasUnlimited && (
+                  <div className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2 ${
+                    allowance.canAdd ? "border-slate-100 bg-white" : "border-amber-200 bg-amber-50"
+                  }`}>
+                    <p className="text-xs font-medium text-slate-600">
+                      {bn
+                        ? `পণ্য ব্যবহার: ${allowance.productCount} / ${allowance.totalAllowed}`
+                        : `Products used: ${allowance.productCount} / ${allowance.totalAllowed}`}
+                    </p>
+                    {!allowance.canAdd && (
+                      <button onClick={() => setShowPackageModal(true)} className="text-xs font-semibold text-emerald-600 hover:underline">
+                        {bn ? "প্যাকেজ কিনুন" : "Buy a package"}
+                      </button>
+                    )}
+                  </div>
+                )}
 
                 {productStockFilter === "low" && (
                   <div className="flex items-center justify-between gap-3 rounded-xl border border-rose-100 bg-rose-50 px-3 py-2">
@@ -818,8 +905,6 @@ useEffect(() => {
                             {p.name_en && <p className="text-[10px] text-slate-400 truncate">{p.name_en}</p>}
                             <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
                               <span className="text-[11px] font-bold text-emerald-600">৳{p.price}</span>
-                              {/* FIX: only show strikethrough original price when it's genuinely
-                                  higher than the current price, not merely truthy/present. */}
                               {p.original_price && Number(p.original_price) > Number(p.price) && (
                                 <span className="text-[10px] text-slate-400 line-through">৳{p.original_price}</span>
                               )}
@@ -887,7 +972,7 @@ useEffect(() => {
               </div>
             )}
 
-            {/* ══════════════════════════════ ORDERS ══════════════════════════════ */}
+            {/* ══════════════════════════════ OFFERS ══════════════════════════════ */}
             {activeTab === "offers" && (
               <div className="space-y-4 mt-9">
                 <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,420px)_1fr] gap-4">
@@ -1078,6 +1163,7 @@ useEffect(() => {
               </div>
             )}
 
+            {/* ══════════════════════════════ ORDERS ══════════════════════════════ */}
             {activeTab === "orders" && (
               <div className="space-y-4 mt-9">
                 <div className="flex flex-col md:flex-row gap-3">
@@ -1675,12 +1761,25 @@ onClick={() => navigate(`/mart/vendor/messages/${chat.id}`)}
         )}
       </PanelSidebarTabs>
 
-      <AddProductForm
+<AddProductForm
         open={showAddProduct}
         onClose={() => { setShowAddProduct(false); setEditingProduct(null); }}
         onSuccess={fetchProducts}
+        onLimitReached={() => {
+          setShowAddProduct(false);
+          setEditingProduct(null);
+          setShowPackageModal(true);
+        }}
         editProduct={editingProduct}
         sellerId={sellerId}
+      />
+
+      <PackageLimitModal
+        open={showPackageModal}
+        onClose={() => setShowPackageModal(false)}
+        sellerId={sellerId}
+        allowance={allowance}
+        bn={bn}
       />
     </>
   );

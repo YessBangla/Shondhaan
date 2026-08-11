@@ -3,12 +3,19 @@ import { supabase } from "@/integrations/supabase/client";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
-  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area
+  XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, ReferenceLine
 } from "recharts";
 import { RefreshCw, TrendingUp, DollarSign, ShoppingCart, MapPin, Users, Calendar, ArrowUpRight, ArrowDownRight, Wallet, Receipt, Download, Package, Handshake, Eye, Briefcase, UserCheck, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+
+interface PackageDef {
+  id: number;
+  name: string;
+  price: number;
+  is_active: number;
+}
 
 interface Booking {
   id: string;
@@ -78,6 +85,7 @@ interface PackageTransaction {
   status: string; // pending | success | failed | cancelled
   created_at: string;
   employer_user_id: number;
+  package_name: string | null; // joined from packages table, null if deleted or unmatched
 }
 
 interface JobProfileRecord {
@@ -135,9 +143,19 @@ const AdminAnalytics = () => {
   const [packageTransactions, setPackageTransactions] = useState<PackageTransaction[]>([]);
   const [jobseekerProfiles, setJobseekerProfiles] = useState<JobProfileRecord[]>([]);
   const [employerProfiles, setEmployerProfiles] = useState<JobProfileRecord[]>([]);
+  const [packagesCatalog, setPackagesCatalog] = useState<PackageDef[]>([]);
   const [jobStatsError, setJobStatsError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "6m" | "1y">("30d");
+
+  // সর্বোচ্চ মূল্যের প্যাকেজ — from the packages catalog (CMS), not from
+  // transactions. This is a reference point ("what we currently offer"),
+  // separate from packageIncome ("what we've actually collected").
+  const highestPackage = useMemo(() => {
+    const active = packagesCatalog.filter(p => p.is_active === 1 || p.is_active === undefined);
+    if (active.length === 0) return null;
+    return active.reduce((max, p) => (p.price > max.price ? p : max), active[0]);
+  }, [packagesCatalog]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -162,14 +180,24 @@ const AdminAnalytics = () => {
       setJobStatsError(null);
       const auth = getMySqlAuth();
       const token = auth?.token || null;
-      const res = await fetch(`${JOBS_API_URL}/api/admin/job-stats`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-      });
-      if (!res.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${res.status})`);
-      const jobData: JobStatsResponse = await res.json();
+      const [statsRes, packagesRes] = await Promise.all([
+        fetch(`${JOBS_API_URL}/api/admin/job-stats`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }),
+        fetch(`${JOBS_API_URL}/api/packages/admin/all`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+        }),
+      ]);
+      if (!statsRes.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${statsRes.status})`);
+      const jobData: JobStatsResponse = await statsRes.json();
       setPackageTransactions(jobData.packageTransactions || []);
       setJobseekerProfiles(jobData.jobseekerProfiles || []);
       setEmployerProfiles(jobData.employerProfiles || []);
+
+      if (packagesRes.ok) {
+        const pkgData: PackageDef[] = await packagesRes.json();
+        setPackagesCatalog(pkgData || []);
+      }
     } catch (err: any) {
       console.error("Job stats fetch failed:", err);
       setJobStatsError(err?.message || "জব স্ট্যাটস লোড করা যায়নি");
@@ -355,6 +383,21 @@ const AdminAnalytics = () => {
     });
   }, [filteredPackageTxns, period]);
 
+  // সন্ধান জব — income grouped by package name (success only)
+  const jobIncomeByPackage = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredPackageTxns.filter(t => t.status === "success").forEach(t => {
+      const key = t.package_name || `প্যাকেজ #${t.package_id}`;
+      map.set(key, (map.get(key) || 0) + Number(t.amount || 0));
+    });
+    return Array.from(map.entries())
+      .sort(([, a], [, b]) => b - a)
+      .map(([name, income]) => ({
+        name: name.length > 15 ? name.slice(0, 15) + "…" : name,
+        আয়: Math.round(income),
+      }));
+  }, [filteredPackageTxns]);
+
   // সন্ধান জব — jobseeker vs employer signup trend
   const jobUserTrend = useMemo(() => {
     const useMonthly = period === "6m" || period === "1y";
@@ -459,7 +502,8 @@ const AdminAnalytics = () => {
   })), "mart_order_report");
 
   const exportJobPackageReport = () => exportCSV(filteredPackageTxns.map(t => ({
-    লেনদেন_আইডি: t.id, প্যাকেজ_আইডি: t.package_id, পরিমাণ: t.amount, স্ট্যাটাস: statusLabels[t.status] || t.status, নিয়োগকর্তা_আইডি: t.employer_user_id, তারিখ: t.created_at.slice(0, 10)
+    লেনদেন_আইডি: t.id, প্যাকেজ: t.package_name || `#${t.package_id}`, পরিমাণ: t.amount,
+    স্ট্যাটাস: statusLabels[t.status] || t.status, নিয়োগকর্তা_আইডি: t.employer_user_id, তারিখ: t.created_at.slice(0, 10)
   })), "job_package_report");
 
   if (loading) return <div className="py-12 text-center text-muted-foreground">অ্যানালিটিক্স লোড হচ্ছে...</div>;
@@ -756,6 +800,22 @@ const AdminAnalytics = () => {
                 <SummaryCard icon={Building2} label="নিয়োগকর্তা" value={toBnNum(jobStats.employerCount)} color="text-orange-600" bgColor="bg-orange-500/10" />
               </div>
 
+              {/* সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ থেকে, লেনদেন থেকে নয়) */}
+              {highestPackage && (
+                <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 shrink-0">
+                      <Package className="h-5 w-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-[11px] text-muted-foreground">সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ)</p>
+                      <p className="text-sm font-bold text-foreground">{highestPackage.name}</p>
+                    </div>
+                  </div>
+                  <p className="text-lg font-bold text-purple-600">৳{toBnNum(highestPackage.price)}</p>
+                </div>
+              )}
+
               <ChartCard title="প্যাকেজ আয় ও ক্রয়ের ট্রেন্ড" icon={TrendingUp}>
                 {jobPackageTrend.length > 0 ? (
                   <ResponsiveContainer width="100%" height={280}>
@@ -773,7 +833,29 @@ const AdminAnalytics = () => {
                       <Legend wrapperStyle={{ fontSize: "11px" }} />
                       <Area type="monotone" dataKey="আয়" stroke="hsl(var(--primary))" fill="url(#colorJobIncome)" strokeWidth={2} />
                       <Line type="monotone" dataKey="ক্রয়" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
+                      {highestPackage && (
+                        <ReferenceLine
+                          y={highestPackage.price}
+                          stroke="hsl(0, 84%, 60%)"
+                          strokeDasharray="4 4"
+                          label={{ value: `সর্বোচ্চ প্যাকেজ ৳${toBnNum(highestPackage.price)}`, fontSize: 10, fill: "hsl(0, 84%, 60%)", position: "insideTopRight" }}
+                        />
+                      )}
                     </AreaChart>
+                  </ResponsiveContainer>
+                ) : <EmptyChart />}
+              </ChartCard>
+
+              <ChartCard title="প্যাকেজ অনুযায়ী আয়" icon={Package}>
+                {jobIncomeByPackage.length > 0 ? (
+                  <ResponsiveContainer width="100%" height={Math.max(240, jobIncomeByPackage.length * 40)}>
+                    <BarChart data={jobIncomeByPackage} layout="vertical" margin={{ left: 10 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={110} stroke="hsl(var(--muted-foreground))" />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="আয়" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
                   </ResponsiveContainer>
                 ) : <EmptyChart />}
               </ChartCard>
