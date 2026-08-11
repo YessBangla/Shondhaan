@@ -685,7 +685,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
                         )}
                       >
                         {isSelected && (
-                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-blue-900">
+                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-white">
                             {bn ? "নির্বাচিত" : "Selected"}
                           </span>
                         )}
@@ -826,7 +826,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
                     if (!bookingDate || !bookingTime) return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full border border-primary rounded-lg py-3 text-sm font-semibold text-blue-900 hover:bg-primary/90 flex items-center justify-center gap-2"
+                  className="w-full border border-primary bg-primary rounded-lg py-3 text-sm font-semibold text-white hover:bg-primary/90 hover:text-primary flex items-center justify-center gap-2"
                 >
                   <CalendarCheck className="h-4 w-4" /> {t("sd.bookingConfirmBtn")}
                 </button>
