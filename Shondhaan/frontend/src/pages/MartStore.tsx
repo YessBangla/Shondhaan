@@ -88,14 +88,14 @@ const fetchProducts = async (sellerId: number): Promise<MartProduct[]> => {
 
 // ── Product Card ───────────────────────────────────────────────────────────────
 const ProductCard = ({
-  product,
-  onAddToCart,
-  onOpen,
-}: {
-  product: MartProduct;
-  onAddToCart: (product: MartProduct) => void;
-  onOpen: (product: MartProduct) => void;
-}) => (
+    product,
+    onAddToCart,
+    onOpen,
+  }: {
+    product: MartProduct;
+    onAddToCart: (product: MartProduct) => void;
+    onOpen: (product: MartProduct) => void;
+  }) => (
   <div
     role="button"
     tabIndex={0}
@@ -487,50 +487,50 @@ const MartStore = () => {
 
 
 
-<div className="flex items-center gap-3">
-  <button
-    type="button"
-    onClick={handleFollow}
-    className="
-      group flex items-center gap-2
-      px-5 py-2.5
-      rounded-xl
-      bg-primary
-      text-primary-foreground
-      font-medium
-      shadow-sm
-      hover:shadow-md
-      hover:-translate-y-0.5
-      transition-all duration-300
-    "
-  >
-    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-    <span>{following ? "Following" : "Follow"}</span>
-  </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleFollow}
+                    className="
+                      group flex items-center gap-2
+                      px-5 py-2.5
+                      rounded-xl
+                      bg-primary
+                      text-white
+                      font-medium
+                      shadow-sm
+                      hover:shadow-md
+                      hover:-translate-y-0.5
+                      transition-all duration-300
+                    "
+                  >
+                    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span>{following ? "Following" : "Follow"}</span>
+                  </button>
 
-  <button
-    type="button"
-    onClick={handleOpenChat}
-    className="
-      group flex items-center gap-2
-      px-5 py-2.5
-      rounded-xl
-      bg-background
-      border border-border
-      text-foreground
-      font-medium
-      shadow-sm
-      hover:bg-muted/60
-      hover:border-primary/20
-      hover:-translate-y-0.5
-      hover:shadow-md
-      transition-all duration-300
-    "
-  >
-    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
-    <span>Chat</span>
-  </button>
-</div>
+                  <button
+                    type="button"
+                    onClick={handleOpenChat}
+                    className="
+                      group flex items-center gap-2
+                      px-5 py-2.5
+                      rounded-xl
+                      bg-background
+                      border border-border
+                      text-foreground
+                      font-medium
+                      shadow-sm
+                      hover:bg-muted/60
+                      hover:border-primary/20
+                      hover:-translate-y-0.5
+                      hover:shadow-md
+                      transition-all duration-300
+                    "
+                  >
+                    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span>Chat</span>
+                  </button>
+                </div>
               </div>
 
              
@@ -684,16 +684,13 @@ const MartStore = () => {
                 </div>
               </div>
             </div>
-
-            
-
           </div>
         </aside>
 
         {/* ── Products main area ── */}
         <main className="flex-1 min-w-0">
           {availableCategories.length > 0 && (
-          <div className="relative mb-5">
+            <div className="relative mb-5">
               {/* Trigger Button */}
               <button
                 onClick={() => setShowCategories(!showCategories)}
@@ -719,49 +716,8 @@ const MartStore = () => {
                 </span>
               </button>
 
-      <div className="my-1 h-px bg-border/60" />
-
-      {/* Categories — only the ones this seller actually has products in */}
-      {availableCategories.map((cat) => (
-        <div key={cat.id} className="mb-1">
-          {/* Category */}
-          <button
-            onClick={() => handleCategoryChange(String(cat.id))}
-            className="
-              w-full text-left
-              px-3 py-2.5
-              rounded-xl
-              font-semibold
-              text-sm
-              hover:bg-muted/60
-              hover:text-primary
-              transition
-            "
-          >
-            {cat.name}
-          </button>
-
-          {/* Subcategories — only the ones this seller has products in, within this category */}
-          {filterCategory === String(cat.id) && (
-            <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
-              {availableSubCategories.map((sub) => (
-                <button
-                  key={sub.id}
-                  onClick={() => {
-                    setFilterSubCategory(String(sub.id));
-                    setShowCategories(false);
-                  }}
-                  className="
-                    absolute top-full left-0 mt-2 w-72
-                    bg-card/95 backdrop-blur-md
-                    border border-border
-                    rounded-2xl
-                    shadow-xl
-                    z-50
-                    p-2
-                  "
-                >
-                  {/* All Products */}
+              {showCategories && (
+                <div className="absolute top-full left-0 mt-2 w-72 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-xl z-50 p-2">
                   <button
                     onClick={() => {
                       setFilterCategory("all");
@@ -782,10 +738,9 @@ const MartStore = () => {
 
                   <div className="my-1 h-px bg-border/60" />
 
-                  {/* Categories */}
-                  {categories.map((cat) => (
+                  {/* Categories — only the ones this seller actually has products in */}
+                  {availableCategories.map((cat) => (
                     <div key={cat.id} className="mb-1">
-                      {/* Category */}
                       <button
                         onClick={() => handleCategoryChange(String(cat.id))}
                         className="
@@ -802,30 +757,34 @@ const MartStore = () => {
                         {cat.name}
                       </button>
 
-                      {/* Subcategories */}
+                      {/* Subcategories — only the ones this seller has products in, within this category */}
                       {filterCategory === String(cat.id) && (
                         <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
-                          {subCategories.map((sub) => (
-                            <button
-                              key={sub.id}
-                              onClick={() => {
-                                setFilterSubCategory(String(sub.id));
-                                setShowCategories(false);
-                              }}
-                              className="
-                                w-full text-left
-                                px-3 py-1.5
-                                text-sm
-                                text-muted-foreground
-                                rounded-lg
-                                hover:bg-muted/50
-                                hover:text-foreground
-                                transition
-                              "
-                            >
-                              {sub.name}
-                            </button>
-                          ))}
+                          {subCatLoading ? (
+                            <p className="px-3 py-1.5 text-sm text-muted-foreground">Loading...</p>
+                          ) : (
+                            availableSubCategories.map((sub) => (
+                              <button
+                                key={sub.id}
+                                onClick={() => {
+                                  setFilterSubCategory(String(sub.id));
+                                  setShowCategories(false);
+                                }}
+                                className="
+                                  w-full text-left
+                                  px-3 py-1.5
+                                  text-sm
+                                  text-muted-foreground
+                                  rounded-lg
+                                  hover:bg-muted/50
+                                  hover:text-foreground
+                                  transition
+                                "
+                              >
+                                {sub.name}
+                              </button>
+                            ))
+                          )}
                         </div>
                       )}
                     </div>
@@ -834,16 +793,8 @@ const MartStore = () => {
               )}
             </div>
           )}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
-          )}
 {/* Category filter sidebar */}
             
-         
-
           {/* Breadcrumb */}
           {filterCategory !== "all" && (
             <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
@@ -924,8 +875,7 @@ const MartStore = () => {
         productName={products[0]?.name_bn || products[0]?.name_en || seller.shop_name || seller.seller_name || "Store"}
         productImage={products[0]?.image || seller.profile_image_url || null}
         productPrice={products[0]?.sale_price ?? null}
-        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}
-      />
+        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}/>
     </>
   );
 };

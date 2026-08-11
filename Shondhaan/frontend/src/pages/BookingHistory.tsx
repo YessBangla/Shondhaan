@@ -88,7 +88,7 @@ const BookingHistory = () => {
     <div className="min-h-screen bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[25px]" />
 
       <div className="app-container py-6 md:py-10">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
