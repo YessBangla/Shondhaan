@@ -68,7 +68,7 @@ export const AdminUsersPage = () => {
         className="w-full flex items-center justify-between gap-3 p-4 rounded-2xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 hover:border-primary/40 transition text-left"
       >
         <div className="flex items-center gap-3 min-w-0">
-          <div className="p-2.5 rounded-xl bg-primary text-primary-foreground shadow"><ShieldCheck className="h-5 w-5" /></div>
+          <div className="p-2.5 rounded-xl bg-primary text-white shadow"><ShieldCheck className="h-5 w-5" /></div>
           <div className="min-w-0">
             <p className="text-sm md:text-base font-semibold">প্রতিটি রোলের আলাদা পেইজ</p>
             <p className="text-xs text-muted-foreground line-clamp-1">১৪টি রোল, ইউজার তালিকা, পারমিশন ও প্যানেল লিংক একসাথে দেখুন</p>

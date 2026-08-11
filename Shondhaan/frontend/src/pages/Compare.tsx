@@ -166,7 +166,7 @@ const MobileSideBySide = ({
               <div className="h-[60px] flex items-center justify-center px-2 border-b border-border">
                 <button
                   onClick={() => navigate(`/service/${s.slug}`)}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground"
+                  className="inline-flex items-center gap-1 rounded-lg bg-primary px-3 py-1.5 text-[11px] font-semibold text-white"
                 >
                   <ShoppingBag className="h-3 w-3" />
                   {bn ? "অর্ডার" : "Order"}
@@ -236,13 +236,13 @@ const Compare = () => {
             <GitCompareArrows className="h-8 w-8" />
           </div>
           <h2 className="font-heading text-lg font-bold text-foreground mb-1">
-            {bn ? "সেবা তুলনা" : "Compare Services"}
+            {bn ? "সার্ভিস তুলনা" : "Compare Services"}
           </h2>
           <p className="text-muted-foreground text-sm mb-5 max-w-xs">
-            {bn ? "যেকোনো সেবা কার্ডে তুলনা আইকনে ট্যাপ করে ২-৩টি সেবা যোগ করুন" : "Tap the compare icon on any service card to add 2-3 services"}
+            {bn ? "যেকোনো সার্ভিস কার্ডে তুলনা আইকনে ট্যাপ করে ২-৩টি সার্ভিস যোগ করুন" : "Tap the compare icon on any service card to add 2-3 services"}
           </p>
-          <button onClick={() => navigate("/all-services")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">
-            {bn ? "সেবা দেখুন" : "Browse Services"}
+          <button onClick={() => navigate("/all-services")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-800">
+            {bn ? "সার্ভিস দেখুন" : "Browse Services"}
           </button>
         </div>
       </div>
@@ -267,7 +267,7 @@ const Compare = () => {
           </button>
           <h1 className="font-heading text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
             <GitCompareArrows className="h-5 w-5 text-primary" />
-            {bn ? "সেবা তুলনা" : "Service Comparison"}
+            {bn ? "সার্ভিস তুলনা" : "Service Comparison"}
           </h1>
           <span className="ml-auto text-xs font-medium text-muted-foreground">
             {compareList.length}/3
@@ -396,7 +396,7 @@ const Compare = () => {
                   <td key={s.slug} className="p-3 text-center">
                     <button
                       onClick={() => navigate(`/service/${s.slug}`)}
-                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-primary-foreground"
+                      className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white"
                     >
                       <ShoppingBag className="h-3.5 w-3.5" />
                       {bn ? "অর্ডার করুন" : "Order Now"}

@@ -358,7 +358,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
             onClick={() => setIsOpen(true)}
-              className="fixed right-3 z-[51] hidden md:flex h-14 w-14 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg hover:shadow-xl transition-shadow md:!bottom-[92px] md:right-4"
+              className="fixed right-3 z-[51] hidden md:flex h-14 w-14 items-center justify-center rounded-full bg-primary text-white shadow-lg hover:shadow-xl transition-shadow md:!bottom-[92px] md:right-4"
               style={{ bottom: getMobileFloatingBottom(168), boxShadow: "0 4px 24px hsl(var(--primary) / 0.35)" }}
           >
             <MessageCircle className="h-6 w-6" />
@@ -381,17 +381,17 @@ If the customer didn't ask for any specific service, set needs_service to false.
             <div className="flex items-center justify-between rounded-t-2xl bg-primary px-4 py-3">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-foreground/20">
-                  <Bot className="h-4 w-4 text-primary-foreground" />
+                  <Bot className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-primary-foreground">Shondhaan</p>
-                  <p className="text-[10px] text-primary-foreground/70">{bn ? "অনলাইনে আছি" : "Online"}</p>
+                  <p className="text-sm font-semibold text-white">Shondhaan</p>
+                  <p className="text-[10px] text-white/70">{bn ? "অনলাইনে আছি" : "Online"}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => setIsOpen(false)}
-                  className="flex h-8 w-8 items-center justify-center rounded-full text-primary-foreground/80 transition-colors hover:bg-primary-foreground/10"
+                  className="flex h-8 w-8 items-center justify-center rounded-full text-white/80 transition-colors hover:bg-primary-foreground/10"
                 >
                   <ChevronDown className="h-5 w-5" />
                 </button>
@@ -444,7 +444,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                 <div className="space-y-1.5">
                   <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
                     <Wrench className="h-3.5 w-3.5" />
-                    {bn ? "সেবা নির্বাচন" : "Select Service"}
+                    {bn ? "সার্ভিস নির্বাচন" : "Select Service"}
                   </p>
                   <div className="rounded-xl border border-border bg-card p-1.5">
                     <div className="grid grid-cols-2 gap-1">
@@ -468,7 +468,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                           onClick={() => setShowMoreCats(true)}
                           className="rounded-lg px-2 py-1.5 text-[10px] font-medium text-left transition-all active:scale-[0.97] text-primary hover:bg-primary/10 flex items-center gap-1 col-span-2 justify-center border border-dashed border-primary/30"
                         >
-                          📋 {bn ? "সকল সেবা দেখুন..." : "All Services..."}
+                          📋 {bn ? "সকল সার্ভিস দেখুন..." : "All Services..."}
                         </button>
                       )}
                     </div>
@@ -493,7 +493,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                       >
                         <div className="flex items-center justify-between px-3 py-2 border-b border-border">
                           <p className="text-xs font-bold text-foreground">
-                            {bn ? "সকল সেবা" : "All Services"}
+                            {bn ? "সকল সার্ভিস" : "All Services"}
                           </p>
                           <button
                             type="button"
@@ -551,7 +551,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                 <button
                   onClick={startChat}
                   disabled={!name.trim() || !phone.trim()}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] shadow-md"
+                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white transition-all hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.97] shadow-md"
                 >
                   <MessageCircle className="h-4 w-4" />
                   {bn ? "চ্যাট শুরু করুন" : "Start Chat"}
@@ -572,7 +572,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                       <div
                         className={`max-w-[80%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                           msg.role === "user"
-                            ? "bg-primary text-primary-foreground rounded-br-md"
+                            ? "bg-primary text-white rounded-br-md"
                             : "bg-muted text-foreground rounded-bl-md"
                         }`}
                       >
@@ -631,11 +631,11 @@ If the customer didn't ask for any specific service, set needs_service to false.
                     <div className="flex flex-wrap gap-1.5">
                       {(promptLang === "bn"
                         ? [
-                            "আপনাদের সেবার মূল্য কত?",
+                            "আপনাদের সার্ভিসর মূল্য কত?",
                             "আমার বুকিংয়ের স্ট্যাটাস জানতে চাই",
-                            "একটি সেবা বুকিং করতে চাই",
+                            "একটি সার্ভিস বুকিং করতে চাই",
                             "সার্ভিস রিকোয়েস্ট করতে চাই",
-                            "কোন কোন এলাকায় সেবা পাওয়া যায়?",
+                            "কোন কোন এলাকায় সার্ভিস পাওয়া যায়?",
                           ]
                         : [
                             "What are your service prices?",
@@ -682,7 +682,7 @@ If the customer didn't ask for any specific service, set needs_service to false.
                     <button
                       type="submit"
                       disabled={!input.trim() || isLoading}
-                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-primary-foreground transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-95"
+                      className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-white transition-all hover:bg-primary/90 disabled:opacity-50 active:scale-95"
                     >
                       <Send className="h-4 w-4" />
                     </button>

@@ -39,7 +39,7 @@ const DynamicIslandActivity = () => {
             transition={{ type: "spring", stiffness: 400, damping: 30 }}
             className="bg-foreground text-background rounded-full px-4 flex items-center gap-3 shadow-2xl pointer-events-auto max-w-[90vw]"
           >
-            <div className="flex-shrink-0 text-primary-foreground/90">
+            <div className="flex-shrink-0 text-white/90">
               {act.icon ?? <Bell className="w-4 h-4" />}
             </div>
             <div className="flex flex-col leading-tight overflow-hidden">

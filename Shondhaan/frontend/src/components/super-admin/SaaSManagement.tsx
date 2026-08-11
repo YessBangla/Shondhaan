@@ -71,7 +71,7 @@ const SaaSManagement = () => {
         ].map(tab => (
           <button key={tab.value} onClick={() => setActiveView(tab.value)}
             className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
-              activeView === tab.value ? "bg-primary text-primary-foreground shadow-md" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
+              activeView === tab.value ? "bg-primary text-white shadow-md" : "bg-secondary text-muted-foreground hover:bg-secondary/80"
             }`}>
             {tab.icon} {tab.label}
           </button>
@@ -87,7 +87,7 @@ const SaaSManagement = () => {
             {plans.map((plan, i) => (
               <motion.div key={plan.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                 className={`rounded-xl border bg-card p-5 shadow-sm ${i === 1 ? "border-primary ring-1 ring-primary" : "border-border"}`}>
-                {i === 1 && <span className="text-[10px] font-bold bg-primary text-primary-foreground px-2 py-0.5 rounded-full mb-3 inline-block">সবচেয়ে জনপ্রিয়</span>}
+                {i === 1 && <span className="text-[10px] font-bold bg-primary text-white px-2 py-0.5 rounded-full mb-3 inline-block">সবচেয়ে জনপ্রিয়</span>}
                 <h4 className="font-heading text-lg font-bold text-foreground">{plan.name}</h4>
                 <div className="flex items-baseline gap-1 mt-2">
                   <span className="text-2xl font-bold text-primary">৳{plan.price.toLocaleString("bn-BD")}</span>

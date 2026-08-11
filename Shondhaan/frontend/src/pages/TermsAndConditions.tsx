@@ -10,7 +10,7 @@ const TermsAndConditions = () => {
   useSEO({
     title: bn ? "শর্তাবলী" : "Terms & Conditions",
     description: bn
-      ? "Shondhaan ব্যবহারের শর্তাবলী — সেবা ব্যবহারের নিয়ম, দায়বদ্ধতা ও আইনি বিষয়াবলী।"
+      ? "Shondhaan ব্যবহারের শর্তাবলী — সার্ভিস ব্যবহারের নিয়ম, দায়বদ্ধতা ও আইনি বিষয়াবলী।"
       : "Shondhaan terms of use — rules, responsibilities and legal terms governing the platform.",
     canonical: "/terms",
     locale: bn ? "bn_BD" : "en_US",
@@ -31,16 +31,16 @@ const TermsAndConditions = () => {
 
         <div className="mt-8 space-y-6 text-sm leading-relaxed text-muted-foreground">
           <section>
-            <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "১. সেবা ব্যবহারের শর্ত" : "1. Terms of Use"}</h2>
+            <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "১. সার্ভিস ব্যবহারের শর্ত" : "1. Terms of Use"}</h2>
             <p>{bn
-              ? "Shondhaan প্ল্যাটফর্ম ব্যবহার করে আপনি এই শর্তাবলী মেনে চলতে সম্মত হচ্ছেন। আমাদের সেবা ব্যবহার করতে আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে।"
+              ? "Shondhaan প্ল্যাটফর্ম ব্যবহার করে আপনি এই শর্তাবলী মেনে চলতে সম্মত হচ্ছেন। আমাদের সার্ভিস ব্যবহার করতে আপনার বয়স কমপক্ষে ১৮ বছর হতে হবে।"
               : "By using the Shondhaan platform, you agree to comply with these terms. You must be at least 18 years old to use our services."}</p>
           </section>
 
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "২. অ্যাকাউন্ট নিবন্ধন" : "2. Account Registration"}</h2>
             <p>{bn
-              ? "সেবা বুক করতে আপনাকে একটি অ্যাকাউন্ট তৈরি করতে হবে। আপনার অ্যাকাউন্টের তথ্য সঠিক ও আপডেট রাখা আপনার দায়িত্ব। আপনার অ্যাকাউন্টের নিরাপত্তা আপনার দায়িত্ব।"
+              ? "সার্ভিস বুক করতে আপনাকে একটি অ্যাকাউন্ট তৈরি করতে হবে। আপনার অ্যাকাউন্টের তথ্য সঠিক ও আপডেট রাখা আপনার দায়িত্ব। আপনার অ্যাকাউন্টের নিরাপত্তা আপনার দায়িত্ব।"
               : "You must create an account to book services. You are responsible for keeping your account information accurate and up to date. You are responsible for your account security."}</p>
           </section>
 
@@ -61,7 +61,7 @@ const TermsAndConditions = () => {
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "৫. গ্যারান্টি ও দায়বদ্ধতা" : "5. Guarantee & Liability"}</h2>
             <p>{bn
-              ? "সার্ভিসের মান সম্পর্কে কোনো অভিযোগ থাকলে ৭ দিনের মধ্যে জানাতে হবে। আমরা বিনামূল্যে পুনরায় সেবা দেব অথবা রিফান্ড প্রদান করব। তবে ক্লায়েন্টের অবহেলায় কোনো ক্ষতি হলে Shondhaan দায়ী থাকবে না।"
+              ? "সার্ভিসের মান সম্পর্কে কোনো অভিযোগ থাকলে ৭ দিনের মধ্যে জানাতে হবে। আমরা বিনামূল্যে পুনরায় সার্ভিস দেব অথবা রিফান্ড প্রদান করব। তবে ক্লায়েন্টের অবহেলায় কোনো ক্ষতি হলে Shondhaan দায়ী থাকবে না।"
               : "Any complaints about service quality must be reported within 7 days. We will provide a free re-service or refund. However, Shondhaan is not liable for damages caused by client negligence."}</p>
           </section>
 

@@ -88,8 +88,8 @@ const ShareTargetReceiver = () => {
             >
               <Search className="h-5 w-5 text-primary" />
               <div className="flex-1">
-                <div className="text-sm font-semibold text-foreground">{bn ? "সেবা খুঁজুন" : "Search Services"}</div>
-                <div className="text-[11px] text-muted-foreground">{bn ? "১৮৬+ সেবার মধ্যে অনুসন্ধান" : "Find from 186+ services"}</div>
+                <div className="text-sm font-semibold text-foreground">{bn ? "সার্ভিস খুঁজুন" : "Search Services"}</div>
+                <div className="text-[11px] text-muted-foreground">{bn ? "১৮৬+ সার্ভিসর মধ্যে অনুসন্ধান" : "Find from 186+ services"}</div>
               </div>
             </button>
             <button

@@ -126,7 +126,7 @@ const ServiceRequestsTab = ({ userPhone }: Props) => {
           type="text"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder={bn ? "সেবা, জেলা বা টোকেন দিয়ে খুঁজুন..." : "Search by service, district or token..."}
+          placeholder={bn ? "সার্ভিস, জেলা বা টোকেন দিয়ে খুঁজুন..." : "Search by service, district or token..."}
           className="w-full rounded-lg border border-input bg-background pl-9 pr-8 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring"
         />
         {searchQuery && (
@@ -148,7 +148,7 @@ const ServiceRequestsTab = ({ userPhone }: Props) => {
               onClick={() => setStatusFilter(fb.key)}
               className={`shrink-0 rounded-full px-2.5 py-1 text-[10px] font-medium border transition-all ${
                 statusFilter === fb.key
-                  ? "bg-primary text-primary-foreground border-primary"
+                  ? "bg-primary text-white border-primary"
                   : "bg-card text-muted-foreground border-border hover:border-primary/40"
               }`}
             >

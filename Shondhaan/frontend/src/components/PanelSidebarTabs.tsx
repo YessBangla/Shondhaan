@@ -262,7 +262,7 @@ useEffect(() => {
           collapsed && !inDrawer && "justify-center px-0"
         )}
       >
-        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-primary-foreground flex items-center justify-center shadow-md ring-1 ring-primary/30 shrink-0">
+        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-md ring-1 ring-primary/30 shrink-0">
           {panelIcon || <Sparkles className="h-4 w-4" />}
         </div>
         {(!collapsed || inDrawer) && (
@@ -361,7 +361,7 @@ useEffect(() => {
       <div className="border-t border-border/40 p-2 space-y-1">
         {(!collapsed || inDrawer) && user && (
           <div className="flex items-center gap-2 rounded-xl bg-secondary/40 px-2 py-1.5">
-            <div className="h-7 w-7 overflow-hidden rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center text-[11px] font-bold ring-1 ring-card shrink-0">
+            <div className="h-7 w-7 overflow-hidden rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[11px] font-bold ring-1 ring-card shrink-0">
               {profileImageUrl ? (
                 <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -660,7 +660,7 @@ const NavBtn = ({
         "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-card",
         collapsed ? "justify-center px-0 py-2.5 h-10 w-10 mx-auto" : "px-2.5 py-2",
         active
-          ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-md shadow-primary/25"
+          ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25"
           : "text-foreground hover:bg-secondary/80 hover:text-foreground active:scale-[0.98]"
       )}
       title={collapsed ? item.label : undefined}
@@ -674,7 +674,7 @@ const NavBtn = ({
       )}
       <span className={cn(
         "shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]",
-        active ? "text-primary-foreground" : "text-foreground/85 group-hover:text-primary"
+        active ? "text-white" : "text-foreground/85 group-hover:text-primary"
       )}>
         {item.icon}
       </span>
@@ -684,7 +684,7 @@ const NavBtn = ({
           className={cn(
             "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
             active
-              ? "bg-primary-foreground/20 text-primary-foreground"
+              ? "bg-primary-foreground/20 text-white"
               : "bg-destructive text-destructive-foreground"
           )}
         >

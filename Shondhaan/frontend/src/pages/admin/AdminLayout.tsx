@@ -46,12 +46,12 @@ const NAV: NavGroup[] = [
     ],
   },
   {
-    label: "সেবা CMS",
+    label: "সার্ভিস CMS",
     accent: "from-sky-500 to-blue-600",
     dot: "bg-sky-500",
     items: [
-      { to: "/admin/services", label: "সেবা", icon: <Package className="h-4 w-4" /> },
-      { to: "/admin/service-images", label: "সেবার ছবি", icon: <ImagePlus className="h-4 w-4" /> },
+      { to: "/admin/services", label: "সার্ভিস", icon: <Package className="h-4 w-4" /> },
+      { to: "/admin/service-images", label: "সার্ভিসর ছবি", icon: <ImagePlus className="h-4 w-4" /> },
       { to: "/admin/categories", label: "ক্যাটেগরি", icon: <Grid3X3 className="h-4 w-4" /> },
       { to: "/admin/offers", label: "অফার", icon: <Percent className="h-4 w-4" /> },
       { to: "/admin/banners", label: "ব্যানার", icon: <ImageIcon className="h-4 w-4" /> },
@@ -282,7 +282,7 @@ const AdminLayout = () => {
       b: { to: "/admin/bookings", label: "বুকিং" },
       r: { to: "/admin/requests", label: "সার্ভিস রিকোয়েস্ট" },
       u: { to: "/admin/users", label: "ইউজার" },
-      s: { to: "/admin/services", label: "সেবা" },
+      s: { to: "/admin/services", label: "সার্ভিস" },
       m: { to: "/admin/mart-overview", label: "মার্ট" },
       l: { to: "/admin/deal-overview", label: "ডিল" },
       j: { to: "/admin/job-listings", label: "জবস" },
@@ -409,7 +409,7 @@ const AdminLayout = () => {
         </div>
         <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
         <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র অ্যাডমিনদের জন্য।</p>
-        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
       </div>
     );
   }
@@ -447,7 +447,7 @@ const AdminLayout = () => {
                   data-group={item.group}
                   className={({ isActive }) =>
                   `group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
+                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
                   }`}>
                   <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
                   <span className="truncate flex-1">{item.label}</span>
@@ -547,7 +547,7 @@ const AdminLayout = () => {
         }`}
       >
         <div className={`flex items-center gap-2.5 border-b border-border/40 px-3.5 h-14 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-primary-foreground shadow-md ring-1 ring-primary/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-primary/30">
             <Sparkles className="h-4 w-4" />
           </div>
           {!collapsed && (
@@ -578,7 +578,7 @@ const AdminLayout = () => {
           <aside className="absolute inset-y-0 left-0 w-[78%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
             <div className="flex items-center justify-between border-b border-border/40 px-3.5 h-14">
               <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground shadow-md"><Sparkles className="h-4 w-4" /></div>
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md"><Sparkles className="h-4 w-4" /></div>
                 <p className="text-[13px] font-bold">অ্যাডমিন প্যানেল</p>
               </div>
               <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary"><X className="h-4 w-4" /></button>
@@ -667,7 +667,7 @@ const AdminLayout = () => {
               {/* Role badge — sheba.xyz inspired */}
               <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-2.5 py-0.5 hover:ring-primary/40 transition-all">
                 <div className="relative">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center text-[11px] font-bold shadow-inner">
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shadow-inner">
                     {initials}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
@@ -696,7 +696,7 @@ const AdminLayout = () => {
         </header>
 
         <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
-          <div className="mx-auto w-full max-w-[1440px] px-3 md:px-6 lg:px-8 py-5 md:py-6">
+          <div className="mx-auto w-full max-w-[1440px] px-1 py-1">
             {/* Page header — Laravel Nova-style */}
             <BackendPageHeader
               fallbackTitle={currentLabel}
@@ -823,7 +823,7 @@ const AdminLayout = () => {
           { keys: "g b", label: "বুকিং" },
           { keys: "g r", label: "সার্ভিস রিকোয়েস্ট" },
           { keys: "g u", label: "ইউজার ম্যানেজমেন্ট" },
-          { keys: "g s", label: "সেবা CMS" },
+          { keys: "g s", label: "সার্ভিস CMS" },
           { keys: "g m", label: "সন্ধান মার্ট" },
           { keys: "g l", label: "সন্ধান ডিল" },
           { keys: "g j", label: "সন্ধান জবস" },
@@ -866,8 +866,8 @@ const BackendPageHeader = ({
   const title = meta.title ?? fallbackTitle;
 
   return (
-    <div className="mb-4 md:mb-5">
-      <div className="flex flex-wrap items-end justify-between gap-3">
+    <div className="">
+      {/* <div className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           {eyebrow && (
             <p className="text-[10px] uppercase tracking-[0.14em] font-semibold text-muted-foreground/70">
@@ -905,7 +905,7 @@ const BackendPageHeader = ({
             </div>
           )}
         </div>
-      </div>
+      </div> */}
       {meta.toolbar && (
         <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-2.5 py-2">
           {meta.toolbar}

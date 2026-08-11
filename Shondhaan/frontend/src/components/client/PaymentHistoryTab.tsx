@@ -100,7 +100,7 @@ const PaymentHistoryTab = ({ bookings, martOrders = [] }: Props) => {
 
   const filterTabs: { key: FilterType; label: string; icon: any }[] = [
     { key: "all", label: bn ? "সব" : "All", icon: Filter },
-    { key: "services", label: bn ? "সেবা" : "Services", icon: ClipboardList },
+    { key: "services", label: bn ? "সার্ভিস" : "Services", icon: ClipboardList },
     { key: "mart", label: bn ? "মার্ট" : "Mart", icon: ShoppingBag },
   ];
 
@@ -122,7 +122,7 @@ const PaymentHistoryTab = ({ bookings, martOrders = [] }: Props) => {
           <p className="text-xl font-bold text-foreground">৳{totalSpent.toLocaleString("bn-BD")}</p>
           <div className="flex gap-2 mt-1">
             <span className="text-[9px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-              {bn ? "সেবা" : "Service"}: ৳{totalServiceSpent.toLocaleString("bn-BD")}
+              {bn ? "সার্ভিস" : "Service"}: ৳{totalServiceSpent.toLocaleString("bn-BD")}
             </span>
             <span className="text-[9px] text-muted-foreground bg-muted rounded px-1.5 py-0.5">
               {bn ? "মার্ট" : "Mart"}: ৳{totalMartSpent.toLocaleString("bn-BD")}
@@ -158,7 +158,7 @@ const PaymentHistoryTab = ({ bookings, martOrders = [] }: Props) => {
               key={tab.key}
               onClick={() => setFilter(tab.key)}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                filter === tab.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                filter === tab.key ? "bg-primary text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
               }`}
             >
               <Icon className="h-3 w-3" /> {tab.label}
@@ -218,7 +218,7 @@ const PaymentHistoryTab = ({ bookings, martOrders = [] }: Props) => {
                       <span className={`shrink-0 rounded px-1 py-0.5 text-[8px] font-bold ${
                         t.type === "mart" ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400" : "bg-primary/10 text-primary"
                       }`}>
-                        {t.type === "mart" ? (bn ? "মার্ট" : "Mart") : (bn ? "সেবা" : "Service")}
+                        {t.type === "mart" ? (bn ? "মার্ট" : "Mart") : (bn ? "সার্ভিস" : "Service")}
                       </span>
                     </div>
                     <p className="text-[10px] text-muted-foreground">{t.subtitle} • {new Date(t.created_at).toLocaleDateString("bn-BD")}</p>

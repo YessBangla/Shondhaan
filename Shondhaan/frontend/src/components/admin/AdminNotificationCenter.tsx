@@ -176,7 +176,7 @@ const AdminNotificationCenter = () => {
         <textarea value={message} onChange={e => setMessage(e.target.value)} placeholder="মেসেজ লিখুন..." rows={3}
           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring resize-none" />
 
-        <button onClick={handleSend} disabled={sending} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+        <button onClick={handleSend} disabled={sending} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
           {sending ? "পাঠানো হচ্ছে..." : "নোটিফিকেশন পাঠান"}
         </button>
       </div>

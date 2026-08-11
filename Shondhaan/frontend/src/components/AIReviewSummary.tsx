@@ -45,7 +45,7 @@ const AIReviewSummary = ({ reviews, productName, cacheKey }: Props) => {
         className="flex w-full items-center justify-between gap-2 px-4 py-3 text-left"
       >
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground">
+          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-white">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
           <div>

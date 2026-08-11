@@ -445,7 +445,7 @@ export default function InternalServiceChat() {
                         </div>
                         <div className={`rounded-xl px-3 py-2 text-sm ${
                           isMe
-                            ? "bg-primary text-primary-foreground rounded-br-sm"
+                            ? "bg-primary text-white rounded-br-sm"
                             : "bg-muted text-foreground rounded-bl-sm"
                         }`}>
                           {msg.message}
@@ -461,7 +461,7 @@ export default function InternalServiceChat() {
               {messages.length === 0 && (
                 <div className="text-center py-16 text-muted-foreground">
                   <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                  <p className="text-sm">এই সেবার জন্য এখনো কোনো মেসেজ নেই</p>
+                  <p className="text-sm">এই সার্ভিসর জন্য এখনো কোনো মেসেজ নেই</p>
                   <p className="text-xs mt-1">টিমের সাথে আলোচনা শুরু করুন!</p>
                 </div>
               )}

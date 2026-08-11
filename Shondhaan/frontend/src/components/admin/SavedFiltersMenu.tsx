@@ -73,7 +73,7 @@ function SavedFiltersMenu<T>({
                       placeholder="ফিল্টারের নাম…"
                       className="flex-1 h-8 px-2 rounded-lg bg-card border border-border text-[12px] outline-none focus:ring-2 focus:ring-primary/30"
                     />
-                    <button onClick={handleSave} className="h-8 px-2.5 rounded-lg bg-primary text-primary-foreground text-[11px] font-bold">সেভ</button>
+                    <button onClick={handleSave} className="h-8 px-2.5 rounded-lg bg-primary text-white text-[11px] font-bold">সেভ</button>
                   </div>
                 ) : (
                   <button

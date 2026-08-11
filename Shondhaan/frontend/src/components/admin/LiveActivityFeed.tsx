@@ -257,7 +257,7 @@ const LiveActivityFeed = ({ className }: { className?: string }) => {
               className={cn(
                 "inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10.5px] font-semibold whitespace-nowrap transition-colors",
                 filter === f.key
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-white"
                   : "text-muted-foreground hover:bg-secondary hover:text-foreground",
                 disabled && "opacity-40 cursor-not-allowed"
               )}

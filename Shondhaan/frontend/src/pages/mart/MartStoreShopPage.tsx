@@ -119,7 +119,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
           <p className="text-muted-foreground mb-4">{bn ? "এই লিংকে কোনো শপ নেই" : "No shop exists at this URL"}</p>
           <button
             onClick={() => navigate("/mart/home")}
-            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground"
+            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white"
           >
             {bn ? "মার্টে ফিরুন" : "Go to Mart"}
           </button>

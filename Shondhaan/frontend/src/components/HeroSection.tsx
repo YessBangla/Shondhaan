@@ -148,7 +148,7 @@ const PLATFORM_CARDS = [
   {
     to: "/mart/home",
     labelBn: "মার্রকেটপ্লেস", labelEn: "Marketplace",
-    descBn: "প্রিমিয়াম পণ্য ও সেবা", descEn: "Premium products",
+    descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
     Icon: ShoppingBag,
     accentColor: "#d4a574",
     bgDark: "#1a1a2e",
@@ -174,8 +174,8 @@ const PLATFORM_CARDS = [
   },
     {
     to: "/services",
-    labelBn: "সেবা", labelEn: "Services",
-    descBn: "সেরা সেবাসমূহ", descEn: "Best Services",
+    labelBn: "সার্ভিস", labelEn: "Services",
+    descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
     Icon: LucideWorkflow,
     accentColor: "#a89a9c",
     bgDark: "#1a1a2e",
@@ -258,7 +258,7 @@ function SearchDropdown({
             <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
               <Search className="h-6 w-6 text-amber-700/30" />
               <p className="text-xs text-amber-200/40">
-                {bn ? "সেবা পাওয়া যায়নি" : "No service found"}
+                {bn ? "সার্ভিস পাওয়া যায়নি" : "No service found"}
               </p>
             </div>
           )
@@ -339,11 +339,11 @@ const HeroSection = () => {
 
   const heroTitle =
     (bn ? activeHeroBanner?.title_bn : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) ||
-    (bn ? "আপনার সেবার অংশীদার" : "Your Service Partner");
+    (bn ? "আপনার সার্ভিসর অংশীদার" : "Your Service Partner");
 
   const heroSubtitle =
     (bn ? activeHeroBanner?.subtitle_bn : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
-    (bn ? "প্রিমিয়াম সেবা প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
+    (bn ? "প্রিমিয়াম সার্ভিস প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
   const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
 
@@ -522,7 +522,7 @@ const HeroSection = () => {
                   onChange={(e) => setQuery(e.target.value)}
                   onFocus={() => setFocused(true)}
                   onKeyDown={handleKeyDown}
-                  placeholder={bn ? "সেবা খুঁজুন" : "Search services"}
+                  placeholder={bn ? "সার্ভিস খুঁজুন" : "Search services"}
                   className="flex-1 min-w-0 bg-transparent text-xs outline-none placeholder:text-amber-700/40 text-center"
                 />
                 <button
@@ -694,7 +694,7 @@ const HeroSection = () => {
                       onChange={(e) => setQuery(e.target.value)}
                       onFocus={() => setFocused(true)}
                       onKeyDown={handleKeyDown}
-                      placeholder={bn ? "আপনি কী সেবা খুঁজছেন?" : "What service are you looking for?"}
+                      placeholder={bn ? "আপনি কী সার্ভিস খুঁজছেন?" : "What service are you looking for?"}
                       className="flex-1 bg-transparent text-black outline-none placeholder:text-black font-light text-sm py-2.5 text-center"
                     />
                   </div>

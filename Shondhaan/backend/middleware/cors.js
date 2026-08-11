@@ -6,7 +6,6 @@ const defaultCorsOrigins = [
   "http://localhost:5173",
   "http://127.0.0.1:5173",
   "https://shondhaan.com",
-  "https://www.shondhaan.com",
 ];
 
 const corsOrigins = [

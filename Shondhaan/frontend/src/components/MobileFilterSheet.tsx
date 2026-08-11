@@ -115,7 +115,7 @@ const MobileFilterSheet = ({
               <h3 className="font-heading text-base font-bold text-foreground">
                 {title || (bn ? "ফিল্টার" : "Filters")}
                 {totalSelected > 0 && (
-                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                  <span className="ml-2 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-bold text-white">
                     {totalSelected}
                   </span>
                 )}
@@ -149,7 +149,7 @@ const MobileFilterSheet = ({
                             onClick={() => toggle(group.id, opt.id, group.multiple !== false)}
                             className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-all active:scale-95 ${
                               active
-                                ? "border-primary bg-primary text-primary-foreground"
+                                ? "border-primary bg-primary text-white"
                                 : "border-border bg-background text-foreground"
                             }`}
                             aria-pressed={active}
@@ -190,7 +190,7 @@ const MobileFilterSheet = ({
                   onApply?.();
                   onClose();
                 }}
-                className="flex-[2] rounded-full bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+                className="flex-[2] rounded-full bg-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
               >
                 {bn ? "প্রয়োগ করুন" : "Apply"}
                 {totalSelected > 0 ? ` (${totalSelected})` : ""}

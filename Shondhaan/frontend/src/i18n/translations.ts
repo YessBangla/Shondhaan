@@ -10,10 +10,10 @@ export const translations = {
 
   // Hero
   "hero.title": { bn: "আপনার সাহায্যকারী", en: "Your Personal Assistant" },
-  "hero.subtitle": { bn: "যেকোনো সেবা, যেকোনো সময়। এক জায়গায় সব সমাধান।", en: "Any service, anytime. All solutions in one place." },
-  "hero.searchPlaceholder": { bn: "সেবা খুঁজুন... যেমন AC, ক্লিনিং, সেলুন", en: "Search services... e.g. AC, Cleaning, Salon" },
+  "hero.subtitle": { bn: "যেকোনো সার্ভিস, যেকোনো সময়। এক জায়গায় সব সমাধান।", en: "Any service, anytime. All solutions in one place." },
+  "hero.searchPlaceholder": { bn: "সার্ভিস খুঁজুন... যেমন AC, ক্লিনিং, সেলুন", en: "Search services... e.g. AC, Cleaning, Salon" },
   "hero.from": { bn: "থেকে", en: "from" },
-  "hero.noServiceFound": { bn: "এই শহরে কোনো সেবা পাওয়া যায়নি", en: "No services found in this city" },
+  "hero.noServiceFound": { bn: "এই শহরে কোনো সার্ভিস পাওয়া যায়নি", en: "No services found in this city" },
 
   // Categories
   "cat.acService": { bn: "এসি সার্ভিস", en: "AC Service" },
@@ -25,22 +25,22 @@ export const translations = {
   "cat.electrical": { bn: "ইলেকট্রিক্যাল", en: "Electrical" },
   "cat.painting": { bn: "পেইন্টিং", en: "Painting" },
   "cat.driver": { bn: "ড্রাইভার সার্ভিস", en: "Driver Service" },
-  "cat.allServices": { bn: "সব সেবা", en: "All Services" },
+  "cat.allServices": { bn: "সব সার্ভিস", en: "All Services" },
 
   // Service Sections
   "section.forYourHome": { bn: "আপনার ঘরের জন্য", en: "For Your Home" },
   "section.recommended": { bn: "রিকমেন্ডেড", en: "Recommended" },
   "section.trending": { bn: "ট্রেন্ডিং", en: "Trending" },
   "section.viewAll": { bn: "সব দেখুন", en: "View All" },
-  "section.noServiceCity": { bn: "-তে এখনও সেবা চালু হয়নি", en: " — services not available yet" },
-  "section.comingSoon": { bn: "শীঘ্রই আপনার এলাকায় সেবা আসছে!", en: "Services coming to your area soon!" },
+  "section.noServiceCity": { bn: "-তে এখনও সার্ভিস চালু হয়নি", en: " — services not available yet" },
+  "section.comingSoon": { bn: "শীঘ্রই আপনার এলাকায় সার্ভিস আসছে!", en: "Services coming to your area soon!" },
 
   // How It Works
   "howItWorks.label": { bn: "কিভাবে কাজ করে", en: "How It Works" },
-  "howItWorks.title": { bn: "সবচেয়ে সহজ উপায়ে সেবা নিন", en: "Get Services the Easiest Way" },
+  "howItWorks.title": { bn: "সবচেয়ে সহজ উপায়ে সার্ভিস নিন", en: "Get Services the Easiest Way" },
   "howItWorks.step1": { bn: "১", en: "1" },
-  "howItWorks.step1Title": { bn: "সেবা নির্বাচন করুন", en: "Select a Service" },
-  "howItWorks.step1Desc": { bn: "ওয়েবসাইট বা অ্যাপ থেকে আপনার প্রয়োজনীয় সেবা বেছে নিন।", en: "Choose your required service from the website or app." },
+  "howItWorks.step1Title": { bn: "সার্ভিস নির্বাচন করুন", en: "Select a Service" },
+  "howItWorks.step1Desc": { bn: "ওয়েবসাইট বা অ্যাপ থেকে আপনার প্রয়োজনীয় সার্ভিস বেছে নিন।", en: "Choose your required service from the website or app." },
   "howItWorks.step2": { bn: "২", en: "2" },
   "howItWorks.step2Title": { bn: "সময় নির্ধারণ করুন", en: "Schedule Your Time" },
   "howItWorks.step2Desc": { bn: "আপনার সুবিধাজনক তারিখ ও সময় নির্বাচন করুন। রেটিং দেখে সার্ভিস প্রোভাইডার বেছে নিন।", en: "Pick a convenient date & time. Choose a provider based on ratings." },
@@ -68,20 +68,20 @@ export const translations = {
 
   // App Download
   "app.title": { bn: "আমাদের অ্যাপ ডাউনলোড করুন", en: "Download Our App" },
-  "app.subtitle": { bn: "যেকোনো সেবা, যেকোনো সময়, যেকোনো জায়গায়।", en: "Any service, anytime, anywhere." },
+  "app.subtitle": { bn: "যেকোনো সার্ভিস, যেকোনো সময়, যেকোনো জায়গায়।", en: "Any service, anytime, anywhere." },
   "app.phonePlaceholder": { bn: "আপনার মোবাইল নম্বর দিন", en: "Enter your mobile number" },
   "app.getApp": { bn: "অ্যাপ পান", en: "Get App" },
 
   // Request Service
-  "request.title": { bn: "আপনার কাঙ্ক্ষিত সেবা খুঁজে পাচ্ছেন না?", en: "Can't find the service you need?" },
+  "request.title": { bn: "আপনার কাঙ্ক্ষিত সার্ভিস খুঁজে পাচ্ছেন না?", en: "Can't find the service you need?" },
   "request.subtitle": { bn: "২৪/৭ আমাদের জানান, আমরা সাহায্য করবো।", en: "Let us know 24/7, we'll help you." },
   "request.requestBtn": { bn: "সার্ভিস রিকোয়েস্ট করুন", en: "Request Service" },
   "request.callBtn": { bn: "কল করুন", en: "Call Us" },
 
   // Footer
-  "footer.tagline": { bn: "আপনার বাড়ির প্রিমিয়াম কনসিয়ার্জ সার্ভিস। যেকোনো সেবা, যেকোনো সময়।", en: "Premium concierge service for your home. Any service, anytime." },
+  "footer.tagline": { bn: "আপনার বাড়ির প্রিমিয়াম কনসিয়ার্জ সার্ভিস। যেকোনো সার্ভিস, যেকোনো সময়।", en: "Premium concierge service for your home. Any service, anytime." },
   "footer.links": { bn: "গুরুত্বপূর্ণ লিংক", en: "Important Links" },
-  "footer.allServices": { bn: "সব সেবা", en: "All Services" },
+  "footer.allServices": { bn: "সব সার্ভিস", en: "All Services" },
   "footer.myBookings": { bn: "আমার বুকিং", en: "My Bookings" },
   "footer.profile": { bn: "প্রোফাইল", en: "Profile" },
   "footer.loginRegister": { bn: "লগইন / রেজিস্টার", en: "Login / Register" },
@@ -93,8 +93,8 @@ export const translations = {
   "bottomNav.search": { bn: "খুঁজুন", en: "Search" },
   "bottomNav.orders": { bn: "অর্ডার", en: "Orders" },
   "bottomNav.account": { bn: "অ্যাকাউন্ট", en: "Account" },
-  "bottomNav.searchPlaceholder": { bn: "সেবা খুঁজুন...", en: "Search services..." },
-  "bottomNav.noService": { bn: "এই শহরে কোনো সেবা পাওয়া যায়নি", en: "No services found in this city" },
+  "bottomNav.searchPlaceholder": { bn: "সার্ভিস খুঁজুন...", en: "Search services..." },
+  "bottomNav.noService": { bn: "এই শহরে কোনো সার্ভিস পাওয়া যায়নি", en: "No services found in this city" },
 
   // Location Selector
   "location.searchPlaceholder": { bn: "বিভাগ, জেলা বা থানা খুঁজুন...", en: "Search division, district or thana..." },
@@ -156,8 +156,8 @@ export const translations = {
   "auth.changeEmail": { bn: "ইমেইল পরিবর্তন করুন", en: "Change email" },
 
   // ServiceDetail
-  "sd.notFound": { bn: "সেবা পাওয়া যায়নি", en: "Service Not Found" },
-  "sd.notAvailable": { bn: "এই সেবাটি বর্তমানে উপলব্ধ নয়।", en: "This service is currently unavailable." },
+  "sd.notFound": { bn: "সার্ভিস পাওয়া যায়নি", en: "Service Not Found" },
+  "sd.notAvailable": { bn: "এই সার্ভিসটি বর্তমানে উপলব্ধ নয়।", en: "This service is currently unavailable." },
   "sd.goHome": { bn: "হোমে ফিরুন", en: "Go Home" },
   "sd.goBack": { bn: "পেছনে যান", en: "Go Back" },
   "sd.reviews": { bn: "রিভিউ", en: "reviews" },
@@ -174,9 +174,9 @@ export const translations = {
   "sd.addressPlaceholder": { bn: "ঠিকানা", en: "Address" },
   "sd.submitting": { bn: "অপেক্ষা করুন...", en: "Please wait..." },
   "sd.confirmBooking": { bn: "বুকিং কনফার্ম করুন", en: "Confirm Booking" },
-  "sd.guarantee": { bn: "১০০% সন্তুষ্টি গ্যারান্টি। সেবায় সমস্যা হলে ফুল রিফান্ড।", en: "100% satisfaction guarantee. Full refund if unsatisfied." },
+  "sd.guarantee": { bn: "১০০% সন্তুষ্টি গ্যারান্টি। সার্ভিসয় সমস্যা হলে ফুল রিফান্ড।", en: "100% satisfaction guarantee. Full refund if unsatisfied." },
   "sd.callUs": { bn: "ফোনে কল করুন", en: "Call Us" },
-  "sd.relatedServices": { bn: "সম্পর্কিত সেবা", en: "Related Services" },
+  "sd.relatedServices": { bn: "সম্পর্কিত সার্ভিস", en: "Related Services" },
   "sd.loginFirst": { bn: "বুকিং করতে প্রথমে লগইন করুন", en: "Please login to book" },
   "sd.fillAll": { bn: "সব তথ্য পূরণ করুন", en: "Please fill all fields" },
   "sd.validPhone": { bn: "সঠিক মোবাইল নম্বর দিন", en: "Enter a valid mobile number" },
@@ -186,7 +186,7 @@ export const translations = {
   "bh.title": { bn: "আমার বুকিং সমূহ", en: "My Bookings" },
   "bh.goBack": { bn: "পেছনে যান", en: "Go Back" },
   "bh.noBookings": { bn: "কোনো বুকিং পাওয়া যায়নি", en: "No bookings found" },
-  "bh.viewServices": { bn: "সেবা দেখুন", en: "View Services" },
+  "bh.viewServices": { bn: "সার্ভিস দেখুন", en: "View Services" },
   "bh.pending": { bn: "অপেক্ষমাণ", en: "Pending" },
   "bh.confirmed": { bn: "নিশ্চিত", en: "Confirmed" },
   "bh.completed": { bn: "সম্পন্ন", en: "Completed" },
@@ -209,10 +209,10 @@ export const translations = {
   "profile.updated": { bn: "প্রোফাইল আপডেট হয়েছে!", en: "Profile updated!" },
 
   // AllServices
-  "as.title": { bn: "সকল সেবা", en: "All Services" },
-  "as.searchPlaceholder": { bn: "সেবা খুঁজুন...", en: "Search services..." },
-  "as.found": { bn: "টি সেবা পাওয়া গেছে", en: " services found" },
-  "as.notFound": { bn: "কোনো সেবা পাওয়া যায়নি", en: "No services found" },
+  "as.title": { bn: "সকল সার্ভিস", en: "All Services" },
+  "as.searchPlaceholder": { bn: "সার্ভিস খুঁজুন...", en: "Search services..." },
+  "as.found": { bn: "টি সার্ভিস পাওয়া গেছে", en: " services found" },
+  "as.notFound": { bn: "কোনো সার্ভিস পাওয়া যায়নি", en: "No services found" },
   "as.from": { bn: "থেকে", en: "from" },
 
   // BookingConfirmation
@@ -230,7 +230,7 @@ export const translations = {
   // Cart
   "cart.title": { bn: "কার্ট", en: "Cart" },
   "cart.empty": { bn: "কার্ট খালি", en: "Cart is empty" },
-  "cart.continueShopping": { bn: "সেবা দেখুন", en: "Browse Services" },
+  "cart.continueShopping": { bn: "সার্ভিস দেখুন", en: "Browse Services" },
   "cart.total": { bn: "মোট", en: "Total" },
   "cart.checkout": { bn: "অর্ডার করুন", en: "Checkout" },
   "cart.clear": { bn: "কার্ট খালি করুন", en: "Clear Cart" },
@@ -265,13 +265,13 @@ export const translations = {
   "rv.deleted": { bn: "রিভিউ মুছে ফেলা হয়েছে", en: "Review deleted" },
 
   // Emergency
-  "emergency.title": { bn: "জরুরী সেবা", en: "Emergency Service" },
-  "emergency.subtitle": { bn: "দ্রুত সেবা পান, ৩০% অতিরিক্ত চার্জে", en: "Get quick service, 30% extra charge" },
-  "emergency.btn": { bn: "জরুরী সেবা", en: "Emergency" },
+  "emergency.title": { bn: "জরুরী সার্ভিস", en: "Emergency Service" },
+  "emergency.subtitle": { bn: "দ্রুত সার্ভিস পান, ৩০% অতিরিক্ত চার্জে", en: "Get quick service, 30% extra charge" },
+  "emergency.btn": { bn: "জরুরী সার্ভিস", en: "Emergency" },
   "emergency.tag": { bn: "জরুরী", en: "Emergency" },
-  "emergency.selectService": { bn: "কোন সেবাটি জরুরী ভিত্তিতে প্রয়োজন?", en: "Which service do you need urgently?" },
-  "emergency.backToServices": { bn: "সব সেবা দেখুন", en: "Back to services" },
-  "emergency.addedToCart": { bn: "জরুরী সেবা কার্টে যোগ হয়েছে!", en: "Emergency service added to cart!" },
+  "emergency.selectService": { bn: "কোন সার্ভিসটি জরুরী ভিত্তিতে প্রয়োজন?", en: "Which service do you need urgently?" },
+  "emergency.backToServices": { bn: "সব সার্ভিস দেখুন", en: "Back to services" },
+  "emergency.addedToCart": { bn: "জরুরী সার্ভিস কার্টে যোগ হয়েছে!", en: "Emergency service added to cart!" },
 
   // Share
   "sd.share": { bn: "শেয়ার করুন", en: "Share" },
@@ -291,7 +291,7 @@ export const translations = {
 
   // Checkout
   "checkout.subtotal": { bn: "সাবটোটাল", en: "Subtotal" },
-  "checkout.emergencyNote": { bn: "জরুরী সেবা — যেকোনো সময় বুকিং করা যাবে", en: "Emergency — book anytime" },
+  "checkout.emergencyNote": { bn: "জরুরী সার্ভিস — যেকোনো সময় বুকিং করা যাবে", en: "Emergency — book anytime" },
 } as const;
 
 export type TranslationKey = keyof typeof translations;

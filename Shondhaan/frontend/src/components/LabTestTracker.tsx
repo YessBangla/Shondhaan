@@ -161,7 +161,7 @@ const LabTestTracker = ({ bn }: LabTestTrackerProps) => {
           return (
             <div key={step.key} className="flex flex-1 flex-col items-center gap-1.5 relative">
               <div className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                isActive ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                isActive ? "bg-primary text-white" : "bg-muted text-muted-foreground"
               }`}>
                 <Icon className="h-4 w-4" />
               </div>

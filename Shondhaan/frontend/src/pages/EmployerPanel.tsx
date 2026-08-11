@@ -82,7 +82,7 @@ interface EmployerProfile {
 const INDUSTRY_TYPES = [
   "তথ্যপ্রযুক্তি (IT)", "সফটওয়্যার/ডাটা", "ই-কমার্স", "এফ-কমার্স",
   "গার্মেন্টস/টেক্সটাইল", "ব্যাংক/আর্থিক প্রতিষ্ঠান", "বীমা", "শিক্ষা প্রতিষ্ঠান",
-  "স্বাস্থ্যসেবা/হাসপাতাল", "ডায়াগনস্টিক সেন্টার", "ফার্মাসিউটিক্যালস",
+  "স্বাস্থ্যসার্ভিস/হাসপাতাল", "ডায়াগনস্টিক সেন্টার", "ফার্মাসিউটিক্যালস",
   "টেলিকমিউনিকেশন", "এনজিও/ডেভেলপমেন্ট", "ম্যানুফ্যাকচারিং (ভারী শিল্প)",
   "ম্যানুফ্যাকচারিং (হালকা শিল্প)", "নির্মাণ/রিয়েল এস্টেট", "হোটেল/রেস্তোরাঁ",
   "ট্যুরিজম/এয়ারলাইন", "মিডিয়া/বিজ্ঞাপন", "কৃষি/এগ্রো", "পরিবহন/লজিস্টিকস",
@@ -776,7 +776,7 @@ const EmployerPanel = () => {
                   <div className="flex flex-wrap gap-2">
                     {["1-25", "26-50", "51-100", "101-500", "501-1000", "1000+"].map(c => (
                       <button key={c} type="button" onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${formData.employee_count === c ? "bg-primary text-primary-foreground border-primary" : "bg-background border-input hover:bg-muted"}`}>
+                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${formData.employee_count === c ? "bg-primary text-white border-primary" : "bg-background border-input hover:bg-muted"}`}>
                         {c}
                       </button>
                     ))}
@@ -1229,7 +1229,7 @@ const EmployerPanel = () => {
                     onClick={() => setApplicantsSubTab(t.key as any)}
                     className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
                       applicantsSubTab === t.key
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-white"
                         : "bg-muted text-muted-foreground hover:bg-muted/80"
                     }`}
                   >
@@ -1276,7 +1276,7 @@ const EmployerPanel = () => {
                   key={f.key}
                   onClick={() => setApplicantsFilter(f.key as any)}
                   className={`px-3 py-1 rounded text-[11px] font-medium whitespace-nowrap ${
-                    applicantsFilter === f.key ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    applicantsFilter === f.key ? "bg-primary text-white" : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {f.label} {f.count}
@@ -1681,7 +1681,7 @@ const EmployerPanel = () => {
                 const features = typeof pkg.features === "string" ? JSON.parse(pkg.features || "[]") : (pkg.features || []);
                 return (
                   <div key={pkg.id} className={`border rounded-xl p-5 bg-card relative transition-all hover:shadow-lg ${isRecommended ? "border-primary ring-2 ring-primary/20" : ""} ${visLevel === "hot" ? "border-red-400 bg-gradient-to-b from-red-50/50 to-card dark:from-red-950/20" : ""}`}>
-                    {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] px-3">জনপ্রিয়</Badge>}
+                    {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-white text-[10px] px-3">জনপ্রিয়</Badge>}
                     {visLevel === "hot" && <Badge className="absolute -top-2.5 left-3 bg-red-500 text-white text-[10px] px-3">🔥 Special</Badge>}
                     <div className="flex items-center gap-2 mb-3">
                       {getPackageIcon(visLevel)}
@@ -1759,7 +1759,7 @@ const EmployerPanel = () => {
                     key={pkg.id}
                     className={`border rounded-xl p-4 bg-card relative ${isRecommended ? "border-primary ring-2 ring-primary/20" : ""} ${visLevel === "hot" ? "border-red-400" : ""}`}
                   >
-                    {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-primary-foreground text-[10px] px-3">জনপ্রিয়</Badge>}
+                    {isRecommended && <Badge className="absolute -top-2.5 right-3 bg-primary text-white text-[10px] px-3">জনপ্রিয়</Badge>}
                     {visLevel === "hot" && <Badge className="absolute -top-2.5 left-3 bg-red-500 text-white text-[10px] px-3">🔥 Special</Badge>}
                     <div className="flex items-center gap-2 mb-2">
                       {getPackageIcon(visLevel)}

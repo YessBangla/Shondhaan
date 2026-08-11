@@ -33,7 +33,7 @@ const PrivacyPolicy = () => {
           <section>
             <h2 className="text-base font-semibold text-foreground mb-2">{bn ? "১. তথ্য সংগ্রহ" : "1. Information Collection"}</h2>
             <p>{bn
-              ? "আমরা আপনার নাম, ফোন নম্বর, ইমেইল, ঠিকানা এবং লোকেশন তথ্য সংগ্রহ করি সেবা প্রদানের জন্য। এছাড়া ওয়েবসাইট ব্যবহারের তথ্য (cookies, IP address) স্বয়ংক্রিয়ভাবে সংগ্রহ হতে পারে।"
+              ? "আমরা আপনার নাম, ফোন নম্বর, ইমেইল, ঠিকানা এবং লোকেশন তথ্য সংগ্রহ করি সার্ভিস প্রদানের জন্য। এছাড়া ওয়েবসাইট ব্যবহারের তথ্য (cookies, IP address) স্বয়ংক্রিয়ভাবে সংগ্রহ হতে পারে।"
               : "We collect your name, phone number, email, address, and location information to provide services. Website usage data (cookies, IP address) may also be collected automatically."}</p>
           </section>
 

@@ -57,7 +57,7 @@ export default function AIRecommenderBubble() {
           className="fixed left-4 z-40 max-w-[280px] md:bottom-6 md:left-6"
           style={{ bottom: getMobileFloatingBottom(8) }}
         >
-          <div className="relative border border-primary rounded-2xl bg-accent-foreground p-3 pr-8 text-primary-foreground shadow backdrop-blur">
+          <div className="relative border border-primary rounded-2xl bg-accent-foreground p-3 pr-8 text-white shadow backdrop-blur">
             <button
               onClick={dismiss}
               className="absolute right-2 top-2 rounded-full p-1 text-primary hover:bg-primary hover:text-white transition-colors"

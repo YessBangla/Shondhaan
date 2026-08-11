@@ -9,7 +9,7 @@ import avatarArif from "@/assets/avatar-arif.png";
 
 const testimonials = [
   {
-    quote: "Shondhaan আমার মতো কর্মজীবী নারীদের জন্য অত্যন্ত সহায়ক। তারা সময়মতো সেবা দিয়েছে এবং আমি তাদের সেবার মানে খুবই সন্তুষ্ট।",
+    quote: "Shondhaan আমার মতো কর্মজীবী নারীদের জন্য অত্যন্ত সহায়ক। তারা সময়মতো সার্ভিস দিয়েছে এবং আমি তাদের সার্ভিসর মানে খুবই সন্তুষ্ট।",
     quoteEn: "Shondhaan is extremely helpful for working women like me. They provided timely service and I'm very satisfied with the quality.",
     name: "সাইমা আহমেদ",
     nameEn: "Saima Ahmed",
@@ -27,7 +27,7 @@ const testimonials = [
     avatar: avatarZabin,
   },
   {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সার্ভিস পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
     quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",
@@ -45,7 +45,7 @@ const testimonials = [
     avatar: avatarArif,
   },
    {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সার্ভিস পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
     quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",
@@ -54,7 +54,7 @@ const testimonials = [
     avatar: avatarZeba,
   },
    {
-    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সেবা পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
+    quote: "আমার বিয়ের সময় কোনো বিউটি পার্লরে সময় পাচ্ছিলাম না। Shondhaan অ্যাপে আমার সব প্রয়োজনীয় সার্ভিস পেয়ে গেলাম। সময়মতো বিউটিশিয়ান এসেছিল।",
     quoteEn: "During my wedding, I couldn't get appointments at beauty parlors. I found all the services I needed on Shondhaan app. The beautician arrived on time.",
     name: "জেবা ফারিবা",
     nameEn: "Zeba Fariba",

@@ -52,7 +52,7 @@ interface DealLocationSelectorProps {
    bgImage?: string;
 }
 
-const DEFAULT_BG_IMAGE = "/deal/hero_deal-3.png";
+const DEFAULT_BG_IMAGE = "/deal_assets/hero_deal-3.png";
 
 const DealLocationSelector = ({
   value,
@@ -392,7 +392,7 @@ const DealLocationSelector = ({
             {bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
           </h2> */}
 
-          <div className="flex px-8 flex-col sm:flex-row max-w-4xl mx-auto gap-2">
+          <div className="flex px-8 flex-col sm:flex-row max-w-4xl mx-auto gap-2 relative">
             {/* Search Input */}
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
@@ -426,6 +426,69 @@ const DealLocationSelector = ({
               )}
             </div>
 
+            {/* 🔽 SEARCH RESULTS (with infinite scroll) */}
+            <div className="max-w-4xl mx-auto absolute sm:w-full left-0 right-0 top-0 mt-0 z-500">
+            {results.length > 0 && (
+              <div
+                ref={scrollRef}
+                onScroll={handleScroll}
+                className="w-full border border-gray-200 top-12 bg-white rounded-lg absolute shadow-sm max-h-96 overflow-y-auto divide-y divide-gray-100"
+              >
+                {results.map((item, index) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleResultClick(item)}
+                    className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150 ${
+                      index === activeResultIndex ? "bg-gray-50" : ""
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {getListingImage(item) ? (
+                        <img
+                          src={getListingImage(item)}
+                          alt={item.title}
+                          className="h-12 w-12 rounded-md object-cover flex-shrink-0"
+                          loading="lazy"
+                        />
+                      ) : (
+                        <div className="h-12 w-12 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                          <MapPin className="h-5 w-5 text-gray-400" />
+                        </div>
+                      )}
+                      <div className="flex-2 min-w-0">
+                        <p className="font-medium text-gray-800 truncate">
+                          {bn ? item.title : item.title_en || item.title}
+                        </p>
+                        <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
+                          <MapPin size={12} className="text-gray-400 flex-shrink-0" />
+                          <span className="truncate">
+                            {item.location_district}, {item.location_area}
+                          </span>
+                        </p>
+                        {/* <p className="text-sm font-semibold text-emerald-600 mt-0.5">
+                          ৳ {item.price}
+                        </p> */}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {loadingMore && (
+                  <div className="p-3 flex justify-center">
+                    <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                  </div>
+                )}
+              </div>
+            )}
+            {/* 🧹 CLEAR BUTTON */}
+              {(value.division || value.district || value.thana || search) && (
+                <button
+                  onClick={handleClear}
+                  className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors">
+                  <X size={14} /> {bn ? "মুছুন" : "Clear"}
+                </button>
+              )}
+            </div>
+
             {/* Current Location Button */}
             {geocodingProvider && (
               <button
@@ -453,61 +516,11 @@ const DealLocationSelector = ({
               </button>
             )}
           </div>
-        </div>
-      </div>
 
-      {/* 🔽 SEARCH RESULTS (with infinite scroll) */}
-      {results.length > 0 && (
-        <div
-          ref={scrollRef}
-          onScroll={handleScroll}
-          className="w-full border border-gray-200 bg-white rounded-lg shadow-sm max-h-96 overflow-y-auto divide-y divide-gray-100"
-        >
-          {results.map((item, index) => (
-            <div
-              key={item.id}
-              onClick={() => handleResultClick(item)}
-              className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors duration-150 ${
-                index === activeResultIndex ? "bg-gray-50" : ""
-              }`}
-            >
-              <div className="flex items-start gap-3">
-                {getListingImage(item) ? (
-                  <img
-                    src={getListingImage(item)}
-                    alt={item.title}
-                    className="h-12 w-12 rounded-md object-cover flex-shrink-0"
-                    loading="lazy"
-                  />
-                ) : (
-                  <div className="h-12 w-12 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                    <MapPin className="h-5 w-5 text-gray-400" />
-                  </div>
-                )}
-                <div className="flex-2 min-w-0">
-                  <p className="font-medium text-gray-800 truncate">
-                    {bn ? item.title : item.title_en || item.title}
-                  </p>
-                  <p className="text-sm text-gray-500 flex items-center gap-1 mt-0.5">
-                    <MapPin size={12} className="text-gray-400 flex-shrink-0" />
-                    <span className="truncate">
-                      {item.location_district}, {item.location_area}
-                    </span>
-                  </p>
-                  {/* <p className="text-sm font-semibold text-emerald-600 mt-0.5">
-                    ৳ {item.price}
-                  </p> */}
-                </div>
-              </div>
-            </div>
-          ))}
-          {loadingMore && (
-            <div className="p-3 flex justify-center">
-              <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
-            </div>
-          )}
+
         </div>
-      )}
+
+      </div>
 
       {/* EMPTY STATE */}
       {search.trim() && !loading && results.length === 0 && (
@@ -522,9 +535,9 @@ const DealLocationSelector = ({
       )}
 
       {/* 📍 LOCATION SELECTORS */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div className="hidden grid-cols-1 sm:grid-cols-3 gap-3">
         {/* Division */}
-        {/* <Select value={value.division} onValueChange={handleDivisionChange}>
+        <Select value={value.division} onValueChange={handleDivisionChange}>
           <SelectTrigger>
             <SelectValue
               placeholder={bn ? "বিভাগ নির্বাচন করুন" : "Select Division"}
@@ -537,10 +550,10 @@ const DealLocationSelector = ({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select> */}
+        </Select>
 
         {/* District */}
-        {/* <Select
+        <Select
           value={value.district}
           onValueChange={handleDistrictChange}
           disabled={!value.division}
@@ -557,10 +570,10 @@ const DealLocationSelector = ({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select> */}
+        </Select>
 
         {/* Thana */}
-        {/* <Select
+        <Select
           value={value.thana}
           onValueChange={handleThanaChange}
           disabled={!value.district}
@@ -577,17 +590,9 @@ const DealLocationSelector = ({
               </SelectItem>
             ))}
           </SelectContent>
-        </Select> */}
+        </Select>
       </div>
 
-      {/* 🧹 CLEAR BUTTON */}
-      {(value.division || value.district || value.thana || search) && (
-        <button
-          onClick={handleClear}
-          className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors">
-          <X size={14} /> {bn ? "মুছুন" : "Clear"}
-        </button>
-      )}
     </div>
   );
 };

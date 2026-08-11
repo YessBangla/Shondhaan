@@ -57,7 +57,7 @@ const toneStyles: Record<BulkActionTone, { ring: string; chip: string; btn: stri
   neutral: {
     ring: "ring-primary/30 bg-primary/10 text-primary",
     chip: "bg-primary/10 text-primary",
-    btn: "bg-primary hover:bg-primary/90 text-primary-foreground",
+    btn: "bg-primary hover:bg-primary/90 text-white",
     icon: <AlertTriangle className="h-5 w-5" />,
     defaultTitle: "একশন নিশ্চিত করুন",
   },

@@ -21,7 +21,7 @@ const https = require('https');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL || 'https://backend-central.shondhaan.com';
+const SHONDHAAN_API_URL = process.env.SHONDHAAN_API_URL;
 const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || 'change-this-secret-in-env';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-jwt-secret-should-be-in-env';
 

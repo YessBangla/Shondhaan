@@ -17,7 +17,7 @@ export const RESOURCE_LABELS: Record<string, string> = {
   call_center_panel: "কল সেন্টার প্যানেল",
   provider_panel: "প্রোভাইডার প্যানেল",
   bookings: "বুকিং",
-  services: "সেবা",
+  services: "সার্ভিস",
   categories: "ক্যাটেগরি",
   offers: "অফার",
   banners: "ব্যানার",

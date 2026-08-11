@@ -309,7 +309,7 @@ const ServiceDetail = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h1 className="font-heading text-2xl font-bold text-foreground mb-2">Service Not Found</h1>
         <p className="text-muted-foreground mb-6">The service you are looking for is not available.</p>
-        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors">
           Go Home
         </button>
       </div>
@@ -354,7 +354,7 @@ const ServiceDetail = () => {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[60px] md:pt-[80px]" />
+      <div className="pt-[22px] md:pt-[42px]" />
       
       <div className="app-container py-4">
         <Breadcrumb>
@@ -401,7 +401,7 @@ const ServiceDetail = () => {
           <div className="md:col-span-1">
             <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <h2 className="font-heading text-xl font-bold">Book Now</h2>
-              <button onClick={handleAddToCart} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors">
+              <button onClick={handleAddToCart} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-primary/90 transition-colors">
                 Add to Cart (৳{pkg.price})
               </button>
             </div>
@@ -457,7 +457,7 @@ const CmsServiceDetail = ({
   const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
 
   const seoDescription = bn 
-    ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সেবা।` 
+    ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সার্ভিস।` 
     : `${serviceTitle} — professional, reliable & affordable service.`;
 
   useSEO({
@@ -581,8 +581,8 @@ const CmsServiceDetail = ({
 
   const benefits = [
     { icon: BadgeCheck, title: bn ? "প্রশিক্ষিত পেশাদার" : "Trained Professionals", desc: bn ? "আমাদের সকল টেকনিশিয়ান প্রশিক্ষিত ও অভিজ্ঞ" : "All our technicians are trained & experienced" },
-    { icon: ShieldCheck, title: bn ? "সেবা গ্যারান্টি" : "Service Guarantee", desc: bn ? "সেবায় সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সেবা" : "Free re-service if not satisfied" },
-    { icon: Clock, title: bn ? "সময়মতো সেবা" : "On-time Service", desc: bn ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে" : "Technician arrives at scheduled time" },
+    { icon: ShieldCheck, title: bn ? "সার্ভিস গ্যারান্টি" : "Service Guarantee", desc: bn ? "সার্ভিসয় সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সার্ভিস" : "Free re-service if not satisfied" },
+    { icon: Clock, title: bn ? "সময়মতো সার্ভিস" : "On-time Service", desc: bn ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে" : "Technician arrives at scheduled time" },
     { icon: Award, title: bn ? "স্বচ্ছ মূল্য" : "Transparent Pricing", desc: bn ? "কোনো লুকানো চার্জ নেই" : "No hidden charges" },
   ];
 
@@ -591,7 +591,7 @@ const CmsServiceDetail = ({
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[60px] md:pt-[80px]" />
+      <div className="pt-[20px] md:pt-[20px]" />
 
       <div className="app-container py-3">
         <Breadcrumb>
@@ -601,7 +601,7 @@ const CmsServiceDetail = ({
             </BreadcrumbItem>
             <BreadcrumbSeparator><ChevronRight className="h-3 w-3" /></BreadcrumbSeparator>
             <BreadcrumbItem>
-              <BreadcrumbLink asChild><Link to="/all-services">{bn ? "সকল সেবা" : "All Services"}</Link></BreadcrumbLink>
+              <BreadcrumbLink asChild><Link to="/all-services">{bn ? "সকল সার্ভিস" : "All Services"}</Link></BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator><ChevronRight className="h-3 w-3" /></BreadcrumbSeparator>
             <BreadcrumbItem>
@@ -612,8 +612,8 @@ const CmsServiceDetail = ({
       </div>
 
       {/* Hero Section - Aligned with app-container padding */}
-      <div className="app-container pt-4 md:pt-6">
-        <div className="relative h-[100px] md:h-[150px] w-full overflow-hidden rounded-2xl shadow-sm">
+      <div className="app-container">
+        <div className="relative h-[150px] md:h-[250px] w-full overflow-hidden rounded-2xl shadow-sm">
           <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover" />
           <div className={`absolute inset-0 bg-gradient-to-t ${category?.color_overlay || "from-foreground/80 to-foreground/20"}`} />
           <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
@@ -647,7 +647,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {bn ? "সেবার বিবরণ" : "Service Description"}
+                {bn ? "সার্ভিসর বিবরণ" : "Service Description"}
               </h2>
               {service.description && (
                 <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
@@ -688,7 +688,7 @@ const CmsServiceDetail = ({
                         )}
                       >
                         {isSelected && (
-                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-primary-foreground">
+                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-white">
                             {bn ? "নির্বাচিত" : "Selected"}
                           </span>
                         )}
@@ -722,7 +722,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <Award className="h-5 w-5 text-primary" />
-                {bn ? "এই সেবা নিলে যা যা পাবেন" : "What You Get"}
+                {bn ? "এই সার্ভিস নিলে যা যা পাবেন" : "What You Get"}
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {benefits.map((b, i) => (
@@ -743,7 +743,7 @@ const CmsServiceDetail = ({
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
-                {bn ? "যেসব শহরে সেবাটি পাওয়া যায়" : "Available Cities"}
+                {bn ? "যেসব শহরে সার্ভিসটি পাওয়া যায়" : "Available Cities"}
               </h2>
               {cities.length > 0 ? (
                 <div className="flex flex-wrap gap-2">
@@ -757,7 +757,7 @@ const CmsServiceDetail = ({
                 <div className="rounded-xl border border-border bg-card p-4">
                   <p className="text-sm text-muted-foreground flex items-center gap-2">
                     <CheckCircle2 className="h-4 w-4 text-primary" />
-                    {bn ? "এই সেবাটি সারাদেশে পাওয়া যায়" : "Available nationwide"}
+                    {bn ? "এই সার্ভিসটি সারাদেশে পাওয়া যায়" : "Available nationwide"}
                   </p>
                 </div>
               )}
@@ -793,7 +793,7 @@ const CmsServiceDetail = ({
                 <label className="text-xs font-semibold text-foreground">{t("sd.selectDate")}</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-background px-3 py-2.5 text-sm text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
+                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2.5 text-sm text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
                       <CalendarIcon className="h-4 w-4 text-primary" />
                       {bookingDate ? format(bookingDate, "dd MMM yyyy") : bn ? "তারিখ বেছে নিন" : "Pick a date"}
                     </button>
@@ -813,7 +813,7 @@ const CmsServiceDetail = ({
                       onClick={() => setBookingTime(slot.value)}
                       className={cn(
                         "rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all",
-                        bookingTime === slot.value ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:border-primary/40"
+                        bookingTime === slot.value ? "border-primary text-white" : "border-border text-muted-foreground hover:border-primary/40"
                       )}
                     >
                       {slot.label}
@@ -829,7 +829,7 @@ const CmsServiceDetail = ({
                     if (!bookingDate || !bookingTime) return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 flex items-center justify-center gap-2"
+                  className="w-full rounded-lg py-3 text-sm font-semibold text-white hover:bg-primary/90 flex items-center justify-center gap-2"
                 >
                   <CalendarCheck className="h-4 w-4" /> {t("sd.bookingConfirmBtn")}
                 </button>
@@ -838,7 +838,7 @@ const CmsServiceDetail = ({
                   <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
                     {submitting ? "Submitting..." : bn ? "নিশ্চিত করে বুক করুন" : "Confirm & Book"}
                   </button>
                 </motion.div>
@@ -884,7 +884,7 @@ const CmsServiceDetail = ({
                 setShowBookingForm(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
             >
               <CalendarCheck className="h-4 w-4" /> {t("sd.bookNow")}
             </button>
@@ -1000,7 +1000,7 @@ const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; 
             ))}
           </div>
           <textarea placeholder="Share your experience..." value={comment} onChange={(e) => setComment(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {submitting ? "Submitting..." : "Submit Review"}
           </button>
         </div>

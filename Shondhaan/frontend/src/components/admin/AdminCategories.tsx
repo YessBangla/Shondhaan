@@ -65,7 +65,7 @@ const handleSave = () => {
     <div className="relative">
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading text-lg font-bold text-foreground">ক্যাটেগরি ম্যানেজমেন্ট ({categories.length})</h3>
-        <button onClick={() => setEditing({...empty})} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+        <button onClick={() => setEditing({...empty})} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white">
           <Plus className="h-3.5 w-3.5" /> নতুন ক্যাটেগরি
         </button>
       </div>
@@ -154,7 +154,7 @@ const handleSave = () => {
               <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors">
                 বাতিল
               </button>
-              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors disabled:opacity-50">
                 {upsert.isPending ? "সেভ হচ্ছে..." : "সেভ করুন"}
               </button>
             </div>

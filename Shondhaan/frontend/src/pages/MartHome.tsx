@@ -797,7 +797,7 @@ const MartHome = () => {
                 </h2>
                 <button
                   onClick={() => navigate("/mart/category/all")}
-                  className="bg-primary text-primary-foreground px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors"
+                  className="bg-primary text-white px-4 py-2 rounded-xl text-xs md:text-sm font-semibold flex items-center gap-1.5 hover:bg-primary/90 transition-colors"
                 >
                   {bn ? "এখনই কিনুন" : "Shop Now"}
                   <ArrowRight className="h-4 w-4" />
@@ -959,7 +959,7 @@ const MartHome = () => {
                   return (
                     <div key={c.id} className="shrink-0 w-56 bg-white dark:bg-card border border-border/60 rounded-2xl overflow-hidden shadow-sm">
                       <div className="bg-primary px-4 py-3 flex items-center justify-between">
-                        <span className="text-primary-foreground font-extrabold text-[15px] tracking-wide">{discLabel}</span>
+                        <span className="text-white font-extrabold text-[15px] tracking-wide">{discLabel}</span>
                         {isExpiringSoon && (
                           <span className="text-[10px] font-semibold bg-white/20 text-white px-2 py-0.5 rounded-full">
                             {daysLeft === 0 ? (bn ? "আজ শেষ" : "Today") : `${daysLeft}d`}
@@ -1162,7 +1162,7 @@ const MartHome = () => {
                 onClick={() => setHomeSort(opt.key)}
                 className={`shrink-0 px-4 py-1.5 rounded-full text-[12px] font-semibold border transition-all ${
                   homeSort === opt.key
-                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    ? "bg-primary text-white border-primary shadow-sm"
                     : "bg-white dark:bg-card text-muted-foreground border-border/60 hover:border-primary/40 hover:text-foreground"
                 }`}
               >

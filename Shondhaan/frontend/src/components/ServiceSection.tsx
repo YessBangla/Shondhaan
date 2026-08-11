@@ -99,13 +99,13 @@ const DescriptionTooltip = ({ description, anchorRect }: DescriptionTooltipProps
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95, y: -8 }}
       transition={{ duration: 0.15 }}
-      className="pointer-events-none absolute z-[9998] w-[260px] max-w-[calc(100vw-16px)] rounded-lg border border-border bg-blue-300 px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
+      className="pointer-events-none absolute z-[9998] w-[260px] max-w-[calc(100vw-16px)] rounded border border-gray bg-[aliceblue] px-3 py-2 text-xs leading-relaxed text-foreground shadow-xl"
       style={{ top: position.top, left: position.left }}
       role="tooltip"
     >
       {description}
       <span
-        className="absolute -top-1 h-2 w-2 rotate-45 border-t border-l border-border bg-blue-300"
+        className="absolute -top-1 h-2 w-2 rotate-45 border-t border-l border-border bg-[aliceblue]"
         style={{ left: position.arrowLeft }}
       />
     </motion.div>,
@@ -164,7 +164,7 @@ const ServiceCardWrapper = ({
         onClick={onOpen}
         {...longPress}
         tabIndex={0}
-        className="group relative VITE_DEAL_API_BASE_URL active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px] rounded-md overflow-hidden border border-border"
+        className="group relative VITE_DEAL_API_BASE_URL active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px] rounded-md overflow-hidden border shadow"
       >
         {children}
       </div>
@@ -184,7 +184,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
   const { language } = useLanguage();
   const bn = language === "bn";
   const url = `${window.location.origin}/service/${slug}`;
-  const text = bn ? `${title} - সেবা দেখুন` : `Check out ${title}`;
+  const text = bn ? `${title} - সার্ভিস দেখুন` : `Check out ${title}`;
   const popupRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -248,7 +248,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
         <span className="flex-1 truncate text-[11px] text-muted-foreground">{url}</span>
         <button
           onClick={copyLink}
-          className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-primary-foreground transition-colors hover:bg-primary/90 cursor-pointer"
+          className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-white transition-colors hover:bg-primary/90 cursor-pointer"
         >
           {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
           {copied ? (bn ? "কপি হয়েছে" : "Copied") : (bn ? "কপি" : "Copy")}
@@ -375,7 +375,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
       toast.info(bn ? "তুলনা থেকে সরানো হয়েছে" : "Removed from compare");
     } else {
       if (compareList.length >= 3) {
-        toast.warning(bn ? "সর্বোচ্চ ৩টি সেবা তুলনা করা যাবে" : "Max 3 services to compare");
+        toast.warning(bn ? "সর্বোচ্চ ৩টি সার্ভিস তুলনা করা যাবে" : "Max 3 services to compare");
         return;
       }
       addToCompare(service.cmsService);
@@ -430,30 +430,30 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                 onClickCapture={handleContainerClickCapture}
                 className={`flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-              >
-                {services.map((service) => (
-                  <ServiceCardWrapper
-                    key={service.title}
-                    service={service}
-                    disableHover={isDragging}
-                    onOpen={(e) => {
-                      if ((e.target as HTMLElement).closest("button, a")) return;
-                      if (service.slug) navigate(`/service/${service.slug}`);
-                    }}
-                    onLongPress={() => setQuickMenu(service)}
-                  >
-                    <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 p-2 yess-wm pointer-events-none">
+                >
+                  {services.map((service) => (
+                    <ServiceCardWrapper
+                      key={service.title}
+                      service={service}
+                      disableHover={isDragging}
+                      onOpen={(e) => {
+                        if ((e.target as HTMLElement).closest("button, a")) return;
+                        if (service.slug) navigate(`/service/${service.slug}`);
+                      }}
+                      onLongPress={() => setQuickMenu(service)}
+                    >
+                    <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 yess-wm pointer-events-none">
                       <img 
                         src={getImageSrc(service.image)} 
                         alt={service.title} 
-                        className="aspect-[3/2] w-full rounded-md object-cover transition-transform duration-300 group-hover:scale-105" 
+                        className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105" 
                         loading="lazy" 
                         decoding="async" 
                         fetchPriority="low" 
                         draggable={false} 
                       />
                     </div>
-                    <div className="p-3 bg-blue-300/40 md:p-4 pointer-events-none">
+                    <div className="p-3 bg-background md:p-4 pointer-events-none">
                       <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
                         {service.title}
                       </h3>

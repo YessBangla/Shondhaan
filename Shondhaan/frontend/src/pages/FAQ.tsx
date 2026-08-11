@@ -13,7 +13,7 @@ const faqData = [
   {
     q_bn: "Shondhaan কী?",
     q_en: "What is Shondhaan?",
-    a_bn: "Shondhaan একটি অনলাইন হোম সার্ভিস প্ল্যাটফর্ম যেখানে আপনি AC সার্ভিসিং, ক্লিনিং, ইলেকট্রিক্যাল, প্লাম্বিং, সেলুন সহ বিভিন্ন সেবা ঘরে বসে বুক করতে পারেন।",
+    a_bn: "Shondhaan একটি অনলাইন হোম সার্ভিস প্ল্যাটফর্ম যেখানে আপনি AC সার্ভিসিং, ক্লিনিং, ইলেকট্রিক্যাল, প্লাম্বিং, সেলুন সহ বিভিন্ন সার্ভিস ঘরে বসে বুক করতে পারেন।",
     a_en: "Shondhaan is an online home service platform where you can book AC servicing, cleaning, electrical, plumbing, salon and many other services from home.",
   },
   {
@@ -43,7 +43,7 @@ const faqData = [
   {
     q_bn: "কোন কোন শহরে সার্ভিস পাওয়া যায়?",
     q_en: "In which cities is the service available?",
-    a_bn: "বর্তমানে আমরা ঢাকা, চট্টগ্রাম, সিলেট, রাজশাহী, খুলনা সহ বাংলাদেশের প্রধান শহরগুলোতে সেবা দিচ্ছি।",
+    a_bn: "বর্তমানে আমরা ঢাকা, চট্টগ্রাম, সিলেট, রাজশাহী, খুলনা সহ বাংলাদেশের প্রধান শহরগুলোতে সার্ভিস দিচ্ছি।",
     a_en: "Currently we serve in major cities of Bangladesh including Dhaka, Chittagong, Sylhet, Rajshahi, and Khulna.",
   },
   {

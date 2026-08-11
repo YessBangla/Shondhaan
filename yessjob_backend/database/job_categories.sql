@@ -8,7 +8,7 @@ INSERT INTO job_categories (value, label_bn, label_en, sort_order, is_active) VA
   ('sales', 'সেলস', 'Sales', 3, 1),
   ('accounting', 'একাউন্টিং', 'Accounting', 4, 1),
   ('engineering', 'ইঞ্জিনিয়ারিং', 'Engineering', 5, 1),
-  ('healthcare', 'স্বাস্থ্যসেবা', 'Healthcare', 6, 1),
+  ('healthcare', 'স্বাস্থ্যসার্ভিস', 'Healthcare', 6, 1),
   ('education', 'শিক্ষা', 'Education', 7, 1),
   ('garments', 'গার্মেন্টস', 'Garments', 8, 1),
   ('banking', 'ব্যাংকিং', 'Banking', 9, 1),

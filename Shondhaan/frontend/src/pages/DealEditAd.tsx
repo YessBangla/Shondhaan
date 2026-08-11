@@ -63,11 +63,20 @@ const DealEditAd = () => {
 
   useEffect(() => {
     if (listing && !loaded) {
-      if (user && listing.user_id !== user.id) {
+      // LOG 1: Check what IDs are being compared in the Edit component
+      console.log("[DealEditAd] Listing user_id:", listing.user_id, "Type:", typeof listing.user_id);
+      console.log("[DealEditAd] Logged-in user.id:", user?.id, "Type:", typeof user?.id);
+
+      // FIX: Convert both to strings before comparing to prevent "4" !== 4 mismatch
+      if (user && String(listing.user_id) !== String(user.id)) {
+        console.log("[DealEditAd] Ownership check FAILED. Redirecting...");
         toast.error(bn ? "এটি আপনার বিজ্ঞাপন নয়" : "This is not your ad");
         navigate("/deal");
         return;
       }
+      
+      console.log("[DealEditAd] Ownership check PASSED. Loading form data.");
+
       setForm({
         title: listing.title || "",
         description: listing.description || "",
@@ -88,7 +97,6 @@ const DealEditAd = () => {
   }, [listing, loaded, user, bn, navigate]);
 
   const updateField = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }));
-
 
   const handleSubmit = async () => {
     if (!user || !id) return;

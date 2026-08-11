@@ -123,7 +123,7 @@ const RebookModal = ({ open, onClose, booking, onRebooked }: Props) => {
                   onClick={() => setTime(t)}
                   className={`rounded-lg border px-2 py-1.5 text-xs font-medium transition-all ${
                     time === t
-                      ? "border-primary bg-primary text-primary-foreground"
+                      ? "border-primary bg-primary text-white"
                       : "border-input bg-background text-muted-foreground hover:border-primary/50"
                   }`}
                 >
@@ -136,7 +136,7 @@ const RebookModal = ({ open, onClose, booking, onRebooked }: Props) => {
           <button
             onClick={handleRebook}
             disabled={submitting || !date || !time}
-            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+            className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50"
           >
             {submitting ? (
               <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "বুকিং হচ্ছে..." : "Booking..."}</>
