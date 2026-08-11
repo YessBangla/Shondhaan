@@ -225,7 +225,7 @@ export default function DealChatModal({
                             className={cn(
                               "max-w-[75%] rounded-2xl px-3 py-2 text-sm",
                               isMine
-                                ? "bg-primary text-primary-foreground rounded-br-md"
+                                ? "bg-primary text-white rounded-br-md"
                                 : "bg-muted text-foreground rounded-bl-md",
                               m.pending && "opacity-60",
                               m.failed && "opacity-60 ring-1 ring-destructive"
@@ -237,7 +237,7 @@ export default function DealChatModal({
                               className={cn(
                                 "text-[10px] mt-1",
                                 isMine
-                                  ? "text-primary-foreground/70"
+                                  ? "text-white/70"
                                   : "text-muted-foreground"
                               )}
                             >

@@ -1,9 +1,10 @@
 export const passwordPolicyMessage =
   "Password must be at least 8 characters and include uppercase, lowercase, a number, and a special character.";
 
-  export const ALLOWED_ROLES = new Set([
+export const ROLES = [
   "super_admin",
   "admin",
+  "service_admin",
   "moderator",
   "supervisor",
   "finance",
@@ -16,7 +17,66 @@ export const passwordPolicyMessage =
   "representative",
   "employer",
   "user",
-]);
+];
+
+export const ALLOWED_ROLES = new Set(ROLES);
+
+export const ROLE_LABELS = {
+  super_admin: "Super Admin",
+  admin: "Admin",
+  service_admin: "Service Admin",
+  moderator: "Moderator",
+  supervisor: "Supervisor",
+  finance: "Finance",
+  call_center: "Call Center",
+  provider: "Provider",
+  mart_vendor: "Mart Vendor",
+  mart_delivery: "Mart Delivery",
+  mart_cs: "Mart Customer Service",
+  yessdeal_seller: "YessDeal Seller",
+  representative: "Representative",
+  employer: "Employer",
+  user: "User",
+};
+
+export const ADMIN_ACCESS_BY_ROLE = {
+  super_admin: ["*"],
+  admin: ["*"],
+  service_admin: [
+    "/admin/service",
+    "/admin/bookings",
+    "/admin/requests",
+    "/admin/services",
+    "/admin/service-images",
+    "/admin/categories",
+    "/admin/offers",
+    "/admin/banners",
+    "/admin/sections",
+    "/admin/contacts",
+    "/admin/chat-history",
+    "/admin/notifications",
+    "/admin/reviews",
+  ],
+  call_center: [
+    "/admin/bookings",
+    "/admin/requests",
+    "/admin/contacts",
+    "/admin/chat-history",
+  ],
+};
+
+export const ADMIN_PANEL_ROLES = new Set(Object.keys(ADMIN_ACCESS_BY_ROLE));
+
+export const ADMIN_USER_MANAGEMENT_ROLES = new Set(["super_admin", "admin", "call_center"]);
+
+export const getRoleAccess = (role) => ADMIN_ACCESS_BY_ROLE[role] || [];
+
+export const getRoleConfigs = () =>
+  ROLES.map((key) => ({
+    key,
+    label: ROLE_LABELS[key] || key,
+    adminAccess: getRoleAccess(key),
+  }));
 
 export const CMS_TABLES = {
   cms_categories: {

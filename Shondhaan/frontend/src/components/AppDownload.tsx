@@ -16,15 +16,15 @@ const AppDownload = () => {
     >
       <div className="mx-4 md:mx-0 rounded-2xl bg-primary/90 backdrop-blur-xl border border-primary/30 p-8 md:p-12 flex flex-col md:flex-row items-center gap-8 shadow-lg">
         <div className="flex-1 text-center md:text-left">
-          <h2 className="font-heading text-xl md:text-2xl font-bold text-primary-foreground mb-2">{t("app.title")}</h2>
-          <p className="text-primary-foreground/80 text-sm md:text-base mb-6">{t("app.subtitle")}</p>
+          <h2 className="font-heading text-xl md:text-2xl font-bold text-white mb-2">{t("app.title")}</h2>
+          <p className="text-white/80 text-sm md:text-base mb-6">{t("app.subtitle")}</p>
 
           <div className="flex flex-col sm:flex-row gap-3 items-center md:items-start">
             <div className="flex items-center gap-2 rounded-lg bg-primary-foreground/10 border border-primary-foreground/20 px-4 py-2.5">
               <input
                 type="tel"
                 placeholder={t("app.phonePlaceholder")}
-                className="bg-transparent text-sm text-primary-foreground placeholder:text-primary-foreground/50 outline-none w-48"
+                className="bg-transparent text-sm text-white placeholder:text-white/50 outline-none w-48"
               />
             </div>
             <button className="rounded-lg bg-primary-foreground px-6 py-2.5 text-sm font-semibold text-primary transition-opacity hover:opacity-90">

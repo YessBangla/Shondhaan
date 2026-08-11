@@ -32,7 +32,6 @@ export interface PanelHeroConfig {
   subtitle?: string;
   badge?: { icon?: React.ReactNode; label: string };
   gradient?: string;
-  // liveStatus?: string;
   rightIcon?: React.ReactNode;
   hideOnTabs?: string[];
 }
@@ -64,17 +63,16 @@ const PanelSidebarTabs = ({
   const { mode, cycle } = useTheme();
   const { language, setLanguage } = useLanguage();
 
-
   const [activeTab, setActiveTabState] = useState(defaultValue);
-const requestedTab = searchParams.get("tab");
+  const requestedTab = searchParams.get("tab");
 
-useEffect(() => {
-  if (!requestedTab) return;
+  useEffect(() => {
+    if (!requestedTab) return;
+    if (items.some((item) => item.value === requestedTab)) {
+      setActiveTabState(requestedTab);
+    }
+  }, [requestedTab, items]);
 
-  if (items.some((item) => item.value === requestedTab)) {
-    setActiveTabState(requestedTab);
-  }
-}, [requestedTab, items]);
   const collapseKey = `panel_collapsed_${panelTitle || "default"}`;
   const [collapsed, setCollapsed] = useState<boolean>(() => {
     try { return localStorage.getItem(collapseKey) === "1"; } catch { return false; }
@@ -254,44 +252,48 @@ useEffect(() => {
 
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
 
+  // Premium Sidebar Content
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full bg-sidebar/80 backdrop-blur-xl">
+      {/* Brand Header */}
       <div
         className={cn(
-          "px-3.5 h-14 flex items-center gap-2.5 border-b border-border/40",
+          "px-4 h-16 flex items-center gap-3 border-b border-sidebar-border/50",
           collapsed && !inDrawer && "justify-center px-0"
         )}
       >
-        <div className="h-9 w-9 rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-primary-foreground flex items-center justify-center shadow-md ring-1 ring-primary/30 shrink-0">
-          {panelIcon || <Sparkles className="h-4 w-4" />}
+        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-primary/30 ring-1 ring-white/20 shrink-0">
+          {panelIcon || <Sparkles className="h-5 w-5" />}
         </div>
         {(!collapsed || inDrawer) && (
           <div className="min-w-0">
-            <p className="text-[14px] font-bold text-foreground leading-tight truncate tracking-tight">{panelTitle || "প্যানেল"}</p>
-            <p className="text-[10.5px] font-medium text-muted-foreground leading-tight">Shondhaan Workspace</p>
+            <p className="text-[15px] font-bold text-foreground leading-tight truncate tracking-tight">{panelTitle || "প্যানেল"}</p>
+            <p className="text-[11px] font-medium text-muted-foreground leading-tight">Shondhaan Workspace</p>
           </div>
         )}
       </div>
 
+      {/* Search */}
       {(!collapsed || inDrawer) && (
-        <div className="px-2.5 pt-2.5">
+        <div className="px-3 pt-4">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors px-2.5 py-2 text-[12px] text-muted-foreground"
+            className="w-full flex items-center gap-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors px-3 py-2.5 text-[13px] text-muted-foreground border border-border/50 hover:border-primary/30 group"
           >
-            <Search className="h-3.5 w-3.5" />
-            <span className="flex-1 text-left">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
+            <Search className="h-4 w-4 group-hover:text-primary transition-colors" />
+            <span className="flex-1 text-left font-medium">খুঁজুন…</span>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/80">⌘K</kbd>
           </button>
         </div>
       )}
 
+      {/* Pinned Items */}
       {pinnedItems.length > 0 && (!collapsed || inDrawer) && (
-        <div className="px-2.5 pt-3">
-          <p className="px-1 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1">
-            <Pin className="h-2.5 w-2.5" /> পিন করা
+        <div className="px-3 pt-4">
+          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1.5">
+            <Pin className="h-3 w-3" /> পিন করা
           </p>
-          <div className="space-y-0.5">
+          <div className="space-y-1">
             {pinnedItems.map((item) => (
               <NavBtn
                 key={`pin-${item.value}`}
@@ -307,16 +309,17 @@ useEffect(() => {
         </div>
       )}
 
-      <nav className="flex-1 overflow-y-auto py-2.5 px-2.5 space-y-0.5 scrollbar-none">
+      {/* Main Nav */}
+      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
         {groups.map((group, gi) => {
           const groupKey = group.label || `g-${gi}`;
           const groupCollapsed = collapsedGroups[groupKey];
           return (
-            <div key={gi} className="mb-1">
+            <div key={gi} className="mb-2">
               {group.label && (!collapsed || inDrawer) ? (
                 <button
                   onClick={() => setCollapsedGroups((c) => ({ ...c, [groupKey]: !c[groupKey] }))}
-                  className="w-full flex items-center justify-between px-2 pt-3 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+                  className="w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
                 >
                   <span className="inline-flex items-center gap-1.5">
                     {group.label}
@@ -324,10 +327,10 @@ useEffect(() => {
                       {group.items.length}
                     </span>
                   </span>
-                  <ChevronDown className={cn("h-3 w-3 transition-transform", groupCollapsed && "-rotate-90")} />
+                  <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", groupCollapsed && "-rotate-90")} />
                 </button>
               ) : group.label && collapsed && gi > 0 ? (
-                <div className="mx-2 my-2 border-t border-border/30" />
+                <div className="mx-2 my-3 border-t border-border/30" />
               ) : null}
 
               <AnimatePresence initial={false}>
@@ -336,8 +339,8 @@ useEffect(() => {
                     initial={{ height: 0, opacity: 0 }}
                     animate={{ height: "auto", opacity: 1 }}
                     exit={{ height: 0, opacity: 0 }}
-                    transition={{ duration: 0.18 }}
-                    className="overflow-hidden space-y-0.5"
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
+                    className="overflow-hidden space-y-1"
                   >
                     {group.items.map((item) => (
                       <NavBtn
@@ -358,10 +361,11 @@ useEffect(() => {
         })}
       </nav>
 
-      <div className="border-t border-border/40 p-2 space-y-1">
+      {/* Footer Profile */}
+      <div className="border-t border-sidebar-border/50 p-3 space-y-1 bg-sidebar-accent/30">
         {(!collapsed || inDrawer) && user && (
-          <div className="flex items-center gap-2 rounded-xl bg-secondary/40 px-2 py-1.5">
-            <div className="h-7 w-7 overflow-hidden rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center text-[11px] font-bold ring-1 ring-card shrink-0">
+          <div className="flex items-center gap-2.5 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors px-2.5 py-2 cursor-pointer" ref={profileMenuRef} onClick={() => setProfileMenuOpen(o => !o)}>
+            <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[12px] font-bold ring-1 ring-white/20 shadow-sm shrink-0">
               {profileImageUrl ? (
                 <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -369,33 +373,41 @@ useEffect(() => {
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[11px] font-semibold text-foreground truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
-              <p className="text-[9px] text-muted-foreground truncate leading-tight">{user.email}</p>
+              <p className="text-[12px] font-semibold text-foreground truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-muted-foreground truncate leading-tight">{user.email}</p>
             </div>
+            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", profileMenuOpen && "rotate-180")} />
           </div>
         )}
+        
+        {/* Profile Dropdown */}
+        <AnimatePresence>
+          {profileMenuOpen && (!collapsed || inDrawer) && (
+            <motion.div 
+              initial={{ opacity: 0, y: -10, height: 0 }}
+              animate={{ opacity: 1, y: 0, height: 'auto' }}
+              exit={{ opacity: 0, y: -10, height: 0 }}
+              className="overflow-hidden space-y-1 mt-1"
+            >
+               <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                 <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
+               </button>
+               <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-semibold text-destructive hover:bg-destructive/10 transition-colors">
+                 <LogOut className="h-3.5 w-3.5" /> সাইন আউট
+               </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <button
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
-            "hidden md:flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
+            "hidden md:flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors mt-1",
             collapsed ? "justify-center" : "justify-start"
           )}
         >
-          {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : (<><ChevronLeft className="h-3.5 w-3.5" /> সংকুচিত</>)}
+          {collapsed ? <ChevronRight className="h-4 w-4" /> : (<><ChevronLeft className="h-4 w-4" /> সংকুচিত</>)}
         </button>
-
-        {/* <button
-          onClick={() => setResetConfirmOpen(true)}
-          className={cn(
-            "hidden md:flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors",
-            collapsed ? "justify-center" : "justify-start"
-          )}
-          title="সব প্যানেলের সাইডবার লেআউট ডিফল্টে রিসেট করুন"
-        >
-          <RotateCcw className="h-3.5 w-3.5" />
-          {!collapsed && <span>লেআউট রিসেট</span>}
-        </button> */}
       </div>
     </div>
   );
@@ -405,9 +417,9 @@ useEffect(() => {
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col shrink-0 sticky self-start border-r border-border bg-card transition-[width] duration-200 z-30",
+          "hidden md:flex flex-col shrink-0 sticky self-start border-r border-sidebar-border bg-sidebar/50 backdrop-blur-2xl transition-[width] duration-300 ease-in-out z-30",
           offsetForDesktopMegaMenu ? "top-10 h-[calc(100vh-2.5rem)]" : "top-0 h-screen",
-          collapsed ? "w-[68px]" : "w-64"
+          collapsed ? "w-[76px]" : "w-[270px]"
         )}
       >
         <SidebarBody />
@@ -422,14 +434,14 @@ useEffect(() => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="md:hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+              className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
             />
             <motion.aside
-              initial={{ x: -300 }}
+              initial={{ x: -320 }}
               animate={{ x: 0 }}
-              exit={{ x: -300 }}
-              transition={{ type: "spring", damping: 28, stiffness: 320 }}
-              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[78%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl"
+              exit={{ x: -320 }}
+              transition={{ type: "spring", damping: 30, stiffness: 300 }}
+              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl"
             >
               <SidebarBody inDrawer />
             </motion.aside>
@@ -438,102 +450,101 @@ useEffect(() => {
       </AnimatePresence>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col bg-muted/30">
+      <div className="flex-1 min-w-0 flex flex-col bg-background">
         <header className={cn(
-          "sticky z-40 border-b border-border bg-card shadow-sm",
+          "sticky z-40 border-b border-border/50 bg-card/80 backdrop-blur-xl shadow-sm",
           offsetForDesktopMegaMenu ? "top-0 md:top-10" : "top-0"
         )}>
-          <div className="h-[2px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary" />
-          <div className="flex items-center justify-between gap-2 px-4 md:px-6 h-14">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary/50" />
+          <div className="flex items-center justify-between gap-4 px-4 md:px-8 h-16">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary"
+                className="md:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-foreground transition-colors"
               >
                 <Menu className="h-5 w-5" />
               </button>
               
-              {/* ✅ GO BACK BUTTON ADDED HERE */}
               <button
                 onClick={() => navigate(-1)}
-                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground"
+                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 title="পেছনে যান"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
 
-              <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
+              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-5 [&>*]:w-5 shadow-sm">
                 {activeItem?.icon || panelIcon}
               </div>
               <div className="min-w-0">
-                <nav className="hidden sm:flex items-center gap-1 text-[10px] text-muted-foreground/80 leading-none">
-                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-primary">
-                    <Home className="h-2.5 w-2.5" /> হোম
+                <nav className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground/80 leading-none font-medium">
+                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                    <Home className="h-3 w-3" /> হোম
                   </button>
                   {activeGroup && (
                     <>
-                      <ChevronRight className="h-2.5 w-2.5 opacity-50" />
+                      <ChevronRight className="h-3 w-3 opacity-50" />
                       <span>{activeGroup}</span>
                     </>
                   )}
                 </nav>
-                <h1 className="text-[14px] md:text-[15px] font-bold text-foreground truncate leading-tight mt-0.5">{activeLabel || panelTitle}</h1>
+                <h1 className="text-[16px] md:text-[18px] font-bold text-foreground truncate leading-tight mt-1 tracking-tight">{activeLabel || panelTitle}</h1>
               </div>
             </div>
 
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setPaletteOpen(true)}
-                className="hidden lg:flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-[11px] text-muted-foreground"
+                className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-xl bg-secondary/50 hover:bg-secondary text-[12px] text-muted-foreground border border-border/50 hover:border-primary/30 transition-all font-medium"
               >
-                <Search className="h-3.5 w-3.5" /> খুঁজুন
-                <kbd className="ml-1 rounded border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
+                <Search className="h-4 w-4" /> খুঁজুন
+                <kbd className="ml-1 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
               </button>
               <button
                 onClick={() => setPaletteOpen(true)}
-                className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground"
+                className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground transition-colors"
                 title="খুঁজুন (⌘K)"
               >
-                <Search className="h-4 w-4" />
+                <Search className="h-5 w-5" />
               </button>
               <button
                 onClick={cycle}
-                className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground"
+                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
                 title={`Theme: ${mode}`}
               >
-                <ThemeIcon className="h-4 w-4" />
+                <ThemeIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-                className="h-9 px-2 rounded-xl hover:bg-secondary text-[11px] font-bold text-muted-foreground inline-flex items-center gap-1"
+                className="h-10 px-3 rounded-xl hover:bg-secondary text-[12px] font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
                 title="ভাষা পরিবর্তন"
               >
-                <Languages className="h-3.5 w-3.5" />{language.toUpperCase()}
+                <Languages className="h-4 w-4" />{language.toUpperCase()}
               </button>
+              <div className="h-6 w-px bg-border/50 hidden sm:block mx-1"></div>
               <NotificationBell />
             </div>
           </div>
         </header>
 
         <main className="flex-1 min-w-0">
-          <div className="w-full px-4 md:px-6 lg:px-8 py-5 md:py-6 space-y-5">
+          <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-8 space-y-6">
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}
                 subtitle={hero.subtitle}
                 badge={hero.badge}
                 gradient={hero.gradient}
-                liveStatus={hero.liveStatus}
                 rightIcon={hero.rightIcon || panelIcon}
               />
             )}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 4 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -2 }}
-                transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+                exit={{ opacity: 0, y: -4 }}
+                transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
               >
                 {children(activeTab, setActiveTabState)}
               </motion.div>
@@ -585,10 +596,10 @@ useEffect(() => {
       />
 
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <RotateCcw className="h-4 w-4 text-primary" />
+              <RotateCcw className="h-5 w-5 text-primary" />
               কী রিসেট করবেন?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -596,7 +607,7 @@ useEffect(() => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl">বাতিল</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
@@ -605,7 +616,7 @@ useEffect(() => {
         open={signOutConfirmOpen}
         onOpenChange={(o) => !signingOut && setSignOutConfirmOpen(o)}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
               <LogOut className="h-5 w-5 text-destructive" />
@@ -616,10 +627,10 @@ useEffect(() => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={signingOut}>বাতিল</AlertDialogCancel>
+            <AlertDialogCancel className="rounded-xl" disabled={signingOut}>বাতিল</AlertDialogCancel>
             <AlertDialogAction
               disabled={signingOut}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
               onClick={async (e) => {
                 e.preventDefault();
                 try {
@@ -644,8 +655,7 @@ useEffect(() => {
   );
 };
 
-
-// ── NavBtn ──────────────────────────────────────────────────────────────────
+// ── NavBtn (Refined Apple HIG Style) ──────────────────────────────────────────
 const NavBtn = ({
   item, active, onClick, onPin, pinned, collapsed,
 }: {
@@ -656,44 +666,43 @@ const NavBtn = ({
     <button
       onClick={onClick}
       className={cn(
-        "relative w-full flex items-center gap-2.5 rounded-xl text-[14px] font-semibold transition-all duration-150 outline-none",
+        "relative w-full flex items-center gap-3 rounded-xl text-[14px] font-semibold transition-all duration-200 outline-none",
         "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-card",
-        collapsed ? "justify-center px-0 py-2.5 h-10 w-10 mx-auto" : "px-2.5 py-2",
+        collapsed ? "justify-center px-0 py-3 h-12 w-12 mx-auto" : "px-3 py-2.5",
         active
-          ? "bg-gradient-to-r from-primary to-emerald-600 text-primary-foreground shadow-md shadow-primary/25"
-          : "text-foreground hover:bg-secondary/80 hover:text-foreground active:scale-[0.98]"
+          ? "bg-primary/10 text-primary ring-1 ring-primary/20 shadow-sm shadow-primary/5"
+          : "text-foreground/80 hover:bg-secondary/70 hover:text-foreground active:scale-[0.98]"
       )}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
     >
       {active && !collapsed && (
-        <span className="absolute left-0 top-1.5 bottom-1.5 w-1 rounded-r-full bg-primary-foreground/90" />
+        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
       )}
       {active && collapsed && (
-        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_6px_hsl(var(--primary))]" />
+        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
       )}
       <span className={cn(
         "shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]",
-        active ? "text-primary-foreground" : "text-foreground/85 group-hover:text-primary"
+        active ? "text-primary" : "text-foreground/80 group-hover:text-primary"
       )}>
         {item.icon}
       </span>
-      {!collapsed && <span className="truncate flex-1 text-left">{item.label}</span>}
+      {!collapsed && <span className="truncate flex-1 text-left tracking-tight">{item.label}</span>}
       {!collapsed && item.badge != null && String(item.badge) !== "0" && (
         <span
           className={cn(
-            "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums",
+            "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums transition-colors",
             active
-              ? "bg-primary-foreground/20 text-primary-foreground"
-              : "bg-destructive text-destructive-foreground"
+              ? "bg-primary/20 text-primary"
+              : "bg-destructive/10 text-destructive"
           )}
         >
           {typeof item.badge === "number" && item.badge > 99 ? "99+" : item.badge}
         </span>
       )}
-      {!collapsed && active && <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground/80" />}
       {collapsed && item.badge != null && String(item.badge) !== "0" && (
-        <span className="absolute -right-1 -top-1 h-4 min-w-4 rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 text-destructive-foreground">
+        <span className="absolute -right-0 -top-0 h-4 min-w-4 rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 text-destructive-foreground ring-2 ring-card">
           {typeof item.badge === "number" && item.badge > 9 ? "9+" : item.badge}
         </span>
       )}
@@ -702,7 +711,7 @@ const NavBtn = ({
     {collapsed && (
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-lg bg-popover text-popover-foreground border border-border/60 px-2 py-1 text-[12px] font-semibold shadow-lg opacity-0 group-hover:opacity-100 transition-opacity"
+        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-lg bg-popover text-popover-foreground border border-border/60 px-2.5 py-1.5 text-[12px] font-semibold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
       >
         {item.label}
       </span>
@@ -713,18 +722,18 @@ const NavBtn = ({
         onMouseDown={(e) => e.stopPropagation()}
         onClick={(e) => { e.stopPropagation(); onPin(); }}
         className={cn(
-          "absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all",
-          pinned ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 hover:opacity-100 text-muted-foreground"
+          "absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all [&>svg]:h-3.5 [&>svg]:w-3.5",
+          pinned ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 hover:opacity-100 text-muted-foreground hover:bg-secondary"
         )}
         title={pinned ? "পিন সরান" : "পিন করুন"}
       >
-        {pinned ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+        {pinned ? <PinOff /> : <Pin />}
       </button>
     )}
   </div>
 );
 
-// ── CommandPalette ───────────────────────────────────────────────────────────
+// ── CommandPalette (Spotlight Style) ───────────────────────────────────────────
 const CommandPalette = ({
   query, setQuery, items, allItems, recentValues, onSelect, onClose,
   onCycleTheme, themeMode, onToggleLanguage, language, onSignOut, onNavigate,
@@ -759,32 +768,32 @@ const CommandPalette = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-black/50 backdrop-blur-sm"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/50 backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
-        initial={{ scale: 0.95, opacity: 0, y: -10 }}
+        initial={{ scale: 0.98, opacity: 0, y: -10 }}
         animate={{ scale: 1, opacity: 1, y: 0 }}
-        exit={{ scale: 0.95, opacity: 0, y: -10 }}
-        transition={{ duration: 0.15 }}
-        className="w-full max-w-2xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden"
+        exit={{ scale: 0.98, opacity: 0, y: -10 }}
+        transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+        className="w-full max-w-2xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden ring-1 ring-black/5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
-          <CommandIcon className="h-4 w-4 text-muted-foreground" />
+        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
+          <Search className="h-5 w-5 text-muted-foreground" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKey}
             placeholder="পেজ, ইউজার, অর্ডার, সার্ভিস বা একশন খুঁজুন…"
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/70 font-medium"
           />
-          <kbd className="rounded-md border border-border bg-card px-1.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
+          <kbd className="rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
         </div>
-        <div className="max-h-[58vh] overflow-y-auto p-2 space-y-1">
+        <div className="max-h-[50vh] overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
           {rows.length === 0 ? (
-            <p className="text-center py-8 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
+            <p className="text-center py-10 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
           ) : (
             rows.map((it, idx) => (
               <button
@@ -792,13 +801,16 @@ const CommandPalette = ({
                 onMouseEnter={() => setHi(idx)}
                 onClick={() => onSelect(it.value)}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2 text-sm transition-colors text-left",
-                  idx === hi ? "bg-primary/10 text-foreground" : "text-foreground/85 hover:bg-secondary"
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors text-left",
+                  idx === hi ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
                 )}
               >
-                <span className="h-8 w-8 rounded-lg flex items-center justify-center shrink-0">{it.icon}</span>
+                <span className={cn(
+                  "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 [&>svg]:h-4 [&>svg]:w-4 transition-colors",
+                  idx === hi ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                )}>{it.icon}</span>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium truncate">{it.label}</p>
+                  <p className="font-semibold truncate">{it.label}</p>
                 </div>
                 {idx === hi && (
                   <kbd className="rounded border border-border bg-card px-1.5 text-[9px] font-mono text-muted-foreground">↵</kbd>
@@ -808,10 +820,12 @@ const CommandPalette = ({
           )}
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border/50 text-[10px] text-muted-foreground">
-          <span>Shondhaan Workspace</span>
-          <span>Theme: <b>{themeMode}</b></span>
-          <span>Lang: <b>{language}</b></span>
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/50 text-[10px] text-muted-foreground bg-secondary/30">
+          <span className="font-medium">Shondhaan Workspace</span>
+          <div className="flex items-center gap-4">
+            <span>Theme: <b className="text-foreground">{themeMode}</b></span>
+            <span>Lang: <b className="text-foreground">{language}</b></span>
+          </div>
         </div>
       </motion.div>
     </motion.div>

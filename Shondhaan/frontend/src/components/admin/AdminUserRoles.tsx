@@ -104,7 +104,7 @@ const AdminUserRoles = () => {
       {/* Header */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center shadow-sm shrink-0">
+          <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center shadow-sm shrink-0">
             <UsersIcon className="h-4 w-4" />
           </div>
           <div className="min-w-0">

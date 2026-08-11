@@ -36,10 +36,9 @@ import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
-  import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  import.meta.env.VITE_API_BASE;
 const PROFILE_API_BASE = MART_API_BASE;
-const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL).replace(/\/+$/, "");
 
 interface Booking {
   id: string;
@@ -309,8 +308,8 @@ const ClientDashboard = () => {
         setBookings(prev => prev.map(b => b.id === updated.id ? { ...b, ...updated } : b));
         const labels: Record<string, string> = {
           confirmed: bn ? "আপনার বুকিং নিশ্চিত হয়েছে!" : "Booking confirmed!",
-          in_progress: bn ? "আপনার সেবা চলছে!" : "Service in progress!",
-          completed: bn ? "আপনার সেবা সম্পন্ন!" : "Service completed!",
+          in_progress: bn ? "আপনার সার্ভিস চলছে!" : "Service in progress!",
+          completed: bn ? "আপনার সার্ভিস সম্পন্ন!" : "Service completed!",
           cancelled: bn ? "বুকিং বাতিল হয়েছে" : "Booking cancelled",
         };
         if (labels[updated.status]) toast.info(labels[updated.status]);
@@ -477,83 +476,81 @@ const ClientDashboard = () => {
     <>
         <PanelSidebarTabs
          items={[
-  {
-    value: "dashboard",
-    label: bn ? "ড্যাশবোর্ড" : "Dashboard",
-    icon: <Home className="h-5 w-5" />,
-    group: bn ? "ড্যাশবোর্ড" : "Dashboard",
-  },
-  {
-    value: "bookings",
-    label: bn ? "বুকিং" : "Bookings",
-    icon: <ClipboardList className="h-5 w-5" />,
-    group: bn ? "সেবা" : "Services",
-  },
-  {
-    value: "messages",
-    label: bn ? "ম্যাসেজ" : "Messages",
-    icon: <MessageSquare className="h-5 w-5" />,
-    group: bn ? "সেবা" : "Services",
-  },
-  {
-    value: "requests",
-    label: bn ? "রিকোয়েস্ট" : "Requests",
-    icon: <FileSearch className="h-5 w-5" />,
-  },
-  {
-    value: "mart-orders",
-    label: bn ? "মার্ট অর্ডার" : "Mart Orders",
-    icon: <ShoppingBag className="h-5 w-5" />,
-    group: bn ? "শপিং" : "Shopping",
-  },
-  {
-    value: "deal-my-ads",
-    label: bn ? "আমার বিজ্ঞাপন" : "My Ads",
-    icon: <Megaphone className="h-5 w-5" />,
-    group: bn ? "সন্ধান ডিল" : "Deal",
-  },
-  {
-    value: "deal-favorites",
-    label: bn ? "ফেভারিট" : "Favorites",
-    icon: <Heart className="h-5 w-5" />,
-  },
-  {
-    value: "deal-messages",
-    label: bn ? "মেসেজ" : "Messages",
-    icon: <MessageSquare className="h-5 w-5" />,
-  },
-  {
-    value: "payments",
-    label: bn ? "পেমেন্ট" : "Payments",
-    icon: <Wallet className="h-5 w-5" />,
-    group: bn ? "আর্থিক" : "Finance",
-  },
-  {
-    value: "reviews",
-    label: bn ? "রিভিউ" : "Reviews",
-    icon: <Star className="h-5 w-5" />,
-    group: bn ? "অন্যান্য" : "Others",
-  },
-  {
-    value: "notifications",
-    label: bn ? "নোটিফিকেশন" : "Notifications",
-    icon: <Bell className="h-5 w-5" />,
-  },
-  {
-    value: "profile",
-    label: bn ? "প্রোফাইল" : "Profile",
-    icon: <User className="h-5 w-5" />,
-    group: bn ? "অ্যাকাউন্ট" : "Account",
-  },
- {
-   
-  value: "job",
-  label: bn ? "আমার আবেদনসমূহ" : "My Applications",
-  icon: <User className="h-5 w-5" />,
-  group: bn ? "চাকরি" : "Job",
-
-  },
-]}
+              {
+                value: "dashboard",
+                label: bn ? "ড্যাশবোর্ড" : "Dashboard",
+                icon: <Home className="h-5 w-5" />,
+                group: bn ? "ড্যাশবোর্ড" : "Dashboard",
+              },
+              {
+                value: "bookings",
+                label: bn ? "বুকিং" : "Bookings",
+                icon: <ClipboardList className="h-5 w-5" />,
+                group: bn ? "সার্ভিস" : "Services",
+              },
+              {
+                value: "messages",
+                label: bn ? "ম্যাসেজ" : "Messages",
+                icon: <MessageSquare className="h-5 w-5" />,
+                group: bn ? "সার্ভিস" : "Services",
+              },
+              {
+                value: "requests",
+                label: bn ? "রিকোয়েস্ট" : "Requests",
+                icon: <FileSearch className="h-5 w-5" />,
+              },
+              {
+                value: "mart-orders",
+                label: bn ? "মার্ট অর্ডার" : "Mart Orders",
+                icon: <ShoppingBag className="h-5 w-5" />,
+                group: bn ? "শপিং" : "Shopping",
+              },
+              {
+                value: "deal-my-ads",
+                label: bn ? "আমার বিজ্ঞাপন" : "My Ads",
+                icon: <Megaphone className="h-5 w-5" />,
+                group: bn ? "সন্ধান ডিল" : "Deal",
+              },
+              {
+                value: "deal-favorites",
+                label: bn ? "ফেভারিট" : "Favorites",
+                icon: <Heart className="h-5 w-5" />,
+              },
+              {
+                value: "deal-messages",
+                label: bn ? "মেসেজ" : "Messages",
+                icon: <MessageSquare className="h-5 w-5" />,
+              },
+              {
+                value: "payments",
+                label: bn ? "পেমেন্ট" : "Payments",
+                icon: <Wallet className="h-5 w-5" />,
+                group: bn ? "আর্থিক" : "Finance",
+              },
+              {
+                value: "reviews",
+                label: bn ? "রিভিউ" : "Reviews",
+                icon: <Star className="h-5 w-5" />,
+                group: bn ? "অন্যান্য" : "Others",
+              },
+              {
+                value: "notifications",
+                label: bn ? "নোটিফিকেশন" : "Notifications",
+                icon: <Bell className="h-5 w-5" />,
+              },
+              {
+                value: "job",
+                label: bn ? "আমার আবেদনসমূহ" : "My Applications",
+                icon: <User className="h-5 w-5" />,
+                group: bn ? "চাকরি" : "Job",
+              },
+              {
+                value: "profile",
+                label: bn ? "প্রোফাইল" : "Profile",
+                icon: <User className="h-5 w-5" />,
+                group: bn ? "অ্যাকাউন্ট" : "Account",
+              },
+            ]}
           defaultValue="dashboard"
           panelTitle={profile.display_name || (bn ? "ক্লায়েন্ট ড্যাশবোর্ড" : "Client Dashboard")}
           panelIcon={<Store className="h-5 w-5" />}
@@ -595,8 +592,8 @@ const ClientDashboard = () => {
                   <div className="text-center py-12">
                     <Package className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
                     <p className="text-base text-muted-foreground">{bn ? "কোনো বুকিং নেই" : "No bookings yet"}</p>
-                    <button onClick={() => navigate("/")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground">
-                      {bn ? "সেবা দেখুন" : "Browse Services"}
+                    <button onClick={() => navigate("/")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
+                      {bn ? "সার্ভিস দেখুন" : "Browse Services"}
                     </button>
                   </div>
                 ) : (
@@ -658,9 +655,8 @@ const ClientDashboard = () => {
                   ))}
                 </div>
               )}
- {/* my applications */}
              {/* my applications */}
-{activeTab === "job" && <JobApplicationsTab bn={bn} />}
+             {activeTab === "job" && <JobApplicationsTab bn={bn} />}
               {/* AI Weekly Summary */}
               {activeTab === "bookings" && (
                 <div>
@@ -709,8 +705,8 @@ const ClientDashboard = () => {
                     className="rounded-xl border border-border bg-gradient-to-br from-primary/10 to-primary/5 p-4 text-left hover:border-primary/40 hover:shadow-sm transition-all group"
                   >
                     <ClipboardList className="h-6 w-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                    <p className="text-sm font-bold text-foreground">{bn ? "সেবা নিন" : "Get Service"}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "১৮৬+ সেবা" : "186+ services"}</p>
+                    <p className="text-sm font-bold text-foreground">{bn ? "সার্ভিস নিন" : "Get Service"}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{bn ? "১৮৬+ সার্ভিস" : "186+ services"}</p>
                   </motion.button>
                 </div>
               )}
@@ -796,7 +792,7 @@ const ClientDashboard = () => {
 
               {/* Profile */}
               {activeTab === "profile" && (
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card p-6 max-w-lg">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="rounded-2xl border border-border bg-card p-6 max-w-lg mx-auto">
                   <div className="mb-5 flex items-center gap-3">
                     <label className="relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-primary/20 bg-primary/10 text-primary transition hover:border-primary/50">
                       {profile.profile_image_url ? (
@@ -849,7 +845,7 @@ const ClientDashboard = () => {
                       </div>
                     </div>
                     <button type="submit" disabled={saving}
-                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-base font-semibold text-primary-foreground disabled:opacity-50">
+                      className="w-full flex items-center justify-center gap-2 rounded-lg bg-primary py-3 text-base font-semibold text-white disabled:opacity-50">
                       {saving ? <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "সেভ হচ্ছে..." : "Saving..."}</> : <><Save className="h-4 w-4" /> {bn ? "সেভ করুন" : "Save"}</>}
                     </button>
                   </form>

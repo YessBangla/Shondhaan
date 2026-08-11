@@ -94,7 +94,7 @@ const MobileFabHub = () => {
     },
     {
       key: "matchmaker",
-      label: bn ? "সঠিক সেবা" : "Match",
+      label: bn ? "সঠিক সার্ভিস" : "Match",
       icon: <Sparkles className="h-[20px] w-[20px]" strokeWidth={2.2} />,
       bg: "bg-gradient-to-br from-fuchsia-500 to-pink-500",
       onClick: fire("yess:open-matchmaker"),
@@ -179,7 +179,7 @@ const MobileFabHub = () => {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={bn ? "দ্রুত অ্যাকশন" : "Quick actions"}
-        className="press fixed right-3 z-[57] flex h-[54px] w-[54px] items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-emerald-600 text-primary-foreground shadow-[0_10px_28px_hsl(var(--primary)/0.45)] ring-1 ring-white/25 md:hidden"
+        className="press fixed right-3 z-[57] flex h-[54px] w-[54px] items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-emerald-600 text-white shadow-[0_10px_28px_hsl(var(--primary)/0.45)] ring-1 ring-white/25 md:hidden"
         style={{ bottom: getMobileFloatingBottom(8), touchAction: "manipulation" }}
       >
         {/* Idle pulse ring */}

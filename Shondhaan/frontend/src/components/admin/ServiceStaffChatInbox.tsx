@@ -251,7 +251,7 @@ const ServiceStaffChatInbox = () => {
                           className={cn(
                             "max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                             staff
-                              ? "rounded-br-md bg-primary text-primary-foreground"
+                              ? "rounded-br-md bg-primary text-white"
                               : "rounded-bl-md border border-border bg-card text-foreground"
                           )}
                         >
@@ -285,7 +285,7 @@ const ServiceStaffChatInbox = () => {
               <button
                 type="submit"
                 disabled={sending || !draft.trim()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50"
+                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white disabled:opacity-50"
               >
                 {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               </button>

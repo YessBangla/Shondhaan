@@ -31,7 +31,7 @@ const GestureTutorial = () => {
     ? [
         { icon: ArrowLeft, title: "সোয়াইপ ব্যাক", desc: "যেকোনো পেজে স্ক্রিনের বাম প্রান্ত থেকে ডানে টানুন।" },
         { icon: ChevronsDown, title: "নিচে টেনে বন্ধ করুন", desc: "কোনো মোডাল/শীট খুললে নিচে টেনে দ্রুত বন্ধ করুন।" },
-        { icon: Mic, title: "ভয়েসে বুক করুন", desc: "নিচের ডানে মাইক বাটন চেপে বলুন কোন সেবা চান।" },
+        { icon: Mic, title: "ভয়েসে বুক করুন", desc: "নিচের ডানে মাইক বাটন চেপে বলুন কোন সার্ভিস চান।" },
         { icon: Smartphone, title: "শেক করে আনডু", desc: "ভুল করেছেন? ফোনটি একটু ঝাঁকান — শেষ অ্যাকশন undo হবে।" },
         { icon: Keyboard, title: "কীবোর্ড শর্টকাট", desc: "ডেস্কটপে Shift + ? চেপে সব শর্টকাট দেখুন।" },
       ]
@@ -77,7 +77,7 @@ const GestureTutorial = () => {
               <X className="h-4 w-4" />
             </button>
 
-            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-primary-foreground shadow-lg shadow-primary/30">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary to-primary/60 text-white shadow-lg shadow-primary/30">
               <Icon className="h-8 w-8" />
             </div>
             <h3 className="mb-1 text-lg font-bold text-foreground">{tips[step].title}</h3>
@@ -101,7 +101,7 @@ const GestureTutorial = () => {
               </button>
               <button
                 onClick={next}
-                className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground shadow"
+                className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-white shadow"
               >
                 {step >= tips.length - 1 ? (bn ? "শুরু করুন" : "Get started") : (bn ? "পরবর্তী" : "Next")}
               </button>

@@ -23,7 +23,7 @@ export default function ARTryOnBadge({ onClick, className, variant = "badge" }: 
         whileTap={{ scale: 0.97 }}
         onClick={onClick}
         className={cn(
-          "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-pink-500 px-4 py-2 text-sm font-semibold text-primary-foreground shadow-md",
+          "inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-primary to-pink-500 px-4 py-2 text-sm font-semibold text-white shadow-md",
           className
         )}
       >

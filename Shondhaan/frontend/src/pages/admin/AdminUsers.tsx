@@ -235,7 +235,7 @@ const AdminUsers = () => {
               checked={checked}
               onChange={() => sel.toggle(u.id)}
             />
-            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center font-bold shrink-0">
+            <div className="h-11 w-11 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center font-bold shrink-0">
               {(name || "?").slice(0, 1).toUpperCase()}
             </div>
             <div className="min-w-0 flex-1">
@@ -418,7 +418,7 @@ const AdminUsers = () => {
           <button
             onClick={() => setViewMode("grouped")}
             className={`flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-medium transition ${
-              viewMode === "grouped" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              viewMode === "grouped" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
             title="রোল অনুসারে গ্রুপ"
           >
@@ -427,7 +427,7 @@ const AdminUsers = () => {
           <button
             onClick={() => setViewMode("flat")}
             className={`flex items-center gap-1 rounded-lg px-2.5 py-2 text-xs font-medium transition ${
-              viewMode === "flat" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              viewMode === "flat" ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
             title="সাধারণ তালিকা"
           >
@@ -437,7 +437,7 @@ const AdminUsers = () => {
         <button onClick={load} className="flex items-center gap-1.5 rounded-xl border border-border px-3 py-2.5 text-sm hover:bg-secondary">
           <RefreshCw className="h-4 w-4" /> রিফ্রেশ
         </button>
-        <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90">
+        <button onClick={() => setShowCreate(true)} className="flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2.5 text-sm font-semibold text-white hover:opacity-90">
           <UserPlus className="h-4 w-4" /> নতুন ইউজার
         </button>
       </div>
@@ -674,7 +674,7 @@ const CreateUserModal = ({ onClose, onCreated }: { onClose: () => void; onCreate
         </div>
       </div>
       <button onClick={submit} disabled={loading || !form.email || !form.password}
-        className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+        className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50">
         {loading ? "তৈরী হচ্ছে…" : "তৈরী করুন"}
       </button>
     </ModalShell>
@@ -715,7 +715,7 @@ const EditUserModal = ({ user, onClose, onSaved }: { user: UserRow; onClose: () 
           rows={3} className="mt-1 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
       </label>
       <button onClick={save} disabled={loading}
-        className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-50">
+        className="w-full rounded-lg bg-primary py-2.5 text-sm font-semibold text-white disabled:opacity-50">
         {loading ? "সেভ হচ্ছে…" : "সেভ করুন"}
       </button>
     </ModalShell>
@@ -752,7 +752,7 @@ const PasswordModal = ({ user, onClose, onReset }: { user: UserRow; onClose: () 
         <input type="text" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="নতুন পাসওয়ার্ড…"
           className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm" />
         <button onClick={setNew} disabled={loading || pw.length < 6}
-          className="mt-2 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-primary-foreground disabled:opacity-50">
+          className="mt-2 w-full rounded-lg bg-primary py-2 text-xs font-semibold text-white disabled:opacity-50">
           {loading ? "সেভ হচ্ছে…" : "সেট করুন"}
         </button>
       </div>

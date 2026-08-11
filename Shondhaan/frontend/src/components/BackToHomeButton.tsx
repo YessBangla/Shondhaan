@@ -15,7 +15,7 @@ const BackToHomeButton = () => {
       whileHover={{ scale: 1.1 }}
       whileTap={{ scale: 0.9 }}
       onClick={() => navigate("/")}
-      className="fixed bottom-20 md:bottom-6 left-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/25 text-sm font-semibold"
+      className="fixed bottom-20 md:bottom-6 left-4 z-50 flex items-center gap-2 px-4 py-2.5 rounded-full bg-primary text-white shadow-lg shadow-primary/25 text-sm font-semibold"
     >
       <Home className="h-4 w-4" />
       {language === "bn" ? "হোমে ফিরুন" : "Back to Home"}

@@ -50,7 +50,7 @@ type ApiService = {
   price?: string | number;
 };
 
-const API_BASE = import.meta.env.VITE_SERVICE_API_BASE_URL + "/api";
+export const API_BASE = import.meta.env.VITE_SERVICE_API_BASE_URL + "/api";
 
 const parseJsonArray = (value: unknown): string[] => {
   if (!value) return [];
@@ -127,7 +127,7 @@ const AllServices = () => {
   const initialScrollDone = useRef(false);
 
   useSEO({
-    title: bn ? "সকল সেবা" : "All Services",
+    title: bn ? "সকল সার্ভিস" : "All Services",
     description: bn
       ? "সন্ধানের সকল হোম সার্ভিস ব্রাউজ করুন।"
       : "Browse all home services on Shondhaan.",
@@ -454,7 +454,7 @@ const AllServices = () => {
                       onClick={() => setFilterCategory("all")}
                       className={`rounded-full border px-3 py-1 text-xs font-medium ${
                         filterCategory === "all"
-                          ? "border-primary bg-primary text-primary-foreground"
+                          ? "border-primary bg-primary text-white"
                           : "border-border bg-background text-foreground hover:bg-secondary"
                       }`}
                     >
@@ -471,7 +471,7 @@ const AllServices = () => {
                         }}
                         className={`rounded-full border px-3 py-1 text-xs font-medium ${
                           filterCategory === cat.id
-                            ? "border-primary bg-primary text-primary-foreground"
+                            ? "border-primary bg-primary text-white"
                             : "border-border bg-background text-foreground hover:bg-secondary"
                         }`}
                       >
@@ -700,7 +700,7 @@ const CategorySidebar = ({
               onClick={() => scrollToCategory(cat.id)}
               className={`flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
                 activeCategory === cat.id
-                  ? "bg-primary text-primary-foreground"
+                  ? "bg-primary text-white"
                   : "bg-secondary text-muted-foreground"
               }`}
             >
@@ -922,7 +922,7 @@ const CmsServiceCard = ({
             disabled={!inCompare && compareList.length >= 3}
             className={`flex h-7 w-7 items-center justify-center rounded-full border ${
               inCompare
-                ? "border-primary bg-primary text-primary-foreground"
+                ? "border-primary bg-primary text-white"
                 : "border-border bg-background/80 text-muted-foreground disabled:opacity-30"
             }`}
           >

@@ -108,7 +108,7 @@ const PaymentCancel = ({ failed = false }: PaymentCancelProps) => {
               type="button"
               onClick={handleRetry}
               disabled={retrying}
-              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground disabled:opacity-60"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-60"
             >
               {retrying ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
               {bn ? "আবার পে করুন" : "Retry payment"}

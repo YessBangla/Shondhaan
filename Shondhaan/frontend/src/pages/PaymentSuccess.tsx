@@ -44,7 +44,6 @@ const PaymentSuccess = () => {
     },
     [params]
   );
-
   useEffect(() => {
     let cancelled = false;
 
@@ -127,7 +126,7 @@ const PaymentSuccess = () => {
         )}
 
         <div className="mt-6 flex w-full gap-2">
-          <Link to="/bookings" className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground">
+          <Link to="/bookings" className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">
             {bn ? "বুকিং দেখুন" : "View bookings"}
           </Link>
           <Link to="/" className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground">

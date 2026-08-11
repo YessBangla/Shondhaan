@@ -59,7 +59,7 @@ export default function ServiceMatchmakerLauncher() {
         aria-label="open matchmaker"
       >
         <Sparkles className="h-3.5 w-3.5" />
-        {bn ? "সঠিক সেবা খুঁজুন" : "Find my service"}
+        {bn ? "সঠিক সার্ভিস খুঁজুন" : "Find my service"}
       </motion.button>
       <ServiceMatchmakerQuiz open={open} onClose={() => setOpen(false)} />
     </>

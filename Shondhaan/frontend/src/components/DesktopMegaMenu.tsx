@@ -114,14 +114,14 @@ const hasSidebar =
   const menus: MenuGroup[] = [
     {
       key: "home",
-      labelBn: "হোম ও সেবা",
+      labelBn: "হোম ও সার্ভিস",
       labelEn: "Home & Services",
       icon: Home,
       children: [
         { labelBn: "মূল পেজ", labelEn: "Home", href: "/", icon: Home },
-        { labelBn: "সকল সেবা", labelEn: "All Services", href: "/all-services", icon: Layers },
-        { labelBn: "সেবা তুলনা", labelEn: "Compare Services", href: "/compare", icon: ArrowRightLeft },
-        { labelBn: "সেবা ট্র্যাকিং", labelEn: "Track Service", href: "/track/search", icon: Route },
+        { labelBn: "সকল সার্ভিস", labelEn: "All Services", href: "/all-services", icon: Layers },
+        { labelBn: "সার্ভিস তুলনা", labelEn: "Compare Services", href: "/compare", icon: ArrowRightLeft },
+        { labelBn: "সার্ভিস ট্র্যাকিং", labelEn: "Track Service", href: "/track/search", icon: Route },
         // { labelBn: "চেকআউট", labelEn: "Checkout", href: "/checkout", icon: ShoppingCart },
         // { labelBn: "বুকিং কনফার্মেশন", labelEn: "Booking Confirmation", href: "/booking-confirmation", icon: BookMarked },
       ],
@@ -186,7 +186,7 @@ const hasSidebar =
         { labelBn: "Payments", labelEn: "Payments", href: "/dashboard?tab=payments", icon: Wallet },
         { labelBn: "Reviews", labelEn: "Reviews", href: "/dashboard?tab=reviews", icon: Star },
         { labelBn: "Notifications", labelEn: "Notifications", href: "/dashboard?tab=notifications", icon: Bell },
-        { labelBn: "সেবা ট্র্যাক করুন", labelEn: "Track My Service", href: "/track/search", icon: Route },
+        { labelBn: "সার্ভিস ট্র্যাক করুন", labelEn: "Track My Service", href: "/track/search", icon: Route },
         ...(!user ? [
           { labelBn: "লগইন", labelEn: "Login", href: "/auth", icon: LogIn },
           { labelBn: "রেজিস্ট্রেশন", labelEn: "Register", href: "/auth?mode=register", icon: UserPlus },
@@ -217,7 +217,7 @@ const hasSidebar =
         { labelBn: "সুপার অ্যাডমিন", labelEn: "Super Admin", href: "/super-admin", icon: Crown },
         { labelBn: "অ্যাডমিন প্যানেল", labelEn: "Admin Dashboard", href: "/admin", icon: Settings },
         { labelBn: "কল সেন্টার", labelEn: "Call Center", href: "/call-center", icon: Headphones },
-        { labelBn: "সেবাদাতা প্যানেল", labelEn: "Provider Panel", href: "/provider", icon: Wrench },
+        { labelBn: "সার্ভিসদাতা প্যানেল", labelEn: "Provider Panel", href: "/provider", icon: Wrench },
         { labelBn: "এরিয়া প্রতিনিধি", labelEn: "Representative", href: "/representative", icon: MapPinCheck },
         { labelBn: "মডারেটর", labelEn: "Moderator", href: "/moderator", icon: ShieldCheck },
         { labelBn: "সুপারভাইজার", labelEn: "Supervisor", href: "/supervisor", icon: Eye },

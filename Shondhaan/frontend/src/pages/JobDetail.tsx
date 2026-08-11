@@ -687,6 +687,20 @@ const JobDetail = () => {
               <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {job.views_count} {bn ? "বার দেখা হয়েছে" : "views"}</span>
               <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {job.applications_count} {bn ? "জন আবেদন করেছেন" : "applications"}</span>
             </div>
+            {!isExpired && (
+              <div
+                className="
+                  sticky
+                  bottom-16 md:bottom-0
+                  bg-background/90
+                  backdrop-blur-sm
+                  border-t
+                  py-3 md:py-4
+                  z-20
+                "
+              >
+              </div>
+            )}
           </div>
 
           {/* Sidebar - Related Jobs */}
@@ -731,15 +745,53 @@ const JobDetail = () => {
           Hidden by default. Slides up into view only once the inline
           action bar above has scrolled out of the viewport, then stays
           pinned to the bottom of the screen for the rest of the scroll.
-          Scrolling back up hides it again automatically.
-
-          IMPORTANT: this is portaled to document.body (see
-          `createPortal` below) specifically so it sits OUTSIDE
-          JobsPageTransition's DOM subtree and can't be affected by any
-          transform that wrapper applies. Don't move this block back
-          inline into the normal render tree above — that's what caused
-          the button to visibly drift right while scrolling. */}
-      {typeof document !== "undefined" && createPortal(stickyBottomBar, document.body)}
+          Scrolling back up hides it again automatically. */}
+      {!isExpired && (
+        <div
+          className={`fixed bottom-20 md:bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
+            showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+          }`}
+        >
+          <div className="mx-auto max-w-7xl px-4 py-3 ">
+            <div className="flex flex-wrap items-center gap-2">
+              <Button
+                onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+                className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
+              >
+                <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
+                {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+                {bn ? "সংরক্ষণ" : "Save"}
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="gap-1.5">
+                    <Share2 className="h-4 w-4" /> {bn ? "শেয়ার" : "Share"}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="start">
+                  <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                    <Facebook className="h-4 w-4 text-blue-600" /> Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                    <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                    <Send className="h-4 w-4 text-green-600" /> WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
+                    <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+                <Printer className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Apply Modal — only Age & Expected Salary are collected here.
           Name, phone, email, CV, and video CV all come from the

@@ -13,8 +13,8 @@ interface Props {
 }
 
 const STATIC_LABELS: Record<string, { bn: string; en: string }> = {
-  "all-services": { bn: "সকল সেবা", en: "All Services" },
-  service: { bn: "সেবা", en: "Service" },
+  "all-services": { bn: "সকল সার্ভিস", en: "All Services" },
+  service: { bn: "সার্ভিস", en: "Service" },
   bookings: { bn: "বুকিং", en: "Bookings" },
   profile: { bn: "প্রোফাইল", en: "Profile" },
   checkout: { bn: "চেকআউট", en: "Checkout" },

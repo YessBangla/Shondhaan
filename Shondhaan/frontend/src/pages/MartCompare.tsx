@@ -95,10 +95,10 @@ const MartCompare = () => {
       <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
 
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-primary-foreground">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
         <div className="app-container py-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-primary-foreground" onClick={() => navigate(-1)}>
+            <Button variant="ghost" size="icon" className="text-white" onClick={() => navigate(-1)}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-xl font-bold flex items-center gap-2">

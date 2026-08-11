@@ -71,13 +71,13 @@ const sidebarItems = [
   { value: "api-keys", label: "API ও ইন্টিগ্রেশন", icon: <Key />, group: "SaaS প্ল্যাটফর্ম" },
   { value: "monitoring", label: "সিস্টেম মনিটরিং", icon: <Activity />, group: "SaaS প্ল্যাটফর্ম" },
 
-  // সেবা CMS
-  { value: "services", label: "সেবা", icon: <Package />, group: "সেবা CMS" },
-  { value: "service-images", label: "সেবার ছবি", icon: <ImagePlus />, group: "সেবা CMS" },
-  { value: "categories", label: "ক্যাটেগরি", icon: <Grid3X3 />, group: "সেবা CMS" },
-  { value: "offers", label: "অফার", icon: <Percent />, group: "সেবা CMS" },
-  { value: "banners", label: "ব্যানার", icon: <Image />, group: "সেবা CMS" },
-  { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সেবা CMS" },
+  // সার্ভিস CMS
+  { value: "services", label: "সার্ভিস", icon: <Package />, group: "সার্ভিস CMS" },
+  { value: "service-images", label: "সার্ভিসর ছবি", icon: <ImagePlus />, group: "সার্ভিস CMS" },
+  { value: "categories", label: "ক্যাটেগরি", icon: <Grid3X3 />, group: "সার্ভিস CMS" },
+  { value: "offers", label: "অফার", icon: <Percent />, group: "সার্ভিস CMS" },
+  { value: "banners", label: "ব্যানার", icon: <Image />, group: "সার্ভিস CMS" },
+  { value: "sections", label: "সেকশন", icon: <LayoutList />, group: "সার্ভিস CMS" },
 
   // সন্ধান মার্ট
   { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "সন্ধান মার্ট" },
@@ -185,7 +185,7 @@ const SuperAdminPanel = () => {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-secondary"><Crown className="h-8 w-8 text-muted-foreground" /></div>
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সুপার অ্যাডমিনদের জন্য।</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
         </div>
       </div>
     );

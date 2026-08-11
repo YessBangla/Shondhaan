@@ -310,7 +310,7 @@ const BookingConfirmation = () => {
           )}
           <button
             onClick={() => navigate("/")}
-            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground"
+            className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white"
           >
             {t("bc.goHome")}
           </button>
@@ -385,11 +385,11 @@ const BookingConfirmation = () => {
       </div>
 
       <div class="lh-section">
-        <div class="lh-section-title">${bn ? "সেবা বিবরণ" : "Service Details"}</div>
+        <div class="lh-section-title">${bn ? "সার্ভিস বিবরণ" : "Service Details"}</div>
         <table class="lh-table">
           <thead>
             <tr>
-              <th>${bn ? "সেবা" : "Service"}</th>
+              <th>${bn ? "সার্ভিস" : "Service"}</th>
               <th>${bn ? "প্যাকেজ" : "Package"}</th>
               <th style="text-align:end;">${bn ? "মূল্য" : "Price"}</th>
             </tr>
@@ -428,7 +428,7 @@ const BookingConfirmation = () => {
       </div>
 
       <p style="text-align:center;margin-top:8mm;color:#64748b;font-size:9.5pt;">
-        ${bn ? "ধন্যবাদ! আমাদের সেবা ব্যবহার করার জন্য।" : "Thank you for using our service."}
+        ${bn ? "ধন্যবাদ! আমাদের সার্ভিস ব্যবহার করার জন্য।" : "Thank you for using our service."}
       </p>
     `;
 
@@ -631,7 +631,7 @@ ${booking.bookingDate} ${booking.bookingTime}`;
 
           <button
             onClick={handleDownloadPdf}
-            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-xl bg-primary py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
           >
             <FileDown className="h-4 w-4" />
             {bn ? "PDF ডাউনলোড" : "Download PDF"}
@@ -653,7 +653,7 @@ ${booking.bookingDate} ${booking.bookingTime}`;
         >
           <button
             onClick={() => navigate("/bookings")}
-            className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-colors hover:bg-primary/90"
           >
             {t("bc.viewBookings")}
           </button>

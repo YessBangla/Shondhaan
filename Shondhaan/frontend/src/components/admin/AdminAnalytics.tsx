@@ -490,7 +490,7 @@ const AdminAnalytics = () => {
 
   // Export handlers
   const exportBookingReport = () => exportCSV(filteredBookings.map(b => ({
-    সেবা: b.service_title, মূল্য: b.package_price, স্ট্যাটাস: b.status, তারিখ: b.created_at.slice(0, 10), জরুরি: b.is_emergency ? "হ্যাঁ" : "না"
+    সার্ভিস: b.service_title, মূল্য: b.package_price, স্ট্যাটাস: b.status, তারিখ: b.created_at.slice(0, 10), জরুরি: b.is_emergency ? "হ্যাঁ" : "না"
   })), "booking_report");
 
   const exportRequestReport = () => exportCSV(filteredRequests.map(r => ({
@@ -517,7 +517,7 @@ const AdminAnalytics = () => {
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["7d", "30d", "6m", "1y"] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-secondary"}`}>
+                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
                 {p === "7d" ? "৭ দিন" : p === "30d" ? "৩০ দিন" : p === "6m" ? "৬ মাস" : "১ বছর"}
               </button>
             ))}
@@ -530,14 +530,14 @@ const AdminAnalytics = () => {
 
       <Tabs defaultValue="service" className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
-          <TabsTrigger value="service" className="text-xs"><ShoppingCart className="h-3.5 w-3.5 mr-1" /> সেবা ও বুকিং</TabsTrigger>
+          <TabsTrigger value="service" className="text-xs"><ShoppingCart className="h-3.5 w-3.5 mr-1" /> সার্ভিস ও বুকিং</TabsTrigger>
           <TabsTrigger value="commission" className="text-xs"><Wallet className="h-3.5 w-3.5 mr-1" /> কমিশন ও আয়</TabsTrigger>
           <TabsTrigger value="mart" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> সন্ধান মার্ট</TabsTrigger>
           <TabsTrigger value="deal" className="text-xs"><Handshake className="h-3.5 w-3.5 mr-1" /> সন্ধান ডিল</TabsTrigger>
           <TabsTrigger value="job" className="text-xs"><Briefcase className="h-3.5 w-3.5 mr-1" /> সন্ধান জব</TabsTrigger>
         </TabsList>
 
-        {/* ── সেবা ও বুকিং ── */}
+        {/* ── সার্ভিস ও বুকিং ── */}
         <TabsContent value="service" className="space-y-4">
           <div className="flex justify-end">
             <Button variant="outline" size="sm" onClick={exportBookingReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
@@ -600,7 +600,7 @@ const AdminAnalytics = () => {
             </ChartCard>
           </div>
 
-          <ChartCard title="জনপ্রিয় সেবাসমূহ" icon={ShoppingCart}>
+          <ChartCard title="জনপ্রিয় সার্ভিসসমূহ" icon={ShoppingCart}>
             {topServices.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={topServices} layout="vertical">
@@ -652,7 +652,7 @@ const AdminAnalytics = () => {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <SummaryCard icon={Wallet} label="সেবা রেভিনিউ" value={`৳${toBnNum(commissionStats.totalServiceRevenue)}`} color="text-primary" bgColor="bg-primary/10" />
+            <SummaryCard icon={Wallet} label="সার্ভিস রেভিনিউ" value={`৳${toBnNum(commissionStats.totalServiceRevenue)}`} color="text-primary" bgColor="bg-primary/10" />
             <SummaryCard icon={Receipt} label="কোম্পানি কমিশন" value={`৳${toBnNum(commissionStats.totalCommission)}`} color="text-green-600" bgColor="bg-green-500/10" />
             <SummaryCard icon={DollarSign} label="প্রতিনিধি আয়" value={`৳${toBnNum(commissionStats.totalRepEarnings)}`} color="text-orange-600" bgColor="bg-orange-500/10" />
             <SummaryCard icon={Receipt} label="মোট রশিদ" value={toBnNum(commissionStats.totalEarningRecords)} color="text-blue-600" bgColor="bg-blue-500/10" />

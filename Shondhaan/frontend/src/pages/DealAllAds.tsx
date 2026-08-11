@@ -577,7 +577,7 @@ const DealAllAds = () => {
               key={item.label}
               type="button"
               onClick={() => setPriceRange(item.value)}
-              className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background hover:bg-primary hover:text-primary-foreground hover:border-primary transition-colors"
+              className="text-[11px] px-2 py-0.5 rounded-full border border-border bg-background hover:bg-primary hover:text-white hover:border-primary transition-colors"
             >
               {item.label}
             </button>
@@ -707,7 +707,7 @@ const DealAllAds = () => {
     <div className="min-h-screen bg-muted/30">
       <Navbar />
 
-      <div className="pt-[44px] md:pt-[68px]" />
+      <div className="pt-[14px] md:pt-[28px]" />
 
       <div className="bg-background border-b border-border/50">
         <div className="app-container py-3">

@@ -157,7 +157,7 @@ const ProductCard = ({
         type="button"
         disabled={product.stock <= 0}
         onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold py-2 px-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
         {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
@@ -476,9 +476,6 @@ const MartStore = () => {
                     )}
                     {/* Meta info */}
               <div className=" flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                
-                
-                
                 <div className="flex items-center gap-1.5">
                   <Package className="h-4 w-4 text-primary" />
                   <span>{seller.total_products ?? products.length} Products</span>
@@ -486,7 +483,6 @@ const MartStore = () => {
               </div>
                   </div>
                 </div>
-
                 
 
 
@@ -625,7 +621,6 @@ const MartStore = () => {
       )}
 
       <div className="app-container py-6 flex gap-6">
-
         {/* ── Sidebar ── */}
         <aside className="hidden lg:block w-72 shrink-0">
           <div className="sticky top-4 space-y-4">
@@ -699,62 +694,30 @@ const MartStore = () => {
         <main className="flex-1 min-w-0">
           {availableCategories.length > 0 && (
           <div className="relative mb-5">
-  {/* Trigger Button */}
-  <button
-    onClick={() => setShowCategories(!showCategories)}
-    className="
-      flex items-center gap-2
-      px-4 py-2.5
-      rounded-xl
-      bg-card
-      border border-border
-      text-sm font-medium
-      hover:bg-muted/60
-      hover:shadow-sm
-      transition-all duration-300
-    "
-  >
-    Category
-    <span
-      className={`text-xs transition-transform duration-300 ${
-        showCategories ? "rotate-180" : ""
-      }`}
-    >
-      ▼
-    </span>
-  </button>
-
-  {/* Dropdown */}
-  {showCategories && (
-    <div
-      className="
-        absolute top-full left-0 mt-2 w-72
-        bg-card/95 backdrop-blur-md
-        border border-border
-        rounded-2xl
-        shadow-xl
-        z-50
-        p-2
-      "
-    >
-      {/* All Products */}
-      <button
-        onClick={() => {
-          setFilterCategory("all");
-          setFilterSubCategory("all");
-          setShowCategories(false);
-        }}
-        className="
-          w-full text-left
-          px-3 py-2.5
-          rounded-xl
-          text-sm font-medium
-          hover:bg-muted/60
-          transition
-        "
-      >
-        All Products
-      </button>
+              {/* Trigger Button */}
+              <button
+                onClick={() => setShowCategories(!showCategories)}
+                className="
+                  flex items-center gap-2
+                  px-4 py-2.5
+                  rounded-xl
+                  bg-card
+                  border border-border
+                  text-sm font-medium
+                  hover:bg-muted/60
+                  hover:shadow-sm
+                  transition-all duration-300
+                "
+              >
+                Category
+                <span
+                  className={`text-xs transition-transform duration-300 ${
+                    showCategories ? "rotate-180" : ""
+                  }`}
+                >
+                  ▼
+                </span>
+              </button>
 
       <div className="my-1 h-px bg-border/60" />
 
@@ -789,19 +752,86 @@ const MartStore = () => {
                     setShowCategories(false);
                   }}
                   className="
-                    w-full text-left
-                    px-3 py-1.5
-                    text-sm
-                    text-muted-foreground
-                    rounded-lg
-                    hover:bg-muted/50
-                    hover:text-foreground
-                    transition
+                    absolute top-full left-0 mt-2 w-72
+                    bg-card/95 backdrop-blur-md
+                    border border-border
+                    rounded-2xl
+                    shadow-xl
+                    z-50
+                    p-2
                   "
                 >
-                  {sub.name}
-                </button>
-              ))}
+                  {/* All Products */}
+                  <button
+                    onClick={() => {
+                      setFilterCategory("all");
+                      setFilterSubCategory("all");
+                      setShowCategories(false);
+                    }}
+                    className="
+                      w-full text-left
+                      px-3 py-2.5
+                      rounded-xl
+                      text-sm font-medium
+                      hover:bg-muted/60
+                      transition
+                    "
+                  >
+                    All Products
+                  </button>
+
+                  <div className="my-1 h-px bg-border/60" />
+
+                  {/* Categories */}
+                  {categories.map((cat) => (
+                    <div key={cat.id} className="mb-1">
+                      {/* Category */}
+                      <button
+                        onClick={() => handleCategoryChange(String(cat.id))}
+                        className="
+                          w-full text-left
+                          px-3 py-2.5
+                          rounded-xl
+                          font-semibold
+                          text-sm
+                          hover:bg-muted/60
+                          hover:text-primary
+                          transition
+                        "
+                      >
+                        {cat.name}
+                      </button>
+
+                      {/* Subcategories */}
+                      {filterCategory === String(cat.id) && (
+                        <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
+                          {subCategories.map((sub) => (
+                            <button
+                              key={sub.id}
+                              onClick={() => {
+                                setFilterSubCategory(String(sub.id));
+                                setShowCategories(false);
+                              }}
+                              className="
+                                w-full text-left
+                                px-3 py-1.5
+                                text-sm
+                                text-muted-foreground
+                                rounded-lg
+                                hover:bg-muted/50
+                                hover:text-foreground
+                                transition
+                              "
+                            >
+                              {sub.name}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>

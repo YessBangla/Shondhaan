@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { Link } from "react-router-dom";
 import {
   TrendingUp, TrendingDown, Calendar, DollarSign, Users, Inbox, LifeBuoy,
   AlertTriangle, CheckCircle2, Sparkles, ArrowUpRight, Activity, Clock,
   ShieldCheck, Wallet, ScrollText, RefreshCw,
+  Briefcase, Tag, Wrench, ShoppingCart
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -28,7 +28,42 @@ type Alert = {
   type: string; label: string; count: number; href: string; tone: "amber" | "rose" | "sky" | "orange";
 };
 
-const AdminSmartDashboard = () => {
+type TabId = "jobs" | "deals" | "service" | "mart";
+
+// Map your API endpoints based on the active tab
+const apiBaseUrls: Record<TabId, string> = {
+  service: "http://localhost:3000/api/bookings",
+  jobs: "http://localhost:3000/api/jobs", // Change if your jobs endpoint is different
+  deals: "http://localhost:3000/api/deals", // Change if your deals endpoint is different
+  mart: "http://localhost:3000/api/mart-products" // Change if your mart endpoint is different
+};
+
+// Safe API fetcher wrapper
+const apiFetch = async (url: string) => {
+  const res = await fetch(url, {
+    headers: {
+      "Content-Type": "application/json",
+      // Add your auth headers here if needed, e.g., Authorization: `Bearer ${token}`
+    },
+  });
+
+  // Prevent crashes if the server returns an HTML page (like a 404) instead of JSON
+  const contentType = res.headers.get("content-type");
+  if (!contentType || !contentType.includes("application/json")) {
+    console.warn(`Non-JSON response from ${url}`);
+    return null; 
+  }
+
+  if (!res.ok) throw new Error(`API Error: ${res.status}`);
+  return res.json();
+};
+
+interface AdminSmartDashboardProps {
+  defaultTab?: TabId;
+}
+
+const AdminSmartDashboard = ({ defaultTab = "service" }: AdminSmartDashboardProps) => {
+  const [activeTab, setActiveTab] = useState<TabId>(defaultTab);
   const [today, setToday] = useState<Snapshot | null>(null);
   const [history, setHistory] = useState<Snapshot[]>([]);
   const [alerts, setAlerts] = useState<Alert[]>([]);
@@ -36,54 +71,77 @@ const AdminSmartDashboard = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [now, setNow] = useState(() => new Date());
 
+  const tabs = [
+    { id: "service" as TabId, label: "Service", icon: Wrench },
+    { id: "jobs" as TabId, label: "Jobs", icon: Briefcase },
+    { id: "deals" as TabId, label: "Deals", icon: Tag },
+    { id: "mart" as TabId, label: "Mart", icon: ShoppingCart },
+  ];
+
   useEffect(() => {
     const id = setInterval(() => setNow(new Date()), 60_000);
     return () => clearInterval(id);
   }, []);
 
-  const load = async () => {
-      // Trigger a fresh snapshot
-      try { await (supabase.rpc as any)("generate_daily_snapshot"); } catch {}
+  const load = async (category: TabId) => {
+    setLoading(true);
+    try {
+      const baseApiUrl = apiBaseUrls[category];
 
-      const { data: snaps } = await supabase
-        .from("daily_stats_snapshot")
-        .select("*")
-        .order("snapshot_date", { ascending: false })
-        .limit(7);
+      // Fetch the main data for the active tab (e.g. /api/bookings)
+      // Assuming this endpoint returns an array of items or snapshots. 
+      // Adjust the URL below if you have a specific stats endpoint like /api/bookings/stats
+      const mainDataRes = await apiFetch(`${baseApiUrl}?status=pending&count=true`);
+      const pendingBookings = mainDataRes?.count ?? 0;
 
-      const all = (snaps as Snapshot[]) ?? [];
+      // If you have a snapshots endpoint, define it here. Otherwise, we mock it empty for now.
+      // Example: const snapsData = await apiFetch(`http://localhost:3000/api/snapshots?limit=7&category=${category}`);
+      // For now, we leave history empty so the chart shows "Not enough data" until you connect the stats API
+      const snapsData = null; 
+      const all = (Array.isArray(snapsData) ? snapsData : snapsData?.data ?? []) as Snapshot[];
+      
       setToday(all[0] ?? null);
       setHistory(all.slice().reverse());
 
-      // Build alerts from live tables
-      const lowStockPromise = (async () => {
-        try {
-          const r: any = await (supabase as any).from("mart_products").select("*", { count: "exact", head: true }).lt("stock_quantity", 5);
-          return { count: r?.count ?? 0 };
-        } catch { return { count: 0 }; }
-      })();
-      const [{ count: pendingApprovals }, { count: openDisputes }, { count: pendingBookings }, { count: lowStockProducts }] = await Promise.all([
-        supabase.from("approval_queue").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        supabase.from("disputes").select("*", { count: "exact", head: true }).in("status", ["open", "in_progress", "escalated"]),
-        supabase.from("bookings").select("*", { count: "exact", head: true }).eq("status", "pending"),
-        lowStockPromise,
+      // Fetch alert counts concurrently
+      // Using catch(() => ({ count: 0 })) so if an alert endpoint doesn't exist, it just shows 0
+      const [
+        approvalsRes, 
+        disputesRes, 
+        lowStockRes
+      ] = await Promise.all([
+        apiFetch(`http://localhost:3000/api/approval-queue?status=pending&count=true&category=${category}`).catch(() => ({ count: 0 })),
+        apiFetch(`http://localhost:3000/api/disputes?status=open,in_progress,escalated&count=true&category=${category}`).catch(() => ({ count: 0 })),
+        apiFetch(`http://localhost:3000/api/mart-products?low_stock=true&count=true&category=${category}`).catch(() => ({ count: 0 })),
       ]);
 
+      const pendingApprovals = approvalsRes?.count ?? 0;
+      const openDisputes = disputesRes?.count ?? 0;
+      const lowStockProducts = lowStockRes?.count ?? 0;
+
       const list: Alert[] = [];
-      if ((pendingApprovals ?? 0) > 0) list.push({ type: "approval", label: "অপেক্ষমাণ অনুমোদন", count: pendingApprovals!, href: "/admin/approval-queue", tone: "amber" });
-      if ((openDisputes ?? 0) > 0) list.push({ type: "dispute", label: "খোলা অভিযোগ", count: openDisputes!, href: "/admin/disputes", tone: "rose" });
-      if ((pendingBookings ?? 0) > 0) list.push({ type: "booking", label: "অপেক্ষমাণ বুকিং", count: pendingBookings!, href: "/admin/bookings", tone: "sky" });
-      if ((lowStockProducts ?? 0) > 0) list.push({ type: "stock", label: "কম স্টক প্রোডাক্ট", count: lowStockProducts!, href: "/admin/mart-overview", tone: "orange" });
+      if (pendingApprovals > 0) list.push({ type: "approval", label: "অপেক্ষমাণ অনুমোদন", count: pendingApprovals, href: "/admin/approval-queue", tone: "amber" });
+      if (openDisputes > 0) list.push({ type: "dispute", label: "খোলা অভিযোগ", count: openDisputes, href: "/admin/disputes", tone: "rose" });
+      if (pendingBookings > 0) list.push({ type: "booking", label: "অপেক্ষমাণ বুকিং", count: pendingBookings, href: "/admin/bookings", tone: "sky" });
+      if (lowStockProducts > 0) list.push({ type: "stock", label: "কম স্টক প্রোডাক্ট", count: lowStockProducts, href: "/admin/mart-overview", tone: "orange" });
+      
       setAlerts(list);
+    } catch (error) {
+      console.error("Error loading dashboard data:", error);
+    } finally {
       setLoading(false);
       setRefreshing(false);
+    }
   };
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, []);
+  // Reload data whenever the active tab changes
+  useEffect(() => {
+    load(activeTab);
+  }, [activeTab]);
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    await load();
+    await load(activeTab);
   };
 
   const trend = (key: keyof Snapshot) => {
@@ -130,7 +188,7 @@ const AdminSmartDashboard = () => {
   if (loading) {
     return (
       <div className="p-6 space-y-4">
-        <div className="h-24 rounded-2xl bg-muted/40 animate-pulse" />
+        <div className="h-12 rounded-2xl bg-muted/40 animate-pulse" />
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           {[0,1,2,3].map((i) => <div key={i} className="h-28 rounded-2xl bg-muted/40 animate-pulse" />)}
         </div>
@@ -138,49 +196,26 @@ const AdminSmartDashboard = () => {
       </div>
     );
   }
-
-  const dateLong = now.toLocaleDateString("bn-BD", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-  const timeStr = now.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
-
+  
   return (
-    <div className="space-y-5 p-4 md:p-6">
-      {/* === HERO HEADER === */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-gradient-to-br from-primary/8 via-card to-emerald-500/5 p-5 md:p-6">
-        <div className="absolute -top-20 -right-20 h-56 w-56 rounded-full bg-primary/15 blur-3xl" />
-        <div className="absolute -bottom-16 -left-16 h-48 w-48 rounded-full bg-emerald-500/10 blur-3xl" />
-        <div className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-start gap-3">
-            <div className="h-11 w-11 shrink-0 rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/25">
-              <Sparkles className="h-5 w-5" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg md:text-2xl font-bold tracking-tight text-foreground">স্মার্ট ড্যাশবোর্ড</h1>
-                <span className="hidden md:inline-flex items-center gap-1 rounded-full bg-emerald-500/10 text-emerald-600 px-2 py-0.5 text-[10px] font-semibold ring-1 ring-emerald-500/30">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
-                </span>
-              </div>
-              <p className="text-xs md:text-sm text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5" /> {dateLong} · {timeStr}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleRefresh}
-              disabled={refreshing}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-card/80 backdrop-blur px-3 py-2 text-xs font-medium hover:bg-card transition disabled:opacity-50"
-            >
-              <RefreshCw className={cn("h-3.5 w-3.5", refreshing && "animate-spin")} /> রিফ্রেশ
-            </button>
-            <Link
-              to="/admin/analytics"
-              className="inline-flex items-center gap-1.5 rounded-xl bg-foreground text-background px-3 py-2 text-xs font-semibold hover:opacity-90 transition"
-            >
-              <Activity className="h-3.5 w-3.5" /> বিস্তারিত অ্যানালিটিক্স <ArrowUpRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
+    <div className="space-y-5">
+      {/* === CATEGORY TABS === */}
+      <div className="flex items-center gap-2 p-1 bg-muted/40 rounded-xl border border-border/60 w-full md:w-fit overflow-x-auto">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              "flex-1 md:flex-none inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap",
+              activeTab === tab.id 
+                ? "bg-card text-foreground shadow-sm border border-border/60" 
+                : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+            )}
+          >
+            <tab.icon className="h-4 w-4" />
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* === KPI CARDS === */}
@@ -245,7 +280,7 @@ const AdminSmartDashboard = () => {
         <div className="lg:col-span-2 rounded-2xl border border-border/60 bg-card p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-sm font-bold text-foreground">গত ৭ দিনের পারফরম্যান্স</h3>
+              <h3 className="text-sm font-bold text-foreground capitalize">{activeTab} - গত ৭ দিনের পারফরম্যান্স</h3>
               <p className="text-[11px] text-muted-foreground mt-0.5">নতুন বুকিং vs রেভিনিউ</p>
             </div>
             <div className="flex items-center gap-3 text-[11px]">

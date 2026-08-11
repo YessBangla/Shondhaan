@@ -556,16 +556,16 @@ const MartCheckout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[40px]" />
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Steps indicator */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex items-center justify-center gap-2 mb-6 text-white">
           {[
             { key: "cart", label: bn ? "কার্ট" : "Cart" },
             { key: "shipping", label: bn ? "শিপিং" : "Shipping" },
           ].map((s, i) => (
             <div key={s.key} className="flex items-center gap-2">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${step === s.key || (step === "shipping" && i === 0) ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-bold ${step === s.key || (step === "shipping" && i === 0) ? "bg-primary text-white" : "bg-muted text-muted-foreground"}`}>
                 {i + 1}
               </div>
               <span className={`text-sm font-medium ${step === s.key ? "text-foreground" : "text-muted-foreground"}`}>{s.label}</span>
@@ -713,8 +713,7 @@ const MartCheckout = () => {
                       {/* Address label */}
                       <div className="flex gap-2">
                         {["Home", "Office", "Other"].map((l) => (
-                          <button key={l} onClick={() => setAddressLabel(l)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${addressLabel === l ? "bg-primary text-primary-foreground border-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>
-                            {l === "Home" ? (bn ? "🏠 বাসা" : "🏠 Home") : l === "Office" ? (bn ? "🏢 অফিস" : "🏢 Office") : (bn ? "📍 অন্যান্য" : "📍 Other")}
+                          <button key={l} onClick={() => setAddressLabel(l)} className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${addressLabel === l ? "bg-primary text-white border-primary" : "border-border text-muted-foreground hover:border-primary/40"}`}>                     {l === "Home" ? (bn ? "বাসা" : "Home") : l === "Office" ? (bn ? "অফিস" : "Office") : (bn ? "অন্যান্য" : "Other")}
                           </button>
                         ))}
                       </div>
@@ -849,11 +848,11 @@ const MartCheckout = () => {
                 )}
               </div>
               {step === "cart" ? (
-                <Button className="w-full mt-4 h-11 font-bold" onClick={() => setStep("shipping")} disabled={items.length === 0}>
+                <Button className="w-full mt-4 h-11 font-bold text-white hover:bg-emerald-800" onClick={() => setStep("shipping")} disabled={items.length === 0}>
                   {bn ? "চেকআউটে যান" : "Proceed to Checkout"}
                 </Button>
               ) : (
-                <Button className="w-full mt-4 h-11 font-bold" onClick={handlePlaceOrder} disabled={submitting}>
+                <Button className="w-full mt-4 h-11 font-bold text-white hover:bg-emerald-800" onClick={handlePlaceOrder} disabled={submitting}>
                   {submitting ? "..." : (bn ? "অর্ডার করুন" : "Place Order")}
                 </Button>
               )}

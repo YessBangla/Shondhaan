@@ -162,7 +162,7 @@ const SupervisorPanel = () => {
           <Eye className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সুপারভাইজারদের জন্য।</p>
-          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-primary-foreground">হোমে ফিরুন</button>
+          <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">হোমে ফিরুন</button>
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -234,7 +234,7 @@ const SupervisorPanel = () => {
             panelIcon={<Eye className="h-4 w-4" />}
             hero={{
               title: "মাঠ পর্যায়ের সুপারভিশন",
-              subtitle: "সেবা ও দল তত্ত্বাবধান, কোয়ালিটি অডিট ও পারফরম্যান্স মনিটরিং।",
+              subtitle: "সার্ভিস ও দল তত্ত্বাবধান, কোয়ালিটি অডিট ও পারফরম্যান্স মনিটরিং।",
               badge: { label: "সুপারভাইজার প্যানেল" },
               gradient: "from-sky-500 via-blue-600 to-cyan-700",
             }}

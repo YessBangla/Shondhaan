@@ -47,18 +47,12 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 const corsOrigin = [
   ...new Set(
     [
-      ...(process.env.CORS_ORIGIN || "")
+      ...(process.env.CORS_ORIGIN || "https://www.shondhaan.com")
         .split(",")
         .map((o) => o.trim())
         .filter(Boolean),
 
-      process.env.FRONTEND_BASE_URL,
-
-      "http://localhost:5173",
-      "http://localhost:8080",
-      "http://localhost:4000",
-      "https://shondhaan.com",
-      "https://www.shondhaan.com",
+      process.env.FRONTEND_BASE_URL
     ].filter(Boolean)
   ),
 ];
@@ -92,9 +86,9 @@ app.get("/", (req, res) => {
   });
 });
 
-//
+
 // HEALTH CHECK
-//
+
 app.get("/api/health", async (req, res) => {
   try {
     await dealDb.query("SELECT 1");

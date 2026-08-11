@@ -13,7 +13,7 @@ const REASONS = [
   { value: "inappropriate", label: "অশোভন কনটেন্ট", labelEn: "Inappropriate content" },
   { value: "wrong_category", label: "ভুল ক্যাটেগরি", labelEn: "Wrong category" },
   { value: "duplicate", label: "ডুপ্লিকেট বিজ্ঞাপন", labelEn: "Duplicate ad" },
-  { value: "prohibited", label: "নিষিদ্ধ পণ্য/সেবা", labelEn: "Prohibited item" },
+  { value: "prohibited", label: "নিষিদ্ধ পণ্য/সার্ভিস", labelEn: "Prohibited item" },
   { value: "other", label: "অন্যান্য", labelEn: "Other" },
 ];
 

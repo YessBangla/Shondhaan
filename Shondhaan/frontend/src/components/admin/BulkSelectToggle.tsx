@@ -80,7 +80,7 @@ const BulkSelectToggle = ({
       <span aria-hidden="true">{active ? selectedLabel : label}</span>
       {selectedCount > 0 && (
         <span
-          className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-primary-foreground text-[10px] font-bold leading-none"
+          className="ml-0.5 inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-primary text-white text-[10px] font-bold leading-none"
           aria-hidden="true"
         >
           {toBn(selectedCount)}

@@ -4,6 +4,9 @@ import { pool, setPool } from "./pool.js";
 import { hashPassword } from "../utils/crypto.js";
 import { normalizeEmail, normalizeMobile } from "../utils/normalize.js";
 
+const USER_TYPE_ENUM =
+  "ENUM('super_admin', 'admin', 'service_admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'mart_vendor', 'mart_delivery', 'mart_cs', 'yessdeal_seller', 'employer', 'user') NOT NULL DEFAULT 'user'";
+
 export async function ensureTableColumn(table, column, alterSql) {
   const [existing] = await pool.execute(
     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
@@ -92,7 +95,7 @@ export async function initDatabase() {
       password VARCHAR(255) NOT NULL,
       shop_name VARCHAR(255) NULL,
       shop_type VARCHAR(50) NULL,
-      type ENUM('super_admin', 'admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'employer', 'user') NOT NULL DEFAULT 'user',
+      type ${USER_TYPE_ENUM},
       email_verified TINYINT(1) NOT NULL DEFAULT 0,
       otp_hash VARCHAR(64) NULL,
       otp_expires_at DATETIME NULL,
@@ -231,7 +234,7 @@ export async function initDatabase() {
   const columns = [
     ["shop_name", "ALTER TABLE users ADD COLUMN shop_name VARCHAR(255) NULL"],
     ["shop_type", "ALTER TABLE users ADD COLUMN shop_type VARCHAR(50) NULL AFTER shop_name"],
-    ["type", "ALTER TABLE users ADD COLUMN type ENUM('super_admin', 'admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'employer', 'user') NOT NULL DEFAULT 'user'"],
+    ["type", `ALTER TABLE users ADD COLUMN type ${USER_TYPE_ENUM}`],
     ["email_verified", "ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0"],
     ["otp_hash", "ALTER TABLE users ADD COLUMN otp_hash VARCHAR(64) NULL"],
     ["otp_expires_at", "ALTER TABLE users ADD COLUMN otp_expires_at DATETIME NULL"],
@@ -242,6 +245,8 @@ export async function initDatabase() {
   for (const [column, alterSql] of columns) {
     await ensureTableColumn("users", column, alterSql);
   }
+
+  await pool.query(`ALTER TABLE users MODIFY COLUMN type ${USER_TYPE_ENUM}`);
 
   const [emailIndexExists] = await pool.execute(
     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_email'",

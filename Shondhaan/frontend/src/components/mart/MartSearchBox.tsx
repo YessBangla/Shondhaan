@@ -86,7 +86,7 @@ const MartSearchBox = ({ className }: MartSearchBoxProps) => {
             </button>
           )}
         </div>
-        <button type="submit" className="m-1.5 flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-primary-foreground transition-colors hover:bg-primary/90">
+        <button type="submit" className="m-1.5 flex items-center justify-center rounded-lg bg-primary px-4 py-2.5 text-white transition-colors hover:bg-primary/90">
           <Search className="h-4 w-4" />
         </button>
       </form>

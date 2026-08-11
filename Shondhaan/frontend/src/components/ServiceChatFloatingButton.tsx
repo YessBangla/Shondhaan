@@ -157,7 +157,7 @@ const ServiceChatFloatingButton = () => {
     <div className="fixed bottom-8 right-2 z-[80]">
       {open && (
         <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-xs overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
-          <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-primary-foreground">
+          <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-white">
             <div className="flex items-center gap-2">
               <Headphones className="h-4 w-4 text-white" />
               <div>
@@ -189,7 +189,7 @@ const ServiceChatFloatingButton = () => {
                         className={cn(
                           "max-w-[82%] rounded-2xl px-3 py-2 text-sm shadow-sm",
                           own
-                            ? "rounded-br-md bg-primary text-primary-foreground"
+                            ? "rounded-br-md bg-primary text-white"
                             : "rounded-bl-md border border-border bg-card text-foreground"
                         )}
                       >
@@ -220,7 +220,7 @@ const ServiceChatFloatingButton = () => {
             <button
               type="submit"
               disabled={sending || !draft.trim()}
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-primary-foreground disabled:opacity-50"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white disabled:opacity-50"
             >
               {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </button>

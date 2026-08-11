@@ -28,7 +28,7 @@ const AdminOffers = () => {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-heading text-lg font-bold text-foreground">স্পেশাল অফার ({offers.length})</h3>
-        <button onClick={() => setEditing({...empty})} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-primary-foreground">
+        <button onClick={() => setEditing({...empty})} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white">
           <Plus className="h-3.5 w-3.5" /> নতুন অফার
         </button>
       </div>
@@ -52,7 +52,7 @@ const AdminOffers = () => {
             <input type="number" value={editing.sort_order || 0} onChange={e => setEditing({...editing, sort_order: parseInt(e.target.value)})} className="w-20 rounded-lg border border-input bg-background px-2 py-1 text-xs" placeholder="ক্রম" />
           </div>
           <div className="flex gap-2">
-            <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-primary-foreground disabled:opacity-50">
+            <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white disabled:opacity-50">
               <Save className="h-3.5 w-3.5" /> সেভ
             </button>
             <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-xs text-foreground">

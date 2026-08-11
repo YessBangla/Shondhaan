@@ -88,7 +88,7 @@ const MartCartSidebar = () => {
                 <span>{bn ? "সাবটোটাল" : "Subtotal"}</span>
                 <span className="text-primary">৳{subtotal.toLocaleString("bn-BD")}</span>
               </div>
-              <Button className="w-full font-bold active:scale-[0.98]" onClick={() => { haptic("medium"); setIsOpen(false); navigate("/mart/checkout"); }}>
+              <Button className="w-full font-bold active:scale-[0.98] text-white hover:bg-emerald-800" onClick={() => { haptic("medium"); setIsOpen(false); navigate("/mart/checkout"); }}>
                 {bn ? "চেকআউটে যান" : "Checkout"}
               </Button>
             </div>
