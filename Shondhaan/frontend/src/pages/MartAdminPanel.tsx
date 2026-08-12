@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import {
   Package, ShoppingCart, Users, Search,
   BarChart3, DollarSign, Loader2, MessageCircle, Eye, 
-  Shield, Store, FolderTree, Image, Tag, RotateCcw, ImageIcon, Trash2, AlertTriangle
+  Shield, Store, FolderTree, Image, Tag, RotateCcw, ImageIcon, Trash2, AlertTriangle,
+  Wallet
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import ImageUploader from "@/components/admin/ImageUploader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import NotificationBell from "@/components/NotificationBell";
@@ -36,6 +38,14 @@ const orderStatusMap: Record<string, { label: string; color: string }> = {
   cancelled: { label: "বাতিল", color: "bg-red-100 text-red-800" },
 };
 
+const txStatusMap: Record<string, string> = {
+  paid: "bg-green-100 text-green-800",
+  unpaid: "bg-yellow-100 text-yellow-800",
+  failed: "bg-red-100 text-red-800",
+  cancelled: "bg-gray-100 text-gray-800",
+  initiated: "bg-blue-100 text-blue-800",
+};
+
 const COLORS = ["#16a34a", "#059669", "#0d9488", "#0891b2", "#2563eb", "#7c3aed"];
 
 const MartAdminPanel = () => {
@@ -43,6 +53,11 @@ const MartAdminPanel = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const bn = language === "bn";
+  const API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "http://localhost:8081";
+  // FIX: getMySqlAuth() may return an object whose `.user` is undefined —
+  // `.user.type` alone would throw and crash the whole page.
+  const mysqlRole = getMySqlAuth()?.user?.type;
+  const isSignedIn = Boolean(user || mysqlRole);
 
   const [hasAccess, setHasAccess] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -56,17 +71,28 @@ const MartAdminPanel = () => {
   const [editingImageProduct, setEditingImageProduct] = useState<any | null>(null);
   const [newImageUrl, setNewImageUrl] = useState("");
 
+  // Transactions (MySQL-backed, separate from the Supabase data above)
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [txLoading, setTxLoading] = useState(false);
+  const [txSearch, setTxSearch] = useState("");
+  const [txStatus, setTxStatus] = useState("all");
+  const [txPage, setTxPage] = useState(1);
+  const [txTotalPages, setTxTotalPages] = useState(1);
+
   useEffect(() => {
-    if (!authLoading && !user) navigate("/main-login", { replace: true });
-  }, [user, authLoading, navigate]);
+    if (!authLoading && !isSignedIn) navigate("/mart/login", { replace: true });
+  }, [isSignedIn, authLoading, navigate]);
 
   const checkRole = useCallback(async () => {
-    if (!user) return;
-    const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
-    const roles = data?.map(r => r.role) || [];
-    setHasAccess(roles.includes("admin"));
+    const roles = mysqlRole ? [mysqlRole] : [];
+    if (user) {
+      const { data } = await supabase.from("user_roles").select("role").eq("user_id", user.id);
+      roles.push(...(data?.map(r => r.role) || []));
+    }
+    const allowed = ["admin", "super_admin", "mart_admin"];
+    setHasAccess(roles.some((rl) => allowed.includes(rl)));
     setLoading(false);
-  }, [user]);
+  }, [user, mysqlRole]);
 
   const fetchAll = useCallback(async () => {
     const { data: prods } = await supabase.from("mart_products").select("*").order("created_at", { ascending: false });
@@ -83,8 +109,40 @@ const MartAdminPanel = () => {
     }
   }, []);
 
+  // NOTE: assumes a relative /api/transactions route proxied to your Node/Express
+  // server, with no auth header required. If your other MySQL calls use a full
+  // base URL (VITE_API_URL) or send an Authorization/Bearer token, tell me and
+  // I'll update just this function.
+const fetchTransactions = useCallback(async () => {
+  setTxLoading(true);
+  try {
+    const params = new URLSearchParams({ page: String(txPage), limit: "20" });
+    if (txStatus !== "all") params.set("status", txStatus);
+    if (txSearch) params.set("search", txSearch);
+
+    const auth = getMySqlAuth();
+    const token = auth?.token;
+
+    const res = await fetch(`${API_BASE_URL}/api/transactions?${params.toString()}`, {
+      credentials: "include", // matches the cookie-based pattern used elsewhere in mysqlAuth.ts
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    setTransactions(json.data || []);
+    setTxTotalPages(json.pagination?.totalPages || 1);
+  } catch (e) {
+    console.error("fetchTransactions error:", e);
+    toast.error(bn ? "লেনদেন লোড ব্যর্থ" : "Failed to load transactions");
+    setTransactions([]);
+  } finally {
+    setTxLoading(false);
+  }
+  }, [API_BASE_URL, txPage, txStatus, txSearch, bn]);
+
   useEffect(() => { checkRole(); }, [checkRole]);
   useEffect(() => { if (hasAccess) fetchAll(); }, [hasAccess, fetchAll]);
+  useEffect(() => { if (hasAccess) fetchTransactions(); }, [hasAccess, fetchTransactions]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     const { error } = await supabase.from("mart_orders").update({ status: newStatus }).eq("id", orderId);
@@ -166,20 +224,25 @@ const MartAdminPanel = () => {
     name: v.label, value: orders.filter(o => o.status === k).length,
   })).filter(d => d.value > 0);
 
+  // FIX: value is now lowercase "package" so it actually matches the
+  // activeTab === "package" check below (was "Package" vs "package").
   const sidebarItems = [
     { value: "orders", label: bn ? "অর্ডার" : "Orders", icon: <ShoppingCart />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
-    { value: "returns", label: bn ? "রিটার্ন/রিফান্ড" : "Returns", icon: <RotateCcw /> },
-    { value: "products", label: bn ? "পণ্য" : "Products", icon: <Package /> },
-    { value: "vendors", label: bn ? "ভেন্ডর/শপ" : "Vendors", icon: <Store /> },
+    { value: "returns", label: bn ? "রিটার্ন/রিফান্ড" : "Returns", icon: <RotateCcw />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
+    { value: "products", label: bn ? "পণ্য" : "Products", icon: <Package />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
+    { value: "vendors", label: bn ? "ভেন্ডর/শপ" : "Vendors", icon: <Store />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
+    { value: "package", label: bn ? "প্যাকেজ" : "Package", icon: <Package />, group: bn ? "ফাইন্যান্স" : "Finance" },
+    { value: "wallet", label: bn ? "ওয়ালেট" : "Wallet", icon: <Wallet />, group: bn ? "ফাইন্যান্স" : "Finance" },
+    { value: "withdrawals", label: bn ? "উইথড্রয়াল" : "Withdrawals", icon: <DollarSign />, group: bn ? "ফাইন্যান্স" : "Finance" },
+    { value: "transactions", label: bn ? "লেনদেন" : "Transactions", icon: <DollarSign />, group: bn ? "ফাইন্যান্স" : "Finance" },
     { value: "categories", label: bn ? "ক্যাটেগরি" : "Categories", icon: <FolderTree />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
-    { value: "banners", label: bn ? "ব্যানার" : "Banners", icon: <Image /> },
-    { value: "coupons", label: bn ? "কুপন" : "Coupons", icon: <Tag /> },
+    { value: "banners", label: bn ? "ব্যানার" : "Banners", icon: <Image />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
+    { value: "coupons", label: bn ? "কুপন" : "Coupons", icon: <Tag />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "analytics", label: bn ? "রিপোর্ট" : "Analytics", icon: <BarChart3 />, group: bn ? "পরিসংখ্যান" : "Analytics" },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-7xl mx-auto px-4 py-6 pb-28 md:pb-10">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -194,26 +257,6 @@ const MartAdminPanel = () => {
               <MessageCircle className="h-4 w-4 mr-1" />{bn ? "চ্যাট" : "Chat"}
             </Button>
           </div>
-        </div>
-
-        {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          {[
-            { icon: DollarSign, label: bn ? "মোট রেভিনিউ" : "Revenue", value: `৳${totalRevenue.toLocaleString("bn-BD")}`, color: "text-green-600", bg: "bg-green-50" },
-            { icon: ShoppingCart, label: bn ? "মোট অর্ডার" : "Orders", value: orders.length, color: "text-blue-600", bg: "bg-blue-50" },
-            { icon: Package, label: bn ? "মোট পণ্য" : "Products", value: products.length, color: "text-purple-600", bg: "bg-purple-50" },
-            { icon: Store, label: bn ? "মোট ভেন্ডর" : "Vendors", value: vendors.length, color: "text-amber-600", bg: "bg-amber-50" },
-          ].map((stat, i) => (
-            <Card key={i} className="border-border/50">
-              <CardContent className="p-4 flex items-center gap-3">
-                <div className={`${stat.bg} p-2 rounded-lg`}><stat.icon className={`h-5 w-5 ${stat.color}`} /></div>
-                <div>
-                  <p className="text-sm text-muted-foreground">{stat.label}</p>
-                  <p className="text-lg font-bold text-foreground">{stat.value}</p>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
         </div>
 
         <Card className="border-border/50 overflow-hidden">
@@ -231,6 +274,26 @@ const MartAdminPanel = () => {
           >
             {(activeTab) => (
               <div className="p-4 md:p-6">
+                {/* Stats — lives inside the content pane so it sits beside the sidebar */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+                  {[
+                    { icon: DollarSign, label: bn ? "মোট রেভিনিউ" : "Revenue", value: `৳${totalRevenue.toLocaleString("bn-BD")}`, color: "text-green-600", bg: "bg-green-50" },
+                    { icon: ShoppingCart, label: bn ? "মোট অর্ডার" : "Orders", value: orders.length, color: "text-blue-600", bg: "bg-blue-50" },
+                    { icon: Package, label: bn ? "মোট পণ্য" : "Products", value: products.length, color: "text-purple-600", bg: "bg-purple-50" },
+                    { icon: Store, label: bn ? "মোট ভেন্ডর" : "Vendors", value: vendors.length, color: "text-amber-600", bg: "bg-amber-50" },
+                  ].map((stat, i) => (
+                    <Card key={i} className="border-border/50">
+                      <CardContent className="p-4 flex items-center gap-3">
+                        <div className={`${stat.bg} p-2 rounded-lg`}><stat.icon className={`h-5 w-5 ${stat.color}`} /></div>
+                        <div>
+                          <p className="text-sm text-muted-foreground">{stat.label}</p>
+                          <p className="text-lg font-bold text-foreground">{stat.value}</p>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+
                 {/* Orders */}
                 {activeTab === "orders" && (
                   <div className="space-y-4">
@@ -359,6 +422,115 @@ const MartAdminPanel = () => {
                 {/* Returns */}
                 {activeTab === "returns" && <MartReturnManager />}
 
+                {/* Package — placeholder until package/plan table is confirmed */}
+                {activeTab === "package" && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <Package className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>{bn ? "প্যাকেজ ম্যানেজমেন্ট শীঘ্রই আসছে" : "Package management coming soon"}</p>
+                  </div>
+                )}
+
+                {/* Wallet — placeholder until wallet table is confirmed */}
+                {activeTab === "wallet" && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <Wallet className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>{bn ? "ওয়ালেট ডেটা শীঘ্রই আসছে" : "Wallet data coming soon"}</p>
+                  </div>
+                )}
+
+                {/* Withdrawals — placeholder until withdrawal table is confirmed */}
+                {activeTab === "withdrawals" && (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <DollarSign className="h-12 w-12 mx-auto mb-3 opacity-30" />
+                    <p>{bn ? "উইথড্রয়াল রিকোয়েস্ট শীঘ্রই আসছে" : "Withdrawal requests coming soon"}</p>
+                  </div>
+                )}
+
+                {/* Transactions — live MySQL data */}
+                {activeTab === "transactions" && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={bn ? "ট্রান্স আইডি বা অর্ডার নম্বর..." : "Transaction ID or order #..."}
+                          value={txSearch}
+                          onChange={(e) => { setTxSearch(e.target.value); setTxPage(1); }}
+                          className="pl-9"
+                        />
+                      </div>
+                      <Select value={txStatus} onValueChange={(v) => { setTxStatus(v); setTxPage(1); }}>
+                        <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{bn ? "সকল" : "All"}</SelectItem>
+                          <SelectItem value="paid">{bn ? "পরিশোধিত" : "Paid"}</SelectItem>
+                          <SelectItem value="unpaid">{bn ? "অপরিশোধিত" : "Unpaid"}</SelectItem>
+                          <SelectItem value="failed">{bn ? "ব্যর্থ" : "Failed"}</SelectItem>
+                          <SelectItem value="cancelled">{bn ? "বাতিল" : "Cancelled"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {txLoading ? (
+                      <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto rounded-lg border border-border/50">
+                          <table className="w-full text-sm">
+                            <thead className="bg-muted/50">
+                              <tr>
+                                <th className="text-left p-3 font-medium">{bn ? "ট্রান্স আইডি" : "Transaction ID"}</th>
+                                <th className="text-left p-3 font-medium">{bn ? "অর্ডার" : "Order"}</th>
+                                <th className="text-left p-3 font-medium">{bn ? "ব্যবহারকারী" : "User"}</th>
+                                <th className="text-left p-3 font-medium">{bn ? "বিবরণ" : "Details"}</th>
+                                <th className="text-left p-3 font-medium">{bn ? "গেটওয়ে" : "Gateway"}</th>
+                                <th className="text-right p-3 font-medium">{bn ? "পরিমাণ" : "Amount"}</th>
+                                <th className="text-center p-3 font-medium">{bn ? "স্ট্যাটাস" : "Status"}</th>
+                                <th className="text-left p-3 font-medium">{bn ? "তারিখ" : "Date"}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {transactions.map((tx) => (
+                                <tr key={tx.id} className="border-t border-border/30 hover:bg-muted/30">
+                                  <td className="p-3 font-mono text-xs">{tx.transaction_id}</td>
+                                  <td className="p-3">{tx.order_number || "—"}</td>
+                                  <td className="p-3">{tx.user_name || "—"}</td>
+                                  <td className="p-3 text-sm text-muted-foreground">{tx.package_details || "—"}</td>
+                                  <td className="p-3 capitalize">{tx.gateway}</td>
+                                  <td className="p-3 text-right font-bold">{tx.currency} {Number(tx.amount || 0).toLocaleString("bn-BD")}</td>
+                                  <td className="p-3 text-center">
+                                    <Badge className={txStatusMap[tx.payment_status] || "bg-gray-100 text-gray-800"}>
+                                      {tx.payment_status}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3 text-xs text-muted-foreground">
+                                    {tx.created_at ? new Date(tx.created_at).toLocaleString("bn-BD") : "—"}
+                                  </td>
+                                </tr>
+                              ))}
+                              {transactions.length === 0 && (
+                                <tr><td colSpan={8} className="p-8 text-center text-muted-foreground">{bn ? "কোনো লেনদেন নেই" : "No transactions"}</td></tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {txTotalPages > 1 && (
+                          <div className="flex items-center justify-center gap-2">
+                            <Button variant="outline" size="sm" disabled={txPage <= 1} onClick={() => setTxPage(p => Math.max(1, p - 1))}>
+                              {bn ? "আগের" : "Prev"}
+                            </Button>
+                            <span className="text-sm text-muted-foreground">{txPage} / {txTotalPages}</span>
+                            <Button variant="outline" size="sm" disabled={txPage >= txTotalPages} onClick={() => setTxPage(p => Math.min(txTotalPages, p + 1))}>
+                              {bn ? "পরের" : "Next"}
+                            </Button>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
+
                 {/* Categories */}
                 {activeTab === "categories" && <MartCategoryManager />}
 
@@ -453,7 +625,6 @@ const MartAdminPanel = () => {
           </PanelSidebarTabs>
         </Card>
       </motion.div>
-      
 
       <Dialog open={!!editingImageProduct} onOpenChange={(o) => { if (!o) { setEditingImageProduct(null); setNewImageUrl(""); } }}>
         <DialogContent className="max-w-md">

@@ -1,11 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Crown, Shield, ShieldCheck, Headphones, Wrench, MapPinCheck,
-  ClipboardCheck, Banknote, Store, Truck, MessageCircle, Tag, Briefcase, User,
+  ClipboardCheck, Banknote, Store, Truck, MessageCircle,BarChart3, Tag, Briefcase, User,
 } from "lucide-react";
 
 export type RoleKey =
-  | "super_admin" | "admin" | "service_admin" | "moderator" | "call_center" | "provider"
+  | "super_admin" | "admin" | "mart_admin" | "job_admin" | "service_admin" | "moderator" | "call_center" | "provider"
   | "representative" | "supervisor" | "finance" | "mart_vendor"
   | "mart_delivery" | "mart_cs" | "yessdeal_seller" | "employer" | "user";
 
@@ -23,6 +23,8 @@ export interface RoleConfig {
 export const ROLES: RoleConfig[] = [
   { key: "super_admin", labelBn: "সুপার অ্যাডমিন", labelEn: "Super Admin", descriptionBn: "পুরো সিস্টেমের কেন্দ্রীয় নিয়ন্ত্রণ — POS, SAAS, ফাইন্যান্স।", panelPath: "/super-admin", icon: Crown, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
   { key: "admin", labelBn: "অ্যাডমিন", labelEn: "Admin", descriptionBn: "সেবা, অর্ডার, ইউজার ও কনটেন্ট ম্যানেজমেন্ট।", panelPath: "/admin", icon: Shield, gradient: "from-red-500 to-rose-600", accent: "text-red-700" },
+  { key: "mart_admin", labelBn: "মার্ট অ্যাডমিন", labelEn: "Mart Admin", descriptionBn: "মার্ট সিস্টেমের নিয়ন্ত্রণ — পণ্য, অর্ডার, কাস্টমার।", panelPath: "/mart/mart-admin", icon: BarChart3, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
+  { key: "job_admin", labelBn: "জব অ্যাডমিন", labelEn: "Job Admin", descriptionBn: "জব সিস্টেমের নিয়ন্ত্রণ — চাকরি, ক্যান্ডিডেট, ইন্টারভিউ।", panelPath: "/job/admin", icon: Briefcase, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
   { key: "service_admin", labelBn: "সার্ভিস অ্যাডমিন", labelEn: "Service Admin", descriptionBn: "সেবা CMS, বুকিং, রিকোয়েস্ট ও সার্ভিস কমিউনিকেশন।", panelPath: "/admin/service", icon: Wrench, gradient: "from-sky-500 to-blue-600", accent: "text-sky-700" },
   { key: "moderator", labelBn: "মডারেটর", labelEn: "Moderator", descriptionBn: "রিভিউ, রিপোর্ট ও কনটেন্ট মডারেশন।", panelPath: "/moderator", icon: ShieldCheck, gradient: "from-purple-500 to-violet-600", accent: "text-purple-700" },
   { key: "call_center", labelBn: "কল সেন্টার", labelEn: "Call Center", descriptionBn: "কল গ্রহণ, বুকিং তৈরি ও কাস্টমার সাপোর্ট।", panelPath: "/call-center", icon: Headphones, gradient: "from-blue-500 to-indigo-600", accent: "text-blue-700" },

@@ -49,6 +49,7 @@ const wishlistRoutes = require("./routes/wishlist"); // Import the wishlist rout
 const notificationsRoutes = require("./routes/notifications");
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
 const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
+const transactionsRoutes = require("./routes/transactions"); // ★ NEW — transactions routes
 
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
@@ -143,7 +144,9 @@ app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
+app.use("/api/transactions", transactionsRoutes); // ★ NEW — transactions routes
 app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
+
 server.listen(PORT, async () => {
   const backendBaseUrl = getBackendBaseUrl();
   console.log(`Server running on ${backendBaseUrl}`);

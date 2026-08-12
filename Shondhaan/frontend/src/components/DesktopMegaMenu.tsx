@@ -54,6 +54,8 @@ const DesktopMegaMenu = () => {
   const rolePriority: RoleKey[] = [
     "super_admin",
     "admin",
+    "mart_admin",
+    "job_admin",
     "moderator",
     "finance",
     "supervisor",
@@ -235,6 +237,8 @@ const hasSidebar =
   const hasStaffRole = effectiveRoles.some(r => [
     "admin",
     "super_admin",
+    "mart_admin",
+    "job_admin",
     "provider",
     "call_center",
     "representative",

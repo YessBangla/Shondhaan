@@ -6,6 +6,7 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 const ROLE_PRIORITY: RoleKey[] = [
   "super_admin",
   "admin",
+  "mart_admin",
   "service_admin",
   "moderator",
   "finance",
