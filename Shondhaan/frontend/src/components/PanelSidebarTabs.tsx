@@ -47,6 +47,9 @@ interface PanelSidebarTabsProps {
   offsetForDesktopMegaMenu?: boolean;
 }
 
+// Custom premium scrollbar classes
+const customScrollbar = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-500/50 [&::-webkit-scrollbar]:transition-colors";
+
 const PanelSidebarTabs = ({
   items,
   defaultValue,
@@ -244,7 +247,6 @@ const PanelSidebarTabs = ({
       (i) => i.label.toLowerCase().includes(q) || (i.group || "").toLowerCase().includes(q)
     );
   }, [items, paletteQuery]);
-
   const initials = useMemo(() => {
     const src = user?.user_metadata?.full_name || user?.email || "U";
     return String(src).trim().slice(0, 1).toUpperCase();
@@ -252,37 +254,62 @@ const PanelSidebarTabs = ({
 
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
 
-  // Premium Sidebar Content
+  // Premium Dark Gradient Sidebar Content
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
-    <div className="flex flex-col h-full bg-sidebar/80 backdrop-blur-xl">
+    <div className="flex flex-col h-full bg-blue-400/30  text-slate-300 border-r border-white/5">
       {/* Brand Header */}
-      <div
-        className={cn(
-          "px-4 h-16 flex items-center gap-3 border-b border-sidebar-border/50",
-          collapsed && !inDrawer && "justify-center px-0"
-        )}
-      >
-        <div className="h-10 w-10 rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white flex items-center justify-center shadow-lg shadow-primary/30 ring-1 ring-white/20 shrink-0">
-          {panelIcon || <Sparkles className="h-5 w-5" />}
-        </div>
-        {(!collapsed || inDrawer) && (
-          <div className="min-w-0">
-            <p className="text-[15px] font-bold text-foreground leading-tight truncate tracking-tight">{panelTitle || "প্যানেল"}</p>
-            <p className="text-[11px] font-medium text-muted-foreground leading-tight">Shondhaan Workspace</p>
+      {/* User Profile Mini Card */}
+      {(!collapsed || inDrawer) && user && (
+        <div className="px-3 pt-4">
+          <div 
+            ref={profileMenuRef}
+            className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer" 
+            onClick={() => setProfileMenuOpen(o => !o)}
+          >
+            <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
+              {profileImageUrl ? (
+                <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold text-white truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-blue-200/60 truncate leading-tight">{user.email}</p>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-blue-200/50 transition-transform", profileMenuOpen && "rotate-180")} />
           </div>
-        )}
-      </div>
+          
+          <AnimatePresence>
+            {profileMenuOpen && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden space-y-1 mt-1"
+              >
+                <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                  <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
+                </button>
+                <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
+                  <LogOut className="h-3.5 w-3.5" /> সাইন আউট
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
       {/* Search */}
       {(!collapsed || inDrawer) && (
         <div className="px-3 pt-4">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2 rounded-xl bg-secondary/50 hover:bg-secondary transition-colors px-3 py-2.5 text-[13px] text-muted-foreground border border-border/50 hover:border-primary/30 group"
+            className="w-full flex items-center gap-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors px-3 py-2.5 text-[13px] text-slate-400 border border-white/5 hover:border-blue-500/30 group"
           >
-            <Search className="h-4 w-4 group-hover:text-primary transition-colors" />
+            <Search className="h-4 w-4 group-hover:text-blue-400 transition-colors" />
             <span className="flex-1 text-left font-medium">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground/80">⌘K</kbd>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-white/5 bg-black/20 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">⌘K</kbd>
           </button>
         </div>
       )}
@@ -290,7 +317,7 @@ const PanelSidebarTabs = ({
       {/* Pinned Items */}
       {pinnedItems.length > 0 && (!collapsed || inDrawer) && (
         <div className="px-3 pt-4">
-          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1.5">
+          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-200/40 inline-flex items-center gap-1.5">
             <Pin className="h-3 w-3" /> পিন করা
           </p>
           <div className="space-y-1">
@@ -310,7 +337,7 @@ const PanelSidebarTabs = ({
       )}
 
       {/* Main Nav */}
-      <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1 scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
+      <nav className={cn("flex-1 overflow-y-auto py-4 px-3 space-y-1", customScrollbar)}>
         {groups.map((group, gi) => {
           const groupKey = group.label || `g-${gi}`;
           const groupCollapsed = collapsedGroups[groupKey];
@@ -319,18 +346,18 @@ const PanelSidebarTabs = ({
               {group.label && (!collapsed || inDrawer) ? (
                 <button
                   onClick={() => setCollapsedGroups((c) => ({ ...c, [groupKey]: !c[groupKey] }))}
-                  className="w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground hover:text-foreground transition-colors"
+                  className="w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-blue-200/40 hover:text-blue-200/70 transition-colors"
                 >
                   <span className="inline-flex items-center gap-1.5">
                     {group.label}
-                    <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-secondary text-[9.5px] font-bold tabular-nums text-foreground/70">
+                    <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-white/5 text-[9.5px] font-bold tabular-nums text-slate-500">
                       {group.items.length}
                     </span>
                   </span>
                   <ChevronDown className={cn("h-3.5 w-3.5 transition-transform duration-200", groupCollapsed && "-rotate-90")} />
                 </button>
               ) : group.label && collapsed && gi > 0 ? (
-                <div className="mx-2 my-3 border-t border-border/30" />
+                <div className="mx-2 my-3 border-t border-white/5" />
               ) : null}
 
               <AnimatePresence initial={false}>
@@ -361,48 +388,12 @@ const PanelSidebarTabs = ({
         })}
       </nav>
 
-      {/* Footer Profile */}
-      <div className="border-t border-sidebar-border/50 p-3 space-y-1 bg-sidebar-accent/30">
-        {(!collapsed || inDrawer) && user && (
-          <div className="flex items-center gap-2.5 rounded-xl bg-secondary/40 hover:bg-secondary/60 transition-colors px-2.5 py-2 cursor-pointer" ref={profileMenuRef} onClick={() => setProfileMenuOpen(o => !o)}>
-            <div className="h-8 w-8 overflow-hidden rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[12px] font-bold ring-1 ring-white/20 shadow-sm shrink-0">
-              {profileImageUrl ? (
-                <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[12px] font-semibold text-foreground truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-muted-foreground truncate leading-tight">{user.email}</p>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", profileMenuOpen && "rotate-180")} />
-          </div>
-        )}
-        
-        {/* Profile Dropdown */}
-        <AnimatePresence>
-          {profileMenuOpen && (!collapsed || inDrawer) && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10, height: 0 }}
-              animate={{ opacity: 1, y: 0, height: 'auto' }}
-              exit={{ opacity: 0, y: -10, height: 0 }}
-              className="overflow-hidden space-y-1 mt-1"
-            >
-               <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
-                 <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
-               </button>
-               <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-semibold text-destructive hover:bg-destructive/10 transition-colors">
-                 <LogOut className="h-3.5 w-3.5" /> সাইন আউট
-               </button>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+      {/* Footer Collapse Btn */}
+      <div className="border-t border-white/5 p-3">
         <button
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
-            "hidden md:flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors mt-1",
+            "hidden md:flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-500 hover:bg-white/5 hover:text-white transition-colors",
             collapsed ? "justify-center" : "justify-start"
           )}
         >
@@ -413,13 +404,13 @@ const PanelSidebarTabs = ({
   );
 
   return (
-    <div className={cn("flex w-full min-h-screen bg-muted/40", offsetForDesktopMegaMenu && "md:pt-10")}>
+    <div className={cn("flex w-full min-h-screen bg-[#0b0f17]", offsetForDesktopMegaMenu && "md:pt-2")}>
       {/* Desktop sidebar */}
       <aside
         className={cn(
-          "hidden md:flex flex-col shrink-0 sticky self-start border-r border-sidebar-border bg-sidebar/50 backdrop-blur-2xl transition-[width] duration-300 ease-in-out z-30",
+          "hidden md:flex flex-col shrink-0 sticky self-start transition-[width] duration-300 ease-in-out z-30 shadow-2xl",
           offsetForDesktopMegaMenu ? "top-10 h-[calc(100vh-2.5rem)]" : "top-0 h-screen",
-          collapsed ? "w-[76px]" : "w-[270px]"
+          collapsed ? "w-[80px]" : "w-[280px]"
         )}
       >
         <SidebarBody />
@@ -434,14 +425,14 @@ const PanelSidebarTabs = ({
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setMobileOpen(false)}
-              className="md:hidden fixed inset-0 z-[60] bg-black/60 backdrop-blur-md"
+              className="md:hidden fixed inset-0 z-[60] bg-black/70 backdrop-blur-md"
             />
             <motion.aside
               initial={{ x: -320 }}
               animate={{ x: 0 }}
               exit={{ x: -320 }}
               transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl"
+              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] shadow-2xl"
             >
               <SidebarBody inDrawer />
             </motion.aside>
@@ -450,35 +441,35 @@ const PanelSidebarTabs = ({
       </AnimatePresence>
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col bg-background">
+      <div className="flex-1 min-w-0 flex flex-col bg-slate-50 dark:bg-slate-950">
         <header className={cn(
-          "sticky z-40 border-b border-border/50 bg-card/80 backdrop-blur-xl shadow-sm",
+          "sticky z-40 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl",
           offsetForDesktopMegaMenu ? "top-0 md:top-10" : "top-0"
         )}>
-          <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary/50" />
-          <div className="flex items-center justify-between gap-4 px-4 md:px-8 h-16">
+          <div className="h-1 py-2 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
+          {/* <div className="flex items-center justify-between gap-4 px-4 md:px-4  h-16">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="md:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-foreground transition-colors"
+                className="md:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors"
               >
                 <Menu className="h-5 w-5" />
               </button>
               
               <button
                 onClick={() => navigate(-1)}
-                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 title="পেছনে যান"
               >
                 <ChevronLeft className="h-5 w-5" />
               </button>
 
-              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/10 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-5 [&>*]:w-5 shadow-sm">
+              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20 shrink-0 [&>*]:h-5 [&>*]:w-5 shadow-sm">
                 {activeItem?.icon || panelIcon}
               </div>
               <div className="min-w-0">
-                <nav className="hidden sm:flex items-center gap-1.5 text-[11px] text-muted-foreground/80 leading-none font-medium">
-                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-primary transition-colors">
+                <nav className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 leading-none font-medium">
+                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
                     <Home className="h-3 w-3" /> হোম
                   </button>
                   {activeGroup && (
@@ -488,47 +479,47 @@ const PanelSidebarTabs = ({
                     </>
                   )}
                 </nav>
-                <h1 className="text-[16px] md:text-[18px] font-bold text-foreground truncate leading-tight mt-1 tracking-tight">{activeLabel || panelTitle}</h1>
+                <h1 className="text-[16px] md:text-[18px] font-bold text-slate-900 dark:text-white truncate leading-tight mt-1 tracking-tight">{activeLabel || panelTitle}</h1>
               </div>
             </div>
 
             <div className="flex items-center gap-1.5">
               <button
                 onClick={() => setPaletteOpen(true)}
-                className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-xl bg-secondary/50 hover:bg-secondary text-[12px] text-muted-foreground border border-border/50 hover:border-primary/30 transition-all font-medium"
+                className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[12px] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all font-medium"
               >
                 <Search className="h-4 w-4" /> খুঁজুন
-                <kbd className="ml-1 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
+                <kbd className="ml-1 rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-black/20 px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
               </button>
               <button
                 onClick={() => setPaletteOpen(true)}
-                className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground transition-colors"
+                className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 transition-colors"
                 title="খুঁজুন (⌘K)"
               >
                 <Search className="h-5 w-5" />
               </button>
               <button
                 onClick={cycle}
-                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors"
+                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
                 title={`Theme: ${mode}`}
               >
                 <ThemeIcon className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-                className="h-10 px-3 rounded-xl hover:bg-secondary text-[12px] font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 transition-colors"
+                className="h-10 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-[12px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1.5 transition-colors"
                 title="ভাষা পরিবর্তন"
               >
                 <Languages className="h-4 w-4" />{language.toUpperCase()}
               </button>
-              <div className="h-6 w-px bg-border/50 hidden sm:block mx-1"></div>
+              <div className="h-6 w-px bg-slate-200 dark:bg-white/5 hidden sm:block mx-1"></div>
               <NotificationBell />
             </div>
-          </div>
+          </div> */}
         </header>
 
         <main className="flex-1 min-w-0">
-          <div className="w-full px-4 md:px-8 lg:px-12 py-6 md:py-8 space-y-6">
+          <div className="w-full  space-y-6">
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}
@@ -599,7 +590,7 @@ const PanelSidebarTabs = ({
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <RotateCcw className="h-5 w-5 text-primary" />
+              <RotateCcw className="h-5 w-5 text-blue-500" />
               কী রিসেট করবেন?
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -619,7 +610,7 @@ const PanelSidebarTabs = ({
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <LogOut className="h-5 w-5 text-destructive" />
+              <LogOut className="h-5 w-5 text-rose-500" />
               সাইন আউট নিশ্চিত করুন
             </AlertDialogTitle>
             <AlertDialogDescription>
@@ -630,7 +621,7 @@ const PanelSidebarTabs = ({
             <AlertDialogCancel className="rounded-xl" disabled={signingOut}>বাতিল</AlertDialogCancel>
             <AlertDialogAction
               disabled={signingOut}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-xl"
+              className="bg-rose-500 text-white hover:bg-rose-600 rounded-xl"
               onClick={async (e) => {
                 e.preventDefault();
                 try {
@@ -655,7 +646,7 @@ const PanelSidebarTabs = ({
   );
 };
 
-// ── NavBtn (Refined Apple HIG Style) ──────────────────────────────────────────
+// ── NavBtn (Refined Dark Style) ──────────────────────────────────────────
 const NavBtn = ({
   item, active, onClick, onPin, pinned, collapsed,
 }: {
@@ -666,25 +657,25 @@ const NavBtn = ({
     <button
       onClick={onClick}
       className={cn(
-        "relative w-full flex items-center gap-3 rounded-xl text-[14px] font-semibold transition-all duration-200 outline-none",
-        "focus-visible:ring-2 focus-visible:ring-primary/50 focus-visible:ring-offset-1 focus-visible:ring-offset-card",
+        "relative w-full flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 outline-none",
+        "focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0b0f17]",
         collapsed ? "justify-center px-0 py-3 h-12 w-12 mx-auto" : "px-3 py-2.5",
         active
-          ? "bg-primary/10 text-primary ring-1 ring-primary/20 shadow-sm shadow-primary/5"
-          : "text-foreground/80 hover:bg-secondary/70 hover:text-foreground active:scale-[0.98]"
+          ? "bg-gradient-to-r from-blue-500/15 to-transparent text-white font-semibold"
+          : "text-slate-400 hover:bg-white/5 hover:text-white active:scale-[0.98]"
       )}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
     >
       {active && !collapsed && (
-        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-primary" />
+        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-blue-500 shadow-[0_0_10px_rgb(59,130,246)]" />
       )}
       {active && collapsed && (
-        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-primary shadow-[0_0_8px_hsl(var(--primary))]" />
+        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgb(59,130,246)]" />
       )}
       <span className={cn(
         "shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]",
-        active ? "text-primary" : "text-foreground/80 group-hover:text-primary"
+        active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"
       )}>
         {item.icon}
       </span>
@@ -694,15 +685,15 @@ const NavBtn = ({
           className={cn(
             "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums transition-colors",
             active
-              ? "bg-primary/20 text-primary"
-              : "bg-destructive/10 text-destructive"
+              ? "bg-blue-500/20 text-blue-300"
+              : "bg-white/5 text-slate-400 group-hover:bg-rose-500/10 group-hover:text-rose-400"
           )}
         >
           {typeof item.badge === "number" && item.badge > 99 ? "99+" : item.badge}
         </span>
       )}
       {collapsed && item.badge != null && String(item.badge) !== "0" && (
-        <span className="absolute -right-0 -top-0 h-4 min-w-4 rounded-full bg-destructive px-1 text-[9px] font-bold leading-4 text-destructive-foreground ring-2 ring-card">
+        <span className="absolute -right-0 -top-0 h-4 min-w-4 rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-4 text-white ring-2 ring-[#0b0f17]">
           {typeof item.badge === "number" && item.badge > 9 ? "9+" : item.badge}
         </span>
       )}
@@ -711,7 +702,7 @@ const NavBtn = ({
     {collapsed && (
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-lg bg-popover text-popover-foreground border border-border/60 px-2.5 py-1.5 text-[12px] font-semibold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+        className="pointer-events-none absolute left-full top-1/2 -translate-y-1/2 ml-2 z-50 whitespace-nowrap rounded-lg bg-slate-900 text-white border border-white/10 px-2.5 py-1.5 text-[12px] font-semibold shadow-xl opacity-0 group-hover:opacity-100 transition-opacity duration-200"
       >
         {item.label}
       </span>
@@ -723,7 +714,7 @@ const NavBtn = ({
         onClick={(e) => { e.stopPropagation(); onPin(); }}
         className={cn(
           "absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all [&>svg]:h-3.5 [&>svg]:w-3.5",
-          pinned ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 hover:opacity-100 text-muted-foreground hover:bg-secondary"
+          pinned ? "text-blue-400 opacity-100" : "opacity-0 group-hover:opacity-60 hover:opacity-100 text-slate-500 hover:bg-white/5"
         )}
         title={pinned ? "পিন সরান" : "পিন করুন"}
       >
@@ -768,7 +759,7 @@ const CommandPalette = ({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/50 backdrop-blur-md"
+      className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-white backdrop-blur-md"
       onClick={onClose}
     >
       <motion.div
@@ -776,24 +767,24 @@ const CommandPalette = ({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.98, opacity: 0, y: -10 }}
         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-2xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden ring-1 ring-black/5"
+        className="w-full max-w-2xl rounded-2xl bg-gradient-to-b from-blue-950 via-[#0b0f17] to-black border border-white/10 shadow-2xl overflow-hidden ring-1 ring-black/5"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
-          <Search className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
+          <Search className="h-5 w-5 text-slate-500" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKey}
             placeholder="পেজ, ইউজার, অর্ডার, সার্ভিস বা একশন খুঁজুন…"
-            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-muted-foreground/70 font-medium"
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate-500 text-white font-medium"
           />
-          <kbd className="rounded-md border border-border bg-secondary px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
+          <kbd className="rounded-md border border-white/5 bg-white/5 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 shadow-sm">ESC</kbd>
         </div>
-        <div className="max-h-[50vh] overflow-y-auto p-2 space-y-1 scrollbar-thin scrollbar-thumb-muted-foreground/20">
+        <div className={cn("max-h-[50vh] overflow-y-auto p-2 space-y-1", customScrollbar)}>
           {rows.length === 0 ? (
-            <p className="text-center py-10 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
+            <p className="text-center py-10 text-sm text-slate-500">কিছু পাওয়া যায়নি</p>
           ) : (
             rows.map((it, idx) => (
               <button
@@ -801,30 +792,30 @@ const CommandPalette = ({
                 onMouseEnter={() => setHi(idx)}
                 onClick={() => onSelect(it.value)}
                 className={cn(
-                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors text-left",
-                  idx === hi ? "bg-primary/10 text-primary" : "text-foreground/80 hover:bg-secondary"
+                  "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all text-left",
+                  idx === hi ? "bg-blue-500/10 text-white shadow-sm" : "text-slate-400 hover:bg-white/5"
                 )}
               >
                 <span className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 [&>svg]:h-4 [&>svg]:w-4 transition-colors",
-                  idx === hi ? "bg-primary/15 text-primary" : "bg-secondary text-muted-foreground"
+                  idx === hi ? "bg-blue-500/20 text-blue-400" : "bg-white/5 text-slate-500"
                 )}>{it.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{it.label}</p>
                 </div>
                 {idx === hi && (
-                  <kbd className="rounded border border-border bg-card px-1.5 text-[9px] font-mono text-muted-foreground">↵</kbd>
+                  <kbd className="rounded border border-white/5 bg-black/20 px-1.5 text-[9px] font-mono text-slate-500">↵</kbd>
                 )}
               </button>
             ))
           )}
         </div>
 
-        <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/50 text-[10px] text-muted-foreground bg-secondary/30">
+        <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5 text-[10px] text-slate-500 bg-white/5">
           <span className="font-medium">Shondhaan Workspace</span>
           <div className="flex items-center gap-4">
-            <span>Theme: <b className="text-foreground">{themeMode}</b></span>
-            <span>Lang: <b className="text-foreground">{language}</b></span>
+            <span>Theme: <b className="text-slate-300">{themeMode}</b></span>
+            <span>Lang: <b className="text-slate-300">{language}</b></span>
           </div>
         </div>
       </motion.div>

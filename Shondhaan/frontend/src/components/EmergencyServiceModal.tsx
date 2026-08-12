@@ -13,6 +13,7 @@ const PRESCRIPTION_MODAL_KEY = "prescriptionModalOpen";
 const SERVICE_API_BASE_URL = (
   import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000"
 ).replace(/\/+$/, "");
+
 interface ScanResult {
   medicine_name: string;
   dosage: string | null;
@@ -24,9 +25,6 @@ interface Props {
   open: boolean;
   onClose: () => void;
 }
-
-const getPayload = (raw: any) =>
-  raw?.data ?? raw?.services ?? raw?.item ?? raw?.result ?? raw;
 
 const EmergencyServiceModal = ({ open, onClose }: Props) => {
   const { selectedCity } = useLocation();
@@ -54,39 +52,46 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
         const response = await fetch(`${SERVICE_API_BASE_URL}/api/services`, { headers });
         const json = await response.json();
 
-        
         if (!response.ok) throw new Error(json?.message || "Failed to fetch services");
-        const payload = getPayload(json);
-        const list = Array.isArray(payload) ? payload : (payload?.services || []);
-        if (Array.isArray(list)) {
-          const mapped = list.map((s: any) => {
-            // Parse cities
-            let cities: string[] = [];
-            if (Array.isArray(s.available_cities)) {
-              cities = s.available_cities.map(String);
-            } else if (typeof s.available_cities === "string" && s.available_cities) {
-              try {
-                const parsed = JSON.parse(s.available_cities);
-                if (Array.isArray(parsed)) cities = parsed.map(String);
-                else cities = s.available_cities.split(",").map((c: string) => c.trim());
-              } catch {
-                cities = s.available_cities.split(",").map((c: string) => c.trim());
+
+        let list: any[] = [];
+        if (Array.isArray(json)) {
+          list = json;
+        } else if (json && Array.isArray(json.data)) {
+          list = json.data;
+        } else if (json && Array.isArray(json.services)) {
+          list = json.services;
+        }
+
+        if (list.length > 0) {
+          const mapped = list
+            .map((s: any) => {
+              let cities: string[] = [];
+              if (Array.isArray(s.available_cities)) {
+                cities = s.available_cities.map(String);
+              } else if (typeof s.available_cities === "string" && s.available_cities) {
+                try {
+                  const parsed = JSON.parse(s.available_cities);
+                  if (Array.isArray(parsed)) cities = parsed.map(String);
+                  else cities = s.available_cities.split(",").map((c: string) => c.trim());
+                } catch {
+                  cities = s.available_cities.split(",").map((c: string) => c.trim());
+                }
               }
-            }
 
-            // Parse packages
-            let packages = Array.isArray(s.packages) ? s.packages : [];
-            if (packages.length === 0 && Number(s.price) > 0) {
-              packages = [{ name: "Basic Service", price: Number(s.price) }];
-            }
+              let packages = Array.isArray(s.packages) ? s.packages : [];
+              if (packages.length === 0 && Number(s.price) > 0) {
+                packages = [{ name: "Basic Service", price: Number(s.price) }];
+              }
 
-            return {
-              ...s,
-              image: s.image_url || s.image || "",
-              availableCities: cities,
-              packages: packages,
-            };
-          }).filter((s: any) => s.slug && s.title); // Filter out invalid items
+              return {
+                ...s,
+                image: s.image_url || s.image || "",
+                availableCities: cities,
+                packages: packages,
+              };
+            })
+            .filter((s: any) => s.slug && s.title && s.is_active !== false);
 
           setApiServices(mapped);
         } else {
@@ -103,13 +108,23 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
     fetchServices();
   }, [open, bn]);
 
-  // Filter by city (case-insensitive) or show if service has no city restrictions
-  const cityServices = apiServices.filter((s) => {
-    if (!selectedCity || s.availableCities.length === 0) return true;
-    return s.availableCities.some(
-      (c) => c.toLowerCase() === selectedCity.toLowerCase()
-    );
+  // Fuzzy match for cities
+  let cityServices = apiServices.filter((s) => {
+    if (!selectedCity || !s.availableCities || s.availableCities.length === 0) return true;
+    
+    const targetCity = selectedCity.trim().toLowerCase();
+    if (!targetCity) return true;
+
+    return s.availableCities.some((c) => {
+      const serviceCity = String(c).trim().toLowerCase();
+      return serviceCity === targetCity || serviceCity.includes(targetCity) || targetCity.includes(serviceCity);
+    });
   });
+
+  // Fail-safe: If city filter removes everything, just show all services
+  if (cityServices.length === 0 && apiServices.length > 0) {
+    cityServices = apiServices;
+  }
   
   const [searchQuery, setSearchQuery] = useState("");
   const filteredServices = cityServices.filter((s) =>
@@ -187,7 +202,6 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
       if (!response.ok) {
         throw new Error(result.message || "Failed to scan prescription");
       }
-      // setScanResults(result.data);
       console.log(result);
       toast.success(bn ? "প্রেসক্রিপশন স্ক্যান সম্পন্ন হয়েছে" : "Prescription scanned successfully");
     } catch (err: any) {
