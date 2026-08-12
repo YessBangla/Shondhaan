@@ -595,7 +595,7 @@ const MartStore = () => {
                   onClick={() => setActiveSlide((current) => (current - 1 + carouselMedia.length) % carouselMedia.length)}
                   className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm hover:bg-background z-20"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-5 w-5" /> 
                 </button>
                 <button
                   type="button"
