@@ -88,6 +88,8 @@ import {
 } from "./pages/admin/AdminPages";
 import MartStore from "./pages/MartStore";
 import ServiceMessage from "./pages/ServiceMessage";
+import AdminServices from "./components/admin/AdminServices";
+import ServiceAdminDashboard from "./components/admin/serviceAdmin/ServiceAdminDashboard";
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -157,6 +159,11 @@ const DealStaffLogin = lazy(() => import("./pages/DealStaffLogin"));
 const JobsStaffLogin = lazy(() => import("./pages/JobsStaffLogin"));
 const MainLogin = lazy(() => import("./pages/MainLogin"));
 const SuperAdminLogin = lazy(() => import("./pages/SuperAdminLogin"));
+
+// ✅ ADDED: Lazy-loaded Payment Redirection Pages
+const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
+const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
+const PaymentFailed = lazy(() => import("./pages/PaymentFailed"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -319,6 +326,7 @@ const App = () => {
               <Route path="staff-assignments" element={<AdminStaffAssignments />} />
               <Route path="staff-workload" element={<AdminStaffWorkload />} />
               <Route path="notification-rules" element={<AdminNotificationRules />} />
+               <Route path="service" element={<ServiceAdminDashboard />} />
             </Route>
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/faq" element={<FAQ />} />
@@ -379,6 +387,12 @@ const App = () => {
             <Route path="/deal/login" element={<DealStaffLogin />} />
             <Route path="/jobs/login" element={<JobsStaffLogin />} />
             <Route path="/mart/store/:vendorId" element={<MartStore />} />
+            
+            {/* ✅ ADDED: Payment Gateway Redirection Routes */}
+            <Route path="/payment-success" element={<PaymentSuccess />} />
+            <Route path="/payment-cancel" element={<PaymentCancel />} />
+            <Route path="/payment-failed" element={<PaymentFailed />} />
+            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

@@ -1,6 +1,6 @@
 import crypto from "node:crypto";
 import { pool } from "../db/pool.js";
-import { ALLOWED_ROLES, passwordPolicyMessage } from "../config/constants.js";
+import { ALLOWED_ROLES, ADMIN_PANEL_ROLES, passwordPolicyMessage } from "../config/constants.js";
 import { hashPassword, verifyPassword, hashValue, validatePasswordPolicy } from "../utils/crypto.js";
 import { createToken } from "../utils/jwt.js";
 import { normalizeEmail, normalizeMobile } from "../utils/normalize.js";
@@ -86,6 +86,9 @@ export const signupRequestOtp = async (req, res) => {
     }
     if (!ALLOWED_ROLES.has(type)) {
       return res.status(400).json({ message: "Valid account type is required" });
+    }
+    if (ADMIN_PANEL_ROLES.has(type)) {
+      return res.status(403).json({ message: "This account type must be assigned by a super admin" });
     }
 
     const passwordHash = await hashPassword(password);

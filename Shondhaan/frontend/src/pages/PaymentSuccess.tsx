@@ -44,7 +44,6 @@ const PaymentSuccess = () => {
     },
     [params]
   );
-
   useEffect(() => {
     let cancelled = false;
 
@@ -77,8 +76,8 @@ const PaymentSuccess = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
-      <main className="mx-auto flex min-h-[60vh] max-w-md flex-col items-center justify-center px-4 py-10 text-center">
+      <div className="pt-[44px]"/>
+      <main className="mx-auto flex min-h-[60vh] bg-background border shadow rounded-lg max-w-md flex-col items-center justify-center px-4 py-5 text-center mb-[30px]">
         {loading ? (
           <>
             <Loader2 className="mb-4 h-12 w-12 animate-spin text-primary" />
@@ -127,10 +126,10 @@ const PaymentSuccess = () => {
         )}
 
         <div className="mt-6 flex w-full gap-2">
-          <Link to="/bookings" className="flex-1 rounded-lg bg-primary px-4 py-2.5 text-sm font-semibold text-white">
+          <Link to="/bookings" className="flex-1 rounded-lg bg-primary hover:bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white">
             {bn ? "বুকিং দেখুন" : "View bookings"}
           </Link>
-          <Link to="/" className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground">
+          <Link to="/" className="flex-1 rounded-lg border border-border px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-primary hover:text-white">
             {bn ? "হোম" : "Home"}
           </Link>
         </div>

@@ -309,7 +309,7 @@ const ServiceDetail = () => {
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
         <h1 className="font-heading text-2xl font-bold text-foreground mb-2">Service Not Found</h1>
         <p className="text-muted-foreground mb-6">The service you are looking for is not available.</p>
-        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 transition-colors">
+        <button onClick={() => navigate("/")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-blue-900 hover:bg-primary/90 transition-colors">
           Go Home
         </button>
       </div>
@@ -401,7 +401,7 @@ const ServiceDetail = () => {
           <div className="md:col-span-1">
             <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <h2 className="font-heading text-xl font-bold">Book Now</h2>
-              <button onClick={handleAddToCart} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-primary/90 transition-colors">
+              <button onClick={handleAddToCart} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-blue-900 hover:bg-primary/90 transition-colors">
                 Add to Cart (৳{pkg.price})
               </button>
             </div>
@@ -449,17 +449,15 @@ const CmsServiceDetail = ({
   const cities = Array.isArray(service.available_cities) ? service.available_cities : [];
 
   const pkg = packages[selectedPackage] || packages[0];
-  const platformFee = Number(service.platform_fee || 0);
-
+  const commissionPercent = Number(service.commission_percent || 0);
+// Calculate fee: Package Price * (Commission Percent / 100)
+const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
   const { addItem: addRecentlyViewed, getItems: getRecentItems } = useRecentlyViewed();
   const heroImage = getServiceDisplayImage(service.slug, service.image_url);
-
   const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
-
   const seoDescription = bn 
     ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সার্ভিস।` 
     : `${serviceTitle} — professional, reliable & affordable service.`;
-
   useSEO({
     title: serviceTitle,
     description: seoDescription,
@@ -528,7 +526,6 @@ const CmsServiceDetail = ({
     });
     toast.success(t("cart.added"));
   };
-
   const handleDirectBooking = async () => {
     if (!activeUserId) {
       toast.error(t("sd.loginFirst"));
@@ -780,12 +777,12 @@ const CmsServiceDetail = ({
                     <span className="font-heading text-2xl font-bold text-primary">৳{pkg.price}</span>
                     {pkg.original_price && <span className="text-sm text-muted-foreground line-through">৳{pkg.original_price}</span>}
                   </div>
-                  <div className="mt-3 rounded-lg border border-dashed border-border bg-background px-3 py-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Platform Fee</span>
-                      <span className="font-semibold text-foreground">৳{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}</span>
-                    </div>
-                  </div>
+                 <div className="mt-3 rounded-lg border border-dashed border-border bg-background px-3 py-2">
+  <div className="flex items-center justify-between text-xs">
+    <span className="text-muted-foreground">Commission Fee ({commissionPercent}%)</span>
+    <span className="font-semibold text-foreground">৳{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}</span>
+  </div>
+</div>
                 </div>
               )}
 
@@ -813,7 +810,7 @@ const CmsServiceDetail = ({
                       onClick={() => setBookingTime(slot.value)}
                       className={cn(
                         "rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all",
-                        bookingTime === slot.value ? "border-primary text-white" : "border-border text-muted-foreground hover:border-primary/40"
+                        bookingTime === slot.value ? "border-primary text-blue-900" : "border-border text-muted-foreground hover:border-primary/40"
                       )}
                     >
                       {slot.label}
@@ -829,7 +826,7 @@ const CmsServiceDetail = ({
                     if (!bookingDate || !bookingTime) return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full rounded-lg py-3 text-sm font-semibold text-white hover:bg-primary/90 flex items-center justify-center gap-2"
+                  className="w-full border border-primary bg-primary rounded-lg py-3 text-sm font-semibold text-white hover:bg-primary/90 hover:text-primary flex items-center justify-center gap-2"
                 >
                   <CalendarCheck className="h-4 w-4" /> {t("sd.bookingConfirmBtn")}
                 </button>
@@ -838,7 +835,7 @@ const CmsServiceDetail = ({
                   <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-blue-900 hover:bg-emerald-800 disabled:opacity-50">
                     {submitting ? "Submitting..." : bn ? "নিশ্চিত করে বুক করুন" : "Confirm & Book"}
                   </button>
                 </motion.div>
@@ -884,7 +881,7 @@ const CmsServiceDetail = ({
                 setShowBookingForm(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-blue-900 transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
             >
               <CalendarCheck className="h-4 w-4" /> {t("sd.bookNow")}
             </button>
@@ -1000,7 +997,7 @@ const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; 
             ))}
           </div>
           <textarea placeholder="Share your experience..." value={comment} onChange={(e) => setComment(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text- disabled:opacity-50">
             {submitting ? "Submitting..." : "Submit Review"}
           </button>
         </div>
