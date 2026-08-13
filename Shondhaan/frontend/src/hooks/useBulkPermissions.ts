@@ -4,7 +4,7 @@ import { usePermissions } from "@/hooks/usePermissions";
 /**
  * Centralized permission checks for admin bulk actions.
  * - super_admin / admin always get full access (matches existing app convention).
- * - Otherwise, falls back to role_permissions (resource + action).
+ * - Otherwise, checks the current MySQL user type against static resource rules.
  */
 type Action = "can_create" | "can_read" | "can_update" | "can_delete";
 

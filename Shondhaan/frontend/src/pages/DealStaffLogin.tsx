@@ -11,6 +11,7 @@ const DealStaffLogin = () => (
     roleKeys={[
       "super_admin",
       "admin",
+      "deal_admin",
       "moderator",
       "yessdeal_seller",
       "representative",

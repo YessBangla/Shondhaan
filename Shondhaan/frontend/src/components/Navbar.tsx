@@ -406,7 +406,7 @@ const  Navbar = () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="fixed top-0 left-0 right-0 z-40 glass-nav bg-background/95 md:!border-b-0 md:!shadow-none"
+        className="fixed top-0 left-0 right-0 z-[9999] glass-nav bg-background/95 md:!border-b-0 md:!shadow-none"
         style={isJobsHeader ? { borderBottom: 0, boxShadow: "none" } : undefined}
       >
         {/* Mobile header */}

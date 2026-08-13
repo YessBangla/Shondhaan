@@ -445,8 +445,8 @@ const JobDetail = () => {
 
   return (
     <JobsPageTransition>
-      <Navbar />
-      <JobsMenuBar flushWithHeader />
+      <Navbar  />
+      <JobsMenuBar />
 
       <div className="mx-auto max-w-7xl px-2 md:px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">

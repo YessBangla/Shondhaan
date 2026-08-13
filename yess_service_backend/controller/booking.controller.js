@@ -264,12 +264,10 @@ export const getBookings = async (req, res) => {
       query += ` AND booking_date = ?`;
       values.push(date);
     }
-
     if (provider_id) {
       query += ` AND provider_id = ?`;
       values.push(provider_id);
     }
-
     if (assigned_to) {
       query += ` AND assigned_to = ?`;
       values.push(assigned_to);

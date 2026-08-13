@@ -265,7 +265,7 @@ const hasSidebar =
   return (
   <div
   className={`hidden md:block fixed left-0 right-0 z-30
-  ${hasSidebar ? "top-0" : "top-[68px]"}
+  ${hasSidebar ? "top-16" : "top-[68px]"}
     bg-primary border-b border-border/40`}>
       <div className="max-w-7xl mx-auto px-4">
         <nav className="flex items-center justify-center">

@@ -386,12 +386,10 @@ const App = () => {
             <Route path="/deal/login" element={<DealStaffLogin />} />
             <Route path="/jobs/login" element={<JobsStaffLogin />} />
             <Route path="/mart/store/:vendorId" element={<MartStore />} />
-            
-            {/* ✅ ADDED: Payment Gateway Redirection Routes */}
+            {/* ADDED: Payment Gateway Redirection Routes */}
             <Route path="/payment-success" element={<PaymentSuccess />} />
             <Route path="/payment-cancel" element={<PaymentCancel />} />
             <Route path="/payment-failed" element={<PaymentFailed />} />
-            
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

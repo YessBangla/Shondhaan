@@ -8,6 +8,9 @@ const ROLE_PRIORITY: RoleKey[] = [
   "admin",
   "mart_admin",
   "service_admin",
+  "mart_admin",   // ✅ Added
+  "deal_admin",   // ✅ Added
+  "job_admin",    // ✅ Added
   "moderator",
   "finance",
   "supervisor",
@@ -28,7 +31,7 @@ const ROLE_PRIORITY: RoleKey[] = [
  * Falls back to `/dashboard` (Client Dashboard) when no role is found.
  */
 export async function getRoleRedirectPath(): Promise<string> {
-  const mysqlRole = getMySqlAuth()?.user.type;
+  const mysqlRole = getMySqlAuth()?.user.type as RoleKey | undefined;
   if (mysqlRole) {
     const cfg = ROLES.find((r) => r.key === mysqlRole);
     if (cfg) return cfg.panelPath;
@@ -60,6 +63,12 @@ function getProfilePathForRole(role: string): string {
       return "/employer?tab=profile";
     case "yessdeal_seller":
       return "/yessdeal";
+    // ✅ Added for new admins to go to their settings tab
+    case "mart_admin":
+    case "deal_admin":
+    case "job_admin":
+    case "service_admin":
+      return "/admin/settings";
     default:
       return "/profile";
   }

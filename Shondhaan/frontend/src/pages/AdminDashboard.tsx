@@ -440,7 +440,6 @@ const AdminDashboard = () => {
           </PanelSidebarTabs>
         </div>
       </div>
-
       <div className="h-16 md:hidden" />
     </div>
   );
