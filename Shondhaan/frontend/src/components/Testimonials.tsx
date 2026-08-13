@@ -87,12 +87,12 @@ const Testimonials = () => {
       className="py-16 px-4 mx-auto max-w-7xl md:py-24 "
     >
       <div className="text-center mb-12 md:mb-16">
-        <p className="text-sm font-bold text-blue-600 uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
-          <span className="h-1 w-6 bg-gradient-to-r from-blue-600 to-emerald-500 rounded-full"></span>
+        <p className="text-sm font-bold text-primary uppercase tracking-widest mb-3 flex items-center justify-center gap-2">
+          <span className="h-1 w-6 bg-gradient-to-r from-primary to-emerald-500 rounded-full"></span>
           {t("testimonials.label")}
-          <span className="h-1 w-6 bg-gradient-to-r from-emerald-500 to-blue-600 rounded-full"></span>
+          <span className="h-1 w-6 bg-gradient-to-r from-primary to-blue-600 rounded-full"></span>
         </p>
-        <h2 className="font-heading text-3xl md:text-4xl font-bold bg-gradient-to-r from-blue-700 via-blue-600 to-emerald-600 bg-clip-text text-transparent mb-2">
+        <h2 className="font-heading text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary to-emerald-600 bg-clip-text text-transparent mb-2">
           {t("testimonials.title")}
         </h2>
         <p className="text-slate-600 mt-4 max-w-2xl mx-auto text-sm md:text-base leading-relaxed">
