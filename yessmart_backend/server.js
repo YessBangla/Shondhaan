@@ -25,6 +25,7 @@ const createNotificationsTable = require("./database/createNotificationsTable");
 const createMartPackagesTable = require("./database/createMartPackagesTable");
 const createMartSellerPackagesTable = require("./database/createMartSellerPackagesTable");
 const createMartPackageTransactionsTable = require("./database/createMartPackageTransactionsTable");
+const createMartWalletTables = require("./database/createMartWalletTables");
 const createWishlistTable = require("./database/createWishlist.table"); // Import the createWishlistTable function
 const createMessagesTable = require("./database/Createmessage.table"); // Import the createMessagesTable function
 const createUserProfileTable = require("./database/user_profile.table");
@@ -50,6 +51,7 @@ const notificationsRoutes = require("./routes/notifications");
 const MessagesRoutes = require("./routes/messages"); // Import the messages routes
 const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
 const transactionsRoutes = require("./routes/transactions"); // ★ NEW — transactions routes
+const martWalletRoutes = require("./routes/martWallets");
 
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
@@ -145,6 +147,7 @@ app.use("/api/notifications", notificationsRoutes);
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 app.use("/api/transactions", transactionsRoutes); // ★ NEW — transactions routes
+app.use("/api/mart-wallets", martWalletRoutes);
 app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
 
 server.listen(PORT, async () => {
@@ -178,6 +181,7 @@ server.listen(PORT, async () => {
     await createMartPackagesTable(); // ★ NEW — Create the mart_packages table
     await createMartSellerPackagesTable(); // ★ NEW — Create the mart_seller_packages table
     await createMartPackageTransactionsTable(); // Payment audit trail for package purchases
+    await createMartWalletTables(); // Seller wallet balances and adjustment audit trail
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);
