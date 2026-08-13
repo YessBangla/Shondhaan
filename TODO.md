@@ -1,15 +1,14 @@
-# Fix AdminAnalytics 401 Unauthorized on /api/admin/job-stats
+# Task: Enforce 5-free-product limit with buy-package message
 
-## Root Cause
-- Frontend reads token from `localStorage.getItem("token")` but the admin JWT is stored in `localStorage["yess_mysql_auth"]` as `{ user, token }`.
-- Backend `requireAuth` verifies against yessjob's own `JWT_SECRET`, but the admin token is signed by the central backend's secret.
+## Done
+- [x] Analyze current implementation (frontend gating + backend allowance logic)
+- [x] Wire `requireProductAllowance` guard into POST /api/products in `yessmart_backend/routes/products.js`
+- [x] Fix "Could not load packages" — route double-prefix mismatch in `yessmart_backend/server.js` (changed mount from `/api/mart-packages` to `/api` so internal `/mart-packages` and `/sellers/:id/...` paths resolve)
+- [x] Frontend `MartPanel.tsx` shows explicit "cannot add product without buying a package" message and opens the package modal
+- [x] Frontend `AddProductForm.tsx` handles backend `PRODUCT_LIMIT_REACHED` via `onLimitReached` → opens package modal
+- [x] Frontend `martApi.ts` attaches `code` to errors for reliable limit detection
 
-## Steps
-- [x] Create shared auth helper in yessjob backend (`utils/auth.js`) mirroring `jobs.js` `verifyShondhaanUser`.
-- [x] Update `yessjob_backend/middleware/requireAuth.js` to use the shared helper.
-- [x] Update `yessjob_backend/routes/adminJobStats.js` to use the shared admin check.
-- [x] Update `Shondhaan/frontend/src/components/admin/AdminAnalytics.tsx` to read token via `getMySqlAuth()` and send `Bearer` header.
-- [x] Verify backend files pass `node --check` (all OK).
-- [x] Verify TypeScript — no new errors in `AdminAnalytics.tsx` (other errors are pre-existing and unrelated).
-
-## Done ✅
+## Verify
+- [ ] Restart `yessmart_backend` server so the route mount + product-limit enforcement take effect
+- [ ] Confirm `GET /api/mart-packages` returns packages (no more "Could not load packages")
+- [ ] Confirm sellers can add up to 5 products free, then see the buy-package message/modal

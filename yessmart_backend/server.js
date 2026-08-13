@@ -22,7 +22,9 @@ const createCouponsTable = require("./database/coupons.table");
 const createDeliveryRequestsTable = require("./database/createDeliveryRequestsTable");
 const createDeliverymenTable = require("./database/deliverymen.table");
 const createNotificationsTable = require("./database/createNotificationsTable");
-
+const createMartPackagesTable = require("./database/createMartPackagesTable");
+const createMartSellerPackagesTable = require("./database/createMartSellerPackagesTable");
+const createMartPackageTransactionsTable = require("./database/createMartPackageTransactionsTable");
 const createWishlistTable = require("./database/createWishlist.table"); // Import the createWishlistTable function
 const createMessagesTable = require("./database/Createmessage.table"); // Import the createMessagesTable function
 const createUserProfileTable = require("./database/user_profile.table");
@@ -63,7 +65,11 @@ const io = new Server(server, {
 app.set("io", io);
 registerMartMessageSocket(io);
 
-const corsOrigins = [process.env.FRONTEND_URL, process.env.CORS_ORIGIN]
+const corsOrigins = [
+  process.env.FRONTEND_URL,
+  process.env.CORS_ORIGIN,
+  "https://www.shondhaan.com",
+]
   .flatMap((value) => String(value || "").split(","))
   .map((origin) => origin.trim())
   .filter(Boolean);
@@ -113,7 +119,7 @@ app.use(validateSignupPassword);
 app.get("/", (req, res) => {
   res.json({
     success: true,
-    message: "YService Mart Backend is running successfully!",
+    message: "yMart Backend is running successfully!",
   });
 });
 
@@ -137,6 +143,7 @@ app.use("/api/wishlist", wishlistRoutes); // Use the wishlist routes
 app.use("/api/notifications", notificationsRoutes);
 app.use("/api/messages", MessagesRoutes); // Use the messages routes
 app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
+app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
 server.listen(PORT, async () => {
   const backendBaseUrl = getBackendBaseUrl();
   console.log(`Server running on ${backendBaseUrl}`);
@@ -165,6 +172,9 @@ server.listen(PORT, async () => {
     await createMessagesTable(); // Create the mart_conversations and mart_messages tables
     await createNotificationsTable(); // Create the notifications table
     await createBannersTable(); // ★ NEW — Create the banners table
+    await createMartPackagesTable(); // ★ NEW — Create the mart_packages table
+    await createMartSellerPackagesTable(); // ★ NEW — Create the mart_seller_packages table
+    await createMartPackageTransactionsTable(); // Payment audit trail for package purchases
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);

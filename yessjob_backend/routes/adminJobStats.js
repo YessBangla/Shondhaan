@@ -9,6 +9,13 @@
 // (all statuses are returned, not just success, so the frontend can also
 // show a pending/success/failed/cancelled breakdown — same pattern as the
 // booking/request status pies already in the dashboard).
+//
+// package_name is joined in from `packages` at read time. Since packages
+// is CMS-editable, transaction `amount` is a snapshot of the price paid
+// at purchase time and will NOT match the package's current price if it
+// was changed later — that's expected, not a bug. LEFT JOIN (not INNER)
+// so transactions for a since-deleted package still show up, just with
+// package_name: null.
 const express = require('express');
 const mysql = require('mysql2');
 const { requireAdmin } = require('../utils/auth');
@@ -28,7 +35,7 @@ const pool = mysql.createPool({
 //
 // Response shape:
 // {
-//   packageTransactions: [{ id, package_id, amount, status, created_at, employer_user_id }],
+//   packageTransactions: [{ id, package_id, amount, status, created_at, employer_user_id, package_name }],
 //   jobseekerProfiles:   [{ id, created_at }],
 //   employerProfiles:    [{ id, created_at }]
 // }
@@ -38,9 +45,11 @@ const pool = mysql.createPool({
 router.get('/job-stats', requireAdmin, async (req, res) => {
   try {
     const [packageTransactions] = await pool.query(
-      `SELECT id, package_id, amount, status, created_at, employer_user_id
-       FROM payment_transactions
-       ORDER BY created_at DESC`
+      `SELECT pt.id, pt.package_id, pt.amount, pt.status, pt.created_at,
+              pt.employer_user_id, p.name AS package_name
+       FROM payment_transactions pt
+       LEFT JOIN packages p ON p.id = pt.package_id
+       ORDER BY pt.created_at DESC`
     );
 
     // Assumes created_at exists on both tables, matching the rest of this

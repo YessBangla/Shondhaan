@@ -1,6 +1,7 @@
 // src/components/mart/MartChatModal.tsx
 import { useState, useEffect, useRef } from "react";
-import { X, Send, MessageCircle, Loader2, ShoppingBag } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { X, Send, MessageCircle, Loader2, ShoppingBag, LogIn } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
@@ -52,6 +53,8 @@ export default function MartChatModal({
   sellerId,
 }: Props) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
   const { language } = useLanguage();
   const bn = language === "bn";
 
@@ -292,6 +295,7 @@ export default function MartChatModal({
         </div>
 
         {/* ── Input ── */}
+        {user ? (
         <div className="px-3 py-3 border-t border-gray-100 bg-white shrink-0 flex items-end gap-2">
           <textarea
             ref={inputRef}
@@ -315,6 +319,18 @@ export default function MartChatModal({
             }
           </button>
         </div>
+        ) : (
+          <div className="px-4 py-3 border-t border-gray-100 bg-white">
+            <button
+              type="button"
+              onClick={() => navigate(`/auth?redirect=${encodeURIComponent(`${location.pathname}${location.search}`)}`)}
+              className="w-full h-10 rounded-xl bg-primary text-white text-sm font-semibold inline-flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors"
+            >
+              <LogIn className="h-4 w-4" />
+              {bn ? "Login to chat" : "Login to start chatting"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );

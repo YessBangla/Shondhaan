@@ -5,7 +5,7 @@ const PageLoader = () => {
   const { settings } = useSiteSettings();
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex items-center justify-center bg-background relative z-!2000">
       <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

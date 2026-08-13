@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useSEO } from "@/hooks/useSEO";
+import contactUs from "/images/contact-us.png";
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -65,18 +66,53 @@ const ContactUs = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[30px]" />
+
+{/* ══════════════════════ Hero band — text left, image right ══════════════════════ */}
+      <div className="">
+        <div className="app-container py-8 md:py-12">
+          <div
+            className="relative grid gap-6 md:grid-cols-2 rounded-lg overflow-hidden items-center"
+            style={{
+              backgroundImage: `url(${contactUs})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }}
+          >
+            {/* Dark + Blur Overlay */}
+            <div className="absolute inset-0 bg-black/60 backdrop-blur-[3px]" />
+
+            {/* Content */}
+            <div className="relative z-10 text-center md:text-left pl-6 pr-6">
+              <h1 className="font-heading text-2xl md:text-4xl font-bold text-white">
+                {bn ? "যোগাযোগ করুন" : "Contact Us"}
+              </h1>
+
+              <p className="mt-2 text-sm md:text-base text-white max-w-md mx-auto md:mx-0">
+                {bn
+                  ? "আমাদের সাথে যোগাযোগ করুন, আমরা সাহায্য করতে প্রস্তুত"
+                  : "Get in touch with us, we're ready to help"}
+              </p>
+            </div>
+
+            <div className="overflow-hidden">
+              <img
+                src={contactUs}
+                alt={bn ? "যোগাযোগ করুন" : "Contact us"}
+                className="w-full h-48 md:h-auto object-cover"
+              />
+            </div>
+
+            {/* Optional image visibility layer */}
+            <div className="relative z-10 hidden md:block" />
+          </div>
+        </div>
+      </div>
 
       <div className="app-container py-8 md:py-14">
-        <h1 className="font-heading text-2xl md:text-4xl font-bold text-foreground text-center">
-          {bn ? "যোগাযোগ করুন" : "Contact Us"}
-        </h1>
-        <p className="mt-2 text-center text-sm text-muted-foreground">
-          {bn ? "আমাদের সাথে যোগাযোগ করুন, আমরা সাহায্য করতে প্রস্তুত" : "Get in touch with us, we're ready to help"}
-        </p>
+        <div className="grid gap-6 md:grid-cols-5">
 
-        <div className="mt-8 grid gap-6 md:grid-cols-5">
-          {/* Contact info */}
+          {/* ── Contact info ─────────────────────────────────── */}
           <div className="md:col-span-2 space-y-4">
             <div className="rounded-xl border border-border bg-card p-5 space-y-4">
               <div className="flex items-start gap-3">
@@ -85,7 +121,10 @@ const ContactUs = () => {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">{bn ? "ফোন" : "Phone"}</p>
-                  <a href={`tel:${settings.footer_phone.replace(/[^\d+]/g, "")}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <a
+                    href={`tel:${settings.footer_phone.replace(/[^\d+]/g, "")}`}
+                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
                     {settings.footer_phone}
                   </a>
                 </div>
@@ -97,7 +136,10 @@ const ContactUs = () => {
                 </div>
                 <div>
                   <p className="text-xs font-medium text-muted-foreground">{bn ? "ইমেইল" : "Email"}</p>
-                  <a href={`mailto:${settings.footer_email}`} className="text-sm font-medium text-foreground hover:text-primary transition-colors">
+                  <a
+                    href={`mailto:${settings.footer_email}`}
+                    className="text-sm font-medium text-foreground hover:text-primary transition-colors"
+                  >
                     {settings.footer_email}
                   </a>
                 </div>
@@ -115,9 +157,18 @@ const ContactUs = () => {
                 </div>
               </div>
             </div>
+
+            {/* Supporting image — swap the src for a real office/support photo */}
+            <div className="rounded-xl overflow-hidden border border-border">
+              <img
+                src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?auto=format&fit=crop&w=800&q=80"
+                alt={bn ? "আমাদের সাপোর্ট টিম" : "Our support team"}
+                className="w-full h-40 md:h-48 object-cover"
+              />
+            </div>
           </div>
 
-          {/* Form */}
+          {/* ── Form ─────────────────────────────────────────── */}
           <div className="md:col-span-3">
             <div className="rounded-xl border border-border bg-card p-5">
               <Form {...form}>
@@ -182,6 +233,21 @@ const ContactUs = () => {
               </Form>
             </div>
           </div>
+        </div>
+
+        {/* ── Google Map ───────────────────────────────────────── */}
+        <div className="mt-6 rounded-xl overflow-hidden border border-border">
+          <iframe
+            title={bn ? "আমাদের অবস্থান" : "Our location"}
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d117014.7!2d90.3563!3d23.8103!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3755b8aa427f8a91%3A0x8600cf4a5f3e4b0!2sDhaka!5e0!3m2!1sen!2sbd!4v0000000000000"
+            width="100%"
+            height="360"
+            style={{ border: 0 }}
+            allowFullScreen
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="w-full h-64 md:h-[360px]"
+          />
         </div>
       </div>
 
