@@ -112,28 +112,45 @@ interface WorkspaceDashboardProps {
   userRole?: string;
 }
 
-const SERVICE_ADMIN_ALLOWED_PATHS = new Set([
-  "/admin/service",
-  "/admin/bookings",
-  "/admin/requests",
-  "/admin/services",
-  "/admin/service-images",
-  "/admin/categories",
-  "/admin/offers",
-  "/admin/banners",
-  "/admin/sections",
-  "/admin/contacts",
-  "/admin/chat-history",
-  "/admin/notifications",
-  "/admin/reviews",
-]);
+const ROLE_ALLOWED_PATHS: Record<string, Set<string>> = {
+  service_admin: new Set([
+    "/admin/service",
+    "/admin/bookings",
+    "/admin/requests",
+    "/admin/services",
+    "/admin/service-images",
+    "/admin/categories",
+    "/admin/offers",
+    "/admin/banners",
+    "/admin/sections",
+    "/admin/contacts",
+    "/admin/chat-history",
+    "/admin/notifications",
+    "/admin/reviews",
+  ]),
+  mart_admin: new Set([
+    "/admin/mart-overview",
+    "/admin/settings",
+  ]),
+  deal_admin: new Set([
+    "/admin/deal-overview",
+    "/admin/deal-categories",
+    "/admin/settings",
+  ]),
+  job_admin: new Set([
+    "/admin/job-listings",
+    "/admin/employers",
+    "/admin/jobs",
+    "/admin/settings",
+  ]),
+};
 
 const WorkspaceDashboard = ({ userRole }: WorkspaceDashboardProps) => {
   const filteredNav =
-    userRole === "service_admin"
+    userRole && ROLE_ALLOWED_PATHS[userRole]
       ? NAV.map((group) => ({
           ...group,
-          items: group.items.filter((item) => SERVICE_ADMIN_ALLOWED_PATHS.has(item.to)),
+          items: group.items.filter((item) => ROLE_ALLOWED_PATHS[userRole].has(item.to)),
         })).filter((group) => group.items.length > 0)
       : NAV;
 

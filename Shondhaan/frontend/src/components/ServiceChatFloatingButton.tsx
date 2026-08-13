@@ -161,7 +161,7 @@ const ServiceChatFloatingButton = () => {
             <div className="flex items-center gap-2">
               <Headphones className="h-4 w-4 text-white" />
               <div>
-                <p className="text-sm font-bold leading-tight text-white">Service support</p>
+                <p className="text-sm font-bold leading-tight text-white">Shondhaan Support</p>
                 <p className="text-[11px] opacity-85 text-white">{auth?.user ? userName : "Anonymous visitor"}</p>
               </div>
             </div>

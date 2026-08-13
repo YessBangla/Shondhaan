@@ -11,6 +11,7 @@ const JobsStaffLogin = () => (
     roleKeys={[
       "super_admin",
       "admin",
+      "job_admin",
       "moderator",
       "employer",
     ]}

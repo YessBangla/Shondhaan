@@ -11,6 +11,7 @@ const MartStaffLogin = () => (
     roleKeys={[
       "super_admin",
       "admin",
+      "mart_admin",
       "mart_vendor",
       "mart_delivery",
       "mart_cs",

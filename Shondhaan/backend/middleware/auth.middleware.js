@@ -14,7 +14,7 @@ export const requireSuperAdmin = (req, res, next) => {
   });
 };
 
-// ✅ NEW MIDDLEWARE: Allows super_admin, admin, and call_center
+// NEW MIDDLEWARE: Allows super_admin, admin, and call_center
 export const requireAdminOrCallCenter = (req, res, next) => {
   requireLoggedIn(req, res, () => {
     const role = getAuthRole(req.user);
@@ -55,10 +55,7 @@ export function requireCmsAdmin(req, res, next) {
 
 export const requireLoggedIn = (req, res, next) => {
   try {
-    // Browser clients use the httpOnly cookie, while the YessJob service
-    // validates a user's session by forwarding the Authorization header.
-    // Accept both forms so service-to-service verification does not depend
-    // on a cross-domain cookie being available.
+
     const authHeader = req.headers.authorization;
     const bearerToken = authHeader?.startsWith("Bearer ")
       ? authHeader.slice("Bearer ".length).trim()
@@ -74,12 +71,3 @@ export const requireLoggedIn = (req, res, next) => {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
-
-// export const requireStaff = (req, res, next) => {
-//   if (!isStaffUser(req.user)) {
-//     return res.status(403).json({
-//       message: "Staff access required",
-//     });
-//   }
-//   next();
-// };
