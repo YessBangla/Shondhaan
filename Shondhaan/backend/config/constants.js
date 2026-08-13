@@ -5,6 +5,9 @@ export const ROLES = [
   "super_admin",
   "admin",
   "service_admin",
+  "mart_admin", // ✅ Added
+  "deal_admin", // ✅ Added
+  "job_admin",  // ✅ Added
   "moderator",
   "supervisor",
   "finance",
@@ -25,6 +28,9 @@ export const ROLE_LABELS = {
   super_admin: "Super Admin",
   admin: "Admin",
   service_admin: "Service Admin",
+  mart_admin: "Mart Admin", // ✅ Added
+  deal_admin: "Deal Admin", // ✅ Added
+  job_admin: "Job Admin",   // ✅ Added
   moderator: "Moderator",
   supervisor: "Supervisor",
   finance: "Finance",
@@ -42,8 +48,12 @@ export const ROLE_LABELS = {
 export const ADMIN_ACCESS_BY_ROLE = {
   super_admin: ["*"],
   admin: ["*"],
+  
+  // Service Admin Permissions
   service_admin: [
     "/admin/service",
+    "/admin/smart-dashboard",
+    "/admin/analytics",
     "/admin/bookings",
     "/admin/requests",
     "/admin/services",
@@ -55,8 +65,32 @@ export const ADMIN_ACCESS_BY_ROLE = {
     "/admin/contacts",
     "/admin/chat-history",
     "/admin/notifications",
+    "/admin/notification-rules",
     "/admin/reviews",
+    "/admin/settings",
   ],
+  
+  // ✅ Mart Admin Permissions
+  mart_admin: [
+    "/admin/mart-overview",
+    "/admin/settings",
+  ],
+  
+  // ✅ Deal Admin Permissions
+  deal_admin: [
+    "/admin/deal-overview",
+    "/admin/deal-categories",
+    "/admin/settings",
+  ],
+  
+  // ✅ Job Admin Permissions
+  job_admin: [
+    "/admin/job-listings",
+    "/admin/employers",
+    "/admin/jobs",
+    "/admin/settings",
+  ],
+
   call_center: [
     "/admin/bookings",
     "/admin/requests",

@@ -29,6 +29,9 @@ import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 
+// ✅ ADDED: Import the ServiceMessage page so we can render it directly inside the tab
+import ServiceMessage from "@/pages/ServiceMessage";
+
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
@@ -100,13 +103,6 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.onerror = () => reject(new Error("Could not read image"));
     reader.readAsDataURL(file);
   });
-
-const MessagesRedirect = ({ navigate }: { navigate: (path: string) => void }) => {
-  useEffect(() => {
-    navigate("/service-message");
-  }, [navigate]);
-  return null;
-};
 
 // --- Bright White & Blue Charts ---
 const AreaChart = () => (
@@ -421,7 +417,7 @@ const ClientDashboard = () => {
         offsetForDesktopMegaMenu
       >
         {(activeTab, setTab) => (
-          <div className="space-y-8 p-2 md:p-3 bg-slate-50 min-h-screen">
+          <div className="bg-slate-50 min-h-screen">
             
             {/* === DASHBOARD TAB === */}
             {activeTab === "dashboard" && (
@@ -679,7 +675,8 @@ const ClientDashboard = () => {
             )}
 
             {/* === OTHER TABS === */}
-            {activeTab === "messages" && (<MessagesRedirect navigate={navigate} />)}
+            {/* ✅ FIXED: Rendering the ServiceMessage component directly inside the tab like other pages! */}
+            {activeTab === "messages" && <ServiceMessage />}
             {activeTab === "requests" && <ServiceRequestsTab userPhone={profile.phone} />}
             {activeTab === "mart-orders" && (<MartOrdersTab orders={martOrders as any} onRefresh={fetchMartOrders} apiBase={`${MART_API_BASE}/api`} />)}
             {activeTab === "deal-my-ads" && <DealSection activeTab="my-ads" />}

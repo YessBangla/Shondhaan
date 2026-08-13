@@ -61,7 +61,7 @@ const PanelSidebarTabs = ({
   offsetForDesktopMegaMenu = false,
 }: PanelSidebarTabsProps) => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, signOut } = useAuth();
   const { mode, cycle } = useTheme();
   const { language, setLanguage } = useLanguage();
@@ -167,14 +167,28 @@ const PanelSidebarTabs = ({
   const pinnedItems = useMemo(() => items.filter((i) => pinned.includes(i.value)), [items, pinned]);
 
   const handleSelect = useCallback((value: string) => {
+    // 1. Update the URL so it behaves like a real page navigation
+    setSearchParams(prev => {
+      prev.set("tab", value);
+      return prev;
+    });
+
+    // 2. Update internal state immediately for a snappy UI
     setActiveTabState(value);
+
+    // 3. Scroll to top to mimic a real page load
+    window.scrollTo({ top: 0, behavior: "smooth" });
+
+    // 4. Update recent history
     setRecent((prev) => {
       const next = prev.filter((v) => v !== value);
       next.unshift(value);
       return next.slice(0, 10);
     });
+
+    // 5. Close mobile drawer if open
     setMobileOpen(false);
-  }, []);
+  }, [setSearchParams]);
 
   const activeItem = items.find((i) => i.value === activeTab);
   const activeLabel = activeItem?.label || "";
@@ -519,7 +533,7 @@ const PanelSidebarTabs = ({
         </header>
 
         <main className="flex-1 min-w-0">
-          <div className="w-full  space-y-6">
+          <div className="w-full px-2 py-2  space-y-6">
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}

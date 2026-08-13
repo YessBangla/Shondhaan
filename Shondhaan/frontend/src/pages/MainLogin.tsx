@@ -31,6 +31,9 @@ const MainLogin = () => {
           "super_admin",
           "admin",
           "service_admin",
+          "mart_admin",     // ✅ Added
+          "deal_admin",     // ✅ Added
+          "job_admin",      // ✅ Added
           "moderator",
           "supervisor",
           "finance",
