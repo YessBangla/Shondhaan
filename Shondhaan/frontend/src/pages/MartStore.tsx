@@ -88,14 +88,14 @@ const fetchProducts = async (sellerId: number): Promise<MartProduct[]> => {
 
 // ── Product Card ───────────────────────────────────────────────────────────────
 const ProductCard = ({
-    product,
-    onAddToCart,
-    onOpen,
-  }: {
-    product: MartProduct;
-    onAddToCart: (product: MartProduct) => void;
-    onOpen: (product: MartProduct) => void;
-  }) => (
+  product,
+  onAddToCart,
+  onOpen,
+}: {
+  product: MartProduct;
+  onAddToCart: (product: MartProduct) => void;
+  onOpen: (product: MartProduct) => void;
+}) => (
   <div
     role="button"
     tabIndex={0}
@@ -157,7 +157,7 @@ const ProductCard = ({
         type="button"
         disabled={product.stock <= 0}
         onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-800 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold py-2 px-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
         {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
@@ -476,6 +476,9 @@ const MartStore = () => {
                     )}
                     {/* Meta info */}
               <div className=" flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                
+                
+                
                 <div className="flex items-center gap-1.5">
                   <Package className="h-4 w-4 text-primary" />
                   <span>{seller.total_products ?? products.length} Products</span>
@@ -483,54 +486,55 @@ const MartStore = () => {
               </div>
                   </div>
                 </div>
+
                 
 
 
 
-                <div className="flex items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={handleFollow}
-                    className="
-                      group flex items-center gap-2
-                      px-5 py-2.5
-                      rounded-xl
-                      bg-primary
-                      text-white
-                      font-medium
-                      shadow-sm
-                      hover:shadow-md
-                      hover:-translate-y-0.5
-                      transition-all duration-300
-                    "
-                  >
-                    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-                    <span>{following ? "Following" : "Follow"}</span>
-                  </button>
+<div className="flex items-center gap-3">
+  <button
+    type="button"
+    onClick={handleFollow}
+    className="
+      group flex items-center gap-2
+      px-5 py-2.5
+      rounded-xl
+      bg-primary
+      text-primary-foreground
+      font-medium
+      shadow-sm
+      hover:shadow-md
+      hover:-translate-y-0.5
+      transition-all duration-300
+    "
+  >
+    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
+    <span>{following ? "Following" : "Follow"}</span>
+  </button>
 
-                  <button
-                    type="button"
-                    onClick={handleOpenChat}
-                    className="
-                      group flex items-center gap-2
-                      px-5 py-2.5
-                      rounded-xl
-                      bg-background
-                      border border-border
-                      text-foreground
-                      font-medium
-                      shadow-sm
-                      hover:bg-muted/60
-                      hover:border-primary/20
-                      hover:-translate-y-0.5
-                      hover:shadow-md
-                      transition-all duration-300
-                    "
-                  >
-                    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
-                    <span>Chat</span>
-                  </button>
-                </div>
+  <button
+    type="button"
+    onClick={handleOpenChat}
+    className="
+      group flex items-center gap-2
+      px-5 py-2.5
+      rounded-xl
+      bg-background
+      border border-border
+      text-foreground
+      font-medium
+      shadow-sm
+      hover:bg-muted/60
+      hover:border-primary/20
+      hover:-translate-y-0.5
+      hover:shadow-md
+      transition-all duration-300
+    "
+  >
+    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+    <span>Chat</span>
+  </button>
+</div>
               </div>
 
              
@@ -591,7 +595,7 @@ const MartStore = () => {
                   onClick={() => setActiveSlide((current) => (current - 1 + carouselMedia.length) % carouselMedia.length)}
                   className="absolute left-3 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-background/85 text-foreground shadow-sm hover:bg-background z-20"
                 >
-                  <ChevronLeft className="h-5 w-5" />
+                  <ChevronLeft className="h-5 w-5" /> 
                 </button>
                 <button
                   type="button"
@@ -621,6 +625,7 @@ const MartStore = () => {
       )}
 
       <div className="app-container py-6 flex gap-6">
+
         {/* ── Sidebar ── */}
         <aside className="hidden lg:block w-72 shrink-0">
           <div className="sticky top-4 space-y-4">
@@ -684,117 +689,131 @@ const MartStore = () => {
                 </div>
               </div>
             </div>
+
+            
+
           </div>
         </aside>
 
         {/* ── Products main area ── */}
         <main className="flex-1 min-w-0">
           {availableCategories.length > 0 && (
-            <div className="relative mb-5">
-              {/* Trigger Button */}
-              <button
-                onClick={() => setShowCategories(!showCategories)}
-                className="
-                  flex items-center gap-2
-                  px-4 py-2.5
-                  rounded-xl
-                  bg-card
-                  border border-border
-                  text-sm font-medium
-                  hover:bg-muted/60
-                  hover:shadow-sm
-                  transition-all duration-300
-                "
-              >
-                Category
-                <span
-                  className={`text-xs transition-transform duration-300 ${
-                    showCategories ? "rotate-180" : ""
-                  }`}
+          <div className="relative mb-5">
+  {/* Trigger Button */}
+  <button
+    onClick={() => setShowCategories(!showCategories)}
+    className="
+      flex items-center gap-2
+      px-4 py-2.5
+      rounded-xl
+      bg-card
+      border border-border
+      text-sm font-medium
+      hover:bg-muted/60
+      hover:shadow-sm
+      transition-all duration-300
+    "
+  >
+    Category
+    <span
+      className={`text-xs transition-transform duration-300 ${
+        showCategories ? "rotate-180" : ""
+      }`}
+    >
+      ▼
+    </span>
+  </button>
+
+  {/* Dropdown */}
+  {showCategories && (
+    <div
+      className="
+        absolute top-full left-0 mt-2 w-72
+        bg-card/95 backdrop-blur-md
+        border border-border
+        rounded-2xl
+        shadow-xl
+        z-50
+        p-2
+      "
+    >
+      {/* All Products */}
+      <button
+        onClick={() => {
+          setFilterCategory("all");
+          setFilterSubCategory("all");
+          setShowCategories(false);
+        }}
+        className="
+          w-full text-left
+          px-3 py-2.5
+          rounded-xl
+          text-sm font-medium
+          hover:bg-muted/60
+          transition
+        "
+      >
+        All Products
+      </button>
+
+      <div className="my-1 h-px bg-border/60" />
+
+      {/* Categories — only the ones this seller actually has products in */}
+      {availableCategories.map((cat) => (
+        <div key={cat.id} className="mb-1">
+          {/* Category */}
+          <button
+            onClick={() => handleCategoryChange(String(cat.id))}
+            className="
+              w-full text-left
+              px-3 py-2.5
+              rounded-xl
+              font-semibold
+              text-sm
+              hover:bg-muted/60
+              hover:text-primary
+              transition
+            "
+          >
+            {cat.name}
+          </button>
+
+          {/* Subcategories — only the ones this seller has products in, within this category */}
+          {filterCategory === String(cat.id) && (
+            <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
+              {availableSubCategories.map((sub) => (
+                <button
+                  key={sub.id}
+                  onClick={() => {
+                    setFilterSubCategory(String(sub.id));
+                    setShowCategories(false);
+                  }}
+                  className="
+                    w-full text-left
+                    px-3 py-1.5
+                    text-sm
+                    text-muted-foreground
+                    rounded-lg
+                    hover:bg-muted/50
+                    hover:text-foreground
+                    transition
+                  "
                 >
-                  ▼
-                </span>
-              </button>
-
-              {showCategories && (
-                <div className="absolute top-full left-0 mt-2 w-72 bg-card/95 backdrop-blur-md border border-border rounded-2xl shadow-xl z-50 p-2">
-                  <button
-                    onClick={() => {
-                      setFilterCategory("all");
-                      setFilterSubCategory("all");
-                      setShowCategories(false);
-                    }}
-                    className="
-                      w-full text-left
-                      px-3 py-2.5
-                      rounded-xl
-                      text-sm font-medium
-                      hover:bg-muted/60
-                      transition
-                    "
-                  >
-                    All Products
-                  </button>
-
-                  <div className="my-1 h-px bg-border/60" />
-
-                  {/* Categories — only the ones this seller actually has products in */}
-                  {availableCategories.map((cat) => (
-                    <div key={cat.id} className="mb-1">
-                      <button
-                        onClick={() => handleCategoryChange(String(cat.id))}
-                        className="
-                          w-full text-left
-                          px-3 py-2.5
-                          rounded-xl
-                          font-semibold
-                          text-sm
-                          hover:bg-muted/60
-                          hover:text-primary
-                          transition
-                        "
-                      >
-                        {cat.name}
-                      </button>
-
-                      {/* Subcategories — only the ones this seller has products in, within this category */}
-                      {filterCategory === String(cat.id) && (
-                        <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
-                          {subCatLoading ? (
-                            <p className="px-3 py-1.5 text-sm text-muted-foreground">Loading...</p>
-                          ) : (
-                            availableSubCategories.map((sub) => (
-                              <button
-                                key={sub.id}
-                                onClick={() => {
-                                  setFilterSubCategory(String(sub.id));
-                                  setShowCategories(false);
-                                }}
-                                className="
-                                  w-full text-left
-                                  px-3 py-1.5
-                                  text-sm
-                                  text-muted-foreground
-                                  rounded-lg
-                                  hover:bg-muted/50
-                                  hover:text-foreground
-                                  transition
-                                "
-                              >
-                                {sub.name}
-                              </button>
-                            ))
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+                  {sub.name}
+                </button>
+              ))}
             </div>
+          )}
+        </div>
+      ))}
+    </div>
+  )}
+</div>
           )}
 {/* Category filter sidebar */}
             
+         
+
           {/* Breadcrumb */}
           {filterCategory !== "all" && (
             <div className="flex items-center gap-2 mb-4 text-xs text-muted-foreground">
@@ -875,7 +894,8 @@ const MartStore = () => {
         productName={products[0]?.name_bn || products[0]?.name_en || seller.shop_name || seller.seller_name || "Store"}
         productImage={products[0]?.image || seller.profile_image_url || null}
         productPrice={products[0]?.sale_price ?? null}
-        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}/>
+        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}
+      />
     </>
   );
 };

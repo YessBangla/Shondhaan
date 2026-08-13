@@ -6,7 +6,7 @@ import { normalizeEmail, normalizeMobile } from "../utils/normalize.js";
 
 // ✅ UPDATED: Added 'mart_admin', 'deal_admin', 'job_admin'
 const USER_TYPE_ENUM =
-  "ENUM('super_admin', 'admin', 'service_admin', 'mart_admin', 'deal_admin', 'job_admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'mart_vendor', 'mart_delivery', 'mart_cs', 'yessdeal_seller', 'employer', 'user') NOT NULL DEFAULT 'user'";
+  "ENUM('super_admin', 'admin','mart_admin', 'job_admin', 'service_admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'mart_vendor', 'mart_delivery', 'mart_cs', 'yessdeal_seller', 'employer', 'user') NOT NULL DEFAULT 'user'";
 
 export async function ensureTableColumn(table, column, alterSql) {
   const [existing] = await pool.execute(

@@ -1,13 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   Crown, Shield, ShieldCheck, Headphones, Wrench, MapPinCheck,
-  ClipboardCheck, Banknote, Store, Truck, MessageCircle, Tag, Briefcase, User,
-  ShoppingCart, Handshake, Building2 // ✅ Added new icons
+  ClipboardCheck, Banknote, Store, Truck, MessageCircle,BarChart3, Tag, Briefcase, User,
 } from "lucide-react";
 
 export type RoleKey =
-  | "super_admin" | "admin" | "service_admin" | "mart_admin" | "deal_admin" | "job_admin" // ✅ Added new roles
-  | "moderator" | "call_center" | "provider"
+  | "super_admin" | "admin" | "mart_admin" | "job_admin" | "service_admin" | "moderator" | "call_center" | "provider"
   | "representative" | "supervisor" | "finance" | "mart_vendor"
   | "mart_delivery" | "mart_cs" | "yessdeal_seller" | "employer" | "user";
 
@@ -25,17 +23,9 @@ export interface RoleConfig {
 export const ROLES: RoleConfig[] = [
   { key: "super_admin", labelBn: "সুপার অ্যাডমিন", labelEn: "Super Admin", descriptionBn: "পুরো সিস্টেমের কেন্দ্রীয় নিয়ন্ত্রণ — POS, SAAS, ফাইন্যান্স।", panelPath: "/super-admin", icon: Crown, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
   { key: "admin", labelBn: "অ্যাডমিন", labelEn: "Admin", descriptionBn: "সেবা, অর্ডার, ইউজার ও কনটেন্ট ম্যানেজমেন্ট।", panelPath: "/admin", icon: Shield, gradient: "from-red-500 to-rose-600", accent: "text-red-700" },
-  { key: "service_admin", labelBn: "সার্ভিস অ্যাডমিন", labelEn: "Service Admin", descriptionBn: "সেবা CMS, বুকিং, রিকোয়েস্ট ও সার্ভিস কমিউনিকেশন।", panelPath: "/admin/analytics", icon: Wrench, gradient: "from-sky-500 to-blue-600", accent: "text-sky-700" },
-  
-  // ✅ ADDED MART ADMIN
-  { key: "mart_admin", labelBn: "মার্ট অ্যাডমিন", labelEn: "Mart Admin", descriptionBn: "সন্ধান মার্ট কেন্দ্রিক পণ্য, অর্ডার ও ভেন্ডর ম্যানেজমেন্ট।", panelPath: "/admin/mart-overview", icon: ShoppingCart, gradient: "from-emerald-500 to-green-600", accent: "text-emerald-700" },
-  
-  // ✅ ADDED DEAL ADMIN
-  { key: "deal_admin", labelBn: "ডিল অ্যাডমিন", labelEn: "Deal Admin", descriptionBn: "সন্ধান ডিল কেন্দ্রিক বিজ্ঞাপন, ক্যাটেগরি ও সেলার ম্যানেজমেন্ট।", panelPath: "/admin/deal-overview", icon: Handshake, gradient: "from-orange-500 to-amber-600", accent: "text-orange-700" },
-  
-  // ✅ ADDED JOB ADMIN
-  { key: "job_admin", labelBn: "জব অ্যাডমিন", labelEn: "Job Admin", descriptionBn: "সন্ধান জবস কেন্দ্রিক চাকরি, এমপ্লয়ার ও আবেদন ম্যানেজমেন্ট।", panelPath: "/admin/job-listings", icon: Building2, gradient: "from-indigo-500 to-blue-600", accent: "text-indigo-700" },
-
+  { key: "mart_admin", labelBn: "মার্ট অ্যাডমিন", labelEn: "Mart Admin", descriptionBn: "মার্ট সিস্টেমের নিয়ন্ত্রণ — পণ্য, অর্ডার, কাস্টমার।", panelPath: "/mart/mart-admin", icon: BarChart3, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
+  { key: "job_admin", labelBn: "জব অ্যাডমিন", labelEn: "Job Admin", descriptionBn: "জব সিস্টেমের নিয়ন্ত্রণ — চাকরি, ক্যান্ডিডেট, ইন্টারভিউ।", panelPath: "/job/admin", icon: Briefcase, gradient: "from-amber-500 to-orange-600", accent: "text-amber-700" },
+  { key: "service_admin", labelBn: "সার্ভিস অ্যাডমিন", labelEn: "Service Admin", descriptionBn: "সেবা CMS, বুকিং, রিকোয়েস্ট ও সার্ভিস কমিউনিকেশন।", panelPath: "/admin/service", icon: Wrench, gradient: "from-sky-500 to-blue-600", accent: "text-sky-700" },
   { key: "moderator", labelBn: "মডারেটর", labelEn: "Moderator", descriptionBn: "রিভিউ, রিপোর্ট ও কনটেন্ট মডারেশন।", panelPath: "/moderator", icon: ShieldCheck, gradient: "from-purple-500 to-violet-600", accent: "text-purple-700" },
   { key: "call_center", labelBn: "কল সেন্টার", labelEn: "Call Center", descriptionBn: "কল গ্রহণ, বুকিং তৈরি ও কাস্টমার সাপোর্ট।", panelPath: "/call-center", icon: Headphones, gradient: "from-blue-500 to-indigo-600", accent: "text-blue-700" },
   { key: "provider", labelBn: "প্রোভাইডার", labelEn: "Provider", descriptionBn: "অ্যাসাইন বুকিং ও সার্ভিস সম্পন্নকরণ।", panelPath: "/provider", icon: Wrench, gradient: "from-emerald-500 to-green-600", accent: "text-emerald-700" },

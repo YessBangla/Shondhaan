@@ -4,6 +4,8 @@ export const passwordPolicyMessage =
 export const ROLES = [
   "super_admin",
   "admin",
+  "mart_admin",
+  "job_admin",
   "service_admin",
   "mart_admin", // ✅ Added
   "deal_admin", // ✅ Added
@@ -27,6 +29,8 @@ export const ALLOWED_ROLES = new Set(ROLES);
 export const ROLE_LABELS = {
   super_admin: "Super Admin",
   admin: "Admin",
+  mart_admin: "Mart Admin",
+  job_admin: "Job Admin",
   service_admin: "Service Admin",
   mart_admin: "Mart Admin", // ✅ Added
   deal_admin: "Deal Admin", // ✅ Added

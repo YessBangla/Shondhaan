@@ -28,12 +28,34 @@ const allowedOrigins = [
   'https://www.shondhaan.com',
   'http://localhost:5173',
   'http://localhost:3000',
+  'http://127.0.0.1:5173',
+  'http://127.0.0.1:3000',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
 ];
+
+if (process.env.CORS_ORIGIN) {
+  process.env.CORS_ORIGIN.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
 
 app.use(cors({
   origin: function (origin, callback) {
     // Allow requests without an Origin header
-    // (Postman, server-to-server requests, etc.)
+    // (Postman, server-to-server requests, server-to-server calls, etc.)
     if (!origin) {
       return callback(null, true);
     }
@@ -69,6 +91,7 @@ app.use('/api/packages', require('./routes/packages'));
 app.use('/api/payments', require('./routes/payments'));
 app.use('/api/enrolled-packages', require('./routes/enrolledPackages'));
 app.use('/api/admin', require('./routes/adminJobStats'));
+
 app.get('/', (req, res) => {
   res.send('YessJob backend is running');
 });

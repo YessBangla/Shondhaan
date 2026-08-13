@@ -59,7 +59,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import FabStackPreview from "@/components/FabStackPreview";
 import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
-
+import MartAdminPanel from "@/pages/MartAdminPanel";
 // Lazy-loaded pages — each route loads only when visited
 const Index = lazy(() => import("./pages/Index"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
@@ -121,7 +121,6 @@ const InternalServiceChat = lazy(() => import("./pages/InternalServiceChat"));
 const InternalChatHub = lazy(() => import("./pages/InternalChatHub"));
 const MartPanel = lazy(() => import("./pages/MartPanel"));
 const VendorMessageDetail = lazy(() => import("../src/components/mart/VendorMessageDetail"));
-const MartAdminPanel = lazy(() => import("./pages/MartAdminPanel"));
 const MartDeliveryPanel = lazy(() => import("./pages/MartDeliveryPanel"));
 const MartCustomerServicePanel = lazy(() => import("./pages/MartCustomerServicePanel"));
 const MartHome = lazy(() => import("./pages/MartHome"));
@@ -349,10 +348,11 @@ const App = () => {
             <Route path="/internal/:slug" element={<InternalServiceChat />} />
             <Route path="/mart" element={<MartPanel />} />
             <Route path="/mart/vendor/messages/:conversationId" element={<VendorMessageDetail />} />
-            <Route path="/mart/admin" element={<MartAdminPanel />} />
+            <Route path="/mart/mart-admin" element={<MartAdminPanel />} />
             <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
             <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
             <Route path="/mart/home" element={<MartHome />} />
+            <Route path="/mart/MartAdmin" element={<MartStoreShopPage />} />
             <Route path="/mart/category/:slug" element={<MartCategoryPage />} />
             <Route path="/mart/product/:slug" element={<MartProductDetail />} />
             <Route path="/mart/checkout" element={<MartCheckout />} />
