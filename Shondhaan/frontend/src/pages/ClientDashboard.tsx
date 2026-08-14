@@ -415,7 +415,7 @@ const ClientDashboard = () => {
         panelIcon={<Store className="h-5 w-5" />}
         profileImageUrl={profile.profile_image_url || undefined}
         offsetForDesktopMegaMenu
-      >
+        >
         {(activeTab, setTab) => (
           <div className="bg-slate-50 min-h-screen">
             

@@ -16,6 +16,10 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useSEO } from "@/hooks/useSEO";
 import contactUs from "/images/contact-us.png";
 
+import whatsappIcon from "/images/whatsapp.png";
+import facebookIcon from "/images/facebook.png";
+import mailIcon from "/images/email.png";
+
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
   email: z.string().trim().email("Invalid email").max(255),
@@ -158,13 +162,67 @@ const ContactUs = () => {
                 </div>
               </div>
 
-              {/* Supporting image — swap the src for a real office/support photo */}
-              <div className="rounded-xl overflow-hidden border border-border">
-                <img
-                  src="https://images.unsplash.com/photo-1573497491208-6b1acb260507?auto=format&fit=crop&w=800&q=80"
-                  alt={bn ? "আমাদের সাপোর্ট টিম" : "Our support team"}
-                  className="w-full h-40 md:h-48 object-cover"
-                />
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+                {/* WhatsApp */}
+                <a
+                  href={`https://wa.me/${settings.footer_phone.replace(/[^\d]/g, "")}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center gap-3 hover:border-[#25D366]/50 hover:shadow-sm transition-all"
+                  >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#25D366]/10 group-hover:bg-[#25D366]/15 transition-colors">
+                    <img src={whatsappIcon} alt="WhatsApp" className="h-6 w-6 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {bn ? "হোয়াটসঅ্যাপ" : "WhatsApp"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {bn ? "সরাসরি চ্যাট করুন" : "Chat with us directly"}
+                    </p>
+                  </div>
+                </a>
+
+                {/* Facebook */}
+                <a
+                  href={settings.facebook_url || "https://facebook.com/shondhaan"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center gap-3 hover:border-[#1877F2]/50 hover:shadow-sm transition-all"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#1877F2]/10 group-hover:bg-[#1877F2]/15 transition-colors">
+                    <img src={facebookIcon} alt="Facebook" className="h-6 w-6 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {bn ? "ফেসবুক" : "Facebook"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {bn ? "আমাদের পেজ ভিজিট করুন" : "Visit our page"}
+                    </p>
+                  </div>
+                </a>
+
+                {/* Email */}
+                <a
+                  href={`mailto:${settings.footer_email}`}
+                  className="group rounded-xl border border-border bg-card p-5 flex flex-col items-center text-center gap-3 hover:border-blue-600/50 hover:shadow-sm transition-all"
+                >
+                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-blue-600/20 group-hover:bg-blue-600/50 transition-colors">
+                    <img src={mailIcon} alt="Email" className="h-6 w-6 object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">
+                      {bn ? "ইমেইল" : "Email"}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {settings.footer_email}
+                    </p>
+                  </div>
+                </a>
+
               </div>
             </div>
 
