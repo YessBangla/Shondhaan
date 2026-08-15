@@ -263,7 +263,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <Megaphone className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "কোনো বিজ্ঞাপন পোস্ট করেননি" : "No ads posted yet"}</p>
-          <button onClick={() => navigate("/deal/post")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
+          <button onClick={() => navigate("/deal/post")} className="mt-3 rounded-lg bg-userprimary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "বিজ্ঞাপন দিন" : "Post an Ad"}
           </button>
         </div>
@@ -351,7 +351,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <Heart className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "No favorites yet" : "No favorites yet"}</p>
-          <button onClick={() => navigate("/deal/ads")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
+          <button onClick={() => navigate("/deal/ads")} className="mt-3 rounded-lg bg-userprimary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "Browse Ads" : "Browse Ads"}
           </button>
         </div>
@@ -441,7 +441,7 @@ const DealSection = ({ activeTab }: Props) => {
         <div className="text-center py-12">
           <MessageSquare className="h-12 w-12 mx-auto text-muted-foreground/40 mb-3" />
           <p className="text-base text-muted-foreground">{bn ? "কোনো মেসেজ নেই" : "No messages"}</p>
-          <button onClick={() => navigate("/deal")} className="mt-3 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white">
+          <button onClick={() => navigate("/deal")} className="mt-3 rounded-lg bg-userprimary px-5 py-2.5 text-sm font-semibold text-white">
             {bn ? "সন্ধান ডিল দেখুন" : "Browse Deals"}
           </button>
         </div>

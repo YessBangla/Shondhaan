@@ -454,7 +454,7 @@ function RichTextArea({
       title={label}
       className={`h-7 w-7 flex items-center justify-center rounded-md border transition-colors ${
         activeFormats.has(key)
-          ? "bg-blue-600 border-blue-600 text-white"
+          ? "bg-primary border-primary text-white"
           : "bg-background border-transparent text-muted-foreground hover:bg-muted"
       }`}
     >
@@ -773,7 +773,7 @@ const JobPostForm = () => {
           </p>
           <div className="flex gap-3 justify-center">
             <Button variant="outline" onClick={() => navigate("/jobs")}>{bn ? "চাকরি দেখুন" : "Browse Jobs"}</Button>
-            <Button onClick={() => { setSubmitted(false); setTitle(""); setDescription(""); setCurrentStep(0); }} className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => { setSubmitted(false); setTitle(""); setDescription(""); setCurrentStep(0); }} className="bg-primary hover:bg-primary">
               {bn ? "আরেকটি দিন" : "Post Another"}
             </Button>
           </div>
@@ -791,14 +791,14 @@ const JobPostForm = () => {
       <Navbar />
       {/* <JobsMenuBar /> */}
 
-      <div className="mx-auto max-w-4xl px-1 py-4">
+      <div className="mx-auto max-w-7xl px-1 mt-6 py-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="mb-4 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-4 w-4 mr-1" /> {bn ? "Yess Jobs" : "Yess Jobs"}
         </Button>
 
         <div className="flex items-center gap-3 mb-4">
           <div className="bg-blue-100 dark:bg-blue-900/30 rounded-xl p-2.5">
-            <Briefcase className="h-6 w-6 text-blue-600" />
+            <Briefcase className="h-6 w-6 text-primary" />
           </div>
           <div>
             <h1 className="text-xl font-bold">{bn ? "চাকরির বিজ্ঞাপন দিন" : "Post a Job on Yess Jobs"}</h1>
@@ -817,14 +817,14 @@ const JobPostForm = () => {
               >
                 <div
                   className={`h-10 w-10 rounded-full flex items-center justify-center transition-colors ${
-                    step.done ? "bg-green-500" : currentStep === i ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"
+                    step.done ? "bg-green-500" : currentStep === i ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"
                   }`}
                 >
                   <step.icon className="h-5 w-5 text-white" />
                 </div>
                 <span
                   className={`text-[10px] font-bold uppercase tracking-wide text-center leading-tight ${
-                    step.done ? "text-green-600" : currentStep === i ? "text-blue-600" : "text-muted-foreground"
+                    step.done ? "text-green-600" : currentStep === i ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
                   {step.label}
@@ -842,7 +842,7 @@ const JobPostForm = () => {
           {currentStep === 0 && (
             <>
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "মৌলিক তথ্য" : "Basic Information"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "মৌলিক তথ্য" : "Basic Information"}</h3>
 
                 <div className="grid grid-cols-3 gap-2 items-start">
                   <JobTitleAutocomplete
@@ -905,7 +905,7 @@ const JobPostForm = () => {
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-blue-700">{bn ? "বিবরণ" : "Job Description"}</h3>
+                  <h3 className="font-semibold text-sm text-primary">{bn ? "বিবরণ" : "Job Description"}</h3>
                   <Button variant="outline" size="sm" onClick={handleAIDescription} disabled={aiLoading} className="gap-1 text-xs">
                     <Sparkles className="h-3 w-3" /> {bn ? "AI দিয়ে লিখুন" : "AI Write"}
                   </Button>
@@ -921,7 +921,7 @@ const JobPostForm = () => {
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-blue-700">{bn ? "বেতন" : "Salary"}</h3>
+                  <h3 className="font-semibold text-sm text-primary">{bn ? "বেতন" : "Salary"}</h3>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-muted-foreground">{bn ? "প্রকাশ্যে দেখান" : "Show publicly"}</span>
                     <button
@@ -950,7 +950,7 @@ const JobPostForm = () => {
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <div className="flex items-center justify-between flex-wrap gap-2">
-                  <h3 className="font-semibold text-sm text-blue-700">{bn ? "কর্মস্থল" : "Workplace"}</h3>
+                  <h3 className="font-semibold text-sm text-primary">{bn ? "কর্মস্থল" : "Workplace"}</h3>
                   <div className="flex items-center gap-3">
                     <label className="flex items-center gap-1.5 text-xs">
                       <input type="checkbox" checked={workFromOffice} onChange={(e) => setWorkFromOffice(e.target.checked)} className="rounded" />
@@ -980,7 +980,7 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "যোগাযোগের তথ্য" : "Contact Information"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "যোগাযোগের তথ্য" : "Contact Information"}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <Input className="h-9 text-sm" placeholder={bn ? "মোবাইল নম্বর" : "Phone Number"} value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} />
                   <Input className="h-9 text-sm" placeholder={bn ? "ইমেইল ঠিকানা" : "Email Address"} value={contactEmail} onChange={(e) => setContactEmail(e.target.value)} />
@@ -994,7 +994,7 @@ const JobPostForm = () => {
             <>
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-blue-700">{bn ? "প্রার্থীর যোগ্যতা" : "Candidate Requirements"}</h3>
+                  <h3 className="font-semibold text-sm text-primary">{bn ? "প্রার্থীর যোগ্যতা" : "Candidate Requirements"}</h3>
                   <div className="flex items-center gap-2">
                     <button
                       type="button"
@@ -1027,7 +1027,7 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "শিক্ষাগত যোগ্যতা" : "Educational Qualification"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "শিক্ষাগত যোগ্যতা" : "Educational Qualification"}</h3>
 
                 <div>
                   <label className="text-[11px] text-muted-foreground mb-1 block">{bn ? "ডিগ্রি (সর্বোচ্চ ৫)" : "Degree (Max 5)"}</label>
@@ -1074,7 +1074,7 @@ const JobPostForm = () => {
                   <button
                     type="button"
                     onClick={() => setShowInstitutionInput(true)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-xs font-medium text-blue-600"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-xs font-medium text-primary"
                   >
                     <Plus className="h-3.5 w-3.5" /> {bn ? "পছন্দের শিক্ষা প্রতিষ্ঠান যোগ করুন" : "Add Preferred Educational Institution"}
                   </button>
@@ -1089,7 +1089,7 @@ const JobPostForm = () => {
                   <button
                     type="button"
                     onClick={() => setShowCertificationInput(true)}
-                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-xs font-medium text-blue-600"
+                    className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-dashed py-2 text-xs font-medium text-primary"
                   >
                     <Plus className="h-3.5 w-3.5" /> {bn ? "পেশাগত সনদ / প্রশিক্ষণ / অন্যান্য যোগ করুন" : "Add Professional Certification / Training / Others"}
                   </button>
@@ -1097,13 +1097,13 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "অভিজ্ঞতা ও ব্যবসায়িক ক্ষেত্র" : "Experience & Business Area"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "অভিজ্ঞতা ও ব্যবসায়িক ক্ষেত্র" : "Experience & Business Area"}</h3>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
                     onClick={() => setExperienceRequired(false)}
                     className={`h-9 rounded-lg text-sm font-medium border transition-colors ${
-                      !experienceRequired ? "bg-blue-600 text-white border-blue-600" : "bg-background text-muted-foreground"
+                      !experienceRequired ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground"
                     }`}
                   >
                     {bn ? "অভিজ্ঞতা প্রয়োজন নেই" : "No Experience Required"}
@@ -1112,7 +1112,7 @@ const JobPostForm = () => {
                     type="button"
                     onClick={() => setExperienceRequired(true)}
                     className={`h-9 rounded-lg text-sm font-medium border transition-colors ${
-                      experienceRequired ? "bg-blue-600 text-white border-blue-600" : "bg-background text-muted-foreground"
+                      experienceRequired ? "bg-primary text-white border-primary" : "bg-background text-muted-foreground"
                     }`}
                   >
                     {bn ? "অভিজ্ঞতা প্রয়োজন" : "Experience Required"}
@@ -1127,19 +1127,19 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "দক্ষতা ও বিশেষজ্ঞতা (সর্বোচ্চ ১০)" : "Skills & Area of Expertise (Max 10)"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "দক্ষতা ও বিশেষজ্ঞতা (সর্বোচ্চ ১০)" : "Skills & Area of Expertise (Max 10)"}</h3>
                 <Input className="h-9 text-sm" placeholder={bn ? "দক্ষতা ও বিশেষজ্ঞতা যোগ করুন" : "Add Skills and Expertise"} value={skills} onChange={(e) => setSkills(e.target.value)} />
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <div className="flex items-center justify-between">
-                  <h3 className="font-semibold text-sm text-blue-700">{bn ? "অতিরিক্ত প্রয়োজনীয়তা" : "Additional Requirements"}</h3>
+                  <h3 className="font-semibold text-sm text-primary">{bn ? "অতিরিক্ত প্রয়োজনীয়তা" : "Additional Requirements"}</h3>
                   <label className="flex items-center gap-2 text-xs">
                     {bn ? "ভিডিও রিজিউম পছন্দ করুন" : "Prefer Video Resume"}
                     <button
                       type="button"
                       onClick={() => setPreferVideoResume(!preferVideoResume)}
-                      className={`h-5 w-9 rounded-full relative transition-colors ${preferVideoResume ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+                      className={`h-5 w-9 rounded-full relative transition-colors ${preferVideoResume ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"}`}
                     >
                       <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${preferVideoResume ? "translate-x-4" : "translate-x-0.5"}`} />
                     </button>
@@ -1159,7 +1159,7 @@ const JobPostForm = () => {
           {currentStep === 2 && (
             <>
               <div className="rounded-xl border bg-card p-3 space-y-3">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "আবেদনকারী ম্যাচিং" : "Applicant Matching"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "আবেদনকারী ম্যাচিং" : "Applicant Matching"}</h3>
                 <div className="flex flex-col sm:flex-row gap-4 items-center sm:items-start">
                   <div className="flex flex-col items-center gap-1.5 shrink-0">
                     <svg width="88" height="88" viewBox="0 0 88 88">
@@ -1207,7 +1207,7 @@ const JobPostForm = () => {
                               else if (c.key === "skills") setShowSkillsInput(true);
                               else if (c.gotoStep !== undefined) setCurrentStep(c.gotoStep);
                             }}
-                            className="flex items-center gap-0.5 text-blue-600 font-semibold shrink-0"
+                            className="flex items-center gap-0.5 text-primary font-semibold shrink-0"
                           >
                             <Plus className="h-3 w-3" /> {bn ? "যোগ" : "Add"}
                           </button>
@@ -1236,7 +1236,7 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-3">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "আবেদনকারী বিধিনিষেধ" : "Applicant Restriction"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "আবেদনকারী বিধিনিষেধ" : "Applicant Restriction"}</h3>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   {/* Age restriction */}
                   <div className="rounded-lg border p-2.5 space-y-2">
@@ -1245,7 +1245,7 @@ const JobPostForm = () => {
                       <button
                         type="button"
                         onClick={() => setAgeRestrict(!ageRestrict)}
-                        className={`h-5 w-9 rounded-full relative transition-colors ${ageRestrict ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+                        className={`h-5 w-9 rounded-full relative transition-colors ${ageRestrict ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"}`}
                       >
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${ageRestrict ? "translate-x-4" : "translate-x-0.5"}`} />
                       </button>
@@ -1266,7 +1266,7 @@ const JobPostForm = () => {
                       <button
                         type="button"
                         onClick={() => setGenderRestrict(!genderRestrict)}
-                        className={`h-5 w-9 rounded-full relative transition-colors ${genderRestrict ? "bg-blue-600" : "bg-gray-300 dark:bg-gray-700"}`}
+                        className={`h-5 w-9 rounded-full relative transition-colors ${genderRestrict ? "bg-primary" : "bg-gray-300 dark:bg-gray-700"}`}
                       >
                         <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-transform ${genderRestrict ? "translate-x-4" : "translate-x-0.5"}`} />
                       </button>
@@ -1297,7 +1297,7 @@ const JobPostForm = () => {
           {currentStep === 3 && (
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "বিলিংয়ের জন্য যোগাযোগ ব্যক্তি" : "Contact Person for Billing"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "বিলিংয়ের জন্য যোগাযোগ ব্যক্তি" : "Contact Person for Billing"}</h3>
                 <p className="text-[10px] text-muted-foreground bg-blue-50 dark:bg-blue-900/20 rounded-lg px-2.5 py-2">
                   {bn
                     ? "এই চাকরির বিলিং সংক্রান্ত যেকোনো জিজ্ঞাসার জন্য আমরা এই ব্যক্তির সাথে যোগাযোগ করব।"
@@ -1322,7 +1322,7 @@ const JobPostForm = () => {
               </div>
 
               <div className="rounded-xl border bg-card p-3 space-y-2">
-                <h3 className="font-semibold text-sm text-blue-700">{bn ? "সার্কুলারের এইচআর/রিক্রুটমেন্ট যোগাযোগ" : "Related Recruitment/HR Person"}</h3>
+                <h3 className="font-semibold text-sm text-primary">{bn ? "সার্কুলারের এইচআর/রিক্রুটমেন্ট যোগাযোগ" : "Related Recruitment/HR Person"}</h3>
                 <p className="text-[10px] text-muted-foreground bg-blue-50 dark:bg-blue-900/20 rounded-lg px-2.5 py-2">
                   {bn
                     ? "এই সার্কুলার সম্পর্কে যেকোনো জিজ্ঞাসার জন্য আমরা এই ব্যক্তির সাথে যোগাযোগ করব।"
@@ -1346,11 +1346,11 @@ const JobPostForm = () => {
               <div className="flex-1" />
             )}
             {currentStep < steps.length - 1 ? (
-              <Button onClick={goNext} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white">
+              <Button onClick={goNext} className="flex-1 bg-primary hover:bg-primary text-white">
                 {bn ? "পরবর্তী" : "Next"}
               </Button>
             ) : (
-              <Button onClick={handleSubmit} disabled={postJob.isPending} className="flex-1 bg-blue-600 hover:bg-blue-700 text-white h-12 text-base font-semibold">
+              <Button onClick={handleSubmit} disabled={postJob.isPending} className="flex-1 bg-primary hover:bg-primary text-white h-12 text-base font-semibold">
                 {postJob.isPending ? (bn ? "জমা হচ্ছে..." : "Submitting...") : bn ? "বিজ্ঞাপন জমা দিন" : "Submit Job Posting"}
               </Button>
             )}

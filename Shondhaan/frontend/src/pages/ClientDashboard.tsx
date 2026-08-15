@@ -109,12 +109,12 @@ const AreaChart = () => (
   <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-20">
     <defs>
       <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-        <stop offset="0%" stopColor="rgb(59, 130, 246)" stopOpacity="0.3" />
-        <stop offset="100%" stopColor="rgb(59, 130, 246)" stopOpacity="0" />
+        <stop offset="0%" stopColor="rgb(0, 148, 67)" stopOpacity="0.3" />
+        <stop offset="100%" stopColor="rgb(2, 109, 34)" stopOpacity="0" />
       </linearGradient>
     </defs>
     <path d="M0,30 Q20,5 40,20 T80,10 T100,25 V40 H0" fill="url(#grad1)" />
-    <path d="M0,30 Q20,5 40,20 T80,10 T100,25" fill="none" stroke="rgb(59, 130, 246)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
+    <path d="M0,30 Q20,5 40,20 T80,10 T100,25" fill="none" stroke="rgb(1, 151, 93)" strokeWidth="2.5" vectorEffect="non-scaling-stroke" />
   </svg>
 );
 
@@ -122,7 +122,7 @@ const BarChart = ({ data }: { data: number[] }) => (
   <div className="flex items-end justify-between h-24 gap-2 w-full">
     {data.map((h, i) => (
       <div key={i} className="w-full bg-slate-100 rounded-t-lg relative group flex items-end overflow-hidden border border-slate-200">
-        <div className="w-full bg-gradient-to-t from-blue-600 to-indigo-400 rounded-t-lg transition-all duration-300 hover:from-blue-700 hover:to-indigo-500 shadow-sm" style={{ height: `${h}%` }}></div>
+        <div className="w-full bg-gradient-to-t from-userprimary to-userprimaryshade rounded-t-lg transition-all duration-300 hover:from-userprimary hover:to-indigo-500 shadow-sm" style={{ height: `${h}%` }}></div>
       </div>
     ))}
   </div>
@@ -431,7 +431,7 @@ const ClientDashboard = () => {
                   className="relative overflow-hidden rounded-3xl shadow-xl border border-blue-100 bg-white"
                 >
                   {/* Bright Blue gradient header */}
-                  <div className="h-32 bg-gradient-to-r from-blue-500 to-indigo-500 relative">
+                  <div className="h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   </div>
                   
@@ -460,7 +460,7 @@ const ClientDashboard = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
                         className="flex gap-2 mb-2"
-                      >
+                        >
                         <button 
                           onClick={() => setTab("profile")} 
                           className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-all border border-slate-200 shadow-sm"
@@ -477,17 +477,27 @@ const ClientDashboard = () => {
                     </div>
 
                     <div>
-                      <h1 className="text-xl font-bold text-slate-900">
-                        {profile.display_name || (bn ? "ব্যবহারকারী" : "User")}
-                      </h1>
+                      <div className="flex gap-4">
+                        <h1 className="text-xl font-bold text-slate-900">
+                          {profile.display_name || (bn ? "ব্যবহারকারী" : "User")}
+                        </h1>
+                        <div className="flex gap-2 text-[11px] border px-3 py-1 rounded-full border-userprimary bg-userprimaryshade">
+                          <span className="font-bold my-auto">
+                            {bn ? "সন্ধান আইডিঃ" : "Shondhaan ID:"}
+                          </span>
+                          <span className="text-slate-800 my-auto">
+                            {profile.shondhaan_id || (bn ? "SD-00012" : "User")}
+                          </span>
+                        </div>
+                      </div>
                       <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
                         <span className="inline-flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-blue-500" /> 
+                          <Mail className="h-4 w-4 text-userprimary" /> 
                           {user?.email}
                         </span>
                         {profile.phone && (
                           <span className="inline-flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-blue-500" /> 
+                            <Phone className="h-4 w-4 text-userprimary" /> 
                             {profile.phone}
                           </span>
                         )}
@@ -500,12 +510,12 @@ const ClientDashboard = () => {
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {[
-                    { value: bookings.length, label: bn ? "বুকিং" : "Bookings", color: "text-blue-600", bg: "bg-blue-50", icon: <ClipboardList className="h-5 w-5" />, tab: "bookings" },
-                    { value: bookings.filter(b => b.status === "completed").length, label: bn ? "সম্পূর্ণ" : "Done", color: "text-green-600", bg: "bg-green-50", icon: <CheckCircle2 className="h-5 w-5" />, tab: "bookings" },
-                    { value: martOrders.length, label: bn ? "মার্ট অর্ডার" : "Mart Orders", color: "text-indigo-600", bg: "bg-indigo-50", icon: <ShoppingBag className="h-5 w-5" />, tab: "mart-orders" },
-                    { value: dealAdsCount, label: bn ? "বিজ্ঞাপন" : "Ads", color: "text-orange-600", bg: "bg-orange-50", icon: <Megaphone className="h-5 w-5" />, tab: "deal-my-ads" },
-                    { value: martWishlistCount, label: bn ? "ফেভারিট" : "Favorites", color: "text-pink-600", bg: "bg-pink-50", icon: <Heart className="h-5 w-5" />, tab: "deal-favorites" },
-                    { value: unreadCount, label: bn ? "এলার্ট" : "Alerts", color: "text-purple-600", bg: "bg-purple-50", icon: <Bell className="h-5 w-5" />, tab: "notifications" },
+                    { value: bookings.length, label: bn ? "বুকিং" : "Bookings", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <ClipboardList className="h-5 w-5" />, tab: "bookings" },
+                    { value: bookings.filter(b => b.status === "completed").length, label: bn ? "সম্পূর্ণ" : "Done", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <CheckCircle2 className="h-5 w-5" />, tab: "bookings" },
+                    { value: martOrders.length, label: bn ? "মার্ট অর্ডার" : "Mart Orders", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <ShoppingBag className="h-5 w-5" />, tab: "mart-orders" },
+                    { value: dealAdsCount, label: bn ? "বিজ্ঞাপন" : "Ads", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <Megaphone className="h-5 w-5" />, tab: "deal-my-ads" },
+                    { value: martWishlistCount, label: bn ? "ফেভারিট" : "Favorites", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <Heart className="h-5 w-5" />, tab: "deal-favorites" },
+                    { value: unreadCount, label: bn ? "এলার্ট" : "Alerts", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <Bell className="h-5 w-5" />, tab: "notifications" },
                   ].map((stat, i) => (
                     <motion.button
                       key={i}
@@ -538,7 +548,7 @@ const ClientDashboard = () => {
                     <div className="flex items-center justify-between mb-6">
                       <div>
                         <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                          <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
+                          <div className="p-2 rounded-lg bg-userprimaryshade text-userprimary">
                             <TrendingUp className="h-5 w-5" />
                           </div>
                           {bn ? "বুকিং অ্যাক্টিভিটি" : "Booking Activity"}
@@ -563,7 +573,7 @@ const ClientDashboard = () => {
                     className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
                   >
                     <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-6">
-                      <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600">
+                      <div className="p-2 rounded-lg bg-userprimaryshade text-userprimary">
                         <PieChart className="h-5 w-5" />
                       </div>
                       {bn ? "ব্যবহার বিভাজন" : "Usage Split"}
@@ -571,9 +581,9 @@ const ClientDashboard = () => {
                     
                     <div className="flex-1 flex flex-col justify-center space-y-4">
                       {[
-                        { label: "Services", value: bookings.length, color: "bg-blue-500", width: `${Math.min(bookings.length * 10, 100)}%` },
-                        { label: "Mart Orders", value: martOrders.length, color: "bg-indigo-500", width: `${Math.min(martOrders.length * 10, 100)}%` },
-                        { label: "Deal Ads", value: dealAdsCount, color: "bg-purple-500", width: `${Math.min(dealAdsCount * 10, 100)}%` },
+                        { label: "Services", value: bookings.length, color: "bg-userprimaryshade", width: `${Math.min(bookings.length * 10, 100)}%` },
+                        { label: "Mart Orders", value: martOrders.length, color: "bg-userprimary", width: `${Math.min(martOrders.length * 10, 100)}%` },
+                        { label: "Deal Ads", value: dealAdsCount, color: "bg-userprimary", width: `${Math.min(dealAdsCount * 10, 100)}%` },
                       ].map((stat, idx) => (
                         <div key={idx}>
                           <div className="flex justify-between text-xs mb-1">
@@ -593,10 +603,10 @@ const ClientDashboard = () => {
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { title: bn ? "মার্ট" : "Mart", subtitle: bn ? "পণ্য কিনুন" : "Shop products", icon: ShoppingBag, bg: "bg-indigo-50", color: "text-indigo-600", action: () => navigate("/mart/home") },
-                    { title: bn ? "ডিল" : "Deal", subtitle: bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell", icon: Megaphone, bg: "bg-orange-50", color: "text-orange-600", action: () => navigate("/deal") },
-                    { title: bn ? "বিজ্ঞাপন দিন" : "Post Ad", subtitle: bn ? "ফ্রি বিজ্ঞাপন" : "Free listing", icon: Megaphone, bg: "bg-green-50", color: "text-green-600", action: () => navigate("/deal/post") },
-                    { title: bn ? "সার্ভিস নিন" : "Get Service", subtitle: bn ? "১৮৬+ সার্ভিস" : "186+ services", icon: ClipboardList, bg: "bg-blue-50", color: "text-blue-600", action: () => navigate("/") },
+                    { title: bn ? "মার্ট" : "Mart", subtitle: bn ? "পণ্য কিনুন" : "Shop products", icon: ShoppingBag, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/mart/home") },
+                    { title: bn ? "ডিল" : "Deal", subtitle: bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell", icon: Megaphone, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal") },
+                    { title: bn ? "বিজ্ঞাপন দিন" : "Post Ad", subtitle: bn ? "ফ্রি বিজ্ঞাপন" : "Free listing", icon: Megaphone, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal/post") },
+                    { title: bn ? "সার্ভিস নিন" : "Get Service", subtitle: bn ? "১৮৬+ সার্ভিস" : "186+ services", icon: ClipboardList, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/") },
                   ].map((action, i) => {
                     const Icon = action.icon;
                     return (
@@ -636,7 +646,7 @@ const ClientDashboard = () => {
                   <p className="text-sm text-slate-500 mt-1 mb-4">{bn ? "আপনার প্রথম সার্ভিস বুক করুন" : "Book your first service today"}</p>
                   <button 
                     onClick={() => navigate("/")} 
-                    className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors"
+                    className="inline-flex items-center gap-2 rounded-xl bg-userprimary px-5 py-2.5 text-sm font-semibold text-white hover:userprimary transition-colors"
                   >
                     <ClipboardList className="h-4 w-4" /> {bn ? "সার্ভিস দেখুন" : "Browse Services"}
                   </button>
@@ -841,7 +851,7 @@ const ClientDashboard = () => {
                   <button 
                     type="submit" 
                     disabled={saving} 
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-blue-600 py-3 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-userprimary py-3 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   >
                     {saving ? (
                       <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "সেভ হচ্ছে..." : "Saving..."}</>
