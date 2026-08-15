@@ -270,17 +270,18 @@ const PanelSidebarTabs = ({
 
   // Premium Dark Gradient Sidebar Content
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
-    <div className="flex flex-col h-full bg-blue-400/30  text-slate-300 border-r border-white/5">
+    <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
       {/* Brand Header */}
       {/* User Profile Mini Card */}
       {(!collapsed || inDrawer) && user && (
         <div className="px-3 pt-4">
+          {/* user image-name */}
           <div 
             ref={profileMenuRef}
             className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer" 
             onClick={() => setProfileMenuOpen(o => !o)}
-          >
-            <div className="h-9 w-9 overflow-hidden rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
+            >
+            <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
               {profileImageUrl ? (
                 <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
               ) : (
@@ -288,10 +289,10 @@ const PanelSidebarTabs = ({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-white truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-blue-200/60 truncate leading-tight">{user.email}</p>
+              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-foreground truncate leading-tight">{user.email}</p>
             </div>
-            <ChevronDown className={cn("h-4 w-4 text-blue-200/50 transition-transform", profileMenuOpen && "rotate-180")} />
+            <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
           </div>
           
           <AnimatePresence>
@@ -302,7 +303,7 @@ const PanelSidebarTabs = ({
                 exit={{ opacity: 0, height: 0 }}
                 className="overflow-hidden space-y-1 mt-1"
               >
-                <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-foreground transition-colors">
                   <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
                 </button>
                 <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
@@ -319,11 +320,11 @@ const PanelSidebarTabs = ({
         <div className="px-3 pt-4">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors px-3 py-2.5 text-[13px] text-slate-400 border border-white/5 hover:border-blue-500/30 group"
+            className="w-full flex items-center gap-2.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors px-3 py-2.5 text-[13px] text-slate-400 border border-userprimary shadow hover:border-userprimary group"
           >
             <Search className="h-4 w-4 group-hover:text-blue-400 transition-colors" />
             <span className="flex-1 text-left font-medium">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-white/5 bg-black/20 px-1.5 py-0.5 text-[10px] font-mono text-slate-500">⌘K</kbd>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-white/5 px-1.5 py-0.5 text-[10px] font-mono text-userprimary">⌘K</kbd>
           </button>
         </div>
       )}
@@ -331,7 +332,7 @@ const PanelSidebarTabs = ({
       {/* Pinned Items */}
       {pinnedItems.length > 0 && (!collapsed || inDrawer) && (
         <div className="px-3 pt-4">
-          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-blue-200/40 inline-flex items-center gap-1.5">
+          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-wider text-userprimary inline-flex items-center gap-1.5">
             <Pin className="h-3 w-3" /> পিন করা
           </p>
           <div className="space-y-1">
@@ -360,11 +361,11 @@ const PanelSidebarTabs = ({
               {group.label && (!collapsed || inDrawer) ? (
                 <button
                   onClick={() => setCollapsedGroups((c) => ({ ...c, [groupKey]: !c[groupKey] }))}
-                  className="w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-blue-200/40 hover:text-blue-200/70 transition-colors"
+                  className="w-full flex items-center justify-between px-2 pt-3 pb-2 text-[11px] font-bold uppercase tracking-wider text-userprimary hover:text-primary transition-colors"
                 >
                   <span className="inline-flex items-center gap-1.5">
                     {group.label}
-                    <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-white/5 text-[9.5px] font-bold tabular-nums text-slate-500">
+                    <span className="inline-flex items-center justify-center h-4 min-w-[16px] px-1 rounded-full bg-gray-200 text-[9.5px] font-bold tabular-nums text-userprimary">
                       {group.items.length}
                     </span>
                   </span>
@@ -407,7 +408,7 @@ const PanelSidebarTabs = ({
         <button
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
-            "hidden md:flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-500 hover:bg-white/5 hover:text-white transition-colors",
+            "hidden md:flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-medium text-forground hover:text-userprimary transition-colors",
             collapsed ? "justify-center" : "justify-start"
           )}
         >
@@ -418,7 +419,7 @@ const PanelSidebarTabs = ({
   );
 
   return (
-    <div className={cn("flex w-full min-h-screen bg-[#0b0f17]", offsetForDesktopMegaMenu && "md:pt-2")}>
+    <div className={cn("flex w-full min-h-screen", offsetForDesktopMegaMenu && "md:pt-2")}>
       {/* Desktop sidebar */}
       <aside
         className={cn(
@@ -671,25 +672,25 @@ const NavBtn = ({
     <button
       onClick={onClick}
       className={cn(
-        "relative w-full flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200 outline-none",
-        "focus-visible:ring-2 focus-visible:ring-blue-500/50 focus-visible:ring-offset-1 focus-visible:ring-offset-[#0b0f17]",
+        "relative w-full flex items-center gap-3 rounded-xl text-[13px] font-medium transition-all duration-200",
+        "focus-visible:ring-2 focus-visible:ring-userprimary focus-visible:ring-offset-1 focus-visible:ring-offset-[#0b0f17]",
         collapsed ? "justify-center px-0 py-3 h-12 w-12 mx-auto" : "px-3 py-2.5",
         active
-          ? "bg-gradient-to-r from-blue-500/15 to-transparent text-white font-semibold"
-          : "text-slate-400 hover:bg-white/5 hover:text-white active:scale-[0.98]"
+          ? "bg-userprimaryshade text-foreground font-semibold border"
+          : "text-foreground hover:bg-userprimary/10 hover:text-userprimary active:scale-[0.98]"
       )}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
     >
       {active && !collapsed && (
-        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-blue-500 shadow-[0_0_10px_rgb(59,130,246)]" />
+        <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r-full bg-userprimary shadow-[0_0_10px_rgb(59,130,246)]" />
       )}
       {active && collapsed && (
-        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-blue-500 shadow-[0_0_8px_rgb(59,130,246)]" />
+        <span className="absolute -right-0.5 top-1/2 -translate-y-1/2 h-1.5 w-1.5 rounded-full bg-userprimary shadow-[0_0_8px_rgb(59,130,246)]" />
       )}
       <span className={cn(
         "shrink-0 transition-colors [&>svg]:h-[18px] [&>svg]:w-[18px]",
-        active ? "text-blue-400" : "text-slate-500 group-hover:text-slate-300"
+        active ? "text-userprimary" : "text-foreground group-hover:text-userprimary"
       )}>
         {item.icon}
       </span>
@@ -699,7 +700,7 @@ const NavBtn = ({
           className={cn(
             "ml-auto inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[10px] font-bold tabular-nums transition-colors",
             active
-              ? "bg-blue-500/20 text-blue-300"
+              ? "bg-blue-500/20 text-userprimary"
               : "bg-white/5 text-slate-400 group-hover:bg-rose-500/10 group-hover:text-rose-400"
           )}
         >
@@ -781,20 +782,20 @@ const CommandPalette = ({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.98, opacity: 0, y: -10 }}
         transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
-        className="w-full max-w-2xl rounded-2xl bg-gradient-to-b from-blue-950 via-[#0b0f17] to-black border border-white/10 shadow-2xl overflow-hidden ring-1 ring-black/5"
+        className="w-full max-w-2xl rounded-2xl bg-background border border-white/10 shadow-2xl overflow-hidden ring-1 ring-black/5"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center gap-3 px-4 py-4 border-b border-white/5">
-          <Search className="h-5 w-5 text-slate-500" />
+          <Search className="h-5 w-5 text-foreground" />
           <input
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={onKey}
             placeholder="পেজ, ইউজার, অর্ডার, সার্ভিস বা একশন খুঁজুন…"
-            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate-500 text-white font-medium"
+            className="flex-1 bg-transparent text-[15px] outline-none placeholder:text-slate-500 text-foreground font-medium"
           />
-          <kbd className="rounded-md border border-white/5 bg-white/5 px-1.5 py-0.5 text-[10px] font-mono text-slate-500 shadow-sm">ESC</kbd>
+          <kbd className="rounded-md border border-white/5 bg-userprimaryshade px-1.5 py-0.5 text-[10px] font-mono text-slate-500 shadow-sm">ESC</kbd>
         </div>
         <div className={cn("max-h-[50vh] overflow-y-auto p-2 space-y-1", customScrollbar)}>
           {rows.length === 0 ? (
@@ -807,12 +808,12 @@ const CommandPalette = ({
                 onClick={() => onSelect(it.value)}
                 className={cn(
                   "w-full flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all text-left",
-                  idx === hi ? "bg-blue-500/10 text-white shadow-sm" : "text-slate-400 hover:bg-white/5"
+                  idx === hi ? "bg-userprimaryshade text-black shadow-sm" : "text-slate-700 hover:bg-white/5"
                 )}
               >
                 <span className={cn(
                   "h-8 w-8 rounded-lg flex items-center justify-center shrink-0 [&>svg]:h-4 [&>svg]:w-4 transition-colors",
-                  idx === hi ? "bg-blue-500/20 text-blue-400" : "bg-white/5 text-slate-500"
+                  idx === hi ? "bg-userprimaryshade text-userprimary" : "bg-white/5 text-slate-500"
                 )}>{it.icon}</span>
                 <div className="flex-1 min-w-0">
                   <p className="font-semibold truncate">{it.label}</p>
@@ -828,8 +829,8 @@ const CommandPalette = ({
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5 text-[10px] text-slate-500 bg-white/5">
           <span className="font-medium">Shondhaan Workspace</span>
           <div className="flex items-center gap-4">
-            <span>Theme: <b className="text-slate-300">{themeMode}</b></span>
-            <span>Lang: <b className="text-slate-300">{language}</b></span>
+            <span>Theme: <b className="text-slate-600">{themeMode}</b></span>
+            <span>Lang: <b className="text-slate-600">{language}</b></span>
           </div>
         </div>
       </motion.div>

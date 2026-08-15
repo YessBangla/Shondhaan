@@ -324,7 +324,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
       <div className="grid grid-cols-3 gap-3">
         {[
           { value: totalOrders,  label: bn ? "মোট অর্ডার" : "Total Orders", color: "text-primary" },
-          { value: activeOrders, label: bn ? "চলমান" : "Active",             color: "text-orange-600" },
+          { value: activeOrders, label: bn ? "চলমান" : "Active", color: "text-orange-600" },
           {
             value: totalSpent > 999
               ? `৳${(totalSpent / 1000).toFixed(1)}k`

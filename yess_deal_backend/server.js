@@ -18,6 +18,37 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 4000;
 
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:8080",
+];
+
+// Production frontend may be served with or without the www subdomain.
+// Keep both origins allowed because the browser sends the exact page origin.
+allowedOrigins.push("https://shondhaan.com", "https://www.shondhaan.com");
+
+if (process.env.CORS_ORIGIN) {
+  process.env.CORS_ORIGIN.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+if (process.env.FRONTEND_BASE_URL) {
+  process.env.FRONTEND_BASE_URL.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+const corsOrigins = [...allowedOrigins];
+
 const DEAL_BACKEND_BASE_URL =
   process.env.DEAL_BACKEND_BASE_URL;
 
@@ -26,9 +57,8 @@ const DEAL_BACKEND_BASE_URL =
 //
 const io = new Server(server, {
   cors: {
-    origin: [
-      process.env.FRONTEND_BASE_URL
-    ].filter(Boolean),
+    origin: corsOrigins,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     credentials: true,
   },
 });
@@ -44,23 +74,21 @@ fs.mkdirSync(uploadsDir, { recursive: true });
 //
 // ✅ CORS CONFIG
 //
-const corsOrigin = [
-  ...new Set(
-    [
-      ...(process.env.CORS_ORIGIN || "https://www.shondhaan.com")
-        .split(",")
-        .map((o) => o.trim())
-        .filter(Boolean),
-
-      process.env.FRONTEND_BASE_URL
-    ].filter(Boolean)
-  ),
-];
+const corsOrigin = [...new Set(corsOrigins)];
 
 app.use(
   cors({
-    origin: corsOrigin,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("CORS blocked origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 

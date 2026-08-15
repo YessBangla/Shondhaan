@@ -34,6 +34,10 @@ const allowedOrigins = [
   'http://127.0.0.1:8080',
 ];
 
+// Production frontend may be served with or without the www subdomain.
+// Keep both origins allowed because the browser sends the exact page origin.
+allowedOrigins.push('https://shondhaan.com', 'https://www.shondhaan.com');
+
 if (process.env.CORS_ORIGIN) {
   process.env.CORS_ORIGIN.split(',').forEach(origin => {
     const trimmed = origin.trim();
@@ -68,6 +72,8 @@ app.use(cors({
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
 }));
 app.use(cookieParser());
 app.use(express.json());

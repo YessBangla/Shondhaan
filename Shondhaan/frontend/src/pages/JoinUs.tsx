@@ -214,7 +214,7 @@ const JoinUs = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[50px]" />
 
       {/* Hero */}
       <div className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-primary/[0.06] to-transparent">

@@ -57,8 +57,8 @@ const WhyChooseUs = () => {
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-center mb-12 md:mb-16"
-        >
+          className="text-center mb-12 md:mb-6"
+          >
           <motion.p
             initial={{ opacity: 0 }}
             whileInView={{ opacity: 1 }}
@@ -73,7 +73,7 @@ const WhyChooseUs = () => {
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="font-heading text-3xl md:text-5xl font-bold text-foreground mb-4"
+            className="font-heading text-3xl md:text-5xl font-bold text-foreground"
           >
             {t("whyChoose.title")}
           </motion.h2>
@@ -86,7 +86,7 @@ const WhyChooseUs = () => {
         </motion.div>
 
         {/* 3D Team Members - Enhanced */}
-        <motion.div className="flex justify-center gap-3 md:gap-8 mb-14 px-4 md:px-0 flex-wrap">
+        <motion.div className="flex justify-center gap-3 md:gap-3 mb-6 px-4 md:px-0 flex-wrap">
           {teamMembers.map((member, i) => (
             <motion.div
               key={i}
@@ -175,7 +175,7 @@ const WhyChooseUs = () => {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.6 }}
           className="grid grid-cols-3 gap-3 md:gap-6 px-4 md:px-12 lg:mx-20"
-        >
+          >
           {stats.map((stat, i) => (
             <motion.div
               key={i}

@@ -70,7 +70,7 @@ const MyJobs = () => {
             <Button variant="outline" size="sm" onClick={() => navigate("/jobs/profile")} className="gap-1 text-xs">
               <FileText className="h-3.5 w-3.5" /> {bn ? "আমার CV" : "My CV"}
             </Button>
-            <Button size="sm" onClick={() => navigate("/jobs/post")} className="bg-blue-600 hover:bg-blue-700 gap-1">
+            <Button size="sm" onClick={() => navigate("/jobs/post")} className="bg-primary hover:bg-emerald-800 gap-1">
               <Plus className="h-3.5 w-3.5" /> {bn ? "নতুন বিজ্ঞাপন" : "New Post"}
             </Button>
           </div>
@@ -115,7 +115,7 @@ const MyJobs = () => {
               <div className="text-center py-12 bg-muted/20 rounded-xl border border-dashed">
                 <Briefcase className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
                 <p className="text-muted-foreground text-sm mb-3">{bn ? "আপনি এখনো কোনো চাকরির বিজ্ঞাপন দেননি" : "You haven't posted any jobs yet"}</p>
-                <Button onClick={() => navigate("/jobs/post")} className="bg-blue-600 hover:bg-blue-700 gap-1">
+                <Button onClick={() => navigate("/jobs/post")} className="bg-primary border border-primary hover:bg-background hover:text-foreground gap-1">
                   <Plus className="h-4 w-4" /> {bn ? "বিজ্ঞাপন দিন" : "Post a Job"}
                 </Button>
               </div>

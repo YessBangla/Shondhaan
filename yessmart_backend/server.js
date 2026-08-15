@@ -58,29 +58,62 @@ const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
 const PORT = process.env.PORT;
 const server = http.createServer(app);
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:8080",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:8080",
+];
+
+// Production frontend may be served with or without the www subdomain.
+// Keep both origins allowed because the browser sends the exact page origin.
+allowedOrigins.push("https://shondhaan.com", "https://www.shondhaan.com");
+
+if (process.env.CORS_ORIGIN) {
+  process.env.CORS_ORIGIN.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+if (process.env.FRONTEND_URL) {
+  process.env.FRONTEND_URL.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) {
+      allowedOrigins.push(trimmed);
+    }
+  });
+}
+
+const corsOrigins = [...allowedOrigins];
+
 const io = new Server(server, {
   cors: {
-    origin: "*",
-    methods: ["GET", "POST", "DELETE"],
+    origin: [...new Set(corsOrigins)],
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true,
   },
 });
 
 app.set("io", io);
 registerMartMessageSocket(io);
 
-const corsOrigins = [
-  process.env.FRONTEND_URL,
-  process.env.CORS_ORIGIN,
-  "https://www.shondhaan.com",
-]
-  .flatMap((value) => String(value || "").split(","))
-  .map((origin) => origin.trim())
-  .filter(Boolean);
-
 app.use(
   cors({
-    origin: corsOrigins,
+    origin: function (origin, callback) {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      console.log("CORS blocked origin:", origin);
+      return callback(new Error("Not allowed by CORS"));
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   }),
 );
 // Needed for base64 JSON uploads (frontend sends { image: "data:image/...;base64,..." })

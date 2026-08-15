@@ -482,9 +482,9 @@ const Profile = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[30px]" />
 
-      <div className="mx-auto px-4 py-6 md:py-10 max-w-4xl">
+      <div className="mx-auto px-4 py-6 md:py-10 max-w-7xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}

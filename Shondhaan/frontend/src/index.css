@@ -17,6 +17,9 @@
 
     /* --primary: 152 60% 38%; */
     --primary: 208, 79%, 28%;
+    --user-primary: 152, 65%, 26%;
+    /* user primary light opacity color: bg-[hsla(152,65%,26%,0.15)] */
+    --user-primary-shade: 152,65%,26%,0.15;
     --primary-foreground: 180, 80, 97%;
 
     --secondary: 150 20% 95%;
@@ -512,8 +515,9 @@ img[loading="lazy"] {
    Tailwind class (bg-primary, text-primary, ring, etc.) re-themes
    automatically without touching individual components. The  Deal
    logo and brand wordmark remain unchanged. */
-body.deal-theme {
-  --primary: 208, 79%, 28%;          /* #62B146 Bikroy green */
+   /* #62B146 Bikroy green */
+/* body.deal-theme {
+  --primary: 208, 79%, 28%;         
   --primary-foreground: 0 0% 100%;
   --primary-light: 102 55% 94%;
   --primary-dark: 102 50% 38%;
@@ -534,19 +538,19 @@ body.deal-theme {
   --input: 214 18% 90%;
 
   background-image: none;
-}
+} */
 
-body.deal-theme.dark,
+/* body.deal-theme.dark,
 .dark body.deal-theme {
-  --primary: 102 50% 55%;
+  --primary: 208, 79%, 28%;
   --primary-foreground: 210 20% 8%;
   --accent: 102 50% 55%;
   --ring: 102 50% 55%;
   --secondary: 102 25% 16%;
-}
+} */
 
 /* Mobile: keep Bikroy green even though global mobile override sets purple */
-@media (max-width: 767px) {
+/* @media (max-width: 767px) {
   body.deal-theme {
     --primary: 208, 79%, 28%;
     --primary-foreground: 0 0% 100%;
@@ -559,4 +563,4 @@ body.deal-theme.dark,
     --ring: 102 50% 60%;
     --accent: 102 50% 60%;
   }
-}
+} */
