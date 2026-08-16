@@ -18,6 +18,17 @@ function mapReview(row) {
   };
 }
 
+// Shared SELECT that joins users so we get the real reviewer name.
+// users lives in shondhaan_db, reviews lives in ymart_db, so we
+// cross-database join by fully qualifying the table name.
+const REVIEW_SELECT = `
+  SELECT r.id, r.user_id, r.product_id, r.text_review, r.star_review,
+         r.seller_reply, r.seller_reply_by, r.seller_reply_at, r.created_at,
+         u.name AS reviewer_name
+  FROM reviews r
+  LEFT JOIN shondhaan_db.users u ON u.id = r.user_id
+`;
+
 // Get reviews for a product
 router.get("/", async (req, res) => {
   const { product_id } = req.query;
@@ -31,11 +42,7 @@ router.get("/", async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT id, user_id, product_id, text_review, star_review,
-              seller_reply, seller_reply_by, seller_reply_at, created_at
-       FROM reviews
-       WHERE product_id = ?
-       ORDER BY created_at DESC`,
+      `${REVIEW_SELECT} WHERE r.product_id = ? ORDER BY r.created_at DESC`,
       [product_id]
     );
 
@@ -80,10 +87,7 @@ router.post("/", async (req, res) => {
     );
 
     const [rows] = await pool.query(
-      `SELECT id, user_id, product_id, text_review, star_review,
-              seller_reply, seller_reply_by, seller_reply_at, created_at
-       FROM reviews
-       WHERE id = ?`,
+      `${REVIEW_SELECT} WHERE r.id = ?`,
       [result.insertId]
     );
 
@@ -211,10 +215,7 @@ async function saveSellerReply(req, res) {
     }
 
     const [rows] = await pool.query(
-      `SELECT id, user_id, product_id, text_review, star_review,
-              seller_reply, seller_reply_by, seller_reply_at, created_at
-       FROM reviews
-       WHERE id = ?`,
+      `${REVIEW_SELECT} WHERE r.id = ?`,
       [id]
     );
 

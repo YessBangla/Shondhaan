@@ -346,6 +346,7 @@ const MartAdminPanel = () => {
               gradient: "from-emerald-500 via-teal-600 to-emerald-700",
             }}
             panelIcon={<Store className="h-5 w-5" />}
+            embedded
           >
             {(activeTab) => (
               <div className="p-4 md:p-6">

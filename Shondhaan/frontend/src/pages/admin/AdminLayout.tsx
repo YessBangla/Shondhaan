@@ -138,6 +138,50 @@ const NAV: NavGroup[] = [
   },
 ];
 
+// The Mart workspace owns its own Mart-only tools. Keeping it as one entry in
+// the shared shell prevents department admins from seeing unrelated sections.
+const ADMIN_NAV: NavGroup[] = [
+  {
+    label: "Mart",
+    accent: "from-emerald-500 to-teal-600",
+    dot: "bg-teal-500",
+    items: [
+      { to: "/admin/mart-management?tab=orders", label: "Orders", icon: <ShoppingCart className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=returns", label: "Returns", icon: <RefreshCw className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=products", label: "Products", icon: <Package className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=vendors", label: "Vendors", icon: <Store className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=package", label: "Packages", icon: <Package className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=withdrawals", label: "Withdrawals", icon: <Banknote className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=transactions", label: "Package Transactions", icon: <Banknote className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=categories", label: "Categories", icon: <Grid3X3 className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=banners", label: "Banners", icon: <ImageIcon className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=coupons", label: "Coupons", icon: <Tag className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=analytics", label: "Analytics", icon: <BarChart3 className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=mart-overview", label: "Mart Overview", icon: <ShoppingCart className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=kyc%20verification", label: "Seller KYC", icon: <ShieldCheck className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=delivery%20kyc%20verification", label: "Delivery KYC", icon: <Users className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=category%20add", label: "Category Setup", icon: <Grid3X3 className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=mart-banners", label: "Mart Banners", icon: <ImageIcon className="h-4 w-4" /> },
+    ],
+  },
+  ...NAV
+    .filter((group) => !group.items.some((item) => item.to === "/admin/mart-overview"))
+    .map((group) => {
+      if (group.items.some((item) => item.to === "/admin/job-listings")) {
+        return {
+          ...group,
+          items: [
+            ...group.items,
+            { to: "/admin/jobs", label: "Job Applications", icon: <Briefcase className="h-4 w-4" /> },
+          ],
+        };
+      }
+
+      return { ...group, items: group.items.filter((item) => item.to !== "/admin/jobs") };
+    }),
+];
+
 const AdminLayout = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -200,13 +244,20 @@ const AdminLayout = () => {
   const filteredNav = useMemo(() => {
     if (!userRole) return [];
     const allowed = ADMIN_ACCESS_BY_ROLE[userRole as keyof typeof ADMIN_ACCESS_BY_ROLE];
-    if (!allowed || allowed === "*") return NAV;
+    if (!allowed || allowed === "*") return ADMIN_NAV;
 
-    return NAV.map(group => ({
+    return ADMIN_NAV.map(group => ({
       ...group,
-      items: group.items.filter(item => (allowed as string[]).includes(item.to))
+      items: group.items.filter(item => (allowed as string[]).includes(item.to.split("?")[0]))
     })).filter(group => group.items.length > 0);
   }, [userRole]);
+
+  const isNavItemActive = (to: string) => {
+    const [path, query] = to.split("?");
+    if (location.pathname !== path) return false;
+    if (!query) return !location.search;
+    return new URLSearchParams(location.search).toString() === new URLSearchParams(query).toString();
+  };
 
   const flatItems = useMemo(() => filteredNav.flatMap(g => g.items.map(i => ({ ...i, group: g.label }))), [filteredNav]);
   const pinnedItems = useMemo(() => flatItems.filter(i => pinned.includes(i.to)), [flatItems, pinned]);
@@ -370,11 +421,11 @@ const AdminLayout = () => {
 
   const { currentLabel, currentGroup, currentIcon } = useMemo(() => {
     for (const g of filteredNav) {
-      const hit = g.items.find((i) => location.pathname.startsWith(i.to));
+      const hit = g.items.find((i) => isNavItemActive(i.to));
       if (hit) return { currentLabel: hit.label, currentGroup: g.label, currentIcon: hit.icon };
     }
     return { currentLabel: "অ্যাডমিন প্যানেল", currentGroup: "ড্যাশবোর্ড", currentIcon: <LayoutDashboard className="h-4 w-4" /> };
-  }, [location.pathname, filteredNav]);
+  }, [location.pathname, location.search, filteredNav]);
 
   const lastPathRef = useRef<string>("");
   useEffect(() => {
@@ -453,9 +504,9 @@ const AdminLayout = () => {
                 <NavLink to={item.to} end
                   data-sidebar-link
                   data-group={item.group}
-                  className={({ isActive }) =>
+                  className={() =>
                   `group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isActive ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
+                    isNavItemActive(item.to) ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
                   }`}>
                   <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
                   <span className="truncate flex-1">{item.label}</span>
@@ -514,9 +565,9 @@ const AdminLayout = () => {
                       end
                       data-sidebar-link
                       data-group={group.label}
-                      className={({ isActive }) =>
+                      className={() =>
                         `relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                          isActive
+                          isNavItemActive(item.to)
                             ? `bg-gradient-to-r ${group.accent} text-white font-semibold shadow-md`
                             : "text-foreground/75 hover:bg-secondary hover:text-foreground"
                         } ${collapsed ? "justify-center" : ""}`
