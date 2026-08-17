@@ -32,7 +32,7 @@ import StoreSettingsTab from "./StoreSettingsTabV2";
 import { Badge } from "@/components/ui/badge";
 import { getMartSocket } from "@/lib/martSocket";
 import { createMartSellerNotification } from "@/lib/martSellerNotifications";
-
+import { getFullImageUrl } from "@/lib/imageUrl";
 const orderStatusMap: Record<string, { label: string; color: string; dot: string }> = {
   pending:    { label: "অপেক্ষমাণ",       color: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-400"  },
   confirmed:  { label: "নিশ্চিত",          color: "bg-blue-50 text-blue-700 border border-blue-200",          dot: "bg-blue-400"   },
@@ -877,9 +877,9 @@ setEditingProduct(null);
                           <div className={productViewMode === "grid"
                             ? "relative w-full h-24 overflow-hidden bg-slate-100"
                             : "w-10 h-10 rounded-xl overflow-hidden bg-slate-100 shrink-0"}>
-                            {p.image_url
-                              ? <img src={p.image_url} alt="" className="w-full h-full object-cover" />
-                              : <div className="w-full h-full flex items-center justify-center text-lg">📦</div>}
+                           {p.image_url
+  ? <img src={getFullImageUrl(p.image_url)} alt="" className="w-full h-full object-cover" />
+  : <div className="w-full h-full flex items-center justify-center text-lg">📦</div>}
                             {productViewMode === "grid" && (
                               <>
                                 <span className={`absolute top-1.5 left-1.5 text-[9px] font-semibold px-1.5 py-0.5 rounded-full leading-relaxed ${
@@ -1361,7 +1361,7 @@ setEditingProduct(null);
                                     ) : itemList.map((item, idx) => (
                                       <div key={item.id ?? idx} className="flex items-center gap-3 bg-white rounded-xl p-3 border border-slate-100">
                                         <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 shrink-0">
-                                          {item.product_image ? <img src={item.product_image} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm">📦</div>}
+                                         {item.product_image ? <img src={getFullImageUrl(item.product_image)} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm">📦</div>}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                           <p className="text-sm font-medium text-slate-700 truncate">{item.product_name}</p>
@@ -1620,7 +1620,7 @@ setEditingProduct(null);
                             i === 0 ? "bg-amber-100 text-amber-600" : i === 1 ? "bg-slate-100 text-slate-500" : i === 2 ? "bg-orange-50 text-orange-400" : "bg-slate-50 text-slate-400"
                           }`}>{i + 1}</div>
                           <div className="w-9 h-9 rounded-xl bg-slate-100 overflow-hidden shrink-0">
-                            {p.image_url ? <img src={p.image_url} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm">📦</div>}
+                           {p.image_url ? <img src={getFullImageUrl(p.image_url)} alt="" className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-sm">📦</div>}
                           </div>
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium text-slate-700 truncate">{p.name}</p>
@@ -1686,17 +1686,17 @@ onClick={() => navigate(`/mart/vendor/messages/${chat.id}`)}
           >
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
-                {chat.product_image ? (
-                  <img
-                    src={chat.product_image}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    📦
-                  </div>
-                )}
+               {chat.product_image ? (
+  <img
+    src={getFullImageUrl(chat.product_image)}
+    alt=""
+    className="w-full h-full object-cover"
+  />
+) : (
+  <div className="w-full h-full flex items-center justify-center">
+    📦
+  </div>
+)}
               </div>
 
               <div className="flex-1 min-w-0">

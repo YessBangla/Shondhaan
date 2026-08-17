@@ -249,7 +249,7 @@ const JobDetail = () => {
     return (
       <JobsPageTransition>
         <Navbar />
-        <JobsMenuBar />
+        <JobsMenuBar flushWithHeader />
         <div className="app-container py-12">
           <div className="h-48 rounded-xl bg-muted animate-pulse" />
           <div className="h-32 rounded-xl bg-muted animate-pulse mt-4" />

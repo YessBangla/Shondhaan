@@ -60,6 +60,8 @@ export const updateMyProfile = async (req, res) => {
     const name = String(req.body.name ?? "").trim();
     const mobile = normalizeMobile(req.body.mobile ?? req.body.phone ?? "");
     const address = String(req.body.address ?? "").trim();
+    const email =
+      req.body.email !== undefined ? String(req.body.email).trim() : undefined;
 
     // Validation
     if (Object.prototype.hasOwnProperty.call(req.body, "name") && !name) {
@@ -68,6 +70,21 @@ export const updateMyProfile = async (req, res) => {
 
     if (mobile && !/^01[3-9]\d{8}$/.test(mobile)) {
       return res.status(400).json({ message: "Valid BD number required" });
+    }
+
+    if (email !== undefined) {
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        return res.status(400).json({ message: "Valid email is required" });
+      }
+
+      // Prevent duplicate emails across other accounts
+      const [existing] = await pool.execute(
+        "SELECT id FROM users WHERE email = ? AND id != ? LIMIT 1",
+        [email, userId]
+      );
+      if (existing.length) {
+        return res.status(409).json({ message: "This email is already in use" });
+      }
     }
 
     // UPDATE USERS TABLE
@@ -87,6 +104,11 @@ export const updateMyProfile = async (req, res) => {
     if ("address" in req.body) {
       userFields.push("address = ?");
       userValues.push(address || null);
+    }
+
+    if (email !== undefined) {
+      userFields.push("email = ?");
+      userValues.push(email);
     }
 
     if (userFields.length) {
