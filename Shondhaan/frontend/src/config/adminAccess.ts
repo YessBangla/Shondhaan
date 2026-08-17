@@ -38,8 +38,8 @@ export const ADMIN_ACCESS_BY_ROLE: Partial<Record<RoleKey, string[] | "*">> = {
     "/admin/settings",
   ],
   mart_admin: [
+    "/admin/mart-management",
     "/admin/mart-overview",
-    "/admin/settings",
   ],
   deal_admin: [
     "/admin/deal-overview",
@@ -50,7 +50,6 @@ export const ADMIN_ACCESS_BY_ROLE: Partial<Record<RoleKey, string[] | "*">> = {
     "/admin/job-listings",
     "/admin/employers",
     "/admin/jobs",
-    "/admin/settings",
   ],
   call_center: ["/admin/bookings", "/admin/requests", "/admin/contacts", "/admin/chat-history"],
 };

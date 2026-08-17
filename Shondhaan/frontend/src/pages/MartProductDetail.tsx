@@ -15,7 +15,6 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useMartProduct, useMartProducts } from "@/hooks/useMartData";
 import { useMartCart } from "@/contexts/MartCartContext";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
-import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
 import MartProductCard from "@/components/mart/MartProductCard";
 import MartProductReviews from "@/components/mart/MartProductReviews";
@@ -112,48 +111,17 @@ const MartProductDetail = () => {
       : undefined,
   });
 
-  const { data: vendorProfile } = useQuery({
-    queryKey: ["vendor-profile", product?.vendor_id],
-    queryFn: async () => {
-      if (!product?.vendor_id) return null;
-      const { data } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url")
-        .eq("user_id", String(product.vendor_id))
-        .single();
-      return data;
-    },
-    enabled: !!product?.vendor_id && !product?.shop_name && !product?.seller_name,
-  });
-
-  const { data: vendorStats } = useQuery({
-    queryKey: ["vendor-stats", product?.vendor_id],
-    queryFn: async () => {
-      if (!product?.vendor_id) return { count: 0 };
-      const { count } = await supabase
-        .from("mart_products")
-        .select("id", { count: "exact", head: true })
-        .eq("vendor_id", String(product.vendor_id))
-        .eq("is_active", true);
-      return { count: count || 0 };
-    },
-    enabled: !!product?.vendor_id && !product?.shop_name && !product?.seller_name,
-  });
-
+  // Vendor display info now comes straight off the product payload
+  // (shop_name / seller_name), which the MySQL /api/products endpoints
+  // already return. No separate profile/stats lookup is needed.
   const vendorDisplayName =
     product?.shop_name ||
     product?.seller_name ||
-    vendorProfile?.display_name ||
     (bn ? "সন্ধান মার্ট বিক্রেতা" : "Yess Mart Seller");
 
   const vendorVerified = product?.seller_verified === 1 || product?.seller_verified === true;
 
   const isMysqlProduct = Boolean(slug?.startsWith("mysql-product-"));
-  const orderStatsProductId = product
-    ? isMysqlProduct
-      ? slug?.replace("mysql-product-", "")
-      : product.id
-    : null;
 
   // Upgrade legacy mysql-product-<id> links to the readable slug URL so the
   // address bar shows the product name (e.g. /mart/product/teddy-bear) instead
@@ -167,39 +135,34 @@ const MartProductDetail = () => {
     }
   }, [isMysqlProduct, product?.slug, navigate, location.search, location.hash]);
 
+  // Every product is MySQL-backed now, so stats always key off product.id.
+  const orderStatsProductId = product?.id ?? null;
+
   const { data: orderStats } = useQuery<ProductOrderStats>({
-    queryKey: ["mart-product-order-stats", orderStatsProductId, isMysqlProduct],
+    queryKey: ["mart-product-order-stats", orderStatsProductId],
     queryFn: async () => {
       if (!orderStatsProductId) return { order_count: 0 };
-      if (isMysqlProduct) {
-        const res = await fetch(`${MART_API_BASE}/api/orders/product/${encodeURIComponent(String(orderStatsProductId))}/stats`);
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) throw new Error(json.message || "Failed to load product order stats");
-        return { order_count: Number(json.data?.order_count || 0), customer_count: Number(json.data?.customer_count || 0), quantity_sold: Number(json.data?.quantity_sold || 0) };
-      }
-      const { count, error } = await supabase.from("mart_order_items").select("order_id", { count: "exact", head: true }).eq("product_id", String(orderStatsProductId));
-      if (error) throw error;
-      return { order_count: count || 0 };
+      const res = await fetch(`${MART_API_BASE}/api/orders/product/${encodeURIComponent(String(orderStatsProductId))}/stats`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) throw new Error(json.message || "Failed to load product order stats");
+      return {
+        order_count: Number(json.data?.order_count || 0),
+        customer_count: Number(json.data?.customer_count || 0),
+        quantity_sold: Number(json.data?.quantity_sold || 0),
+      };
     },
     enabled: !!orderStatsProductId,
     staleTime: 60 * 1000,
   });
 
   const { data: reviewStats } = useQuery<ProductReviewStats>({
-    queryKey: ["mart-product-review-stats", orderStatsProductId, isMysqlProduct],
+    queryKey: ["mart-product-review-stats", orderStatsProductId],
     queryFn: async () => {
       if (!orderStatsProductId) return { count: 0, avgRating: 0 };
-      if (isMysqlProduct) {
-        const res = await fetch(`${MART_API_BASE}/api/reviews?product_id=${encodeURIComponent(String(orderStatsProductId))}`);
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) throw new Error(json.message || "Failed to load product reviews");
-        const reviews = (json.data || []) as Array<{ rating?: number }>;
-        const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length : 0;
-        return { count: reviews.length, avgRating };
-      }
-      const { data, error } = await supabase.from("mart_product_reviews").select("rating").eq("product_id", String(orderStatsProductId));
-      if (error) throw error;
-      const reviews = data || [];
+      const res = await fetch(`${MART_API_BASE}/api/reviews?product_id=${encodeURIComponent(String(orderStatsProductId))}`);
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) throw new Error(json.message || "Failed to load product reviews");
+      const reviews = (json.data || []) as Array<{ rating?: number }>;
       const avgRating = reviews.length > 0 ? reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) / reviews.length : 0;
       return { count: reviews.length, avgRating };
     },
@@ -211,7 +174,7 @@ const MartProductDetail = () => {
     setLiveReviewStats(stats);
   }, []);
 
-  useEffect(() => { setLiveReviewStats(null); }, [orderStatsProductId, isMysqlProduct]);
+  useEffect(() => { setLiveReviewStats(null); }, [orderStatsProductId]);
 
   useEffect(() => {
     const requestedTab = searchParams.get("tab") as ProductDetailTab | null;
@@ -646,15 +609,10 @@ const MartProductDetail = () => {
                 </div>
                 <div className="flex items-center gap-2">
                   <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                    {vendorProfile?.avatar_url ? (
-                      <img src={vendorProfile.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                    ) : (
-                      <Store className="h-4 w-4 text-primary" />
-                    )}
+                    <Store className="h-4 w-4 text-primary" />
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-semibold text-gray-800 truncate">{vendorDisplayName}</p>
-                    <p className="text-xs text-gray-500">{vendorStats?.count || 0} {bn ? "পণ্য" : "Products"}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
@@ -694,15 +652,10 @@ const MartProductDetail = () => {
             {/* Seller row */}
             <div className="flex items-center gap-3 bg-gray-50 rounded-sm p-3">
               <div className="h-9 w-9 rounded-full bg-primary/10 flex items-center justify-center shrink-0 overflow-hidden">
-                {vendorProfile?.avatar_url ? (
-                  <img src={vendorProfile.avatar_url} alt="" className="h-9 w-9 rounded-full object-cover" />
-                ) : (
-                  <Store className="h-4 w-4 text-primary" />
-                )}
+                <Store className="h-4 w-4 text-primary" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold truncate">{vendorDisplayName}</p>
-                <p className="text-[11px] text-gray-400">{vendorStats?.count || 0} {bn ? "পণ্য" : "products"}</p>
               </div>
 <button onClick={() => navigate(`/mart/store/${product.seller_slug || product.vendor_id}`)} className="text-[11px] border border-primary text-primary px-2 py-1 rounded-sm shrink-0">{bn ? "স্টোর" : "Store"}</button>
             </div>
@@ -762,7 +715,7 @@ const MartProductDetail = () => {
                   productName={bn ? product.name : (product.name_en || product.name)}
                   productUrl={productPath}
                   vendorId={product.vendor_id}
-                  storage={isMysqlProduct ? "mysql" : "supabase"}
+                  storage="mysql"
                   onStatsChange={handleReviewStatsChange}
                 />
               </TabsContent>
@@ -773,7 +726,7 @@ const MartProductDetail = () => {
                   productName={bn ? product.name : (product.name_en || product.name)}
                   productUrl={productPath}
                   vendorId={product.vendor_id}
-                  storage={isMysqlProduct ? "mysql" : "supabase"}
+                  storage="mysql"
                 />
               </TabsContent>
 

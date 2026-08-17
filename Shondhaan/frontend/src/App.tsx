@@ -59,7 +59,7 @@ import MobileBottomNav from "@/components/MobileBottomNav";
 import FabStackPreview from "@/components/FabStackPreview";
 import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
-import MartAdminPanel from "@/pages/MartAdminPanel";
+import MartAdminPanel from "@/components/mart/MartAdminPanel";
 // Lazy-loaded pages — each route loads only when visited
 const Index = lazy(() => import("./pages/Index"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
@@ -301,6 +301,7 @@ const App = () => {
               <Route path="banners" element={<AdminBannersPage />} />
               <Route path="sections" element={<AdminSectionsPage />} />
               <Route path="mart-overview" element={<AdminMartOverviewPage />} />
+              <Route path="mart-management" element={<MartAdminPanel />} />
               <Route path="deal-overview" element={<AdminDealOverviewPage />} />
               <Route path="deal-categories" element={<AdminDealCategoriesPage />} />
               <Route path="job-listings" element={<AdminJobListingsPage />} />
@@ -348,7 +349,8 @@ const App = () => {
             <Route path="/internal/:slug" element={<InternalServiceChat />} />
             <Route path="/mart" element={<MartPanel />} />
             <Route path="/mart/vendor/messages/:conversationId" element={<VendorMessageDetail />} />
-            <Route path="/mart/mart-admin" element={<MartAdminPanel />} />
+            <Route path="/mart/mart-admin" element={<Navigate to="/admin/mart-management" replace />} />
+            <Route path="/job/admin" element={<Navigate to="/admin/job-listings" replace />} />
             <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
             <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
             <Route path="/mart/home" element={<MartHome />} />

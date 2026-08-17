@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,7 +27,8 @@ interface MartProductReviewsProps {
   productName?: string;
   productUrl?: string;
   vendorId?: string | number | null;
-  storage?: "supabase" | "mysql";
+  // Kept for API compatibility with callers; reviews are always MySQL-backed now.
+  storage?: "mysql";
   onStatsChange?: (stats: { count: number; avgRating: number }) => void;
 }
 
@@ -54,7 +54,7 @@ function normalizeReview(review: any): Review {
   };
 }
 
-const MartProductReviews = ({ productId, productName, productUrl, vendorId, storage = "supabase", onStatsChange }: MartProductReviewsProps) => {
+const MartProductReviews = ({ productId, productName, productUrl, vendorId, onStatsChange }: MartProductReviewsProps) => {
   const { user } = useAuth();
   const { language } = useLanguage();
   const bn = language === "bn";
@@ -69,7 +69,6 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
   const [comment, setComment] = useState("");
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [submittingReplyId, setSubmittingReplyId] = useState<string | null>(null);
-  const [userProfile, setUserProfile] = useState<{ display_name: string | null } | null>(null);
 
   const reportStats = useCallback((nextReviews: Review[]) => {
     const avgRating = nextReviews.length > 0
@@ -81,46 +80,25 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
   const fetchReviews = useCallback(async () => {
     setLoading(true);
     try {
-      if (storage === "mysql") {
-        const res = await fetch(
-          `${MART_API_BASE}/api/reviews?product_id=${encodeURIComponent(productId)}`
-        );
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) {
-          throw new Error(json.message || "Failed to load reviews");
-        }
-        const nextReviews = (json.data || []).map((review: any) => normalizeReview(review));
-        setReviews(nextReviews);
-        reportStats(nextReviews);
-      } else {
-        const { data, error } = await supabase
-          .from("mart_product_reviews")
-          .select("*")
-          .eq("product_id", productId)
-          .order("created_at", { ascending: false });
-        if (error) throw error;
-        if (data) {
-          const nextReviews = (data || []).map((review: any) => normalizeReview(review));
-          setReviews(nextReviews);
-          reportStats(nextReviews);
-        }
+      const res = await fetch(
+        `${MART_API_BASE}/api/reviews?product_id=${encodeURIComponent(productId)}`
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Failed to load reviews");
       }
+      const nextReviews = (json.data || []).map((review: any) => normalizeReview(review));
+      setReviews(nextReviews);
+      reportStats(nextReviews);
     } catch (error) {
       console.error(error);
-      toast.error(bn ? "রিভিউ লোড করা যায়নি" : "Failed to load reviews");
+      toast.error(bn ? "রিভিউ লোড করা যায়নি" : "Failed to load reviews");
     } finally {
       setLoading(false);
     }
-  }, [bn, productId, reportStats, storage]);
+  }, [bn, productId, reportStats]);
 
   useEffect(() => { fetchReviews(); }, [fetchReviews]);
-
-  useEffect(() => {
-    if (user && storage === "supabase") {
-      supabase.from("profiles").select("display_name").eq("user_id", user.id).single()
-        .then(({ data }) => { if (data) setUserProfile(data); });
-    }
-  }, [storage, user]);
 
   const avgRating = reviews.length > 0
     ? (reviews.reduce((s, r) => s + r.rating, 0) / reviews.length).toFixed(1)
@@ -137,6 +115,8 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
 
   const notifySellerAboutReview = async (reviewerName: string, reviewRating: number, reviewComment: string | null) => {
     if (!vendorId || String(vendorId) === String(user?.id)) return;
+    // Seller notifications only support numeric MySQL user ids.
+    if (!isNumericMartUserId(vendorId)) return;
 
     const commentPreview = reviewComment
       ? reviewComment.length > 100
@@ -150,82 +130,50 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
       ? `${productName}: ${reviewerName} - ${commentPreview}`
       : `${reviewerName} - ${commentPreview}`;
 
-    if (isNumericMartUserId(vendorId)) {
-      await createMartSellerNotification({
-        userId: vendorId,
-        title,
-        message,
-        type: "mart_product_review",
-        productId,
-        actionUrl: productUrl ? `${productUrl}?tab=reviews#product-reviews` : null,
-      });
-      return;
-    }
-
-    const { error } = await supabase.from("notifications").insert({
-      user_id: String(vendorId),
+    await createMartSellerNotification({
+      userId: vendorId,
       title,
       message,
       type: "mart_product_review",
-      action_url: productUrl ? `${productUrl}?tab=reviews#product-reviews` : null,
-    } as any);
-
-    if (error) {
-      console.warn("Seller review notification failed", error);
-    }
+      productId,
+      actionUrl: productUrl ? `${productUrl}?tab=reviews#product-reviews` : null,
+    });
   };
 
   const handleSubmit = async () => {
     if (!user) { toast.error(bn ? "রিভিউ দিতে লগইন করুন" : "Login to review"); return; }
     if (rating === 0) { toast.error(bn ? "রেটিং দিন" : "Select a rating"); return; }
 
+    const mysqlUserId = Number(user.id);
+    if (!Number.isInteger(mysqlUserId)) {
+      toast.error(bn ? "মার্ট রিভিউ দিতে MySQL অ্যাকাউন্ট দিয়ে লগইন করুন" : "Login with a MySQL account to review this product");
+      return;
+    }
+
     setSubmitting(true);
     const reviewerName =
-      userProfile?.display_name ||
       (user as any).name ||
       user.email?.split("@")[0] ||
       "User";
 
-    const reviewData = {
-      product_id: productId,
-      user_id: user.id,
-      reviewer_name: reviewerName,
-      rating,
-      comment: comment.trim() || null,
-    };
-
     let error: unknown = null;
-    if (storage === "mysql") {
-      const mysqlUserId = Number(user.id);
-      if (!Number.isInteger(mysqlUserId)) {
-        setSubmitting(false);
-        toast.error(bn ? "মার্ট রিভিউ দিতে MySQL অ্যাকাউন্ট দিয়ে লগইন করুন" : "Login with a MySQL account to review this product");
-        return;
+    try {
+      const res = await fetch(`${MART_API_BASE}/api/reviews`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: mysqlUserId,
+          product_id: productId,
+          text_review: comment.trim() || null,
+          star_review: rating,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Failed to save review");
       }
-
-      try {
-        const res = await fetch(`${MART_API_BASE}/api/reviews`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: mysqlUserId,
-            product_id: productId,
-            text_review: comment.trim() || null,
-            star_review: rating,
-          }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) {
-          throw new Error(json.message || "Failed to save review");
-        }
-      } catch (err) {
-        error = err;
-      }
-    } else {
-      const result = existingReview
-        ? await supabase.from("mart_product_reviews").update({ rating, comment: comment.trim() || null }).eq("id", existingReview.id)
-        : await supabase.from("mart_product_reviews").insert(reviewData);
-      error = result.error;
+    } catch (err) {
+      error = err;
     }
 
     setSubmitting(false);
@@ -244,23 +192,18 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
 
   const handleDelete = async (id: string) => {
     let error: unknown = null;
-    if (storage === "mysql") {
-      try {
-        const res = await fetch(`${MART_API_BASE}/api/reviews/${encodeURIComponent(id)}`, {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: Number(user?.id) }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) {
-          throw new Error(json.message || "Failed to delete review");
-        }
-      } catch (err) {
-        error = err;
+    try {
+      const res = await fetch(`${MART_API_BASE}/api/reviews/${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: Number(user?.id) }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Failed to delete review");
       }
-    } else {
-      const result = await supabase.from("mart_product_reviews").delete().eq("id", id);
-      error = result.error;
+    } catch (err) {
+      error = err;
     }
     if (!error) {
       toast.success(bn ? "রিভিউ মুছে ফেলা হয়েছে" : "Review deleted");
@@ -271,7 +214,7 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
       });
     } else {
       console.error(error);
-      toast.error(bn ? "রিভিউ মুছে ফেলা যায়নি" : "Failed to delete review");
+      toast.error(bn ? "রিভিউ মুছে ফেলা যায়নি" : "Failed to delete review");
     }
   };
 
@@ -292,27 +235,19 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, stor
     };
 
     try {
-      if (storage === "mysql") {
-        const res = await fetch(`${MART_API_BASE}/api/reviews/${encodeURIComponent(review.id)}/reply`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: Number(user?.id),
-            seller_id: vendorId,
-            product_id: productId,
-            seller_reply: cleanReply,
-          }),
-        });
-        const json = await res.json().catch(() => ({}));
-        if (!res.ok || json.success === false) {
-          throw new Error(json.message || "Failed to save seller reply");
-        }
-      } else {
-        const { error } = await supabase
-          .from("mart_product_reviews")
-          .update(replyPatch as any)
-          .eq("id", review.id);
-        if (error) throw error;
+      const res = await fetch(`${MART_API_BASE}/api/reviews/${encodeURIComponent(review.id)}/reply`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: Number(user?.id),
+          seller_id: vendorId,
+          product_id: productId,
+          seller_reply: cleanReply,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok || json.success === false) {
+        throw new Error(json.message || "Failed to save seller reply");
       }
     } catch (error) {
       console.error("Seller review reply save failed", error);

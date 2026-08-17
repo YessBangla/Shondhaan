@@ -1,5 +1,4 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { toPublicProduct } from "@/lib/martApi";
 
 const API_BASE =
@@ -213,6 +212,30 @@ export function useMartProducts(categorySlug?: string, search?: string, limit = 
   });
 }
 
+// Looks up a single category by id from the /api/categories list.
+// Replaces the old Supabase `mart_categories` lookup — categories now
+// come exclusively from the MySQL-backed API.
+async function fetchCategoryById(categoryId: string): Promise<MartProductCategory | undefined> {
+  try {
+    const response = await fetch(`${API_BASE}/api/categories`);
+    const json = await response.json().catch(() => ({}));
+    if (!response.ok || json.success === false) return undefined;
+
+    const categories = Array.isArray(json.data) ? json.data : [];
+    const match = categories.find((c: any) => String(c.id) === String(categoryId));
+    if (!match) return undefined;
+
+    return {
+      id: String(match.id),
+      name: match.name,
+      name_en: match.name_en ?? null,
+      slug: match.slug || String(match.id),
+    };
+  } catch {
+    return undefined;
+  }
+}
+
 export function useMartProduct(slug: string) {
   return useQuery({
     queryKey: ["mart-product", slug],
@@ -225,16 +248,11 @@ export function useMartProduct(slug: string) {
         const response = await fetch(`${API_BASE}/api/products/${encodeURIComponent(productId)}`);
         const json = await response.json().catch(() => ({}));
         if (!response.ok || json.success === false) {
-          throw new Error(json.message || "Vendor product not found");
+          throw new Error(json.message || "Product not found");
         }
         const product = toPublicProduct(json.data as any);
         if (product.category_id) {
-          const { data: category } = await supabase
-            .from("mart_categories")
-            .select("id, name, name_en, slug")
-            .eq("id", product.category_id)
-            .single();
-          product.category = category || undefined;
+          product.category = await fetchCategoryById(product.category_id);
         }
         return {
           ...product,
@@ -242,38 +260,20 @@ export function useMartProduct(slug: string) {
         } as MartProduct;
       }
 
-      // Try the MySQL-backed product lookup by real slug first.
+      // Real-slug lookup — the only product source now (no Supabase fallback).
       const response = await fetch(`${API_BASE}/api/products/slug/${encodeURIComponent(slug)}`);
-      if (response.ok) {
-        const json = await response.json().catch(() => ({}));
-        if (json.success !== false && json.data) {
-          const product = toPublicProduct(json.data as any);
-          if (product.category_id) {
-            const { data: category } = await supabase
-              .from("mart_categories")
-              .select("id, name, name_en, slug")
-              .eq("id", product.category_id)
-              .single();
-            product.category = category || undefined;
-          }
-          return {
-            ...product,
-            gallery_urls: product.gallery_urls || [],
-          } as MartProduct;
-        }
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok || json.success === false || !json.data) {
+        throw new Error(json.message || "Product not found");
       }
 
-      // Fall back to Supabase-backed products (older/legacy product source).
-      const { data, error } = await supabase
-        .from("mart_products")
-        .select("*, mart_categories!mart_products_category_id_fkey(id, name, name_en, slug)")
-        .eq("slug", slug)
-        .single();
-      if (error) throw error;
+      const product = toPublicProduct(json.data as any);
+      if (product.category_id) {
+        product.category = await fetchCategoryById(product.category_id);
+      }
       return {
-        ...data,
-        gallery_urls: data.gallery_urls || [],
-        category: data.mart_categories,
+        ...product,
+        gallery_urls: product.gallery_urls || [],
       } as MartProduct;
     },
     enabled: !!slug,

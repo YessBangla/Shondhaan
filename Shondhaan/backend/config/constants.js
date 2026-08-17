@@ -76,8 +76,8 @@ export const ADMIN_ACCESS_BY_ROLE = {
   
   // ✅ Mart Admin Permissions
   mart_admin: [
+    "/admin/mart-management",
     "/admin/mart-overview",
-    "/admin/settings",
   ],
   
   // ✅ Deal Admin Permissions
@@ -92,7 +92,6 @@ export const ADMIN_ACCESS_BY_ROLE = {
     "/admin/job-listings",
     "/admin/employers",
     "/admin/jobs",
-    "/admin/settings",
   ],
 
   call_center: [

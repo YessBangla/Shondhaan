@@ -41,5 +41,9 @@ export const ROLES: RoleConfig[] = [
   { key: "user", labelBn: "ইউজার", labelEn: "User", descriptionBn: "সাধারণ গ্রাহক — সার্ভিস বুকিং ও অর্ডার।", panelPath: "/dashboard", icon: User, gradient: "from-slate-500 to-gray-600", accent: "text-slate-700" },
 ];
 
-export const getRoleConfig = (key: string): RoleConfig | undefined =>
-  ROLES.find((r) => r.key === key);
+export const getRoleConfig = (key: string): RoleConfig | undefined => {
+  const role = ROLES.find((r) => r.key === key);
+  if (role?.key === "mart_admin") return { ...role, panelPath: "/admin/mart-management" };
+  if (role?.key === "job_admin") return { ...role, panelPath: "/admin/job-listings" };
+  return role;
+};

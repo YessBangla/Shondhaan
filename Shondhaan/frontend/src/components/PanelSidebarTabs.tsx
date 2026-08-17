@@ -45,6 +45,7 @@ interface PanelSidebarTabsProps {
   profileImageUrl?: string;
   hero?: PanelHeroConfig;
   offsetForDesktopMegaMenu?: boolean;
+  embedded?: boolean;
 }
 
 // Custom premium scrollbar classes
@@ -59,6 +60,7 @@ const PanelSidebarTabs = ({
   profileImageUrl,
   hero,
   offsetForDesktopMegaMenu = false,
+  embedded = false,
 }: PanelSidebarTabsProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -419,9 +421,9 @@ const PanelSidebarTabs = ({
   );
 
   return (
-    <div className={cn("flex w-full min-h-screen", offsetForDesktopMegaMenu && "md:pt-2")}>
+    <div className={cn("flex w-full", !embedded && "min-h-screen", offsetForDesktopMegaMenu && "md:pt-2")}>
       {/* Desktop sidebar */}
-      <aside
+      {!embedded && <aside
         className={cn(
           "hidden md:flex flex-col shrink-0 sticky self-start transition-[width] duration-300 ease-in-out z-30 shadow-2xl",
           offsetForDesktopMegaMenu ? "top-10 h-[calc(100vh-2.5rem)]" : "top-0 h-screen",
@@ -429,10 +431,10 @@ const PanelSidebarTabs = ({
         )}
       >
         <SidebarBody />
-      </aside>
+      </aside>}
 
       {/* Mobile drawer */}
-      <AnimatePresence>
+      {!embedded && <AnimatePresence>
         {mobileOpen && (
           <>
             <motion.div
@@ -453,11 +455,11 @@ const PanelSidebarTabs = ({
             </motion.aside>
           </>
         )}
-      </AnimatePresence>
+      </AnimatePresence>}
 
       {/* Main content */}
-      <div className="flex-1 min-w-0 flex flex-col bg-slate-50 dark:bg-slate-950">
-        <header className={cn(
+      <div className={cn("flex-1 min-w-0 flex flex-col", !embedded && "bg-slate-50 dark:bg-slate-950")}>
+        {!embedded && <header className={cn(
           "sticky z-40 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl",
           offsetForDesktopMegaMenu ? "top-0 md:top-10" : "top-0"
         )}>
@@ -531,10 +533,10 @@ const PanelSidebarTabs = ({
               <NotificationBell />
             </div>
           </div> */}
-        </header>
+        </header>}
 
         <main className="flex-1 min-w-0">
-          <div className="w-full px-2 py-2  space-y-6">
+          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-2 py-2")}>
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}
