@@ -43,7 +43,7 @@ const NAV: NavGroup[] = [
     items: [
       { to: "/admin/smart-dashboard", label: "স্মার্ট ড্যাশবোর্ড", icon: <Sparkles className="h-4 w-4" /> },
       { to: "/admin/analytics", label: "অ্যানালিটিক্স", icon: <BarChart3 className="h-4 w-4" /> },
-      { to: "/admin/bookings", label: "বুকিং", icon: <Calendar className="h-4 w-4" /> },
+      { to: "/admin/service", label: "বুকিং", icon: <Calendar className="h-4 w-4" /> },
       { to: "/admin/requests", label: "সার্ভিস রিকোয়েস্ট", icon: <FileText className="h-4 w-4" /> },
       { to: "/admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
       { to: "/admin/approval-queue", label: "অনুমোদন কিউ", icon: <Inbox className="h-4 w-4" /> },
@@ -137,7 +137,6 @@ const NAV: NavGroup[] = [
     ],
   },
 ];
-
 const AdminLayout = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -632,13 +631,7 @@ const AdminLayout = () => {
               </div>
             </div>
 
-            <button
-              onClick={() => setPaletteOpen(true)}
-              className="hidden lg:flex items-center gap-1.5 h-9 px-2.5 rounded-xl bg-secondary/50 hover:bg-secondary text-[11px] text-muted-foreground"
-            >
-              <Search className="h-3.5 w-3.5" /> খুঁজুন
-              <kbd className="ml-1 rounded border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
-            </button>
+           
 
             <div className="flex items-center gap-1">
               <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title="খুঁজুন">

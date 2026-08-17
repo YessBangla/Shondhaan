@@ -239,6 +239,8 @@ const hasSidebar =
     "super_admin",
     "mart_admin",
     "job_admin",
+    "deal_admin",
+    "service_admin",
     "provider",
     "call_center",
     "representative",
@@ -370,6 +372,5 @@ const hasSidebar =
     </div>
   );
 };
-
 export default DesktopMegaMenu;
 
