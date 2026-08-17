@@ -3,20 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowRight, Clock, Flame, Sparkles, Tag, Star, Timer } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCmsOffers, CmsSpecialOffer } from "@/hooks/useCmsData";
-
-import offerAc from "@/assets/offer-ac.png";
-import offerCleaning from "@/assets/offer-cleaning.png";
-import offerSalon from "@/assets/offer-salon.png";
-import offerPlumbing from "@/assets/offer-plumbing.png";
-import offerPest from "@/assets/offer-pest.png";
-import offerWater from "@/assets/offer-water.png";
-import offerFridge from "@/assets/offer-fridge.png";
-import offerGarden from "@/assets/offer-garden.png";
-import offerElectric from "@/assets/offer-electric.png";
-import offerPaint from "@/assets/offer-paint.png";
-import offerWashing from "@/assets/offer-washing.png";
-import offerShifting from "@/assets/offer-shifting.png";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 type TabKey = "hot" | "new" | "deal" | "top";
 
@@ -27,199 +14,12 @@ const tabs: { key: TabKey; labelBn: string; labelEn: string; icon: typeof Flame;
   { key: "top", labelBn: "টপ", labelEn: "Top", icon: Star, color: "text-amber-500", activeGradient: "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-amber-500/40" },
 ];
 
-const allOffers: Record<TabKey, any[]> = {
-  hot: [
-    {
-      title_bn: "এসি সার্ভিসিং", title_en: "AC Servicing",
-      discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "গরমে আরাম পান — বিশেষ ছাড়!",
-      description_en: "Beat the heat — special discount!",
-      service_slug: "ac-service", image: offerAc,
-      gradient: "from-orange-500/40 via-orange-400/25 to-orange-300/10",
-      accent_color: "text-orange-600 dark:text-orange-400",
-      bg_accent: "bg-orange-500/10", border_accent: "border-orange-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "হোম ক্লিনিং", title_en: "Home Cleaning",
-      discount_bn: "১৫% ছাড়", discount_en: "15% OFF",
-      description_bn: "পরিষ্কার ঘর, সুস্থ পরিবার!",
-      description_en: "Clean home, healthy family!",
-      service_slug: "cleaning", image: offerCleaning,
-      gradient: "from-emerald-500/40 via-emerald-400/25 to-emerald-300/10",
-      accent_color: "text-emerald-600 dark:text-emerald-400",
-      bg_accent: "bg-emerald-500/10", border_accent: "border-emerald-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "সেলুন কেয়ার", title_en: "Salon Care",
-      discount_bn: "২৫% ছাড়", discount_en: "25% OFF",
-      description_bn: "নিজেকে প্যাম্পার করুন!",
-      description_en: "Pamper yourself!",
-      service_slug: "salon", image: offerSalon,
-      gradient: "from-pink-500/40 via-pink-400/25 to-pink-300/10",
-      accent_color: "text-pink-600 dark:text-pink-400",
-      bg_accent: "bg-pink-500/10", border_accent: "border-pink-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "প্লাম্বিং সার্ভিস", title_en: "Plumbing",
-      discount_bn: "১০% ছাড়", discount_en: "10% OFF",
-      description_bn: "পাইপ লিকেজ? দক্ষ প্লাম্বার!",
-      description_en: "Pipe issue? Expert plumber!",
-      service_slug: "plumbing", image: offerPlumbing,
-      gradient: "from-blue-500/40 via-blue-400/25 to-blue-300/10",
-      accent_color: "text-blue-600 dark:text-blue-400",
-      bg_accent: "bg-blue-500/10", border_accent: "border-blue-500/20",
-      expires_at: null,
-    },
-  ],
-  new: [
-    {
-      title_bn: "পেস্ট কন্ট্রোল", title_en: "Pest Control",
-      discount_bn: "৩০% ছাড়", discount_en: "30% OFF",
-      description_bn: "পোকামাকড় দূর করুন!",
-      description_en: "Eliminate pests — new service!",
-      service_slug: "pest-control", image: offerPest,
-      gradient: "from-teal-500/40 via-teal-400/25 to-teal-300/10",
-      accent_color: "text-teal-600 dark:text-teal-400",
-      bg_accent: "bg-teal-500/10", border_accent: "border-teal-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "ওয়াটার পিউরিফায়ার", title_en: "Water Purifier",
-      discount_bn: "১৫% ছাড়", discount_en: "15% OFF",
-      description_bn: "বিশুদ্ধ পানি নিশ্চিত করুন!",
-      description_en: "Ensure pure drinking water!",
-      service_slug: "water-purifier", image: offerWater,
-      gradient: "from-cyan-500/40 via-cyan-400/25 to-cyan-300/10",
-      accent_color: "text-cyan-600 dark:text-cyan-400",
-      bg_accent: "bg-cyan-500/10", border_accent: "border-cyan-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "ফ্রিজ সার্ভিসিং", title_en: "Fridge Service",
-      discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "ফ্রিজ ঠিক করুন — দ্রুত সার্ভিস!",
-      description_en: "Fridge repair — quick service!",
-      service_slug: "fridge-service", image: offerFridge,
-      gradient: "from-indigo-500/40 via-indigo-400/25 to-indigo-300/10",
-      accent_color: "text-indigo-600 dark:text-indigo-400",
-      bg_accent: "bg-indigo-500/10", border_accent: "border-indigo-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "গার্ডেনিং", title_en: "Gardening",
-      discount_bn: "১০% ছাড়", discount_en: "10% OFF",
-      description_bn: "বাগান পরিচর্যায় বিশেষ ছাড়!",
-      description_en: "Special discount on gardening!",
-      service_slug: "gardening", image: offerGarden,
-      gradient: "from-green-500/40 via-green-400/25 to-green-300/10",
-      accent_color: "text-green-600 dark:text-green-400",
-      bg_accent: "bg-green-500/10", border_accent: "border-green-500/20",
-      expires_at: null,
-    },
-  ],
-  deal: [
-    {
-      title_bn: "ইলেকট্রিশিয়ান", title_en: "Electrician",
-      discount_bn: "৩৫% ছাড়", discount_en: "35% OFF",
-      description_bn: "ইলেকট্রিক সমস্যায় বড় ছাড়!",
-      description_en: "Big savings on electrical!",
-      service_slug: "electrician", image: offerElectric,
-      gradient: "from-amber-500/40 via-amber-400/25 to-amber-300/10",
-      accent_color: "text-amber-600 dark:text-amber-400",
-      bg_accent: "bg-amber-500/10", border_accent: "border-amber-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "পেইন্টিং সার্ভিস", title_en: "Painting",
-      discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "ঘর রাঙান — সেরা দামে!",
-      description_en: "Paint your home — best price!",
-      service_slug: "painting", image: offerPaint,
-      gradient: "from-violet-500/40 via-violet-400/25 to-violet-300/10",
-      accent_color: "text-violet-600 dark:text-violet-400",
-      bg_accent: "bg-violet-500/10", border_accent: "border-violet-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "ওয়াশিং মেশিন", title_en: "Washing Machine",
-      discount_bn: "২৫% ছাড়", discount_en: "25% OFF",
-      description_bn: "ওয়াশিং মেশিন সার্ভিসিং!",
-      description_en: "Washing machine service deal!",
-      service_slug: "washing-machine", image: offerWashing,
-      gradient: "from-sky-500/40 via-sky-400/25 to-sky-300/10",
-      accent_color: "text-sky-600 dark:text-sky-400",
-      bg_accent: "bg-sky-500/10", border_accent: "border-sky-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "শিফটিং সার্ভিস", title_en: "Home Shifting",
-      discount_bn: "১৫% ছাড়", discount_en: "15% OFF",
-      description_bn: "বাসা বদলান সহজেই!",
-      description_en: "Shift your home easily!",
-      service_slug: "shifting", image: offerShifting,
-      gradient: "from-rose-500/40 via-rose-400/25 to-rose-300/10",
-      accent_color: "text-rose-600 dark:text-rose-400",
-      bg_accent: "bg-rose-500/10", border_accent: "border-rose-500/20",
-      expires_at: null,
-    },
-  ],
-  top: [
-    {
-      title_bn: "এসি সার্ভিসিং", title_en: "AC Servicing",
-      discount_bn: "২০% ছাড়", discount_en: "20% OFF",
-      description_bn: "সর্বাধিক জনপ্রিয় সার্ভিস!",
-      description_en: "Most popular service!",
-      service_slug: "ac-service", image: offerAc,
-      gradient: "from-orange-500/40 via-orange-400/25 to-orange-300/10",
-      accent_color: "text-orange-600 dark:text-orange-400",
-      bg_accent: "bg-orange-500/10", border_accent: "border-orange-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "ইলেকট্রিশিয়ান", title_en: "Electrician",
-      discount_bn: "১০% ছাড়", discount_en: "10% OFF",
-      description_bn: "সবচেয়ে বেশি অর্ডার হওয়া সার্ভিস!",
-      description_en: "Most ordered service!",
-      service_slug: "electrician", image: offerElectric,
-      gradient: "from-amber-500/40 via-amber-400/25 to-amber-300/10",
-      accent_color: "text-amber-600 dark:text-amber-400",
-      bg_accent: "bg-amber-500/10", border_accent: "border-amber-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "হোম ক্লিনিং", title_en: "Home Cleaning",
-      discount_bn: "১৫% ছাড়", discount_en: "15% OFF",
-      description_bn: "টপ রেটেড — এখনই বুক করুন!",
-      description_en: "Top rated — book now!",
-      service_slug: "cleaning", image: offerCleaning,
-      gradient: "from-emerald-500/40 via-emerald-400/25 to-emerald-300/10",
-      accent_color: "text-emerald-600 dark:text-emerald-400",
-      bg_accent: "bg-emerald-500/10", border_accent: "border-emerald-500/20",
-      expires_at: null,
-    },
-    {
-      title_bn: "সেলুন কেয়ার", title_en: "Salon Care",
-      discount_bn: "২৫% ছাড়", discount_en: "25% OFF",
-      description_bn: "কাস্টমার ফেভারিট সার্ভিস!",
-      description_en: "Customer favorite!",
-      service_slug: "salon", image: offerSalon,
-      gradient: "from-pink-500/40 via-pink-400/25 to-pink-300/10",
-      accent_color: "text-pink-600 dark:text-pink-400",
-      bg_accent: "bg-pink-500/10", border_accent: "border-pink-500/20",
-      expires_at: null,
-    },
-  ],
-};
-
 const useCountdown = (expiresAt: string | null) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   useEffect(() => {
     const deadline = expiresAt
       ? new Date(expiresAt).getTime()
-      : new Date().setHours(0, 0, 0, 0) + 7 * 86400000;
+      : new Date().setHours(0, 0, 0, 0) + 7 * 86400000; // Fallback to 7 days if null
     const tick = () => {
       const diff = Math.max(0, deadline - Date.now());
       setTimeLeft({
@@ -245,15 +45,15 @@ const TimeUnit = ({ value, label }: { value: number; label: string }) => (
   </div>
 );
 
-// Deterministic deadline per offer (stable across renders) when CMS doesn't provide one.
-// Cycles between 1–7 days from the start of today based on a hash of the slug.
+// Deterministic deadline per offer (stable across renders) when API doesn't provide one.
 const hashStr = (s: string) => {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
   return Math.abs(h);
 };
+
 const getOfferDeadline = (offer: any, fallbackKey: string): string => {
-  if (offer?.expires_at) return offer.expires_at;
+  if (offer?.expires_at || offer?.end_date) return offer.expires_at || offer.end_date;
   const key = offer?.service_slug || fallbackKey;
   const daysAhead = (hashStr(key) % 6) + 2; // 2–7 days
   const hoursOffset = hashStr(key + "h") % 24;
@@ -285,47 +85,111 @@ const OfferCountdown = ({ deadline, bn }: { deadline: string; bn: boolean }) => 
   );
 };
 
-// Map service slugs to images for CMS offers
-const slugImageMap: Record<string, string> = {
-  "ac-service": offerAc, "cleaning": offerCleaning, "salon": offerSalon,
-  "plumbing": offerPlumbing, "pest-control": offerPest, "water-purifier": offerWater,
-  "fridge-service": offerFridge, "gardening": offerGarden, "electrician": offerElectric,
-  "painting": offerPaint, "washing-machine": offerWashing, "shifting": offerShifting,
-  "mosquito-net": offerPest, "bike-servicing": offerPlumbing,
+type ServiceOfferApiItem = {
+  id?: number | string;
+  title?: string;
+  title_bn?: string | null;
+  description?: string | null;
+  description_bn?: string | null;
+  image_url?: string | null;
+  discount_type?: "percentage" | "fixed" | string;
+  discount_value?: number | string | null;
+  service_slug?: string | null;
+  service_id?: number | string | null;
+  category_id?: number | string | null;
+  is_active?: boolean | number | string | null;
+  is_featured?: boolean | number | string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  expires_at?: string | null;
+  badge?: string | null;
+  gradient?: string | null;
+  border_color?: string | null;
+  accent_color?: string | null;
+  bg_accent?: string | null;
+};
+
+const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
+  const discountType = String(offer.discount_type || "percentage");
+  const discountValue = Number(offer.discount_value ?? 0);
+  const titleBn = offer.title_bn || offer.title || "বিশেষ অফার";
+  const titleEn = offer.title || "Special Offer";
+  const descriptionBn = offer.description_bn || offer.description || "বিশেষ ছাড়ের সুযোগ";
+  const descriptionEn = offer.description || "Special discount available";
+  const discountLabel =
+    discountType === "fixed"
+      ? `৳${discountValue}`
+      : `${discountValue}${discountValue > 0 && discountValue <= 100 ? "%" : ""}`;
+
+  return {
+    id: offer.id ?? `api-offer-${index}`,
+    title_bn: titleBn,
+    title_en: titleEn,
+    discount_bn: `${discountLabel} ছাড়`,
+    discount_en: `${discountLabel} OFF`,
+    description_bn: descriptionBn,
+    description_en: descriptionEn,
+    service_slug: offer.service_slug || (offer.service_id ? `service-${offer.service_id}` : ""),
+    image: offer.image_url || "", // No fallback image, will hide if empty
+    gradient: offer.gradient || "from-primary/15 via-primary/5 to-transparent",
+    accent_color: offer.accent_color || "text-primary",
+    bg_accent: offer.bg_accent || "bg-primary/10",
+    border_accent: offer.border_color || "border-primary/20",
+    expires_at: offer.expires_at || offer.end_date || null,
+  };
 };
 
 const SpecialOffers = () => { 
   const navigate = useNavigate();
   const { language } = useLanguage();
-  const { data: cmsOffers } = useCmsOffers();
   const bn = language === "bn";
   const [activeTab, setActiveTab] = useState<TabKey>("hot");
+  const [apiOffers, setApiOffers] = useState<any[]>([]);
+  const [loadingOffers, setLoadingOffers] = useState(true);
 
-  // Enrich CMS offers with images and styling, then pad to 4 with fallbacks
-  const cmsActive = cmsOffers && cmsOffers.length > 0
-    ? cmsOffers.filter((o: CmsSpecialOffer) => o.is_active).map((o) => ({
-        ...o,
-        image: slugImageMap[o.service_slug || ""] || offerAc,
-        gradient: o.gradient?.startsWith("from-") ? o.gradient : "from-primary/15 via-primary/5 to-transparent",
-        accent_color: o.accent_color || "text-primary",
-        bg_accent: o.bg_accent || "bg-primary/10",
-        border_accent: o.border_color || "border-primary/20",
-      }))
-    : null;
+  useEffect(() => {
+    let ignore = false;
 
-  // Always use tabbed fallback system; merge CMS offers into "hot" tab if they exist
-  const tabOffers = { ...allOffers };
-  if (cmsActive && cmsActive.length > 0) {
-    // Replace hot tab with CMS offers, pad to 4
-    const padded = [...cmsActive, ...allOffers.hot].slice(0, 4);
-    tabOffers.hot = padded;
-  }
+    const fetchLiveOffers = async () => {
+      try {
+        setLoadingOffers(true);
+        const res = await fetch(`${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/service-offers?is_active=true`);
+        const json = await res.json().catch(() => ({}));
+        const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
+        if (!ignore) {
+          // Filter active offers and map them
+          const activeRows = rows.filter((offer: any) => offer?.is_active !== false && offer?.is_active !== 0);
+          setApiOffers(activeRows.map(normalizeApiOffer));
+        }
+      } catch (error) {
+        console.error("Failed to load service offers:", error);
+        if (!ignore) setApiOffers([]);
+      } finally {
+        if (!ignore) setLoadingOffers(false);
+      }
+    };
+
+    fetchLiveOffers();
+    return () => {
+      ignore = true;
+    };
+  }, []);
+
+  // For demonstration, we populate all tabs with the same live offers.
+  // You can later add a 'tab' or 'category' column to your DB to filter these properly.
+  const tabOffers: Record<TabKey, any[]> = {
+    hot: apiOffers,
+    new: apiOffers,
+    deal: apiOffers,
+    top: apiOffers.filter(o => o.is_featured) // Example: 'top' tab shows featured
+  };
 
   const offers = tabOffers[activeTab];
   const firstExpiry = offers[0]?.expires_at || null;
   const { days, hours, minutes, seconds } = useCountdown(firstExpiry);
 
-  if (offers.length === 0) return null;
+  // If API is done loading and returns no offers, hide the whole section
+  if (!loadingOffers && apiOffers.length === 0) return null;
 
   return (
     <motion.section
@@ -338,7 +202,7 @@ const SpecialOffers = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-heading text-lg md:text-2xl font-bold text-foreground">
-          {bn ? "🔥 স্পেশাল অফার" : "🔥 Special Offers"}
+          {bn ? "স্পেশাল অফার" : "Special Offers"}
         </h2>
         <div className="flex items-center gap-1">
           <Clock className="h-3 w-3 text-destructive shrink-0" />
@@ -396,20 +260,35 @@ const SpecialOffers = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.25, delay: i * 0.06 }}
-              onClick={() => offer.service_slug && navigate(`/service/${offer.service_slug}`)}
+              onClick={() => {
+                if (offer.service_slug) {
+                  navigate(`/service/${offer.service_slug}`);
+                } else {
+                  navigate("/all-services");
+                }
+              }}
               className={`cursor-pointer group relative rounded-2xl bg-card border-2 ${offer.border_accent} overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5`}
             >
-              {/* Image */}
+              {/* Image / Gradient Header */}
               <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-[88px] md:h-28 overflow-hidden`}>
                 {/* Decorative blobs */}
                 <div className={`absolute -top-6 -left-6 w-20 h-20 rounded-full ${offer.bg_accent} blur-2xl opacity-70`} />
                 <div className={`absolute -bottom-8 -right-4 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-50`} />
-                <img
-                  src={offer.image}
-                  alt=""
-                  loading="lazy"
-                  className="relative z-10 h-14 w-14 md:h-16 md:w-16 object-contain drop-shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300"
-                />
+                
+                {/* Render image only if available */}
+                {offer.image ? (
+                  <img
+                    src={offer.image}
+                    alt=""
+                    loading="lazy"
+                    className="relative z-10 h-14 w-14 md:h-16 md:w-16 object-contain drop-shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="relative z-10 h-14 w-14 md:h-16 md:w-16 flex items-center justify-center">
+                    <Tag className="h-8 w-8 text-muted-foreground/40" />
+                  </div>
+                )}
+
                 <span className={`absolute top-1.5 right-1.5 z-10 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[9px] md:text-[10px] font-extrabold ${offer.accent_color} border ${offer.border_accent} shadow-md`}>
                   {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
                 </span>

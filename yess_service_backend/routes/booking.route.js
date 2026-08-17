@@ -36,9 +36,6 @@ router.patch("/:id/status", updateBookingStatus);
 router.patch("/:id/payment-status", updatePaymentStatus);
 router.patch("/:id/assign-provider", assignBookingProvider);
 
-/**
- * Generic update route after specific routes
- */
 router.put("/:id", updateBooking);
 router.patch("/:id", updateBooking);
 

@@ -24,6 +24,7 @@ import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
 import ForYouSection from "@/components/ForYouSection";
+import SpecialOffers from "@/components/SpecialOffers";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 
@@ -372,6 +373,10 @@ const Index = () => {
         />
 
         <MobilePromoBanner />
+
+       <div className="app-container relative z-10">
+         <SpecialOffers />
+       </div>
 
         {/* Service Section */}
         <div className="relative">

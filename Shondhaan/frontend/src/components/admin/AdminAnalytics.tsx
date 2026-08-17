@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
   XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, AreaChart, Area, ReferenceLine
@@ -77,15 +77,14 @@ interface DealListingStat {
   price: number;
 }
 
-// ── সন্ধান জব: served by the separate jobs backend (MySQL), not Supabase ──
 interface PackageTransaction {
   id: number;
   package_id: number;
   amount: number;
-  status: string; // pending | success | failed | cancelled
+  status: string;
   created_at: string;
   employer_user_id: number;
-  package_name: string | null; // joined from packages table, null if deleted or unmatched
+  package_name: string | null;
 }
 
 interface JobProfileRecord {
@@ -134,6 +133,13 @@ function exportCSV(data: Record<string, any>[], filename: string) {
 }
 
 const AdminAnalytics = () => {
+  const { user } = useAuth();
+  const mysqlRole = getMySqlAuth()?.user?.type;
+  const isServiceAdmin =
+    mysqlRole === "service_admin" ||
+    user?.user_metadata?.role === "service_admin" ||
+    user?.role === "service_admin";
+
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [repEarnings, setRepEarnings] = useState<RepEarning[]>([]);
@@ -145,68 +151,131 @@ const AdminAnalytics = () => {
   const [employerProfiles, setEmployerProfiles] = useState<JobProfileRecord[]>([]);
   const [packagesCatalog, setPackagesCatalog] = useState<PackageDef[]>([]);
   const [jobStatsError, setJobStatsError] = useState<string | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState<"7d" | "30d" | "6m" | "1y">("30d");
 
-  // সর্বোচ্চ মূল্যের প্যাকেজ — from the packages catalog (CMS), not from
-  // transactions. This is a reference point ("what we currently offer"),
-  // separate from packageIncome ("what we've actually collected").
+  // New state to hold data directly from the chart endpoints
+  const [stats, setStats] = useState({
+    totalRevenue: 0, totalBookings: 0, totalRequests: 0, emergencyCount: 0,
+    revenueGrowth: 0, bookingGrowth: 0
+  });
+  const [revenueTrendData, setRevenueTrendData] = useState<any[]>([]);
+
   const highestPackage = useMemo(() => {
     const active = packagesCatalog.filter(p => p.is_active === 1 || p.is_active === undefined);
     if (active.length === 0) return null;
     return active.reduce((max, p) => (p.price > max.price ? p : max), active[0]);
   }, [packagesCatalog]);
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (currentPeriod: string) => {
     setLoading(true);
-    const [{ data: bData }, { data: rData }, { data: eData }, { data: repData }, { data: mData }, { data: dData }] = await Promise.all([
-      supabase.from("bookings").select("id, created_at, package_price, status, service_title, customer_address, is_emergency").order("created_at", { ascending: false }),
-      (supabase as any).from("service_requests").select("id, created_at, division, district, status, payment_amount, payment_status, commission_amount, rep_earning, assigned_rep_id").order("created_at", { ascending: false }),
-      (supabase as any).from("rep_earnings").select("id, created_at, total_amount, commission_amount, rep_earning, receipt_number, rep_id").order("created_at", { ascending: false }),
-      supabase.from("area_representatives").select("id, name, user_id"),
-      supabase.from("mart_orders").select("id, created_at, total, subtotal, status, payment_method, payment_status, shipping_division").order("created_at", { ascending: false }),
-      supabase.from("deal_listings").select("id, created_at, status, views_count, inquiries_count, is_featured, price").order("created_at", { ascending: false }),
-    ]);
-    if (bData) setBookings(bData);
-    if (rData) setRequests(rData as any);
-    if (eData) setRepEarnings(eData as any);
-    if (repData) setAreaReps(repData as any);
-    if (mData) setMartOrders(mData as MartOrder[]);
-    if (dData) setDealListings(dData as DealListingStat[]);
-
-    // সন্ধান জব — separate backend, so fetched independently and its
-    // failure shouldn't block the rest of the dashboard from rendering.
     try {
-      setJobStatsError(null);
-      const auth = getMySqlAuth();
-      const token = auth?.token || null;
-      const [statsRes, packagesRes] = await Promise.all([
-        fetch(`${JOBS_API_URL}/api/admin/job-stats`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }),
-        fetch(`${JOBS_API_URL}/api/packages/admin/all`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-        }),
+      // 1. Fetch Service Admin Dashboard Data from REST API
+      const base = "http://localhost:3000/api/service-admin/dashboard";
+      const [statsRes, recentRes, bChartRes, rChartRes] = await Promise.all([
+        fetch(`${base}/stats?period=${currentPeriod}`).then(r => r.json()).catch(() => null),
+        fetch(`${base}/recent-bookings?period=${currentPeriod}`).then(r => r.json()).catch(() => []),
+        fetch(`${base}/booking-chart?period=${currentPeriod}`).then(r => r.json()).catch(() => []),
+        fetch(`${base}/revenue-chart?period=${currentPeriod}`).then(r => r.json()).catch(() => []),
       ]);
-      if (!statsRes.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${statsRes.status})`);
-      const jobData: JobStatsResponse = await statsRes.json();
-      setPackageTransactions(jobData.packageTransactions || []);
-      setJobseekerProfiles(jobData.jobseekerProfiles || []);
-      setEmployerProfiles(jobData.employerProfiles || []);
 
-      if (packagesRes.ok) {
-        const pkgData: PackageDef[] = await packagesRes.json();
-        setPackagesCatalog(pkgData || []);
+      // Map Stats
+      const s = statsRes?.data || statsRes;
+      if (s) {
+        setStats({
+          totalRevenue: s.totalRevenue ?? 0,
+          totalBookings: s.totalBookings ?? 0,
+          totalRequests: s.totalRequests ?? 0,
+          emergencyCount: s.emergencyCount ?? 0,
+          revenueGrowth: s.revenueGrowth ?? 0,
+          bookingGrowth: s.bookingGrowth ?? 0,
+        });
       }
+
+      // Map Recent Bookings (fallback for lists and distributions)
+      const rb = Array.isArray(recentRes) ? recentRes : (recentRes?.data || []);
+      setBookings(rb);
+
+      // Map Charts
+      const bc = Array.isArray(bChartRes) ? bChartRes : (bChartRes?.data || []);
+      const rc = Array.isArray(rChartRes) ? rChartRes : (rChartRes?.data || []);
+
+      const chartMap: Record<string, any> = {};
+      
+      // Updated to map 'total' to 'bookings'
+      bc.forEach((item: any) => {
+        const date = item.date || item.snapshot_date;
+        if (date) chartMap[date] = { date, bookings: Number(item.total || item.bookings || item.count || 0), revenue: 0 };
+      });
+      
+      rc.forEach((item: any) => {
+        const date = item.date || item.snapshot_date;
+        if (date) {
+          if (!chartMap[date]) chartMap[date] = { date, bookings: 0, revenue: 0 };
+          chartMap[date].revenue = Number(item.revenue || item.total || item.amount || 0);
+        }
+      });
+
+      const mergedChart = Object.keys(chartMap).map(date => ({
+        originalDate: new Date(date),
+        name: new Date(date).toLocaleDateString("bn-BD", { day: "numeric", month: "short" }),
+        রেভিনিউ: chartMap[date].revenue,
+        বুকিং: chartMap[date].bookings,
+      })).sort((a, b) => a.originalDate.getTime() - b.originalDate.getTime());
+
+      setRevenueTrendData(mergedChart);
+
+      if (!isServiceAdmin) {
+        // 2. Fetch Jobs Data (Separate backend)
+        setJobStatsError(null);
+        const auth = getMySqlAuth();
+        const token = auth?.token || null;
+        const [jobStatsRes, packagesRes] = await Promise.all([
+          fetch(`${JOBS_API_URL}/api/admin/job-stats`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }),
+          fetch(`${JOBS_API_URL}/api/packages/admin/all`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+          }),
+        ]);
+
+        if (!jobStatsRes.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${jobStatsRes.status})`);
+        const jobData: JobStatsResponse = await jobStatsRes.json();
+        setPackageTransactions(jobData.packageTransactions || []);
+        setJobseekerProfiles(jobData.jobseekerProfiles || []);
+        setEmployerProfiles(jobData.employerProfiles || []);
+
+        if (packagesRes.ok) {
+          const pkgData: PackageDef[] = await packagesRes.json();
+          setPackagesCatalog(pkgData || []);
+        }
+      } else {
+        setPackageTransactions([]);
+        setJobseekerProfiles([]);
+        setEmployerProfiles([]);
+        setPackagesCatalog([]);
+        setJobStatsError(null);
+      }
+
+      // 3. Reset states we no longer have endpoints for (to prevent old data from showing)
+      setRequests([]);
+      setRepEarnings([]);
+      setAreaReps([]);
+      setMartOrders([]);
+      setDealListings([]);
+
     } catch (err: any) {
-      console.error("Job stats fetch failed:", err);
-      setJobStatsError(err?.message || "জব স্ট্যাটস লোড করা যায়নি");
+      console.error("Analytics fetch failed:", err);
+      setJobStatsError(err?.message || "ডেটা লোড করা যায়নি");
+    } finally {
+      setLoading(false);
     }
+  }, [isServiceAdmin]);
 
-    setLoading(false);
-  }, []);
-
-  useEffect(() => { fetchData(); }, [fetchData]);
+  useEffect(() => { 
+    fetchData(period); 
+  }, [fetchData, period]);
 
   const cutoff = useMemo(() => {
     const now = new Date();
@@ -217,58 +286,38 @@ const AdminAnalytics = () => {
   }, [period]);
 
   const filteredBookings = useMemo(() => bookings.filter(b => new Date(b.created_at) >= cutoff), [bookings, cutoff]);
-  const filteredRequests = useMemo(() => requests.filter(r => new Date(r.created_at) >= cutoff), [requests, cutoff]);
-  const filteredEarnings = useMemo(() => repEarnings.filter(e => new Date(e.created_at) >= cutoff), [repEarnings, cutoff]);
-  const filteredMartOrders = useMemo(() => martOrders.filter(o => new Date(o.created_at) >= cutoff), [martOrders, cutoff]);
-  const filteredDealListings = useMemo(() => dealListings.filter(d => d.created_at && new Date(d.created_at) >= cutoff), [dealListings, cutoff]);
   const filteredPackageTxns = useMemo(() => packageTransactions.filter(t => new Date(t.created_at) >= cutoff), [packageTransactions, cutoff]);
   const filteredJobseekers = useMemo(() => jobseekerProfiles.filter(p => new Date(p.created_at) >= cutoff), [jobseekerProfiles, cutoff]);
   const filteredEmployers = useMemo(() => employerProfiles.filter(p => new Date(p.created_at) >= cutoff), [employerProfiles, cutoff]);
 
-  // Summary stats
-  const stats = useMemo(() => {
-    const totalRevenue = filteredBookings.reduce((sum, b) => sum + b.package_price, 0);
-    const totalBookings = filteredBookings.length;
-    const totalRequests = filteredRequests.length;
-    const emergencyCount = filteredBookings.filter(b => b.is_emergency).length;
-    const periodMs = new Date().getTime() - cutoff.getTime();
-    const prevCutoff = new Date(cutoff.getTime() - periodMs);
-    const prevBookings = bookings.filter(b => { const d = new Date(b.created_at); return d >= prevCutoff && d < cutoff; });
-    const prevRevenue = prevBookings.reduce((sum, b) => sum + b.package_price, 0);
-    const revenueGrowth = prevRevenue > 0 ? Math.round(((totalRevenue - prevRevenue) / prevRevenue) * 100) : 0;
-    const bookingGrowth = prevBookings.length > 0 ? Math.round(((totalBookings - prevBookings.length) / prevBookings.length) * 100) : 0;
-    return { totalRevenue, totalBookings, totalRequests, emergencyCount, revenueGrowth, bookingGrowth };
-  }, [filteredBookings, filteredRequests, bookings, cutoff]);
+  // Calculate missing distributions from the recent bookings array
+  const statusDist = useMemo(() => {
+    const map = new Map<string, number>();
+    filteredBookings.forEach(b => map.set(b.status, (map.get(b.status) || 0) + 1));
+    return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
+  }, [filteredBookings]);
 
-  const commissionStats = useMemo(() => {
-    const paidRequests = filteredRequests.filter(r => r.payment_status === "paid");
-    const totalServiceRevenue = paidRequests.reduce((s, r) => s + (r.payment_amount || 0), 0);
-    const totalCommission = paidRequests.reduce((s, r) => s + (r.commission_amount || 0), 0);
-    const totalRepEarnings = paidRequests.reduce((s, r) => s + (r.rep_earning || 0), 0);
-    const totalEarningRecords = filteredEarnings.length;
-    return { totalServiceRevenue, totalCommission, totalRepEarnings, totalEarningRecords };
-  }, [filteredRequests, filteredEarnings]);
+  const topServices = useMemo(() => {
+    const map = new Map<string, { count: number; revenue: number }>();
 
-  // Mart stats
-  const martStats = useMemo(() => {
-    const totalMartRevenue = filteredMartOrders.reduce((s, o) => s + o.total, 0);
-    const totalMartOrders = filteredMartOrders.length;
-    const deliveredOrders = filteredMartOrders.filter(o => o.status === "delivered").length;
-    const cancelledOrders = filteredMartOrders.filter(o => o.status === "cancelled").length;
-    return { totalMartRevenue, totalMartOrders, deliveredOrders, cancelledOrders };
-  }, [filteredMartOrders]);
+    filteredBookings.forEach(b => {
+      const serviceName = String(b?.service_title ?? "Unknown service").trim() || "Unknown service";
+      const entry = map.get(serviceName) || { count: 0, revenue: 0 };
+      entry.count++;
+      entry.revenue += Number(b?.package_price ?? 0);
+      map.set(serviceName, entry);
+    });
 
-  // Deal stats
-  const dealStats = useMemo(() => {
-    const totalListings = filteredDealListings.length;
-    const activeListings = filteredDealListings.filter(d => d.status === "active").length;
-    const totalViews = filteredDealListings.reduce((s, d) => s + (d.views_count || 0), 0);
-    const totalInquiries = filteredDealListings.reduce((s, d) => s + (d.inquiries_count || 0), 0);
-    const featuredCount = filteredDealListings.filter(d => d.is_featured).length;
-    return { totalListings, activeListings, totalViews, totalInquiries, featuredCount };
-  }, [filteredDealListings]);
+    return Array.from(map.entries())
+      .sort(([, a], [, b]) => b.count - a.count)
+      .slice(0, 8)
+      .map(([name, val]) => ({
+        name: String(name ?? "Unknown service").length > 15 ? String(name ?? "Unknown service").slice(0, 15) + "…" : String(name ?? "Unknown service"),
+        বুকিং: val.count,
+        রেভিনিউ: val.revenue,
+      }));
+  }, [filteredBookings]);
 
-  // সন্ধান জব stats — package income only counts successful payments
   const jobStats = useMemo(() => {
     const successTxns = filteredPackageTxns.filter(t => t.status === "success");
     const packageIncome = successTxns.reduce((s, t) => s + Number(t.amount || 0), 0);
@@ -278,94 +327,6 @@ const AdminAnalytics = () => {
     return { packageIncome, totalPurchases, jobseekerCount, employerCount };
   }, [filteredPackageTxns, filteredJobseekers, filteredEmployers]);
 
-  // Commission trend
-  const commissionTrend = useMemo(() => {
-    const useMonthly = period === "6m" || period === "1y";
-    const map = new Map<string, { commission: number; repEarning: number; total: number }>();
-    filteredRequests.filter(r => r.payment_status === "paid").forEach(r => {
-      const d = new Date(r.created_at);
-      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
-      const entry = map.get(key) || { commission: 0, repEarning: 0, total: 0 };
-      entry.commission += r.commission_amount || 0;
-      entry.repEarning += r.rep_earning || 0;
-      entry.total += r.payment_amount || 0;
-      map.set(key, entry);
-    });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
-      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
-      return { name: label, কমিশন: val.commission, প্রতিনিধি_আয়: val.repEarning, মোট: val.total };
-    });
-  }, [filteredRequests, period]);
-
-  // Revenue trend
-  const revenueTrend = useMemo(() => {
-    const useMonthly = period === "6m" || period === "1y";
-    const map = new Map<string, { revenue: number; count: number }>();
-    filteredBookings.forEach(b => {
-      const d = new Date(b.created_at);
-      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
-      const entry = map.get(key) || { revenue: 0, count: 0 };
-      entry.revenue += b.package_price;
-      entry.count++;
-      map.set(key, entry);
-    });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
-      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
-      return { name: label, রেভিনিউ: val.revenue, বুকিং: val.count };
-    });
-  }, [filteredBookings, period]);
-
-  // Mart order trend
-  const martOrderTrend = useMemo(() => {
-    const useMonthly = period === "6m" || period === "1y";
-    const map = new Map<string, { revenue: number; count: number }>();
-    filteredMartOrders.forEach(o => {
-      const d = new Date(o.created_at);
-      const key = useMonthly ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}` : d.toISOString().slice(0, 10);
-      const entry = map.get(key) || { revenue: 0, count: 0 };
-      entry.revenue += o.total;
-      entry.count++;
-      map.set(key, entry);
-    });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
-      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
-      return { name: label, রেভিনিউ: val.revenue, অর্ডার: val.count };
-    });
-  }, [filteredMartOrders, period]);
-
-  // Mart payment method breakdown
-  const martPaymentMethods = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredMartOrders.forEach(o => map.set(o.payment_method, (map.get(o.payment_method) || 0) + 1));
-    return Array.from(map.entries()).map(([name, value]) => ({ name, value }));
-  }, [filteredMartOrders]);
-
-  // Mart order status distribution
-  const martStatusDist = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredMartOrders.forEach(o => map.set(o.status, (map.get(o.status) || 0) + 1));
-    return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
-  }, [filteredMartOrders]);
-
-  // Deal listing trend
-  const dealListingTrend = useMemo(() => {
-    const useMonthly = period === "6m" || period === "1y";
-    const map = new Map<string, { count: number; views: number }>();
-    filteredDealListings.forEach(d => {
-      const dt = new Date(d.created_at!);
-      const key = useMonthly ? `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}` : dt.toISOString().slice(0, 10);
-      const entry = map.get(key) || { count: 0, views: 0 };
-      entry.count++;
-      entry.views += d.views_count || 0;
-      map.set(key, entry);
-    });
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([key, val]) => {
-      const label = useMonthly ? bnMonths[parseInt(key.split("-")[1]) - 1] + " " + key.split("-")[0].slice(2) : new Date(key).toLocaleDateString("bn-BD", { day: "numeric", month: "short" });
-      return { name: label, বিজ্ঞাপন: val.count, ভিউ: val.views };
-    });
-  }, [filteredDealListings, period]);
-
-  // সন্ধান জব — package income & purchase count trend
   const jobPackageTrend = useMemo(() => {
     const useMonthly = period === "6m" || period === "1y";
     const map = new Map<string, { income: number; count: number }>();
@@ -383,7 +344,6 @@ const AdminAnalytics = () => {
     });
   }, [filteredPackageTxns, period]);
 
-  // সন্ধান জব — income grouped by package name (success only)
   const jobIncomeByPackage = useMemo(() => {
     const map = new Map<string, number>();
     filteredPackageTxns.filter(t => t.status === "success").forEach(t => {
@@ -398,7 +358,6 @@ const AdminAnalytics = () => {
       }));
   }, [filteredPackageTxns]);
 
-  // সন্ধান জব — jobseeker vs employer signup trend
   const jobUserTrend = useMemo(() => {
     const useMonthly = period === "6m" || period === "1y";
     const map = new Map<string, { jobseeker: number; employer: number }>();
@@ -422,84 +381,15 @@ const AdminAnalytics = () => {
     });
   }, [filteredJobseekers, filteredEmployers, period]);
 
-  // সন্ধান জব — package transaction status distribution
   const jobTxnStatusDist = useMemo(() => {
     const map = new Map<string, number>();
     filteredPackageTxns.forEach(t => map.set(t.status, (map.get(t.status) || 0) + 1));
     return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
   }, [filteredPackageTxns]);
 
-  // Booking status distribution
-  const statusDist = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredBookings.forEach(b => map.set(b.status, (map.get(b.status) || 0) + 1));
-    return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
-  }, [filteredBookings]);
-
-  // Top services
-  const topServices = useMemo(() => {
-    const map = new Map<string, { count: number; revenue: number }>();
-    filteredBookings.forEach(b => {
-      const entry = map.get(b.service_title) || { count: 0, revenue: 0 };
-      entry.count++;
-      entry.revenue += b.package_price;
-      map.set(b.service_title, entry);
-    });
-    return Array.from(map.entries()).sort(([, a], [, b]) => b.count - a.count).slice(0, 8).map(([name, val]) => ({ name: name.length > 15 ? name.slice(0, 15) + "…" : name, বুকিং: val.count, রেভিনিউ: val.revenue }));
-  }, [filteredBookings]);
-
-  // Area-wise requests
-  const areaData = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredRequests.forEach(r => map.set(r.division, (map.get(r.division) || 0) + 1));
-    return Array.from(map.entries()).sort(([, a], [, b]) => b - a).map(([name, value]) => ({ name, value }));
-  }, [filteredRequests]);
-
-  // District breakdown
-  const districtData = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredRequests.forEach(r => map.set(r.district, (map.get(r.district) || 0) + 1));
-    return Array.from(map.entries()).sort(([, a], [, b]) => b - a).slice(0, 10).map(([name, রিকোয়েস্ট]) => ({ name, রিকোয়েস্ট }));
-  }, [filteredRequests]);
-
-  // Request status distribution
-  const reqStatusDist = useMemo(() => {
-    const map = new Map<string, number>();
-    filteredRequests.forEach(r => map.set(r.status, (map.get(r.status) || 0) + 1));
-    return Array.from(map.entries()).map(([status, count]) => ({ name: statusLabels[status] || status, value: count }));
-  }, [filteredRequests]);
-
-  // Rep-wise earnings breakdown
-  const repBreakdown = useMemo(() => {
-    const repMap = new Map<string, { name: string; earning: number; commission: number; total: number; count: number }>();
-    filteredEarnings.forEach(e => {
-      const rep = areaReps.find(r => r.id === e.rep_id || r.user_id === e.rep_id);
-      const repName = rep?.name || e.rep_id?.slice(0, 8) || "অজানা";
-      const entry = repMap.get(repName) || { name: repName, earning: 0, commission: 0, total: 0, count: 0 };
-      entry.earning += e.rep_earning;
-      entry.commission += e.commission_amount;
-      entry.total += e.total_amount;
-      entry.count++;
-      repMap.set(repName, entry);
-    });
-    return Array.from(repMap.values()).sort((a, b) => b.earning - a.earning).map(v => ({
-      name: v.name.length > 12 ? v.name.slice(0, 12) + "…" : v.name,
-      আয়: Math.round(v.earning), কমিশন: Math.round(v.commission), লেনদেন: v.count,
-    }));
-  }, [filteredEarnings, areaReps]);
-
-  // Export handlers
   const exportBookingReport = () => exportCSV(filteredBookings.map(b => ({
     সার্ভিস: b.service_title, মূল্য: b.package_price, স্ট্যাটাস: b.status, তারিখ: b.created_at.slice(0, 10), জরুরি: b.is_emergency ? "হ্যাঁ" : "না"
   })), "booking_report");
-
-  const exportRequestReport = () => exportCSV(filteredRequests.map(r => ({
-    বিভাগ: r.division, জেলা: r.district, স্ট্যাটাস: r.status, পেমেন্ট: r.payment_amount, কমিশন: r.commission_amount, প্রতিনিধি_আয়: r.rep_earning, তারিখ: r.created_at.slice(0, 10)
-  })), "request_report");
-
-  const exportMartReport = () => exportCSV(filteredMartOrders.map(o => ({
-    অর্ডার_আইডি: o.id.slice(0, 8), মোট: o.total, স্ট্যাটাস: o.status, পেমেন্ট_মেথড: o.payment_method, পেমেন্ট_স্ট্যাটাস: o.payment_status, তারিখ: o.created_at.slice(0, 10)
-  })), "mart_order_report");
 
   const exportJobPackageReport = () => exportCSV(filteredPackageTxns.map(t => ({
     লেনদেন_আইডি: t.id, প্যাকেজ: t.package_name || `#${t.package_id}`, পরিমাণ: t.amount,
@@ -522,7 +412,7 @@ const AdminAnalytics = () => {
               </button>
             ))}
           </div>
-          <button onClick={fetchData} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary">
+          <button onClick={() => fetchData(period)} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-foreground hover:bg-secondary">
             <RefreshCw className="h-3.5 w-3.5" /> রিফ্রেশ
           </button>
         </div>
@@ -531,10 +421,9 @@ const AdminAnalytics = () => {
       <Tabs defaultValue="service" className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto flex-nowrap h-auto p-1">
           <TabsTrigger value="service" className="text-xs"><ShoppingCart className="h-3.5 w-3.5 mr-1" /> সার্ভিস ও বুকিং</TabsTrigger>
-          <TabsTrigger value="commission" className="text-xs"><Wallet className="h-3.5 w-3.5 mr-1" /> কমিশন ও আয়</TabsTrigger>
-          <TabsTrigger value="mart" className="text-xs"><Package className="h-3.5 w-3.5 mr-1" /> সন্ধান মার্ট</TabsTrigger>
-          <TabsTrigger value="deal" className="text-xs"><Handshake className="h-3.5 w-3.5 mr-1" /> সন্ধান ডিল</TabsTrigger>
-          <TabsTrigger value="job" className="text-xs"><Briefcase className="h-3.5 w-3.5 mr-1" /> সন্ধান জব</TabsTrigger>
+          {!isServiceAdmin && (
+            <TabsTrigger value="job" className="text-xs"><Briefcase className="h-3.5 w-3.5 mr-1" /> সন্ধান জব</TabsTrigger>
+          )}
         </TabsList>
 
         {/* ── সার্ভিস ও বুকিং ── */}
@@ -549,11 +438,11 @@ const AdminAnalytics = () => {
             <SummaryCard icon={MapPin} label="সার্ভিস রিকোয়েস্ট" value={toBnNum(stats.totalRequests)} color="text-blue-600" bgColor="bg-blue-500/10" />
             <SummaryCard icon={Users} label="জরুরি বুকিং" value={toBnNum(stats.emergencyCount)} color="text-red-600" bgColor="bg-red-500/10" />
           </div>
-
+          
           <ChartCard title="রেভিনিউ ও বুকিং ট্রেন্ড" icon={TrendingUp}>
-            {revenueTrend.length > 0 ? (
+            {revenueTrendData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={revenueTrend}>
+                <AreaChart data={revenueTrendData.map(({ originalDate, ...rest }) => rest)}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -586,58 +475,16 @@ const AdminAnalytics = () => {
               ) : <EmptyChart />}
             </ChartCard>
 
-            <ChartCard title="রিকোয়েস্ট স্ট্যাটাস" icon={MapPin}>
-              {reqStatusDist.length > 0 ? (
+            <ChartCard title="জনপ্রিয় সার্ভিসসমূহ" icon={ShoppingCart}>
+              {topServices.length > 0 ? (
                 <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie data={reqStatusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
-                      {reqStatusDist.map((_, i) => <Cell key={i} fill={COLORS[(i + 3) % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : <EmptyChart />}
-            </ChartCard>
-          </div>
-
-          <ChartCard title="জনপ্রিয় সার্ভিসসমূহ" icon={ShoppingCart}>
-            {topServices.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={topServices} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={100} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="বুকিং" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <EmptyChart />}
-          </ChartCard>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="বিভাগভিত্তিক রিকোয়েস্ট" icon={MapPin}>
-              {areaData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie data={areaData} cx="50%" cy="50%" outerRadius={85} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
-                      {areaData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : <EmptyChart />}
-            </ChartCard>
-
-            <ChartCard title="শীর্ষ ১০ জেলা (রিকোয়েস্ট)" icon={MapPin}>
-              {districtData.length > 0 ? (
-                <ResponsiveContainer width="100%" height={260}>
-                  <BarChart data={districtData}>
+                  <BarChart data={topServices} layout="vertical">
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="name" tick={{ fontSize: 9 }} angle={-30} textAnchor="end" height={50} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={100} stroke="hsl(var(--muted-foreground))" />
                     <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="রিকোয়েস্ট" fill="hsl(199, 89%, 48%)" radius={[4, 4, 0, 0]} />
+                    <Legend wrapperStyle={{ fontSize: "11px" }} />
+                    <Bar dataKey="বুকিং" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
                   </BarChart>
                 </ResponsiveContainer>
               ) : <EmptyChart />}
@@ -645,252 +492,121 @@ const AdminAnalytics = () => {
           </div>
         </TabsContent>
 
-        {/* ── কমিশন ও আয় ── */}
-        <TabsContent value="commission" className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={exportRequestReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <SummaryCard icon={Wallet} label="সার্ভিস রেভিনিউ" value={`৳${toBnNum(commissionStats.totalServiceRevenue)}`} color="text-primary" bgColor="bg-primary/10" />
-            <SummaryCard icon={Receipt} label="কোম্পানি কমিশন" value={`৳${toBnNum(commissionStats.totalCommission)}`} color="text-green-600" bgColor="bg-green-500/10" />
-            <SummaryCard icon={DollarSign} label="প্রতিনিধি আয়" value={`৳${toBnNum(commissionStats.totalRepEarnings)}`} color="text-orange-600" bgColor="bg-orange-500/10" />
-            <SummaryCard icon={Receipt} label="মোট রশিদ" value={toBnNum(commissionStats.totalEarningRecords)} color="text-blue-600" bgColor="bg-blue-500/10" />
-          </div>
-
-          <ChartCard title="কমিশন ও প্রতিনিধি আয়ের ট্রেন্ড" icon={Wallet}>
-            {commissionTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={commissionTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="কমিশন" fill="hsl(142, 71%, 45%)" radius={[4, 4, 0, 0]} stackId="a" />
-                  <Bar dataKey="প্রতিনিধি_আয়" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} stackId="a" />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <EmptyChart />}
-          </ChartCard>
-
-          <ChartCard title="প্রতিনিধিভিত্তিক আয়ের ব্রেকডাউন" icon={Users}>
-            {repBreakdown.length > 0 ? (
-              <ResponsiveContainer width="100%" height={Math.max(280, repBreakdown.length * 40)}>
-                <BarChart data={repBreakdown} layout="vertical" margin={{ left: 10 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={100} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="আয়" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                  <Bar dataKey="কমিশন" fill="hsl(0, 84%, 60%)" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <EmptyChart />}
-          </ChartCard>
-        </TabsContent>
-
-        {/* ── সন্ধান মার্ট ── */}
-        <TabsContent value="mart" className="space-y-4">
-          <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={exportMartReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <SummaryCard icon={DollarSign} label="মার্ট রেভিনিউ" value={`৳${toBnNum(martStats.totalMartRevenue)}`} color="text-primary" bgColor="bg-primary/10" />
-            <SummaryCard icon={Package} label="মোট অর্ডার" value={toBnNum(martStats.totalMartOrders)} color="text-green-600" bgColor="bg-green-500/10" />
-            <SummaryCard icon={ShoppingCart} label="ডেলিভার্ড" value={toBnNum(martStats.deliveredOrders)} color="text-blue-600" bgColor="bg-blue-500/10" />
-            <SummaryCard icon={Users} label="বাতিল" value={toBnNum(martStats.cancelledOrders)} color="text-red-600" bgColor="bg-red-500/10" />
-          </div>
-
-          <ChartCard title="মার্ট অর্ডার ও রেভিনিউ ট্রেন্ড" icon={TrendingUp}>
-            {martOrderTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={martOrderTrend}>
-                  <defs>
-                    <linearGradient id="colorMart" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(262, 83%, 58%)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Area type="monotone" dataKey="রেভিনিউ" stroke="hsl(262, 83%, 58%)" fill="url(#colorMart)" strokeWidth={2} />
-                  <Line type="monotone" dataKey="অর্ডার" stroke="hsl(38, 92%, 50%)" strokeWidth={2} dot={{ r: 3 }} />
-                </AreaChart>
-              </ResponsiveContainer>
-            ) : <EmptyChart />}
-          </ChartCard>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ChartCard title="অর্ডার স্ট্যাটাস" icon={Package}>
-              {martStatusDist.length > 0 ? (
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie data={martStatusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
-                      {martStatusDist.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : <EmptyChart />}
-            </ChartCard>
-
-            <ChartCard title="পেমেন্ট মেথড ব্রেকডাউন" icon={Wallet}>
-              {martPaymentMethods.length > 0 ? (
-                <ResponsiveContainer width="100%" height={240}>
-                  <PieChart>
-                    <Pie data={martPaymentMethods} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
-                      {martPaymentMethods.map((_, i) => <Cell key={i} fill={COLORS[(i + 2) % COLORS.length]} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : <EmptyChart />}
-            </ChartCard>
-          </div>
-        </TabsContent>
-
-        {/* ── সন্ধান ডিল ── */}
-        <TabsContent value="deal" className="space-y-4">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <SummaryCard icon={Handshake} label="মোট বিজ্ঞাপন" value={toBnNum(dealStats.totalListings)} color="text-primary" bgColor="bg-primary/10" />
-            <SummaryCard icon={Eye} label="সক্রিয় বিজ্ঞাপন" value={toBnNum(dealStats.activeListings)} color="text-green-600" bgColor="bg-green-500/10" />
-            <SummaryCard icon={Eye} label="মোট ভিউ" value={toBnNum(dealStats.totalViews)} color="text-blue-600" bgColor="bg-blue-500/10" />
-            <SummaryCard icon={Users} label="মোট ইনকোয়্যারি" value={toBnNum(dealStats.totalInquiries)} color="text-orange-600" bgColor="bg-orange-500/10" />
-          </div>
-
-          <ChartCard title="বিজ্ঞাপন ও ভিউ ট্রেন্ড" icon={TrendingUp}>
-            {dealListingTrend.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={dealListingTrend}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Legend wrapperStyle={{ fontSize: "11px" }} />
-                  <Bar dataKey="বিজ্ঞাপন" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  <Bar dataKey="ভিউ" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            ) : <EmptyChart />}
-          </ChartCard>
-        </TabsContent>
-
-        {/* ── সন্ধান জব ── */}
-        <TabsContent value="job" className="space-y-4">
-          {jobStatsError ? (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
-              জব স্ট্যাটস লোড করা যায়নি: {jobStatsError}। ({JOBS_API_URL}/api/admin/job-stats থেকে ডেটা আনার চেষ্টা করা হয়েছে)
-            </div>
-          ) : (
-            <>
-              <div className="flex justify-end">
-                <Button variant="outline" size="sm" onClick={exportJobPackageReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
-              </div>
-
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                <SummaryCard icon={DollarSign} label="প্যাকেজ আয়" value={`৳${toBnNum(jobStats.packageIncome)}`} color="text-primary" bgColor="bg-primary/10" />
-                <SummaryCard icon={Package} label="প্যাকেজ ক্রয়" value={toBnNum(jobStats.totalPurchases)} color="text-green-600" bgColor="bg-green-500/10" />
-                <SummaryCard icon={UserCheck} label="জব সিকার প্রোফাইল" value={toBnNum(jobStats.jobseekerCount)} color="text-blue-600" bgColor="bg-blue-500/10" />
-                <SummaryCard icon={Building2} label="নিয়োগকর্তা" value={toBnNum(jobStats.employerCount)} color="text-orange-600" bgColor="bg-orange-500/10" />
-              </div>
-
-              {/* সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ থেকে, লেনদেন থেকে নয়) */}
-              {highestPackage && (
-                <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 shrink-0">
-                      <Package className="h-5 w-5 text-purple-600" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] text-muted-foreground">সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ)</p>
-                      <p className="text-sm font-bold text-foreground">{highestPackage.name}</p>
-                    </div>
-                  </div>
-                  <p className="text-lg font-bold text-purple-600">৳{toBnNum(highestPackage.price)}</p>
+        {/* Hide other tabs completely from service_admin to save rendering power and enforce role boundaries */}
+        {!isServiceAdmin && (
+          <>
+            {/* ── সন্ধান জব ── */}
+            <TabsContent value="job" className="space-y-4">
+              {jobStatsError ? (
+                <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
+                  জব স্ট্যাটস লোড করা যায়নি: {jobStatsError}। ({JOBS_API_URL}/api/admin/job-stats থেকে ডেটা আনার চেষ্টা করা হয়েছে)
                 </div>
+              ) : (
+                <>
+                  <div className="flex justify-end">
+                    <Button variant="outline" size="sm" onClick={exportJobPackageReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    <SummaryCard icon={DollarSign} label="প্যাকেজ আয়" value={`৳${toBnNum(jobStats.packageIncome)}`} color="text-primary" bgColor="bg-primary/10" />
+                    <SummaryCard icon={Package} label="প্যাকেজ ক্রয়" value={toBnNum(jobStats.totalPurchases)} color="text-green-600" bgColor="bg-green-500/10" />
+                    <SummaryCard icon={UserCheck} label="জব সিকার প্রোফাইল" value={toBnNum(jobStats.jobseekerCount)} color="text-blue-600" bgColor="bg-blue-500/10" />
+                    <SummaryCard icon={Building2} label="নিয়োগকর্তা" value={toBnNum(jobStats.employerCount)} color="text-orange-600" bgColor="bg-orange-500/10" />
+                  </div>
+
+                  {/* সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ থেকে, লেনদেন থেকে নয়) */}
+                  {highestPackage && (
+                    <div className="rounded-xl border border-border bg-card p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/10 shrink-0">
+                          <Package className="h-5 w-5 text-purple-600" />
+                        </div>
+                        <div>
+                          <p className="text-[11px] text-muted-foreground">সর্বোচ্চ মূল্যের প্যাকেজ (ক্যাটালগ)</p>
+                          <p className="text-sm font-bold text-foreground">{highestPackage.name}</p>
+                        </div>
+                      </div>
+                      <p className="text-lg font-bold text-purple-600">৳{toBnNum(highestPackage.price)}</p>
+                    </div>
+                  )}
+
+                  <ChartCard title="প্যাকেজ আয় ও ক্রয়ের ট্রেন্ড" icon={TrendingUp}>
+                    {jobPackageTrend.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={280}>
+                        <AreaChart data={jobPackageTrend}>
+                          <defs>
+                            <linearGradient id="colorJobIncome" x1="0" y1="0" x2="0" y2="1">
+                              <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                              <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                            </linearGradient>
+                          </defs>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Legend wrapperStyle={{ fontSize: "11px" }} />
+                          <Area type="monotone" dataKey="আয়" stroke="hsl(var(--primary))" fill="url(#colorJobIncome)" strokeWidth={2} />
+                          <Line type="monotone" dataKey="ক্রয়" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
+                          {highestPackage && (
+                            <ReferenceLine
+                              y={highestPackage.price}
+                              stroke="hsl(0, 84%, 60%)"
+                              strokeDasharray="4 4"
+                              label={{ value: `সর্বোচ্চ প্যাকেজ ৳${toBnNum(highestPackage.price)}`, fontSize: 10, fill: "hsl(0, 84%, 60%)", position: "insideTopRight" }}
+                            />
+                          )}
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    ) : <EmptyChart />}
+                  </ChartCard>
+
+                  <ChartCard title="প্যাকেজ অনুযায়ী আয়" icon={Package}>
+                    {jobIncomeByPackage.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={Math.max(240, jobIncomeByPackage.length * 40)}>
+                        <BarChart data={jobIncomeByPackage} layout="vertical" margin={{ left: 10 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={110} stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Bar dataKey="আয়" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : <EmptyChart />}
+                  </ChartCard>
+
+                  <ChartCard title="জবসিকার ও নিয়োগকর্তা নিবন্ধন ট্রেন্ড" icon={Users}>
+                    {jobUserTrend.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={280}>
+                        <BarChart data={jobUserTrend}>
+                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                          <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                          <Tooltip contentStyle={tooltipStyle} />
+                          <Legend wrapperStyle={{ fontSize: "11px" }} />
+                          <Bar dataKey="জবসিকার" fill="hsl(199, 89%, 48%)" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="নিয়োগকর্তা" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    ) : <EmptyChart />}
+                  </ChartCard>
+
+                  <ChartCard title="প্যাকেজ লেনদেন স্ট্যাটাস" icon={Receipt}>
+                    {jobTxnStatusDist.length > 0 ? (
+                      <ResponsiveContainer width="100%" height={240}>
+                        <PieChart>
+                          <Pie data={jobTxnStatusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
+                            {jobTxnStatusDist.map((_, i) => <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />)}
+                          </Pie>
+                          <Tooltip contentStyle={tooltipStyle} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                    ) : <EmptyChart />}
+                  </ChartCard>
+                </>
               )}
-
-              <ChartCard title="প্যাকেজ আয় ও ক্রয়ের ট্রেন্ড" icon={TrendingUp}>
-                {jobPackageTrend.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <AreaChart data={jobPackageTrend}>
-                      <defs>
-                        <linearGradient id="colorJobIncome" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                          <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ fontSize: "11px" }} />
-                      <Area type="monotone" dataKey="আয়" stroke="hsl(var(--primary))" fill="url(#colorJobIncome)" strokeWidth={2} />
-                      <Line type="monotone" dataKey="ক্রয়" stroke="hsl(142, 71%, 45%)" strokeWidth={2} dot={{ r: 3 }} />
-                      {highestPackage && (
-                        <ReferenceLine
-                          y={highestPackage.price}
-                          stroke="hsl(0, 84%, 60%)"
-                          strokeDasharray="4 4"
-                          label={{ value: `সর্বোচ্চ প্যাকেজ ৳${toBnNum(highestPackage.price)}`, fontSize: 10, fill: "hsl(0, 84%, 60%)", position: "insideTopRight" }}
-                        />
-                      )}
-                    </AreaChart>
-                  </ResponsiveContainer>
-                ) : <EmptyChart />}
-              </ChartCard>
-
-              <ChartCard title="প্যাকেজ অনুযায়ী আয়" icon={Package}>
-                {jobIncomeByPackage.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={Math.max(240, jobIncomeByPackage.length * 40)}>
-                    <BarChart data={jobIncomeByPackage} layout="vertical" margin={{ left: 10 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis type="number" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis dataKey="name" type="category" tick={{ fontSize: 10 }} width={110} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Bar dataKey="আয়" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : <EmptyChart />}
-              </ChartCard>
-
-              <ChartCard title="জবসিকার ও নিয়োগকর্তা নিবন্ধন ট্রেন্ড" icon={Users}>
-                {jobUserTrend.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={280}>
-                    <BarChart data={jobUserTrend}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                      <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
-                      <Tooltip contentStyle={tooltipStyle} />
-                      <Legend wrapperStyle={{ fontSize: "11px" }} />
-                      <Bar dataKey="জবসিকার" fill="hsl(199, 89%, 48%)" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="নিয়োগকর্তা" fill="hsl(38, 92%, 50%)" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                ) : <EmptyChart />}
-              </ChartCard>
-
-              <ChartCard title="প্যাকেজ লেনদেন স্ট্যাটাস" icon={Receipt}>
-                {jobTxnStatusDist.length > 0 ? (
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie data={jobTxnStatusDist} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={4} dataKey="value" label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`} labelLine={{ stroke: "hsl(var(--muted-foreground))" }}>
-                        {jobTxnStatusDist.map((_, i) => <Cell key={i} fill={COLORS[(i + 4) % COLORS.length]} />)}
-                      </Pie>
-                      <Tooltip contentStyle={tooltipStyle} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                ) : <EmptyChart />}
-              </ChartCard>
-            </>
-          )}
-        </TabsContent>
+            </TabsContent>
+          </>
+        )}
       </Tabs>
     </div>
   );

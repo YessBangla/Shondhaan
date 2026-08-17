@@ -11,7 +11,6 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend,
   PieChart, Pie, Cell
 } from "recharts";
-
 const PIE_COLORS = [
   "hsl(var(--primary))", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
   "hsl(0, 84%, 60%)", "hsl(262, 83%, 58%)", "hsl(199, 89%, 48%)",
@@ -24,7 +23,6 @@ interface AccountsSectionProps {
   userId: string;
   role: RoleType;
 }
-
 interface Transaction {
   id: string;
   date: string;
@@ -76,13 +74,11 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           });
         });
       }
-
       // Also fetch bookings with payment
       const { data: bookings } = await (supabase as any)
         .from("bookings")
         .select("*")
         .order("created_at", { ascending: false });
-
       if (bookings) {
         bookings.forEach((b: any) => {
           txns.push({
@@ -173,7 +169,6 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
         });
       }
     }
-
     setTransactions(txns);
     setLoading(false);
   }, [userId, role]);
