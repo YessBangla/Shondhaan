@@ -25,6 +25,8 @@ import {
   Home,
   ChevronRight,
   Briefcase,
+  Wallet, // [WALLET UPDATE] Added Wallet icon
+  CreditCard, // [WALLET UPDATE] Added CreditCard icon
 } from "lucide-react";
 import PrescriptionUpload from "@/components/PrescriptionUpload";
 import LabTestTracker from "@/components/LabTestTracker";
@@ -103,6 +105,9 @@ type ServiceReview = {
 const SERVICE_API_BASE_URL = (
   INDIVIDUAL_API_BASE_URL || "http://localhost:3000"
 ).replace(/\/+$/, "");
+
+// [WALLET UPDATE] Central Wallet API Base URL
+const WALLET_API_BASE_URL = "http://localhost:5000"; 
 
 const getServiceApiHeaders = () => {
   const auth = getMySqlAuth();
@@ -262,6 +267,24 @@ const useServicePackages = (serviceId?: string, enabled = true) =>
       return normalizePackages(json);
     },
     enabled: !!serviceId && enabled,
+    retry: 1,
+  });
+
+// [WALLET UPDATE] Hook to fetch wallet balance from Central Backend
+const useUserWallet = (userId?: string | number) =>
+  useQuery({
+    queryKey: ["user-wallet-balance", userId],
+    queryFn: async () => {
+      if (!userId) return null;
+      const response = await fetch(`${WALLET_API_BASE_URL}/api/wallet/balance/${userId}`, {
+        headers: getServiceApiHeaders(),
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json?.error || "Failed to load wallet");
+      // FIX: Extract the 'wallet' object from the response
+      return json.wallet || json; 
+    },
+    enabled: !!userId,
     retry: 1,
   });
 
@@ -450,8 +473,8 @@ const CmsServiceDetail = ({
 
   const pkg = packages[selectedPackage] || packages[0];
   const commissionPercent = Number(service.commission_percent || 0);
-// Calculate fee: Package Price * (Commission Percent / 100)
-const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
+  // Calculate fee: Package Price * (Commission Percent / 100)
+  const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
   const { addItem: addRecentlyViewed, getItems: getRecentItems } = useRecentlyViewed();
   const heroImage = getServiceDisplayImage(service.slug, service.image_url);
   const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
@@ -503,6 +526,12 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
   const [bookingAddress, setBookingAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  
+  // [WALLET UPDATE] Wallet state
+  const [useWalletPayment, setUseWalletPayment] = useState(false);
+  const { data: walletData } = useUserWallet(activeUserId);
+  const walletBalance = Number(walletData?.cash_balance || 0);
+  const canPayWithWallet = walletBalance >= platformFee;
 
   const timeSlots = [
     { label: "8:00", value: "08:00" }, { label: "9:00", value: "09:00" }, { label: "10:00", value: "10:00" }, { label: "11:00", value: "11:00" },
@@ -526,6 +555,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
     });
     toast.success(t("cart.added"));
   };
+  
   const handleDirectBooking = async () => {
     if (!activeUserId) {
       toast.error(t("sd.loginFirst"));
@@ -542,8 +572,41 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
     }
     if (!pkg) return;
 
+    // [WALLET UPDATE] Prevent submission if wallet is selected but insufficient
+    if (useWalletPayment && !canPayWithWallet) {
+      toast.error(bn ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই" : "Insufficient wallet balance");
+      return;
+    }
+
     setSubmitting(true);
     try {
+      const paymentAmount = Math.round(Number(platformFee || 0));
+
+      // [WALLET UPDATE] Process wallet payment FIRST if selected
+      let walletTransactionId: string | null = null;
+      if (useWalletPayment) {
+        // 1. Call Central Wallet API to debit the amount
+        const walletRes = await fetch(`${WALLET_API_BASE_URL}/api/wallet/debit`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}) },
+          body: JSON.stringify({
+            user_id: String(activeUserId),
+            amount_cash: paymentAmount,
+            amount_coins: 0,
+            module: "SERVICE",
+            reference_id: `booking-${Date.now()}`,
+            description: `Payment for ${serviceTitle} - ${pkg.name}`
+          })
+        });
+
+        const walletJson = await walletRes.json();
+        if (!walletRes.ok || !walletJson.success) {
+          throw new Error(walletJson.error || "Wallet payment failed");
+        }
+        walletTransactionId = walletJson.transaction_id;
+      }
+
+      // Create booking with appropriate payment status based on payment method
       const createdBooking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
@@ -552,22 +615,43 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
         service_title: serviceTitle,
         package_name: pkg.name,
         package_price: Number(pkg.price || 0),
-        platform_fee_amount: platformFee,
+        platform_fee_amount: paymentAmount,
         customer_name: bookingName.trim(),
         customer_phone: bookingPhone.trim(),
         customer_address: bookingAddress.trim(),
         booking_date: format(bookingDate, "yyyy-MM-dd"),
         booking_time: bookingTime,
         status: "pending",
-        payment_status: "unpaid",
+        payment_status: useWalletPayment ? "paid" : "unpaid",
+        payment_method: useWalletPayment ? "wallet" : "gateway",
+        wallet_cash_used: useWalletPayment ? paymentAmount : 0,
+        wallet_coins_used: 0,
       });
 
-      const paymentAmount = Number(createdBooking?.platform_fee_amount || platformFee || 0);
-      const payment = await startBookingPayment(createdBooking.id, paymentAmount);
+      if (useWalletPayment) {
+        // Payment already done, just update transaction ID
+        await fetch(`${SERVICE_API_BASE_URL}/api/bookings/${createdBooking.id}/payment-status`, {
+          method: "PUT",
+          headers: getServiceApiHeaders(),
+          body: JSON.stringify({
+            payment_status: "paid",
+            payment_method: "wallet",
+            payment_transaction_id: walletTransactionId,
+            wallet_cash_used: paymentAmount,
+            wallet_coins_used: 0
+          })
+        });
 
-      if (!payment.checkout_url) throw new Error("Payment link was not returned");
+        toast.success(bn ? "ওয়ালেট থেকে সফলভাবে পেমেন্ট সম্পন্ন হয়েছে!" : "Payment successful via wallet!");
+        navigate("/my-bookings"); 
+        
+      } else {
+        // Fallback to External Gateway
+        const payment = await startBookingPayment(createdBooking.id, paymentAmount);
+        if (!payment.checkout_url) throw new Error("Payment link was not returned");
+        window.location.href = payment.checkout_url;
+      }
       
-      window.location.href = payment.checkout_url;
     } catch (error: any) {
       console.error("Booking create error:", error);
       toast.error(error.message || t("sd.bookingError"));
@@ -578,7 +662,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
 
   const benefits = [
     { icon: BadgeCheck, title: bn ? "প্রশিক্ষিত পেশাদার" : "Trained Professionals", desc: bn ? "আমাদের সকল টেকনিশিয়ান প্রশিক্ষিত ও অভিজ্ঞ" : "All our technicians are trained & experienced" },
-    { icon: ShieldCheck, title: bn ? "সার্ভিস গ্যারান্টি" : "Service Guarantee", desc: bn ? "সার্ভিসয় সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সার্ভিস" : "Free re-service if not satisfied" },
+    { icon: ShieldCheck, title: bn ? "সার্ভিস গ্যারান্টি" : "Service Guarantee", desc: bn ? "সার্ভিসে সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সার্ভিস" : "Free re-service if not satisfied" },
     { icon: Clock, title: bn ? "সময়মতো সার্ভিস" : "On-time Service", desc: bn ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে" : "Technician arrives at scheduled time" },
     { icon: Award, title: bn ? "স্বচ্ছ মূল্য" : "Transparent Pricing", desc: bn ? "কোনো লুকানো চার্জ নেই" : "No hidden charges" },
   ];
@@ -608,7 +692,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
         </Breadcrumb>
       </div>
 
-      {/* Hero Section - Aligned with app-container padding */}
+      {/* Hero Section */}
       <div className="app-container">
         <div className="relative h-[150px] md:h-[250px] w-full overflow-hidden rounded-2xl shadow-sm">
           <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover" />
@@ -644,7 +728,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
             <section className="space-y-4">
               <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
                 <Sparkles className="h-5 w-5 text-primary" />
-                {bn ? "সার্ভিসর বিবরণ" : "Service Description"}
+                {bn ? "সার্ভিসের বিবরণ" : "Service Description"}
               </h2>
               {service.description && (
                 <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
@@ -777,12 +861,12 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
                     <span className="font-heading text-2xl font-bold text-primary">৳{pkg.price}</span>
                     {pkg.original_price && <span className="text-sm text-muted-foreground line-through">৳{pkg.original_price}</span>}
                   </div>
-                 <div className="mt-3 rounded-lg border border-dashed border-border bg-background px-3 py-2">
-  <div className="flex items-center justify-between text-xs">
-    <span className="text-muted-foreground">Commission Fee ({commissionPercent}%)</span>
-    <span className="font-semibold text-foreground">৳{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}</span>
-  </div>
-</div>
+                  <div className="mt-3 rounded-lg border border-dashed border-border bg-background px-3 py-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-muted-foreground">Commission Fee ({commissionPercent}%)</span>
+                      <span className="font-semibold text-foreground">৳{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}</span>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -835,7 +919,54 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
                   <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
                   <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-blue-900 hover:bg-emerald-800 disabled:opacity-50">
+                  
+                  {/* [WALLET UPDATE] Payment Method Selection UI */}
+                  <div className="pt-2 space-y-2">
+                    <label className="text-xs font-semibold text-foreground">{bn ? "পেমেন্ট মেথড" : "Payment Method"}</label>
+                    <div className="space-y-2">
+                      <button
+                        type="button"
+                        onClick={() => setUseWalletPayment(true)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all",
+                          useWalletPayment ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/40"
+                        )}
+                        disabled={!canPayWithWallet}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-4 w-4 text-primary" />
+                          <div>
+                            <p className="text-sm font-medium">{bn ? "ওয়ালেট ব্যবহার করুন" : "Pay With Wallet"}</p>
+                            <p className="text-[10px] text-muted-foreground">{bn ? "ব্যালেন্স:" : "Balance:"} ৳{walletBalance.toFixed(2)}</p>
+                          </div>
+                        </div>
+                        {useWalletPayment && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setUseWalletPayment(false)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all",
+                          !useWalletPayment ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/40"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <CreditCard className="h-4 w-4 text-primary" />
+                          <div>
+                            <p className="text-sm font-medium">{bn ? "অনলাইন পেমেন্ট" : "Pay Online"}</p>
+                            <p className="text-[10px] text-muted-foreground">{bn ? "বিকাশ/কার্ড" : "bKash/Card"}</p>
+                          </div>
+                        </div>
+                        {!useWalletPayment && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                      </button>
+                    </div>
+                    {!canPayWithWallet && (
+                      <p className="text-[10px] text-destructive text-center">{bn ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই" : "Insufficient wallet balance"}</p>
+                    )}
+                  </div>
+
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
                     {submitting ? "Submitting..." : bn ? "নিশ্চিত করে বুক করুন" : "Confirm & Book"}
                   </button>
                 </motion.div>
@@ -881,7 +1012,7 @@ const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 10
                 setShowBookingForm(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-blue-900 transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
             >
               <CalendarCheck className="h-4 w-4" /> {t("sd.bookNow")}
             </button>
@@ -997,7 +1128,7 @@ const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; 
             ))}
           </div>
           <textarea placeholder="Share your experience..." value={comment} onChange={(e) => setComment(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text- disabled:opacity-50">
+          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
             {submitting ? "Submitting..." : "Submit Review"}
           </button>
         </div>

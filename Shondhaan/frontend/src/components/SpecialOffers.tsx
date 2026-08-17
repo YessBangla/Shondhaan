@@ -1,17 +1,17 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Clock, Flame, Sparkles, Tag, Star, Timer } from "lucide-react";
+import { ArrowRight, Clock, Flame, Sparkles, Tag, Star, Timer, TrendingUp, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 type TabKey = "hot" | "new" | "deal" | "top";
 
-const tabs: { key: TabKey; labelBn: string; labelEn: string; icon: typeof Flame; color: string; activeGradient: string }[] = [
-  { key: "hot", labelBn: "হট", labelEn: "Hot", icon: Flame, color: "text-orange-500", activeGradient: "bg-gradient-to-r from-orange-500 to-rose-500 shadow-orange-500/40" },
-  { key: "new", labelBn: "নিউ", labelEn: "New", icon: Sparkles, color: "text-emerald-500", activeGradient: "bg-gradient-to-r from-emerald-500 to-teal-500 shadow-emerald-500/40" },
-  { key: "deal", labelBn: "ডিল", labelEn: "Deal", icon: Tag, color: "text-blue-500", activeGradient: "bg-gradient-to-r from-blue-500 to-indigo-500 shadow-blue-500/40" },
-  { key: "top", labelBn: "টপ", labelEn: "Top", icon: Star, color: "text-amber-500", activeGradient: "bg-gradient-to-r from-amber-500 to-yellow-500 shadow-amber-500/40" },
+const tabs: { key: TabKey; labelBn: string; labelEn: string; icon: typeof Flame; color: string; activeGradient: string; bgColor: string }[] = [
+  { key: "hot", labelBn: "🔥 হট ডিল", labelEn: "🔥 Hot Deals", icon: Flame, color: "text-orange-500", activeGradient: "bg-gradient-to-r from-orange-500 via-rose-500 to-red-500 shadow-2xl shadow-orange-500/50", bgColor: "bg-orange-500" },
+  { key: "new", labelBn: "✨ নতুন", labelEn: "✨ New", icon: Sparkles, color: "text-emerald-500", activeGradient: "bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 shadow-2xl shadow-emerald-500/50", bgColor: "bg-emerald-500" },
+  { key: "deal", labelBn: "🏷️ অফার", labelEn: "🏷️ Deals", icon: Tag, color: "text-blue-500", activeGradient: "bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 shadow-2xl shadow-blue-500/50", bgColor: "bg-blue-500" },
+  { key: "top", labelBn: "⭐ টপ রেটেড", labelEn: "⭐ Top Rated", icon: Star, color: "text-amber-500", activeGradient: "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-400 shadow-2xl shadow-amber-500/50", bgColor: "bg-amber-500" },
 ];
 
 const useCountdown = (expiresAt: string | null) => {
@@ -19,7 +19,7 @@ const useCountdown = (expiresAt: string | null) => {
   useEffect(() => {
     const deadline = expiresAt
       ? new Date(expiresAt).getTime()
-      : new Date().setHours(0, 0, 0, 0) + 7 * 86400000; // Fallback to 7 days if null
+      : new Date().setHours(0, 0, 0, 0) + 7 * 86400000;
     const tick = () => {
       const diff = Math.max(0, deadline - Date.now());
       setTimeLeft({
@@ -37,15 +37,18 @@ const useCountdown = (expiresAt: string | null) => {
 };
 
 const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-  <div className="flex flex-col items-center">
-    <span className="text-[11px] md:text-sm font-bold tabular-nums text-destructive bg-destructive/10 rounded px-1 py-0.5 min-w-[24px] md:min-w-[28px] text-center leading-none">
+  <motion.div 
+    className="flex flex-col items-center"
+    animate={{ scale: [1, 1.05, 1] }}
+    transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.5 }}
+  >
+    <span className="text-xs md:text-sm font-black tabular-nums text-white bg-gradient-to-br from-red-500 to-orange-600 rounded-lg px-2 py-1 min-w-[28px] md:min-w-[32px] text-center leading-none shadow-lg shadow-orange-500/40">
       {String(value).padStart(2, "0")}
     </span>
-    <span className="text-[8px] md:text-[9px] text-muted-foreground mt-0.5 leading-none">{label}</span>
-  </div>
+    <span className="text-[7px] md:text-[8px] text-muted-foreground mt-1 leading-none uppercase font-bold tracking-wider">{label}</span>
+  </motion.div>
 );
 
-// Deterministic deadline per offer (stable across renders) when API doesn't provide one.
 const hashStr = (s: string) => {
   let h = 0;
   for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
@@ -55,7 +58,7 @@ const hashStr = (s: string) => {
 const getOfferDeadline = (offer: any, fallbackKey: string): string => {
   if (offer?.expires_at || offer?.end_date) return offer.expires_at || offer.end_date;
   const key = offer?.service_slug || fallbackKey;
-  const daysAhead = (hashStr(key) % 6) + 2; // 2–7 days
+  const daysAhead = (hashStr(key) % 6) + 2;
   const hoursOffset = hashStr(key + "h") % 24;
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -67,21 +70,29 @@ const OfferCountdown = ({ deadline, bn }: { deadline: string; bn: boolean }) => 
   const expired = days + hours + minutes + seconds <= 0;
   if (expired) {
     return (
-      <div className="flex items-center gap-1 text-[9px] md:text-[10px] font-semibold text-muted-foreground">
-        <Timer className="h-2.5 w-2.5" />
-        {bn ? "অফার শেষ" : "Expired"}
-      </div>
+      <motion.div 
+        className="flex items-center gap-1 text-xs font-bold text-muted-foreground/60"
+        animate={{ opacity: [0.6, 1] }}
+        transition={{ duration: 1, repeat: Infinity }}
+      >
+        <Timer className="h-3 w-3" />
+        {bn ? "শেষ হয়েছে" : "Expired"}
+      </motion.div>
     );
   }
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <div className="flex items-center gap-1 rounded-md bg-destructive/10 px-1.5 py-0.5 text-destructive">
-      <Timer className="h-2.5 w-2.5 md:h-3 md:w-3 animate-pulse" />
-      <span className="text-[9px] md:text-[10px] font-bold tabular-nums leading-none">
+    <motion.div 
+      className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-300/40 px-2 py-1"
+      animate={{ boxShadow: ["0 0 10px rgba(255,100,0,0)", "0 0 20px rgba(255,100,0,0.5)", "0 0 10px rgba(255,100,0,0)"] }}
+      transition={{ duration: 2, repeat: Infinity }}
+    >
+      <Zap className="h-3.5 w-3.5 text-orange-500 animate-pulse" />
+      <span className="text-xs font-black tabular-nums text-orange-600 leading-none">
         {days > 0 ? `${days}${bn ? "দি" : "d"} ` : ""}
         {pad(hours)}:{pad(minutes)}:{pad(seconds)}
       </span>
-    </div>
+    </motion.div>
   );
 };
 
@@ -130,11 +141,11 @@ const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
     description_bn: descriptionBn,
     description_en: descriptionEn,
     service_slug: offer.service_slug || (offer.service_id ? `service-${offer.service_id}` : ""),
-    image: offer.image_url || "", // No fallback image, will hide if empty
-    gradient: offer.gradient || "from-primary/15 via-primary/5 to-transparent",
-    accent_color: offer.accent_color || "text-primary",
-    bg_accent: offer.bg_accent || "bg-primary/10",
-    border_accent: offer.border_color || "border-primary/20",
+    image: offer.image_url || "",
+    gradient: offer.gradient || "from-blue-600/20 via-purple-600/10 to-transparent",
+    accent_color: offer.accent_color || "text-blue-600",
+    bg_accent: offer.bg_accent || "bg-blue-100",
+    border_accent: offer.border_color || "border-blue-300/40",
     expires_at: offer.expires_at || offer.end_date || null,
   };
 };
@@ -157,7 +168,6 @@ const SpecialOffers = () => {
         const json = await res.json().catch(() => ({}));
         const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
         if (!ignore) {
-          // Filter active offers and map them
           const activeRows = rows.filter((offer: any) => offer?.is_active !== false && offer?.is_active !== 0);
           setApiOffers(activeRows.map(normalizeApiOffer));
         }
@@ -175,20 +185,17 @@ const SpecialOffers = () => {
     };
   }, []);
 
-  // For demonstration, we populate all tabs with the same live offers.
-  // You can later add a 'tab' or 'category' column to your DB to filter these properly.
   const tabOffers: Record<TabKey, any[]> = {
     hot: apiOffers,
     new: apiOffers,
     deal: apiOffers,
-    top: apiOffers.filter(o => o.is_featured) // Example: 'top' tab shows featured
+    top: apiOffers.filter(o => o.is_featured)
   };
 
   const offers = tabOffers[activeTab];
   const firstExpiry = offers[0]?.expires_at || null;
   const { days, hours, minutes, seconds } = useCountdown(firstExpiry);
 
-  // If API is done loading and returns no offers, hide the whole section
   if (!loadingOffers && apiOffers.length === 0) return null;
 
   return (
@@ -196,118 +203,196 @@ const SpecialOffers = () => {
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
-      transition={{ duration: 0.4 }}
-      className="py-5 md:py-8 px-4 md:px-0"
+      transition={{ duration: 0.6 }}
+      className="py-8 md:py-12 px-4 md:px-0 relative overflow-hidden"
     >
+      {/* Animated background elements */}
+      <div className="absolute inset-0 -z-10 overflow-hidden">
+        <motion.div 
+          className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-400/20 to-transparent rounded-full blur-3xl"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div 
+          className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-400/20 to-transparent rounded-full blur-3xl"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+        />
+      </div>
+
       {/* Header */}
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="font-heading text-lg md:text-2xl font-bold text-foreground">
-          {bn ? "স্পেশাল অফার" : "Special Offers"}
-        </h2>
-        <div className="flex items-center gap-1">
-          <Clock className="h-3 w-3 text-destructive shrink-0" />
-          <div className="flex items-center gap-0.5">
+      <motion.div 
+        className="flex items-center justify-between mb-6 md:mb-8 gap-4 flex-wrap"
+        initial={{ opacity: 0, x: -20 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.6 }}
+      >
+        <div className="flex items-center gap-3">
+          <motion.div 
+            className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/40"
+          >
+            <Flame className="h-5 w-5" />
+          </motion.div>
+          <div>
+            <h2 className="font-heading text-2xl md:text-3xl font-black text-foreground tracking-tight">
+              {bn ? " স্পেশাল অফার" : " Special Offers"}
+            </h2>
+            <p className="text-xs md:text-sm text-muted-foreground/70 font-medium mt-0.5">
+              {bn ? "সীমিত সময়ের জন্য" : "Limited time only"}
+            </p>
+          </div>
+        </div>
+
+        {/* Global Countdown */}
+        <motion.div 
+          className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border border-orange-200/50 dark:border-orange-800/50 rounded-2xl px-3 md:px-4 py-2 backdrop-blur-sm"
+          initial={{ opacity: 0, scale: 0.8 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+        >
+          <Clock className="h-4 w-4 text-orange-600 shrink-0" />
+          <div className="flex items-center gap-1.5">
             {days > 0 && (
               <>
                 <TimeUnit value={days} label={bn ? "দিন" : "D"} />
-                <span className="text-[10px] font-bold text-destructive/40">:</span>
+                <span className="text-xs font-bold text-orange-400/60">:</span>
               </>
             )}
-            <TimeUnit value={hours} label={bn ? "ঘণ্টা" : "H"} />
-            <span className="text-[10px] font-bold text-destructive/40">:</span>
+            <TimeUnit value={hours} label={bn ? "ঘ" : "H"} />
+            <span className="text-xs font-bold text-orange-400/60">:</span>
             <TimeUnit value={minutes} label={bn ? "মি" : "M"} />
-            <span className="text-[10px] font-bold text-destructive/40">:</span>
+            <span className="text-xs font-bold text-orange-400/60">:</span>
             <TimeUnit value={seconds} label={bn ? "সে" : "S"} />
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
 
       {/* Tabs */}
-      <div className="flex items-center gap-1.5 mb-4 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.key;
-          return (
-            <button
-              key={tab.key}
-              onClick={() => setActiveTab(tab.key)}
-              className={`relative flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs md:text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
-                isActive
-                  ? `${tab.activeGradient} text-white shadow-lg scale-105`
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              <Icon className={`h-3.5 w-3.5 ${isActive ? "text-white" : tab.color}`} />
-              {bn ? tab.labelBn : tab.labelEn}
-            </button>
-          );
-        })}
-      </div>
+      {/* <motion.div 
+        className="flex items-center gap-2 mb-7 overflow-x-auto pb-2 scroll-smooth"
+        style={{ scrollbarWidth: "none" }}
+        initial={{ opacity: 0, y: 10 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, delay: 0.1 }}
+      >
+        <div className="flex items-center gap-2 p-1.5 bg-muted/50 border border-border/40 rounded-2xl backdrop-blur-sm">
+          {tabs.map((tab, idx) => {
+            const Icon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <motion.button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`relative flex items-center gap-2 px-4 md:px-5 py-2 rounded-xl text-sm md:text-base font-bold whitespace-nowrap transition-all duration-300 ${
+                  isActive
+                    ? `${tab.activeGradient} text-white shadow-xl`
+                    : "text-muted-foreground hover:text-foreground bg-background/50 hover:bg-background"
+                }`}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isActive ? "animate-bounce" : ""}`} />
+                {bn ? tab.labelBn : tab.labelEn}
+              </motion.button>
+            );
+          })}
+        </div>
+      </motion.div> */}
 
-      {/* Cards */}
+      {/* Cards Grid */}
       <AnimatePresence mode="wait">
         <motion.div
           key={activeTab}
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          exit={{ opacity: 0, x: -20 }}
-          transition={{ duration: 0.25 }}
-          className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          transition={{ duration: 0.4 }}
+          className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
         >
           {offers.slice(0, 4).map((offer: any, i: number) => (
             <motion.div
               key={`${offer.id ?? offer.service_slug ?? "offer"}-${i}`}
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.25, delay: i * 0.06 }}
+              initial={{ opacity: 0, scale: 0.8, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: i * 0.1 }}
+              whileHover={{ y: -8 }}
               onClick={() => {
-                if (offer.service_slug) {
-                  navigate(`/service/${offer.service_slug}`);
-                } else {
+                 {
                   navigate("/all-services");
                 }
               }}
-              className={`cursor-pointer group relative rounded-2xl bg-card border-2 ${offer.border_accent} overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-1.5`}
+              className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden "
             >
-              {/* Image / Gradient Header */}
-              <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-[88px] md:h-28 overflow-hidden`}>
-                {/* Decorative blobs */}
-                <div className={`absolute -top-6 -left-6 w-20 h-20 rounded-full ${offer.bg_accent} blur-2xl opacity-70`} />
-                <div className={`absolute -bottom-8 -right-4 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-50`} />
+              <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60 ">
+                {/* Image / Gradient Header */}
+                <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden group-hover:h-40 md:group-hover:h-52 transition-all duration-500`}>
+                  {offer.image ? (
+                    <img
+                      src={offer.image}
+                      alt={offer.title_en || offer.title_bn}
+                      loading="lazy"
+                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500"
+                    />
+                  ) : (
+                    <>
+                      <motion.div 
+                        className={`absolute -top-8 -left-8 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-60`}
+                        animate={{ scale: [1, 1.3, 1] }}
+                        transition={{ duration: 4, repeat: Infinity }}
+                      />
+                      <motion.div 
+                        className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full ${offer.bg_accent} blur-3xl opacity-40`}
+                        animate={{ scale: [1.3, 1, 1.3] }}
+                        transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
+                      />
+                    </>
+                  )}
                 
-                {/* Render image only if available */}
-                {offer.image ? (
-                  <img
-                    src={offer.image}
-                    alt=""
-                    loading="lazy"
-                    className="relative z-10 h-14 w-14 md:h-16 md:w-16 object-contain drop-shadow-lg group-hover:scale-110 group-hover:rotate-3 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="relative z-10 h-14 w-14 md:h-16 md:w-16 flex items-center justify-center">
-                    <Tag className="h-8 w-8 text-muted-foreground/40" />
+                  {offer.image && <div className="absolute inset-0" />}
+                  {/* Premium Badge with Animation */}
+                  <motion.div
+                    className={`absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30`}
+                    animate={{ scale: [1, 1.05, 1], y: [0, -2, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <div className="flex items-center gap-1">
+                      <Zap className="h-3 w-3 md:h-4 md:w-4" />
+                      {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
+                    </div>
+                  </motion.div>
+
+                  {/* Trending Badge for Hot/New */}
+                  {/* {(activeTab === "hot" || activeTab === "new") && (
+                    <motion.div
+                      className="absolute top-3 left-3 z-10 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1 shadow-lg"
+                      animate={{ rotate: [0, 5, 0] }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    >
+                      <TrendingUp className="h-3 w-3" />
+                      {activeTab === "hot" ? (bn ? "ট্রেন্ডিং" : "Trending") : (bn ? "নতুন" : "New")}
+                    </motion.div>
+                  )} */}
+                </div>
+
+                {/* Content */}
+                <div className="p-3.5 md:p-4 space-y-2.5 flex-1 flex flex-col">
+                  <h3 className="text-sm md:text-base font-bold text-foreground leading-tight line-clamp-2">
+                    {bn ? offer.title_bn : (offer.title_en || offer.title_bn)}
+                  </h3>
+                  <p className="text-[11px] md:text-xs text-muted-foreground/80 leading-snug line-clamp-2 flex-1">
+                    {bn ? offer.description_bn : (offer.description_en || offer.description_bn)}
+                  </p>
+                  
+                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto border-t border-border/50">
+                    <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
+                    <motion.span 
+                      className={`flex items-center gap-1 text-xs md:text-sm font-bold text-primary group-hover:gap-2 transition-all whitespace-nowrap`}
+                      whileHover={{ x: 4 }}
+                    >
+                      {bn ? "বুক করুন" : "Book Now"}
+                      <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                    </motion.span>
                   </div>
-                )}
-
-                <span className={`absolute top-1.5 right-1.5 z-10 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-sm px-2 py-0.5 text-[9px] md:text-[10px] font-extrabold ${offer.accent_color} border ${offer.border_accent} shadow-md`}>
-                  {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
-                </span>
-              </div>
-
-              {/* Content */}
-              <div className="p-2.5 md:p-3">
-                <h3 className="text-[13px] md:text-sm font-semibold text-foreground leading-tight line-clamp-1">
-                  {bn ? offer.title_bn : (offer.title_en || offer.title_bn)}
-                </h3>
-                <p className="mt-0.5 text-[10px] md:text-[11px] text-muted-foreground leading-snug line-clamp-2">
-                  {bn ? offer.description_bn : (offer.description_en || offer.description_bn)}
-                </p>
-                <div className="mt-2 flex items-center justify-between gap-1">
-                  <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
-                  <span className={`flex items-center gap-0.5 text-[10px] md:text-xs font-semibold ${offer.accent_color} group-hover:gap-1 transition-all`}>
-                    {bn ? "বুক করুন" : "Book"}
-                    <ArrowRight className="h-2.5 w-2.5 md:h-3 md:w-3" />
-                  </span>
                 </div>
               </div>
             </motion.div>
