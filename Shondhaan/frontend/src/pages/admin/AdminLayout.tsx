@@ -32,6 +32,9 @@ import {
   useBackendPageMeta,
 } from "@/contexts/BackendPageActionsContext";
 
+// [WALLET UPDATE] Central Wallet API Base URL
+const WALLET_API_BASE_URL = "http://localhost:5000";
+
 type NavItem = { to: string; label: string; icon: React.ReactNode };
 type NavGroup = { label: string; items: NavItem[]; accent: string; dot: string };
 
@@ -56,7 +59,7 @@ const NAV: NavGroup[] = [
     dot: "bg-sky-500",
     items: [
       { to: "/admin/services", label: "সার্ভিস", icon: <Package className="h-4 w-4" /> },
-      { to: "/admin/service-images", label: "সার্ভিসর ছবি", icon: <ImagePlus className="h-4 w-4" /> },
+      { to: "/admin/service-images", label: "সার্ভিসের ছবি", icon: <ImagePlus className="h-4 w-4" /> },
       { to: "/admin/categories", label: "ক্যাটেগরি", icon: <Grid3X3 className="h-4 w-4" /> },
       { to: "/admin/offers", label: "অফার", icon: <Percent className="h-4 w-4" /> },
       { to: "/admin/banners", label: "ব্যানার", icon: <ImageIcon className="h-4 w-4" /> },
@@ -80,7 +83,6 @@ const NAV: NavGroup[] = [
       { to: "/admin/deal-categories", label: "ডিল ক্যাটেগরি", icon: <Grid3X3 className="h-4 w-4" /> },
     ],
   },
-  
   {
     label: "সন্ধান জবস",
     accent: "from-blue-500 to-indigo-600",
@@ -90,7 +92,6 @@ const NAV: NavGroup[] = [
       { to: "/admin/employers", label: "এমপ্লয়ার", icon: <Store className="h-4 w-4" /> },
     ],
   },
-
   {
     label: "কমিউনিকেশন",
     accent: "from-fuchsia-500 to-purple-600",
@@ -138,8 +139,6 @@ const NAV: NavGroup[] = [
   },
 ];
 
-// The Mart workspace owns its own Mart-only tools. Keeping it as one entry in
-// the shared shell prevents department admins from seeing unrelated sections.
 const ADMIN_NAV: NavGroup[] = [
   {
     label: "Mart",
@@ -202,6 +201,9 @@ const AdminLayout = () => {
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const sidebarNavRef = useRef<HTMLElement | null>(null);
 
+  // [WALLET UPDATE] State for Admin Wallet Balance
+  const [adminWalletBalance, setAdminWalletBalance] = useState(0);
+
   const A11Y = {
     group: "গ্রুপ",
     item: "আইটেম",
@@ -240,7 +242,6 @@ const AdminLayout = () => {
   useEffect(() => { localStorage.setItem(PIN_KEY, JSON.stringify(pinned)); }, [pinned]);
   const togglePin = (path: string) => setPinned((p) => p.includes(path) ? p.filter(x => x !== path) : [...p, path]);
 
-  // 1. Filter Navigation based on Role
   const filteredNav = useMemo(() => {
     if (!userRole) return [];
     const allowed = ADMIN_ACCESS_BY_ROLE[userRole as keyof typeof ADMIN_ACCESS_BY_ROLE];
@@ -390,7 +391,6 @@ const AdminLayout = () => {
     if (!authLoading && !user && !getMySqlAuth()) navigate("/main-login", { replace: true });
   }, [user, authLoading, navigate]);
 
-  // 2. Set Admin State and Role
   useEffect(() => {
     const mysqlAuth = getMySqlAuth();
     const role = mysqlAuth?.user?.type as string | undefined;
@@ -402,9 +402,31 @@ const AdminLayout = () => {
       setIsAdmin(false);
       setUserRole(null);
     }
+
+    // [WALLET UPDATE] Fetch Admin Wallet Balance
+    const fetchAdminWallet = async () => {
+      const adminId = mysqlAuth?.user?.id;
+      if (!adminId) return;
+      try {
+        const res = await fetch(`${WALLET_API_BASE_URL}/api/wallet/balance/${adminId}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          const walletData = data.wallet || data;
+          setAdminWalletBalance(Number(walletData.cash_balance || 0));
+        }
+      } catch (err) {
+        console.error("Failed to fetch admin wallet balance");
+      }
+    };
+
+    if (role) fetchAdminWallet();
   }, [user, authLoading]);
 
-  // 3. Redirect if user accesses /admin or an unauthorized route directly
   useEffect(() => {
     if (isAdmin && userRole && filteredNav.length > 0) {
       const currentPath = location.pathname;
@@ -686,6 +708,17 @@ const AdminLayout = () => {
            
 
             <div className="flex items-center gap-1">
+              {/* [WALLET UPDATE] Admin Platform Wallet Balance Pill */}
+              <NavLink 
+                to="/admin/accounts" 
+                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 px-3 py-1.5 hover:ring-primary/40 transition-all"
+              >
+                <Wallet className="h-4 w-4 text-primary" />
+                <span className="text-xs font-bold text-foreground">
+                  ৳ {adminWalletBalance.toLocaleString('bn-BD', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
+                </span>
+              </NavLink>
+
               <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title="খুঁজুন">
                 <Search className="h-4 w-4" />
               </button>

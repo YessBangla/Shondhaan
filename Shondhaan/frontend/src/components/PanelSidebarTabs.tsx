@@ -3,13 +3,14 @@ import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Menu, Search, Sun, Moon, Monitor,
   Languages, Pin, PinOff, Command as CommandIcon, Sparkles, ChevronDown,
-  Home, RotateCcw, LogOut,
+  Home, RotateCcw, LogOut, Wallet, Plus, Coins, // [WALLET UPDATE] Added icons
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { getMySqlAuth } from "@/lib/mysqlAuth"; // [WALLET UPDATE] Added for auth token
 import NotificationBell from "@/components/NotificationBell";
 import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
@@ -51,6 +52,9 @@ interface PanelSidebarTabsProps {
 // Custom premium scrollbar classes
 const customScrollbar = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-500/50 [&::-webkit-scrollbar]:transition-colors";
 
+// [WALLET UPDATE] Central Wallet API Base URL
+const WALLET_API_BASE_URL = "http://localhost:5000"; 
+
 const PanelSidebarTabs = ({
   items,
   defaultValue,
@@ -70,6 +74,10 @@ const PanelSidebarTabs = ({
 
   const [activeTab, setActiveTabState] = useState(defaultValue);
   const requestedTab = searchParams.get("tab");
+
+  // [WALLET UPDATE] State for Wallet balances
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [walletCoins, setWalletCoins] = useState(0);
 
   useEffect(() => {
     if (!requestedTab) return;
@@ -98,6 +106,33 @@ const PanelSidebarTabs = ({
   const [signingOut, setSigningOut] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // [WALLET UPDATE] Fetch Wallet Balance Effect (FIXED DATA EXTRACTION)
+  useEffect(() => {
+    const fetchWallet = async () => {
+      if (!user?.id) return;
+      try {
+        const auth = getMySqlAuth();
+        const res = await fetch(`${WALLET_API_BASE_URL}/api/wallet/balance/${user.id}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          // FIX: Extract the 'wallet' object from the response
+          const walletData = data.wallet || data; 
+          setWalletBalance(Number(walletData.cash_balance || 0));
+          setWalletCoins(Number(walletData.coin_balance || 0));
+        }
+      } catch (error) {
+        console.error("Failed to fetch wallet balance");
+      }
+    };
+
+    fetchWallet();
+  }, [user?.id]);
 
   useEffect(() => {
     if (!profileMenuOpen) return;
@@ -263,8 +298,10 @@ const PanelSidebarTabs = ({
       (i) => i.label.toLowerCase().includes(q) || (i.group || "").toLowerCase().includes(q)
     );
   }, [items, paletteQuery]);
+  
   const initials = useMemo(() => {
-    const src = user?.user_metadata?.full_name || user?.email || "U";
+    // Fallback to standard auth context user structure
+    const src = (user as any)?.user_metadata?.full_name || (user as any)?.email || "U";
     return String(src).trim().slice(0, 1).toUpperCase();
   }, [user]);
 
@@ -273,7 +310,6 @@ const PanelSidebarTabs = ({
   // Premium Dark Gradient Sidebar Content
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
     <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
-      {/* Brand Header */}
       {/* User Profile Mini Card */}
       {(!collapsed || inDrawer) && user && (
         <div className="px-3 pt-4">
@@ -291,8 +327,8 @@ const PanelSidebarTabs = ({
               )}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{user.user_metadata?.full_name || user.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-foreground truncate leading-tight">{user.email}</p>
+              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{(user as any)?.user_metadata?.full_name || (user as any)?.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-foreground truncate leading-tight">{(user as any)?.email}</p>
             </div>
             <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
           </div>
@@ -315,6 +351,29 @@ const PanelSidebarTabs = ({
             )}
           </AnimatePresence>
         </div>
+      )}
+
+      {/* [WALLET UPDATE] Wallet Balance Card */}
+      {(!collapsed || inDrawer) && user && (
+<div className="px-2.5 pt-3">
+  <div className="rounded-lg bg-gradient-to-br from-primary to-green-700 p-2 text-white shadow-lg">
+    <div className="flex items-center justify-between">
+      <span className="text-[10px] font-semibold opacity-90 flex items-center gap-1">
+        <Wallet className="h-3 w-3" /> Shondhaan Wallet
+      </span>
+      <span className="text-[9px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+        <Coins className="h-2 w-2" /> {walletCoins}
+      </span>
+    </div>
+    <p className="text-base font-bold tracking-tight mt-0.5">৳ {walletBalance.toFixed(2)}</p>
+    <button 
+      onClick={() => navigate("/wallet")} 
+      className="mt-1.5 w-full bg-white/20 hover:bg-white/30 rounded-md py-1 text-[11px] font-semibold flex items-center justify-center gap-0.5 transition-colors"
+    >
+      <Plus className="h-2.5 w-2.5" /> টাকা যোগ করুন
+    </button>
+  </div>
+</div>
       )}
 
       {/* Search */}
@@ -464,75 +523,6 @@ const PanelSidebarTabs = ({
           offsetForDesktopMegaMenu ? "top-0 md:top-10" : "top-0"
         )}>
           <div className="h-1 py-2 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-          {/* <div className="flex items-center justify-between gap-4 px-4 md:px-4  h-16">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <button
-                onClick={() => setMobileOpen(true)}
-                className="md:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              
-              <button
-                onClick={() => navigate(-1)}
-                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                title="পেছনে যান"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-
-              <div className="hidden sm:flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 ring-1 ring-blue-500/20 shrink-0 [&>*]:h-5 [&>*]:w-5 shadow-sm">
-                {activeItem?.icon || panelIcon}
-              </div>
-              <div className="min-w-0">
-                <nav className="hidden sm:flex items-center gap-1.5 text-[11px] text-slate-400 dark:text-slate-500 leading-none font-medium">
-                  <button onClick={() => navigate("/")} className="inline-flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    <Home className="h-3 w-3" /> হোম
-                  </button>
-                  {activeGroup && (
-                    <>
-                      <ChevronRight className="h-3 w-3 opacity-50" />
-                      <span>{activeGroup}</span>
-                    </>
-                  )}
-                </nav>
-                <h1 className="text-[16px] md:text-[18px] font-bold text-slate-900 dark:text-white truncate leading-tight mt-1 tracking-tight">{activeLabel || panelTitle}</h1>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => setPaletteOpen(true)}
-                className="hidden lg:flex items-center gap-2 h-10 px-3 rounded-xl bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 text-[12px] text-slate-500 dark:text-slate-400 border border-slate-200 dark:border-white/5 hover:border-blue-500/30 transition-all font-medium"
-              >
-                <Search className="h-4 w-4" /> খুঁজুন
-                <kbd className="ml-1 rounded-md border border-slate-200 dark:border-white/5 bg-white dark:bg-black/20 px-1.5 py-0.5 text-[10px] font-mono">⌘K</kbd>
-              </button>
-              <button
-                onClick={() => setPaletteOpen(true)}
-                className="lg:hidden h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 transition-colors"
-                title="খুঁজুন (⌘K)"
-              >
-                <Search className="h-5 w-5" />
-              </button>
-              <button
-                onClick={cycle}
-                className="h-10 w-10 flex items-center justify-center rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
-                title={`Theme: ${mode}`}
-              >
-                <ThemeIcon className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-                className="h-10 px-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 text-[12px] font-bold text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white inline-flex items-center gap-1.5 transition-colors"
-                title="ভাষা পরিবর্তন"
-              >
-                <Languages className="h-4 w-4" />{language.toUpperCase()}
-              </button>
-              <div className="h-6 w-px bg-slate-200 dark:bg-white/5 hidden sm:block mx-1"></div>
-              <NotificationBell />
-            </div>
-          </div> */}
         </header>}
 
         <main className="flex-1 min-w-0">

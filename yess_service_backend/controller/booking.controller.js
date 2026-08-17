@@ -10,6 +10,7 @@ const allowedStatuses = [
   "cancelled",
 ];
 const allowedPaymentStatuses = ["unpaid", "paid", "refunded"];
+const allowedPaymentMethods = ["gateway", "wallet", "mixed"];
 
 const money = (value) => Math.round(Number(value || 0) * 100) / 100;
 
@@ -31,6 +32,11 @@ const formatBooking = (booking) => ({
     booking.payment_status === "paid" ? Number(booking.payment_amount || 0) : 0,
   service_charge_amount: Number(booking.payment_amount || 0),
   due_amount: calculateDueAmount(booking),
+  // [WALLET UPDATE] Return new wallet fields
+  payment_method: booking.payment_method || "gateway",
+  wallet_cash_used: Number(booking.wallet_cash_used || 0),
+  wallet_coins_used: Number(booking.wallet_coins_used || 0),
+  provider_payout_status: booking.provider_payout_status || "unpaid",
 });
 
 export const createBooking = async (req, res) => {
@@ -55,8 +61,12 @@ export const createBooking = async (req, res) => {
       booking_time,
       note,
       platform_fee_amount,
+      // [WALLET UPDATE] New fields from frontend
+      payment_method,
+      payment_status,
+      wallet_cash_used,
+      wallet_coins_used,
     } = req.body;
-
     if (
       !user_id ||
       !service_slug ||
@@ -130,9 +140,15 @@ export const createBooking = async (req, res) => {
 
     platformFeeAmount = money(platformFeeAmount);
 
+    // [WALLET UPDATE] Determine payment method and wallet amounts
+    const finalPaymentMethod = allowedPaymentMethods.includes(payment_method) ? payment_method : "gateway";
+    const finalWalletCash = money(wallet_cash_used || 0);
+    const finalWalletCoins = money(wallet_coins_used || 0);
+
     // Booking starts pending until service charge payment is successful.
     const finalStatus = "pending";
-    const finalPaymentStatus = "unpaid";
+    // [WALLET UPDATE] Respect payment_status from frontend (for wallet payments), default to "unpaid"
+    const finalPaymentStatus = allowedPaymentStatuses.includes(payment_status) ? payment_status : "unpaid";
 
     await pool.execute(
       `
@@ -157,9 +173,13 @@ export const createBooking = async (req, res) => {
         payment_status,
         platform_fee_amount,
         payment_amount,
-        note
+        note,
+        payment_method,
+        wallet_cash_used,
+        wallet_coins_used,
+        provider_payout_status
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -183,6 +203,10 @@ export const createBooking = async (req, res) => {
         platformFeeAmount,
         platformFeeAmount,
         note || null,
+        finalPaymentMethod,
+        finalWalletCash,
+        finalWalletCoins,
+        "unpaid" // Default provider payout to unpaid (Escrow)
       ]
     );
 
@@ -542,7 +566,8 @@ export const updateBookingStatus = async (req, res) => {
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { payment_status } = req.body;
+    // [WALLET UPDATE] Added wallet_cash_used and wallet_coins_used
+    const { payment_status, payment_method, payment_transaction_id, wallet_cash_used, wallet_coins_used } = req.body;
 
     if (!payment_status) {
       return res.status(400).json({
@@ -572,18 +597,31 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
+    // [WALLET UPDATE] Update payment method, transaction ID, and wallet amounts
     await pool.execute(
       `
       UPDATE bookings
       SET
         payment_status = ?,
+        payment_method = COALESCE(?, payment_method),
+        payment_transaction_id = COALESCE(?, payment_transaction_id),
+        wallet_cash_used = COALESCE(?, wallet_cash_used),
+        wallet_coins_used = COALESCE(?, wallet_coins_used),
         payment_verified_at = CASE
           WHEN ? = 'paid' THEN NOW()
           ELSE payment_verified_at
         END
       WHERE id = ?
       `,
-      [payment_status, payment_status, id]
+      [
+        payment_status, 
+        allowedPaymentMethods.includes(payment_method) ? payment_method : null, 
+        payment_transaction_id || null,
+        wallet_cash_used !== undefined ? money(wallet_cash_used) : null,
+        wallet_coins_used !== undefined ? money(wallet_coins_used) : null,
+        payment_status, 
+        id
+      ]
     );
 
     const [rows] = await pool.execute(
@@ -633,10 +671,8 @@ export const assignBookingProvider = async (req, res) => {
         message: "Booking not found",
       });
     }
-
     let finalProviderId = provider_id || null;
     let finalAssignedTo = provider_id || null;
-
     if (provider_id) {
       const [providerRows] = await pool.execute(
         `
@@ -653,7 +689,6 @@ export const assignBookingProvider = async (req, res) => {
         finalAssignedTo = providerRows[0].user_id || providerRows[0].id;
       }
     }
-
     await pool.execute(
       `
       UPDATE bookings
@@ -669,7 +704,6 @@ export const assignBookingProvider = async (req, res) => {
       `,
       [finalProviderId, finalAssignedTo, finalProviderId, id]
     );
-
     const [rows] = await pool.execute(
       `
       SELECT *
@@ -679,7 +713,6 @@ export const assignBookingProvider = async (req, res) => {
       `,
       [id]
     );
-
     return res.json({
       message: finalProviderId
         ? "Provider assigned successfully"
@@ -695,11 +728,9 @@ export const assignBookingProvider = async (req, res) => {
     });
   }
 };
-
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;
-
     const [existing] = await pool.execute(
       `
       SELECT id
@@ -709,13 +740,11 @@ export const deleteBooking = async (req, res) => {
       `,
       [id]
     );
-
     if (!existing.length) {
       return res.status(404).json({
         message: "Booking not found",
       });
     }
-
     await pool.execute(
       `
       DELETE FROM bookings
@@ -723,14 +752,12 @@ export const deleteBooking = async (req, res) => {
       `,
       [id]
     );
-
     return res.json({
       message: "Booking deleted successfully",
       data: { id },
     });
   } catch (error) {
     console.error("Delete booking error:", error);
-
     return res.status(500).json({
       message: "Failed to delete booking",
       error: error.message,

@@ -182,7 +182,7 @@ export const initializeDatabase = async () => {
     `);
     console.log("✅ cms_hero_banners table ready");
 
-    // 8. Create cms_homepage_sections table
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS cms_homepage_sections (
         id VARCHAR(36) PRIMARY KEY,

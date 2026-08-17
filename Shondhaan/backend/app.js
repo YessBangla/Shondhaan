@@ -5,6 +5,7 @@ import { corsMiddleware } from "./middleware/cors.js";
 import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
+import walletRoutes from "./routes/wallet.route.js";
 // import serviceCatalogRoutes from "./routes/serviceCatalog.routes.js";
 
 const app = express();
@@ -26,6 +27,7 @@ app.get("/", (req, res) => {
 app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
+app.use('/api/wallet', walletRoutes);
 
 // app.use("/api/catalog", serviceCatalogRoutes);
 
