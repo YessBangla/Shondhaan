@@ -14,6 +14,7 @@ import { useMartCompare } from "@/contexts/MartCompareContext";
 import { MartProduct } from "@/hooks/useMartData";
 import { useLongPress } from "@/hooks/useLongPress";
 import { haptic } from "@/lib/haptics";
+import { getFullImageUrl } from "@/lib/imageUrl";
 import { toast } from "sonner";
 import yessMartLogo from "@/assets/yess-mart-logo.png";
 
@@ -128,7 +129,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
       >
         <div className="relative h-28 w-28 rounded-lg overflow-hidden bg-muted/30 shrink-0">
           {product.image_url ? (
-            <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
+            <img src={getFullImageUrl(product.image_url)} alt={product.name} className="w-full h-full object-cover" loading="lazy" decoding="async" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ShoppingCart className="h-8 w-8" /></div>
           )}
@@ -191,7 +192,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
     >
       <div className="relative aspect-square bg-muted/30 overflow-hidden">
         {product.image_url ? (
-          <img src={product.image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
+          <img src={getFullImageUrl(product.image_url)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ShoppingCart className="h-10 w-10" /></div>
         )}

@@ -28,7 +28,7 @@ import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import JobApplicationsTab from "@/components/client/JobApplicationsTab";
-
+import ProfileContent from "@/components/ProfileContent";
 // ✅ ADDED: Import the ServiceMessage page so we can render it directly inside the tab
 import ServiceMessage from "@/pages/ServiceMessage";
 
@@ -780,88 +780,21 @@ const ClientDashboard = () => {
               )
             )}
 
-            {/* === PROFILE TAB === */}
-            {activeTab === "profile" && (
-              <motion.div 
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm max-w-lg mx-auto"
-              >
-                <div className="mb-5 flex items-center gap-3">
-                  <label className="relative flex h-16 w-16 cursor-pointer items-center justify-center overflow-hidden rounded-full border-2 border-blue-500/20 bg-blue-50 text-blue-500 transition hover:border-blue-500/50">
-                    {profile.profile_image_url ? (
-                      <img src={profile.profile_image_url} alt="" className="h-full w-full object-cover" />
-                    ) : (
-                      <User className="h-8 w-8" />
-                    )}
-                    <span className="absolute inset-x-0 bottom-0 flex h-6 items-center justify-center bg-black/55 text-white">
-                      {uploadingProfileImage ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Camera className="h-3.5 w-3.5" />}
-                    </span>
-                    <input type="file" accept="image/*" className="hidden" disabled={uploadingProfileImage} onChange={handleProfileImageChange} />
-                  </label>
-                  <div>
-                    <p className="text-base font-semibold text-slate-900">{profile.display_name || (bn ? "ব্যবহারকারী" : "User")}</p>
-                    <p className="text-sm text-slate-500">{user?.email}</p>
-                  </div>
-                </div>
-
-                <form onSubmit={handleSaveProfile} className="space-y-4">
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-500">{bn ? "নাম" : "Name"}</label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input 
-                        type="text" 
-                        value={profile.display_name} 
-                        onChange={e => setProfile({ ...profile, display_name: e.target.value })} 
-                        placeholder={bn ? "আপনার নাম" : "Your name"} 
-                        maxLength={100} 
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 py-3 text-base text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-500">{bn ? "ফোন" : "Phone"}</label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <input 
-                        type="tel" 
-                        value={profile.phone} 
-                        onChange={e => setProfile({ ...profile, phone: e.target.value })} 
-                        placeholder="01XXXXXXXXX" 
-                        maxLength={11} 
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 py-3 text-base text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50" 
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-slate-500">{bn ? "ঠিকানা" : "Address"}</label>
-                    <div className="relative">
-                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                      <textarea 
-                        value={profile.address} 
-                        onChange={e => setProfile({ ...profile, address: e.target.value })} 
-                        placeholder={bn ? "আপনার ঠিকানা" : "Your address"} 
-                        maxLength={300} 
-                        rows={2} 
-                        className="w-full rounded-lg border border-slate-200 bg-slate-50 pl-10 pr-3 py-3 text-base text-slate-900 placeholder-slate-400 outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 resize-none" 
-                      />
-                    </div>
-                  </div>
-                  <button 
-                    type="submit" 
-                    disabled={saving} 
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-userprimary py-3 text-base font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors"
-                  >
-                    {saving ? (
-                      <><Loader2 className="h-4 w-4 animate-spin" /> {bn ? "সেভ হচ্ছে..." : "Saving..."}</>
-                    ) : (
-                      <><Save className="h-4 w-4" /> {bn ? "সেভ করুন" : "Save"}</>
-                    )}
-                  </button>
-                </form>
-              </motion.div>
-            )}
+          {/* === PROFILE TAB === */}
+{activeTab === "profile" && (
+  <div className="max-w-2xl mx-auto">
+    <ProfileContent
+      onProfileUpdated={(updated) => {
+        setProfile({
+          display_name: updated.display_name,
+          phone: updated.phone,
+          address: updated.address,
+          profile_image_url: updated.profile_image_url || "",
+        });
+      }}
+    />
+  </div>
+)}
           </div>
         )}
       </PanelSidebarTabs>

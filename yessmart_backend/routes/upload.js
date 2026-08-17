@@ -3,7 +3,6 @@ const router = express.Router();
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
-const { getBackendBaseUrl } = require("../utils/baseUrl");
 
 const uploadRoot = path.join(__dirname, "..", "uploads", "mart-products");
 const extensionFromMime = (mime = "") => {
@@ -45,8 +44,7 @@ function runUpload(req, res) {
 }
 
 function uploadUrl(filename) {
-  const baseUrl = getBackendBaseUrl();
-  return `${baseUrl}/uploads/mart-products/${filename}`;
+  return `/uploads/mart-products/${filename}`;
 }
 
 // POST /api/upload
@@ -90,12 +88,10 @@ router.post("/", async (req, res) => {
     }
 
     // multipart path
-    // Only try multer if file middleware has run.
     if (!req.file) {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
-    // Build public URL
-    // By default this mart backend runs on PORT=8081 and serves static files at /uploads
+
     const url = uploadUrl(req.file.filename);
 
     console.log("[Upload] File saved:", url);

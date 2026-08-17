@@ -29,7 +29,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-
+import Swal from "sweetalert2";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMartCart } from "@/contexts/MartCartContext";
@@ -208,11 +208,33 @@ const  Navbar = () => {
     }
   }, [settings.favicon_url]);
 
-  const handleSignOut = async () => {
+const handleSignOut = async () => {
+  const result = await Swal.fire({
+    title: bn ? "আপনি কি লগআউট করতে চান?" : "Are you sure you want to logout?",
+    text: bn
+      ? "আপনাকে আবার লগইন করতে হবে।"
+      : "You'll need to sign in again to access your account.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#ef4444", // matches your destructive/red theme
+    cancelButtonColor: "#6b7280",
+    confirmButtonText: bn ? "হ্যাঁ, লগআউট করুন" : "Yes, logout",
+    cancelButtonText: bn ? "বাতিল" : "Cancel",
+  });
+
+  if (result.isConfirmed) {
     await signOut();
     setWishlistCount(0);
     navigate("/");
-  };
+
+    Swal.fire({
+      title: bn ? "লগআউট সফল হয়েছে" : "Logged out",
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false,
+    });
+  }
+};
 
   const handleDashboardClick = async () => {
     const path = await getRoleRedirectPath();
