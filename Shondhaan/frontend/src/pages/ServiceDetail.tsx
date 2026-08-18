@@ -661,7 +661,7 @@ const CmsServiceDetail = ({
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
+      <Navbar/>
       <div className="pt-[16px] md:pt-[16px]" />
       <div className="app-container py-4">
         <Breadcrumb>

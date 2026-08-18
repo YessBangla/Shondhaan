@@ -455,7 +455,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   const closeShare = useCallback(() => setShareState(null), []);
 
   return (
-    <section ref={ref} className="py-8 md:py-12">
+    <section ref={ref} className="py-2 md:py-6">
       <div ref={localRef}>
         <motion.div 
           style={{ scale, opacity, transformOrigin: "center center" }} 
