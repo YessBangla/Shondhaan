@@ -85,6 +85,9 @@ import {
   AdminRepresentativesPage, AdminLeaderboardPage, AdminReviewsPage,
   AdminCouponsPage, AdminWithdrawalsPage, AdminUsersPage,
   AdminPermissionsPage, AdminSettingsPage,
+  // [WALLET UPDATE] Import role-specific accounts pages
+  AdminServiceAdminAccountsPage, AdminDealAdminAccountsPage,
+  AdminMartAdminAccountsPage, AdminJobAdminAccountsPage,
 } from "./pages/admin/AdminPages";
 import MartStore from "./pages/MartStore";
 import ServiceMessage from "./pages/ServiceMessage";
@@ -327,6 +330,12 @@ const App = () => {
               <Route path="staff-workload" element={<AdminStaffWorkload />} />
               <Route path="notification-rules" element={<AdminNotificationRules />} />
                <Route path="service" element={<ServiceAdminDashboard />} />
+              
+              {/* [WALLET UPDATE] Role-Specific Accounts Routes */}
+              <Route path="service-admin/accounts" element={<AdminServiceAdminAccountsPage />} />
+              <Route path="deal-admin/accounts" element={<AdminDealAdminAccountsPage />} />
+              <Route path="mart-admin/accounts" element={<AdminMartAdminAccountsPage />} />
+              <Route path="job-admin/accounts" element={<AdminJobAdminAccountsPage />} />
             </Route>
             <Route path="/checkout" element={<Checkout />} />
             <Route path="/faq" element={<FAQ />} />

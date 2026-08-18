@@ -97,9 +97,8 @@ const ServiceImageManager = () => {
         </div>
         <CategoryFilterDropdown value={categoryFilter} onChange={setCategoryFilter} />
       </div>
-
       {/* Service Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         {filtered.map(s => (
           <div key={s.id} className={`rounded-xl border bg-card overflow-hidden ${!s.image_url ? "border-yellow-300 dark:border-yellow-800" : "border-border"}`}>
             {/* Image Preview */}

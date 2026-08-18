@@ -36,20 +36,28 @@ export const ADMIN_ACCESS_BY_ROLE: Partial<Record<RoleKey, string[] | "*">> = {
     "/admin/notification-rules",
     "/admin/reviews",
     "/admin/settings",
+    // [WALLET UPDATE] Service Admin Accounts
+    "/admin/service-admin/accounts",
   ],
   mart_admin: [
     "/admin/mart-management",
     "/admin/mart-overview",
+    // [WALLET UPDATE] Mart Admin Accounts
+    "/admin/mart-admin/accounts",
   ],
   deal_admin: [
     "/admin/deal-overview",
     "/admin/deal-categories",
     "/admin/settings",
+    // [WALLET UPDATE] Deal Admin Accounts
+    "/admin/deal-admin/accounts",
   ],
   job_admin: [
     "/admin/job-listings",
     "/admin/employers",
     "/admin/jobs",
+    // [WALLET UPDATE] Job Admin Accounts
+    "/admin/job-admin/accounts",
   ],
   call_center: ["/admin/bookings", "/admin/requests", "/admin/contacts", "/admin/chat-history"],
 };

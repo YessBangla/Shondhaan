@@ -71,3 +71,47 @@ export const requireLoggedIn = (req, res, next) => {
     return res.status(401).json({ message: "Invalid token" });
   }
 };
+
+// ==========================================
+// ROLE-SPECIFIC MIDDLEWARE
+// ==========================================
+
+export const requireServiceAdmin = (req, res, next) => {
+  requireLoggedIn(req, res, () => {
+    const role = getAuthRole(req.user);
+    if (role !== "service_admin" && role !== "super_admin" && role !== "admin") {
+      return res.status(403).json({ message: "Service Admin access is required" });
+    }
+    next();
+  });
+};
+
+export const requireDealAdmin = (req, res, next) => {
+  requireLoggedIn(req, res, () => {
+    const role = getAuthRole(req.user);
+    if (role !== "deal_admin" && role !== "super_admin" && role !== "admin") {
+      return res.status(403).json({ message: "Deal Admin access is required" });
+    }
+    next();
+  });
+};
+
+export const requireMartAdmin = (req, res, next) => {
+  requireLoggedIn(req, res, () => {
+    const role = getAuthRole(req.user);
+    if (role !== "mart_admin" && role !== "super_admin" && role !== "admin") {
+      return res.status(403).json({ message: "Mart Admin access is required" });
+    }
+    next();
+  });
+};
+
+export const requireJobAdmin = (req, res, next) => {
+  requireLoggedIn(req, res, () => {
+    const role = getAuthRole(req.user);
+    if (role !== "job_admin" && role !== "super_admin" && role !== "admin") {
+      return res.status(403).json({ message: "Job Admin access is required" });
+    }
+    next();
+  });
+};
