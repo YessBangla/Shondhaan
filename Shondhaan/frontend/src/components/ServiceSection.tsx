@@ -119,20 +119,30 @@ const ServiceCardWrapper = ({
   onOpen,
   onLongPress,
   disableHover,
-  children,
+  imageContent,
+  bn,
+  onAddToCart,
+  onCompare,
+  onShare,
+  isInCompareList,
 }: {
   service: ServiceItem;
   onOpen: (e: React.MouseEvent) => void;
   onLongPress: () => void;
   disableHover?: boolean;
-  children: React.ReactNode;
+  imageContent: React.ReactNode;
+  bn: boolean;
+  onAddToCart: (e: React.MouseEvent, service: ServiceItem) => void;
+  onCompare: (e: React.MouseEvent, service: ServiceItem) => void;
+  onShare: (e: React.MouseEvent, service: ServiceItem) => void;
+  isInCompareList: boolean;
 }) => {
   const longPress = useLongPress<HTMLDivElement>(onLongPress, 480);
   const [hovered, setHovered] = useState(false);
   const [hoverRect, setHoverRect] = useState<DOMRect | null>(null);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const showTooltip = (e: React.MouseEvent<HTMLDivElement> | React.FocusEvent<HTMLDivElement>) => {
+  const showTooltip = (e: React.MouseEvent<HTMLHeadingElement> | React.FocusEvent<HTMLHeadingElement>) => {
     if (disableHover) return;
     if (!service.description) return;
     if (hideTimer.current) {
@@ -157,16 +167,69 @@ const ServiceCardWrapper = ({
   return (
     <>
       <div
-        onMouseEnter={showTooltip}
-        onMouseLeave={hideTooltip}
-        onFocus={showTooltip}
-        onBlur={hideTooltip}
         onClick={onOpen}
         {...longPress}
         tabIndex={0}
         className="group relative VITE_DEAL_API_BASE_URL active:scale-[0.98] shrink-0 w-[calc(50vw-16px)] sm:w-[calc(50vw-28px)] md:max-w-[260px] md:min-w-[170px] rounded-md overflow-hidden border shadow"
       >
-        {children}
+        {imageContent}
+        <div className="p-3 bg-background md:p-4 pointer-events-none">
+          <h3 
+            onMouseEnter={showTooltip}
+            onMouseLeave={hideTooltip}
+            onFocus={showTooltip}
+            onBlur={hideTooltip}
+            className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1 pointer-events-auto cursor-help"
+          >
+            {service.title}
+          </h3>
+          <div className="mt-1.5 flex items-center gap-1">
+            <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+            <span className="text-xs font-medium text-muted-foreground">
+              {service.rating ? service.rating.toFixed(1) : "0.0"}
+            </span>
+          </div>
+          <div className="mt-2 flex items-end justify-between">
+            <p className="text-sm font-bold text-foreground md:text-base">
+              {service.price && service.price > 0 ? (
+                <>
+                  ৳{service.price}
+                  <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
+                </>
+              ) : (
+                <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
+              )}
+            </p>
+            <div className="flex items-center gap-0.5 pointer-events-auto">
+              <button
+                onClick={(e) => onAddToCart(e, service)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
+                title={bn ? "কার্টে যোগ করুন" : "Add to cart"}
+              >
+                <ShoppingCart className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => onCompare(e, service)}
+                className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 cursor-pointer ${
+                  isInCompareList
+                    ? "bg-primary/15 text-primary"
+                    : "text-muted-foreground hover:text-primary"
+                }`}
+                title={bn ? "তুলনা করুন" : "Compare"}
+                aria-label={bn ? "তুলনা করুন" : "Compare"}
+              >
+                <GitCompareArrows className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={(e) => onShare(e, service)}
+                className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
+                title={bn ? "শেয়ার করুন" : "Share"}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <AnimatePresence>
@@ -436,77 +499,31 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                       key={service.title}
                       service={service}
                       disableHover={isDragging}
+                      imageContent={
+                        <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 yess-wm pointer-events-none">
+                          <img 
+                            src={getImageSrc(service.image)} 
+                            alt={service.title} 
+                            className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105" 
+                            loading="lazy" 
+                            decoding="async" 
+                            fetchPriority="low" 
+                            draggable={false} 
+                          />
+                        </div>
+                      }
+                      bn={bn}
                       onOpen={(e) => {
                         if ((e.target as HTMLElement).closest("button, a")) return;
                         if (service.slug) navigate(`/service/${service.slug}`);
                       }}
                       onLongPress={() => setQuickMenu(service)}
-                    >
-                    <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 yess-wm pointer-events-none">
-                      <img 
-                        src={getImageSrc(service.image)} 
-                        alt={service.title} 
-                        className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105" 
-                        loading="lazy" 
-                        decoding="async" 
-                        fetchPriority="low" 
-                        draggable={false} 
-                      />
-                    </div>
-                    <div className="p-3 bg-background md:p-4 pointer-events-none">
-                      <h3 className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1">
-                        {service.title}
-                      </h3>
-                      <div className="mt-1.5 flex items-center gap-1">
-                        <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-                        <span className="text-xs font-medium text-muted-foreground">
-                          {service.rating ? service.rating.toFixed(1) : "0.0"}
-                        </span>
-                      </div>
-                      <div className="mt-2 flex items-end justify-between">
-                        <p className="text-sm font-bold text-foreground md:text-base">
-                          {service.price && service.price > 0 ? (
-                            <>
-                              ৳{service.price}
-                              <span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span>
-                            </>
-                          ) : (
-                            <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>
-                          )}
-                        </p>
-                        <div className="flex items-center gap-0.5 pointer-events-auto">
-                          <button
-                            onClick={(e) => handleAddToCart(e, service)}
-                            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
-                            title={bn ? "কার্টে যোগ করুন" : "Add to cart"}
-                          >
-                            <ShoppingCart className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => handleCompare(e, service)}
-                            className={`flex h-7 w-7 items-center justify-center rounded-full transition-colors hover:bg-primary/10 cursor-pointer ${
-                              service.slug && isInCompare(service.slug)
-                                ? "bg-primary/15 text-primary"
-                                : "text-muted-foreground hover:text-primary"
-                            }`}
-                            title={bn ? "তুলনা করুন" : "Compare"}
-                            aria-label={bn ? "তুলনা করুন" : "Compare"}
-                          >
-                            <GitCompareArrows className="h-3.5 w-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => handleShare(e, service)}
-                            className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-primary/10 hover:text-primary cursor-pointer"
-                            title={bn ? "শেয়ার করুন" : "Share"}
-                          >
-                            <Share2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  </ServiceCardWrapper>
-                ))}
-              </div>
+                      onAddToCart={handleAddToCart}
+                      onCompare={handleCompare}
+                      onShare={handleShare}
+                      isInCompareList={service.slug ? isInCompare(service.slug) : false}
+                    />
+                  ))}              </div>
             </div>
           </motion.div>
         </motion.div>

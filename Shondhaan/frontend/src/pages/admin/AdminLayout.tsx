@@ -92,6 +92,42 @@ const NAV: NavGroup[] = [
       { to: "/admin/employers", label: "এমপ্লয়ার", icon: <Store className="h-4 w-4" /> },
     ],
   },
+  // [WALLET UPDATE] Service Admin Role-Specific Section
+  {
+    label: "সার্ভিস অ্যাডমিন - একাউন্টস",
+    accent: "from-sky-500 to-blue-600",
+    dot: "bg-sky-500",
+    items: [
+      { to: "/admin/service-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
+    ],
+  },
+  // [WALLET UPDATE] Deal Admin Role-Specific Section
+  {
+    label: "ডিল অ্যাডমিন - একাউন্টস",
+    accent: "from-amber-500 to-orange-600",
+    dot: "bg-amber-500",
+    items: [
+      { to: "/admin/deal-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
+    ],
+  },
+  // [WALLET UPDATE] Mart Admin Role-Specific Section
+  {
+    label: "মার্ট অ্যাডমিন - একাউন্টস",
+    accent: "from-emerald-500 to-teal-600",
+    dot: "bg-teal-500",
+    items: [
+      { to: "/admin/mart-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
+    ],
+  },
+  // [WALLET UPDATE] Job Admin Role-Specific Section
+  {
+    label: "জবস অ্যাডমিন - একাউন্টস",
+    accent: "from-blue-500 to-indigo-600",
+    dot: "bg-blue-500",
+    items: [
+      { to: "/admin/job-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
+    ],
+  },
   {
     label: "কমিউনিকেশন",
     accent: "from-fuchsia-500 to-purple-600",

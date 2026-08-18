@@ -25,8 +25,8 @@ import {
   Home,
   ChevronRight,
   Briefcase,
-  Wallet, // [WALLET UPDATE] Added Wallet icon
-  CreditCard, // [WALLET UPDATE] Added CreditCard icon
+  Wallet,
+  CreditCard,
 } from "lucide-react";
 import PrescriptionUpload from "@/components/PrescriptionUpload";
 import LabTestTracker from "@/components/LabTestTracker";
@@ -106,8 +106,7 @@ const SERVICE_API_BASE_URL = (
   INDIVIDUAL_API_BASE_URL || "http://localhost:3000"
 ).replace(/\/+$/, "");
 
-// [WALLET UPDATE] Central Wallet API Base URL
-const WALLET_API_BASE_URL = "http://localhost:5000"; 
+const WALLET_API_BASE_URL = "http://localhost:5000";
 
 const getServiceApiHeaders = () => {
   const auth = getMySqlAuth();
@@ -270,7 +269,6 @@ const useServicePackages = (serviceId?: string, enabled = true) =>
     retry: 1,
   });
 
-// [WALLET UPDATE] Hook to fetch wallet balance from Central Backend
 const useUserWallet = (userId?: string | number) =>
   useQuery({
     queryKey: ["user-wallet-balance", userId],
@@ -281,8 +279,7 @@ const useUserWallet = (userId?: string | number) =>
       });
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json?.error || "Failed to load wallet");
-      // FIX: Extract the 'wallet' object from the response
-      return json.wallet || json; 
+      return json.wallet || json;
     },
     enabled: !!userId,
     retry: 1,
@@ -473,7 +470,6 @@ const CmsServiceDetail = ({
 
   const pkg = packages[selectedPackage] || packages[0];
   const commissionPercent = Number(service.commission_percent || 0);
-  // Calculate fee: Package Price * (Commission Percent / 100)
   const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
   const { addItem: addRecentlyViewed, getItems: getRecentItems } = useRecentlyViewed();
   const heroImage = getServiceDisplayImage(service.slug, service.image_url);
@@ -526,8 +522,8 @@ const CmsServiceDetail = ({
   const [bookingAddress, setBookingAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews">("overview");
   
-  // [WALLET UPDATE] Wallet state
   const [useWalletPayment, setUseWalletPayment] = useState(false);
   const { data: walletData } = useUserWallet(activeUserId);
   const walletBalance = Number(walletData?.cash_balance || 0);
@@ -572,7 +568,6 @@ const CmsServiceDetail = ({
     }
     if (!pkg) return;
 
-    // [WALLET UPDATE] Prevent submission if wallet is selected but insufficient
     if (useWalletPayment && !canPayWithWallet) {
       toast.error(bn ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই" : "Insufficient wallet balance");
       return;
@@ -582,10 +577,8 @@ const CmsServiceDetail = ({
     try {
       const paymentAmount = Math.round(Number(platformFee || 0));
 
-      // [WALLET UPDATE] Process wallet payment FIRST if selected
       let walletTransactionId: string | null = null;
       if (useWalletPayment) {
-        // 1. Call Central Wallet API to debit the amount
         const walletRes = await fetch(`${WALLET_API_BASE_URL}/api/wallet/debit`, {
           method: "POST",
           headers: { "Content-Type": "application/json", ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}) },
@@ -606,7 +599,6 @@ const CmsServiceDetail = ({
         walletTransactionId = walletJson.transaction_id;
       }
 
-      // Create booking with appropriate payment status based on payment method
       const createdBooking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
@@ -629,7 +621,6 @@ const CmsServiceDetail = ({
       });
 
       if (useWalletPayment) {
-        // Payment already done, just update transaction ID
         await fetch(`${SERVICE_API_BASE_URL}/api/bookings/${createdBooking.id}/payment-status`, {
           method: "PUT",
           headers: getServiceApiHeaders(),
@@ -646,7 +637,6 @@ const CmsServiceDetail = ({
         navigate("/my-bookings"); 
         
       } else {
-        // Fallback to External Gateway
         const payment = await startBookingPayment(createdBooking.id, paymentAmount);
         if (!payment.checkout_url) throw new Error("Payment link was not returned");
         window.location.href = payment.checkout_url;
@@ -672,9 +662,8 @@ const CmsServiceDetail = ({
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[20px] md:pt-[20px]" />
-
-      <div className="app-container py-3">
+      <div className="pt-[16px] md:pt-[16px]" />
+      <div className="app-container py-4">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -692,23 +681,23 @@ const CmsServiceDetail = ({
         </Breadcrumb>
       </div>
 
-      {/* Hero Section */}
-      <div className="app-container">
-        <div className="relative h-[150px] md:h-[250px] w-full overflow-hidden rounded-2xl shadow-sm">
+      {/* Compact Hero Section */}
+      <div className="app-container py-4">
+        <div className="relative h-[180px] md:h-[200px] w-full overflow-hidden rounded-2xl shadow-sm">
           <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover" />
           <div className={`absolute inset-0 bg-gradient-to-t ${category?.color_overlay || "from-foreground/80 to-foreground/20"}`} />
-          <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
+          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
             {category && (
-              <span className="inline-flex items-center rounded-full bg-background/20 backdrop-blur-sm px-3 py-1 text-xs font-medium text-background mb-2">
+              <span className="inline-flex items-center rounded-full bg-background/20 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-medium text-background mb-2">
                 {bn ? category.name : category.name_en || category.name}
               </span>
             )}
-            <h1 className="font-heading text-3xl md:text-5xl font-bold text-background drop-shadow-sm">
+            <h1 className="font-heading text-2xl md:text-4xl font-bold text-background drop-shadow-sm leading-tight">
               {serviceTitle}
             </h1>
-            <div className="mt-3 flex items-center gap-4 text-background/90 text-sm">
+            <div className="mt-2 flex items-center gap-3 text-background/90 text-xs md:text-sm">
               <span className="flex items-center gap-1">
-                <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
                 {service.rating ?? 4.5}
               </span>
               <span className="hidden sm:inline">({service.total_reviews ?? 0} {t("sd.reviews")})</span>
@@ -718,165 +707,197 @@ const CmsServiceDetail = ({
         </div>
       </div>
 
-      <div className="app-container py-6 md:py-10">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
+      <div className="app-container py-4 md:py-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
           
-          {/* Main Content */}
-          <div className="md:col-span-2 space-y-10">
-            
-            {/* Description & Features */}
-            <section className="space-y-4">
-              <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                {bn ? "সার্ভিসের বিবরণ" : "Service Description"}
-              </h2>
-              {service.description && (
-                <p className="text-muted-foreground leading-relaxed text-sm md:text-base">
-                  {service.description}
-                </p>
-              )}
-              {features.length > 0 && (
-                <div className="flex flex-wrap gap-2 pt-2">
-                  {features.map((f) => (
-                    <span key={f} className="inline-flex items-center gap-1.5 rounded-full bg-secondary px-3 py-1.5 text-xs font-medium text-secondary-foreground">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-primary" /> {f}
-                    </span>
-                  ))}
-                </div>
-              )}
-            </section>
+          {/* Main Content with Tabs */}
+          <div className="md:col-span-2">
+            {/* Tab Navigation */}
+            <div className="flex gap-1 border-b border-border mb-5">
+              <button
+                onClick={() => setActiveTab("overview")}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-medium transition-all border-b-2",
+                  activeTab === "overview" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {bn ? "সার্ভিস বিবরণ" : "Overview"}
+              </button>
+              <button
+                onClick={() => setActiveTab("reviews")}
+                className={cn(
+                  "px-4 py-2.5 text-sm font-medium transition-all border-b-2",
+                  activeTab === "reviews" 
+                    ? "border-primary text-primary" 
+                    : "border-transparent text-muted-foreground hover:text-foreground"
+                )}
+              >
+                {bn ? "রিভিউ" : "Reviews"} ({service.total_reviews ?? 0})
+              </button>
+            </div>
 
-            {/* Packages */}
-            {packages.length > 0 && (
-              <section className="space-y-4">
-                <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-                  <ShoppingBag className="h-5 w-5 text-primary" />
-                  {bn ? "প্যাকেজ ও মূল্য" : "Packages & Pricing"}
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {packages.map((p: any, i: number) => {
-                    const pFeats = Array.isArray(p.features) ? p.features : [];
-                    const isSelected = selectedPackage === i;
-                    const discount = p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0;
+            {/* Overview Tab */}
+            {activeTab === "overview" && (
+              <div className="space-y-5 animate-in fade-in">
+                
+                {/* Description */}
+                {service.description && (
+                  <div>
+                    <p className="text-muted-foreground leading-relaxed text-sm">
+                      {service.description}
+                    </p>
+                  </div>
+                )}
 
-                    return (
-                      <button
-                        key={p.id || p.name}
-                        onClick={() => setSelectedPackage(i)}
-                        className={cn(
-                          "relative rounded-2xl border-2 p-5 text-left transition-all",
-                          isSelected ? "border-primary bg-primary/5 shadow-md" : "border-border hover:border-primary/40 hover:shadow-sm"
-                        )}
-                      >
-                        {isSelected && (
-                          <span className="absolute -top-2.5 left-4 rounded-full bg-primary px-3 py-0.5 text-[10px] font-bold text-white">
-                            {bn ? "নির্বাচিত" : "Selected"}
-                          </span>
-                        )}
-                        {discount > 0 && (
-                          <span className="absolute -top-2.5 right-4 rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-destructive-foreground">
-                            {discount}% OFF
-                          </span>
-                        )}
-                        <h3 className="font-heading text-base font-semibold text-foreground">{p.name}</h3>
-                        <div className="mt-2 flex items-baseline gap-2">
-                          <span className="font-heading text-2xl font-bold text-primary">৳{p.price}</span>
-                          {p.original_price && <span className="text-sm text-muted-foreground line-through">৳{p.original_price}</span>}
+                {/* Features */}
+                {features.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2.5">{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
+                    <div className="flex flex-wrap gap-2">
+                      {features.map((f) => (
+                        <span key={f} className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground">
+                          <CheckCircle2 className="h-3 w-3 text-primary" /> {f}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Compact Packages */}
+                {packages.length > 0 && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2.5">{bn ? "প্যাকেজ" : "Packages"}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {packages.map((p: any, i: number) => {
+                        const isSelected = selectedPackage === i;
+                        const discount = p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0;
+
+                        return (
+                          <button
+                            key={p.id || p.name}
+                            onClick={() => setSelectedPackage(i)}
+                            className={cn(
+                              "relative rounded-lg border-2 p-3.5 text-left transition-all text-sm",
+                              isSelected ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
+                            )}
+                          >
+                            {isSelected && (
+                              <span className="absolute -top-2 left-3 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-white">
+                                {bn ? "নির্বাচিত" : "Selected"}
+                              </span>
+                            )}
+                            {discount > 0 && (
+                              <span className="absolute -top-2 right-3 rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold text-destructive-foreground">
+                                -{discount}%
+                              </span>
+                            )}
+                            <h4 className="font-semibold text-foreground">{p.name}</h4>
+                            <div className="mt-1 flex items-baseline gap-1.5">
+                              <span className="text-lg font-bold text-primary">৳{p.price}</span>
+                              {p.original_price && <span className="text-xs text-muted-foreground line-through">৳{p.original_price}</span>}
+                            </div>
+                            {Array.isArray(p.features) && p.features.length > 0 && (
+                              <ul className="mt-2 space-y-1 border-t border-border pt-2">
+                                {p.features.slice(0, 2).map((f: string) => (
+                                  <li key={f} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
+                                    <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0 text-primary" /> {f}
+                                  </li>
+                                ))}
+                                {p.features.length > 2 && (
+                                  <li className="text-[10px] text-primary font-medium">+{p.features.length - 2} more</li>
+                                )}
+                              </ul>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                {/* Compact Benefits */}
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground mb-2.5">{bn ? "সুবিধা" : "Benefits"}</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {benefits.map((b, i) => (
+                      <div key={i} className="flex items-start gap-2 rounded-lg border border-border bg-card p-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                          <b.icon className="h-4 w-4 text-primary" />
                         </div>
-                        {pFeats.length > 0 && (
-                          <ul className="mt-4 space-y-2 border-t border-border pt-3">
-                            {pFeats.map((f: string) => (
-                              <li key={f} className="flex items-start gap-2 text-xs text-muted-foreground">
-                                <CheckCircle2 className="h-3.5 w-3.5 mt-0.5 shrink-0 text-primary" /> {f}
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </button>
-                    );
-                  })}
+                        <div className="min-w-0">
+                          <h4 className="text-xs font-semibold text-foreground leading-tight">{b.title}</h4>
+                          <p className="text-[10px] text-muted-foreground mt-0.5">{b.desc}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </section>
+
+                {/* Cities */}
+                {(cities.length > 0 || true) && (
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground mb-2.5">{bn ? "পরিষেবা এলাকা" : "Service Area"}</h3>
+                    {cities.length > 0 ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {cities.map((city) => (
+                          <span key={city} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary">
+                            <MapPin className="h-3 w-3" /> {city}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-lg bg-card p-3 border border-border">
+                        <p className="text-xs text-muted-foreground flex items-center gap-2">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                          {bn ? "সারাদেশে পরিষেবা উপলব্ধ" : "Available nationwide"}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
 
-            {/* Benefits */}
-            <section className="space-y-4">
-              <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary" />
-                {bn ? "এই সার্ভিস নিলে যা যা পাবেন" : "What You Get"}
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {benefits.map((b, i) => (
-                  <div key={i} className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 transition-shadow hover:shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                      <b.icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-semibold text-foreground">{b.title}</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">{b.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Cities */}
-            <section className="space-y-4">
-              <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-                <MapPin className="h-5 w-5 text-primary" />
-                {bn ? "যেসব শহরে সার্ভিসটি পাওয়া যায়" : "Available Cities"}
-              </h2>
-              {cities.length > 0 ? (
-                <div className="flex flex-wrap gap-2">
-                  {cities.map((city) => (
-                    <span key={city} className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
-                      <MapPin className="h-3 w-3" /> {city}
-                    </span>
-                  ))}
-                </div>
-              ) : (
-                <div className="rounded-xl border border-border bg-card p-4">
-                  <p className="text-sm text-muted-foreground flex items-center gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    {bn ? "এই সার্ভিসটি সারাদেশে পাওয়া যায়" : "Available nationwide"}
-                  </p>
-                </div>
-              )}
-            </section>
-
-            {/* Reviews */}
-            <ReviewSection serviceSlug={service.slug} t={t} bn={bn} navigate={navigate} />
+            {/* Reviews Tab */}
+            {activeTab === "reviews" && (
+              <ReviewSection serviceSlug={service.slug} t={t} bn={bn} navigate={navigate} />
+            )}
           </div>
 
-          {/* Sidebar */}
+          {/* Compact Sidebar */}
           <div className="hidden md:block md:col-span-1">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-lg space-y-5">
-              <h2 className="font-heading text-xl font-bold text-foreground">{t("sd.bookNow")}</h2>
+            <div className="sticky top-24 rounded-xl border border-border bg-card p-5 shadow-md space-y-4">
+              <h2 className="font-heading text-lg font-bold text-foreground">{t("sd.bookNow")}</h2>
               
               {pkg && (
-                <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
-                  <p className="text-xs text-muted-foreground">{bn ? "নির্বাচিত প্যাকেজ" : "Selected Package"}</p>
-                  <p className="font-semibold text-foreground text-sm mt-0.5">{pkg.name}</p>
-                  <div className="flex items-baseline gap-2 mt-1">
-                    <span className="font-heading text-2xl font-bold text-primary">৳{pkg.price}</span>
-                    {pkg.original_price && <span className="text-sm text-muted-foreground line-through">৳{pkg.original_price}</span>}
+                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3.5 space-y-2.5">
+                  <div>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">{bn ? "নির্বাচিত" : "Selected"}</p>
+                    <p className="font-semibold text-foreground text-sm">{pkg.name}</p>
                   </div>
-                  <div className="mt-3 rounded-lg border border-dashed border-border bg-background px-3 py-2">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Commission Fee ({commissionPercent}%)</span>
-                      <span className="font-semibold text-foreground">৳{platformFee.toLocaleString(bn ? "bn-BD" : "en-US")}</span>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-heading text-xl font-bold text-primary">৳{pkg.price}</span>
+                    {pkg.original_price && <span className="text-xs text-muted-foreground line-through">৳{pkg.original_price}</span>}
+                  </div>
+                  <div className="rounded border border-dashed border-border/50 bg-background px-2.5 py-1.5">
+                    <div className="flex items-center justify-between text-[10px]">
+                      <span className="text-muted-foreground">Fee ({commissionPercent}%)</span>
+                      <span className="font-semibold text-foreground">৳{platformFee}</span>
                     </div>
                   </div>
                 </div>
               )}
 
+              {/* Date Selection */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-foreground">{t("sd.selectDate")}</label>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2.5 text-sm text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
-                      <CalendarIcon className="h-4 w-4 text-primary" />
-                      {bookingDate ? format(bookingDate, "dd MMM yyyy") : bn ? "তারিখ বেছে নিন" : "Pick a date"}
+                    <button className={cn("w-full flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2 text-xs text-left hover:bg-secondary", !bookingDate && "text-muted-foreground")}>
+                      <CalendarIcon className="h-3.5 w-3.5 text-primary" />
+                      {bookingDate ? format(bookingDate, "dd MMM") : bn ? "তারিখ বেছে নিন" : "Pick date"}
                     </button>
                   </PopoverTrigger>
                   <PopoverContent className="w-auto p-0" align="start">
@@ -885,16 +906,17 @@ const CmsServiceDetail = ({
                 </Popover>
               </div>
 
+              {/* Time Selection */}
               <div className="space-y-2">
                 <label className="text-xs font-semibold text-foreground">{t("sd.selectTime")}</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {timeSlots.map((slot) => (
+                <div className="grid grid-cols-4 gap-1.5">
+                  {timeSlots.slice(0, 8).map((slot) => (
                     <button
                       key={slot.value}
                       onClick={() => setBookingTime(slot.value)}
                       className={cn(
-                        "rounded-lg border px-2 py-1.5 text-[11px] font-medium transition-all",
-                        bookingTime === slot.value ? "border-primary text-blue-900" : "border-border text-muted-foreground hover:border-primary/40"
+                        "rounded border px-1.5 py-1 text-[10px] font-medium transition-all",
+                        bookingTime === slot.value ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary/40"
                       )}
                     >
                       {slot.label}
@@ -910,81 +932,78 @@ const CmsServiceDetail = ({
                     if (!bookingDate || !bookingTime) return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full border border-primary bg-primary rounded-lg py-3 text-sm font-semibold text-white hover:bg-primary/90 hover:text-primary flex items-center justify-center gap-2"
+                  className="w-full border border-primary bg-primary rounded-lg py-2.5 text-xs font-semibold text-white hover:bg-primary/90 flex items-center justify-center gap-2"
                 >
-                  <CalendarCheck className="h-4 w-4" /> {t("sd.bookingConfirmBtn")}
+                  <CalendarCheck className="h-3.5 w-3.5" /> {t("sd.bookingConfirmBtn")}
                 </button>
               ) : (
-                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2.5">
-                  <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
-                  <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring" />
-                  <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
+                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} className="space-y-2">
+                  <input type="text" placeholder={t("sd.namePlaceholder")} value={bookingName} onChange={(e) => setBookingName(e.target.value)} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring" />
+                  <input type="tel" placeholder={t("sd.phonePlaceholder")} value={bookingPhone} onChange={(e) => setBookingPhone(e.target.value.replace(/\D/g, "").slice(0, 11))} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring" />
+                  <textarea placeholder={t("sd.addressPlaceholder")} value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring resize-none" />
                   
-                  {/* [WALLET UPDATE] Payment Method Selection UI */}
-                  <div className="pt-2 space-y-2">
-                    <label className="text-xs font-semibold text-foreground">{bn ? "পেমেন্ট মেথড" : "Payment Method"}</label>
-                    <div className="space-y-2">
+                  {/* Payment Method */}
+                  <div className="space-y-2 pt-1.5">
+                    <label className="text-xs font-semibold text-foreground">{bn ? "পেমেন্ট" : "Payment"}</label>
+                    <div className="space-y-1.5">
                       <button
                         type="button"
                         onClick={() => setUseWalletPayment(true)}
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all",
-                          useWalletPayment ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/40"
+                          "w-full flex items-center justify-between p-2.5 rounded-lg border text-xs transition-all",
+                          useWalletPayment ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
                         )}
                         disabled={!canPayWithWallet}
                       >
                         <div className="flex items-center gap-2">
-                          <Wallet className="h-4 w-4 text-primary" />
-                          <div>
-                            <p className="text-sm font-medium">{bn ? "ওয়ালেট ব্যবহার করুন" : "Pay With Wallet"}</p>
-                            <p className="text-[10px] text-muted-foreground">{bn ? "ব্যালেন্স:" : "Balance:"} ৳{walletBalance.toFixed(2)}</p>
+                          <Wallet className="h-3.5 w-3.5 text-primary" />
+                          <div className="text-left">
+                            <p className="font-medium">{bn ? "ওয়ালেট" : "Wallet"}</p>
+                            <p className="text-[10px] text-muted-foreground">৳{walletBalance.toFixed(0)}</p>
                           </div>
                         </div>
-                        {useWalletPayment && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                        {useWalletPayment && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setUseWalletPayment(false)}
                         className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-lg border text-left transition-all",
-                          !useWalletPayment ? "border-primary bg-primary/5 ring-1 ring-primary" : "border-border hover:border-primary/40"
+                          "w-full flex items-center justify-between p-2.5 rounded-lg border text-xs transition-all",
+                          !useWalletPayment ? "border-primary bg-primary/5" : "border-border hover:border-primary/40"
                         )}
                       >
                         <div className="flex items-center gap-2">
-                          <CreditCard className="h-4 w-4 text-primary" />
-                          <div>
-                            <p className="text-sm font-medium">{bn ? "অনলাইন পেমেন্ট" : "Pay Online"}</p>
-                            <p className="text-[10px] text-muted-foreground">{bn ? "বিকাশ/কার্ড" : "bKash/Card"}</p>
+                          <CreditCard className="h-3.5 w-3.5 text-primary" />
+                          <div className="text-left">
+                            <p className="font-medium">{bn ? "অনলাইন" : "Online"}</p>
+                            <p className="text-[10px] text-muted-foreground">bKash/Card</p>
                           </div>
                         </div>
-                        {!useWalletPayment && <CheckCircle2 className="h-4 w-4 text-primary" />}
+                        {!useWalletPayment && <CheckCircle2 className="h-3.5 w-3.5 text-primary" />}
                       </button>
                     </div>
-                    {!canPayWithWallet && (
-                      <p className="text-[10px] text-destructive text-center">{bn ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই" : "Insufficient wallet balance"}</p>
-                    )}
                   </div>
 
-                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white hover:bg-emerald-800 disabled:opacity-50">
-                    {submitting ? "Submitting..." : bn ? "নিশ্চিত করে বুক করুন" : "Confirm & Book"}
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full rounded-lg bg-primary py-2.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-50">
+                    {submitting ? "Processing..." : (bn ? "বুক করুন" : "Book Now")}
                   </button>
                 </motion.div>
               )}
 
-              <button onClick={handleAddToCart} className="w-full rounded-lg border border-border py-2.5 text-sm font-medium text-foreground hover:bg-secondary flex items-center justify-center gap-2">
-                <ShoppingBag className="h-4 w-4" /> {t("cart.addToCart")}
+              <button onClick={handleAddToCart} className="w-full rounded-lg border border-border py-2 text-xs font-medium text-foreground hover:bg-secondary flex items-center justify-center gap-2">
+                <ShoppingBag className="h-3.5 w-3.5" /> {t("cart.addToCart")}
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Related Services */}
+      {/* Related Services - Compact */}
       {relatedServices.length > 0 && (
-        <div className="app-container pb-12">
-          <h2 className="font-heading text-xl font-bold text-foreground mb-6">{t("sd.relatedServices")}</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="app-container pb-8">
+          <h2 className="text-sm font-bold text-foreground mb-3.5">{t("sd.relatedServices")}</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {relatedServices.map((rs) => (
               <RelatedThumb key={rs.id} service={rs} bn={bn} navigate={navigate} />
             ))}
@@ -996,11 +1015,11 @@ const CmsServiceDetail = ({
 
       {/* Mobile CTA */}
       {pkg && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 py-3 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between gap-3">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 py-2.5 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+          <div className="flex items-center justify-between gap-2">
             <div>
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wide">{pkg.name}</p>
-              <p className="text-lg font-bold text-primary leading-tight">৳{pkg.price}</p>
+              <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">{pkg.name}</p>
+              <p className="text-base font-bold text-primary leading-tight">৳{pkg.price}</p>
             </div>
             <button
               onClick={() => {
@@ -1012,9 +1031,9 @@ const CmsServiceDetail = ({
                 setShowBookingForm(true);
                 window.scrollTo({ top: 0, behavior: "smooth" });
               }}
-              className="flex-1 rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
+              className="flex-1 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
             >
-              <CalendarCheck className="h-4 w-4" /> {t("sd.bookNow")}
+              <CalendarCheck className="h-3.5 w-3.5" /> {t("sd.bookNow")}
             </button>
           </div>
         </div>
@@ -1030,21 +1049,21 @@ const RelatedThumb = ({ service, bn, navigate }: { service: CmsService; bn: bool
 
   return (
     <button onClick={() => navigate(`/service/${service.slug}`)} className="group text-left">
-      <div className="relative rounded-xl overflow-hidden border border-border bg-card aspect-[4/3]">
+      <div className="relative rounded-lg overflow-hidden border border-border bg-card aspect-[4/3]">
         <img
           src={getServiceDisplayImage(service.slug, service.image_url)}
           alt={title}
           className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
           loading="lazy"
         />
-        <div className="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-background/90 backdrop-blur-sm px-2 py-0.5 shadow-sm">
-          <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-          <span className="text-[10px] font-bold text-foreground">{service.rating ?? 4.5}</span>
+        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-background/90 backdrop-blur-sm px-1.5 py-0.5 shadow-sm">
+          <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
+          <span className="text-[9px] font-bold text-foreground">{service.rating ?? 4.5}</span>
         </div>
       </div>
-      <h3 className="mt-2 text-sm font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
+      <h3 className="mt-1.5 text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">{title}</h3>
       {cheapest && (
-        <p className="mt-0.5 text-xs text-primary font-bold">৳{cheapest.price}</p>
+        <p className="mt-0.5 text-[11px] text-primary font-bold">৳{cheapest.price}</p>
       )}
     </button>
   );
@@ -1107,79 +1126,75 @@ const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; 
   };
 
   return (
-    <section className="space-y-5">
+    <div className="space-y-4 animate-in fade-in">
       <div className="flex items-center justify-between">
-        <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
-          <MessageSquare className="h-5 w-5 text-primary" />
-          {bn ? "রিভিউ ও রেটিং" : "Ratings & Reviews"}
-        </h2>
         <button onClick={() => setShowForm(!showForm)} className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20">
-          {showForm ? "Cancel" : "Write a Review"}
+          {showForm ? "Cancel" : (bn ? "রিভিউ লিখুন" : "Write a Review")}
         </button>
       </div>
 
       {showForm && (
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 space-y-3">
-          <div className="flex items-center gap-1">
+        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
+          <div className="flex items-center gap-0.5">
             {Array.from({ length: 5 }).map((_, i) => (
               <button key={i} onClick={() => setRating(i + 1)}>
-                <Star className={`h-6 w-6 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
+                <Star className={`h-5 w-5 ${i < rating ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
               </button>
             ))}
           </div>
-          <textarea placeholder="Share your experience..." value={comment} onChange={(e) => setComment(e.target.value)} rows={3} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring resize-none" />
-          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:opacity-50">
-            {submitting ? "Submitting..." : "Submit Review"}
+          <textarea placeholder={bn ? "আপনার মতামত শেয়ার করুন..." : "Share your experience..."} value={comment} onChange={(e) => setComment(e.target.value)} rows={2} className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring resize-none" />
+          <button onClick={handleSubmit} disabled={submitting} className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50">
+            {submitting ? "Submitting..." : "Submit"}
           </button>
         </div>
       )}
 
       {loading ? (
-        <div className="text-sm text-muted-foreground py-4 text-center">Loading reviews...</div>
+        <div className="text-xs text-muted-foreground py-3 text-center">Loading reviews...</div>
       ) : reviews.length === 0 ? (
-        <div className="rounded-xl border border-border bg-card p-6 text-center">
-          <p className="text-sm text-muted-foreground">No reviews yet. Be the first to review!</p>
+        <div className="rounded-lg border border-border bg-card p-4 text-center">
+          <p className="text-xs text-muted-foreground">No reviews yet. Be the first!</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="flex items-center gap-6 rounded-xl border border-border bg-card p-5">
+        <div className="space-y-3">
+          <div className="flex items-center gap-4 rounded-lg border border-border bg-card p-4">
             <div className="text-center">
-              <p className="font-heading text-4xl font-bold text-foreground">{avgRating}</p>
-              <div className="flex items-center gap-0.5 mt-1 justify-center">
+              <p className="font-heading text-3xl font-bold text-foreground">{avgRating}</p>
+              <div className="flex items-center gap-0.5 mt-0.5 justify-center">
                 {Array.from({ length: 5 }).map((_, i) => (
-                  <Star key={i} className={`h-3 w-3 ${i < Math.round(Number(avgRating)) ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
+                  <Star key={i} className={`h-2.5 w-2.5 ${i < Math.round(Number(avgRating)) ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
                 ))}
               </div>
-              <p className="text-xs text-muted-foreground mt-1">{reviews.length} Reviews</p>
+              <p className="text-[10px] text-muted-foreground mt-1">{reviews.length}</p>
             </div>
           </div>
 
-          <div className="space-y-3">
-            {reviews.map((review) => (
-              <div key={review.id} className="rounded-xl border border-border bg-card p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+          <div className="space-y-2.5">
+            {reviews.slice(0, 5).map((review) => (
+              <div key={review.id} className="rounded-lg border border-border bg-card p-3">
+                <div className="flex items-start justify-between mb-1.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary shrink-0">
                       {review.reviewer_name?.charAt(0)?.toUpperCase() || "U"}
                     </div>
-                    <div>
-                      <span className="font-medium text-sm text-foreground">{review.reviewer_name}</span>
-                      <p className="text-[10px] text-muted-foreground">{review.created_at ? format(new Date(review.created_at), "dd MMM yyyy") : ""}</p>
+                    <div className="min-w-0">
+                      <span className="font-medium text-xs text-foreground truncate">{review.reviewer_name}</span>
+                      <p className="text-[9px] text-muted-foreground">{review.created_at ? format(new Date(review.created_at), "dd MMM") : ""}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-0.5">
+                  <div className="flex items-center gap-0.5 shrink-0">
                     {Array.from({ length: 5 }).map((_, i) => (
-                      <Star key={i} className={`h-3 w-3 ${i < Number(review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
+                      <Star key={i} className={`h-2.5 w-2.5 ${i < Number(review.rating || 0) ? "fill-yellow-400 text-yellow-400" : "text-border"}`} />
                     ))}
                   </div>
                 </div>
-                {review.comment && <p className="text-sm text-muted-foreground mt-1">{review.comment}</p>}
+                {review.comment && <p className="text-xs text-muted-foreground">{review.comment}</p>}
               </div>
             ))}
           </div>
         </div>
       )}
-    </section>
+    </div>
   );
 };
 
