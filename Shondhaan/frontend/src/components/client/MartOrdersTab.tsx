@@ -34,7 +34,7 @@ export interface MartOrder {
   // status aliased from order_status in SELECT
   status: "pending" | "confirmed" | "processing" | "shipped" | "delivered" | "cancelled";
   payment_status: "pending" | "paid" | "failed";
-  payment_method: "bkash" | "nagad" | "rocket" | "sslcommerz" | "cod";
+  payment_method: "bkash" | "nagad" | "rocket" | "sslcommerz" | "wallet" | "cod";
   subtotal: number;
   shipping_fee: number;
   courier_fee: number;
@@ -84,6 +84,7 @@ const PAYMENT_METHOD_LABEL: Record<string, { en: string; bn: string }> = {
   nagad:      { en: "Nagad",               bn: "নগদ" },
   rocket:     { en: "Rocket",              bn: "রকেট" },
   sslcommerz: { en: "SSLCommerz",          bn: "SSLCommerz" },
+  wallet:     { en: "Shondhaan Wallet",    bn: "Shondhaan ওয়ালেট" },
   cod:        { en: "Cash on Delivery",    bn: "ক্যাশ অন ডেলিভারি" },
 };
 

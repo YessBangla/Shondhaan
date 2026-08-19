@@ -133,6 +133,51 @@ const safeJsonStringify = (value) => {
   }
 };
 
+// The customer wallet is owned by the main Shondhaan backend, not the Mart
+// database.  Keep that boundary explicit and use the wallet ledger's
+// reference_id as the idempotency key.
+const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+const debitMainWallet = async ({ userId, amount, referenceId, description }) => {
+  try {
+    const response = await axios.post(
+      `${walletApiBaseUrl()}/api/wallet/debit`,
+      {
+        user_id: userId,
+        amount_cash: amount,
+        amount_coins: 0,
+        module: "MART_ORDER",
+        reference_id: referenceId,
+        description,
+      },
+      { timeout: 15000 }
+    );
+    if (!response.data?.success) throw new Error(response.data?.message || "Wallet payment failed");
+    return response.data;
+  } catch (error) {
+    throw new Error(error.response?.data?.message || error.message || "Wallet payment failed");
+  }
+};
+
+const saveWalletTransaction = async ({ order, transactionId }) => {
+  await pool.query(
+    `INSERT INTO \`transaction\` (
+       order_id, order_number, user_id, gateway, payment_method, transaction_id,
+       amount, currency, gateway_status, payment_status, init_response
+     ) VALUES (?, ?, ?, 'wallet', 'wallet', ?, ?, 'BDT', 'completed', 'paid', ?)
+     ON DUPLICATE KEY UPDATE gateway_status = 'completed', payment_status = 'paid',
+       init_response = VALUES(init_response)`,
+    [
+      order.id,
+      order.order_number,
+      order.user_id,
+      transactionId,
+      Number(order.total || 0),
+      safeJsonStringify({ wallet_transaction_id: transactionId }),
+    ]
+  );
+};
+
 const getTransactionIdFromPayload = (payload = {}) =>
   payload.tran_id || payload.tran_id_value || payload.transaction_id || payload.value_c || null;
 
@@ -419,9 +464,12 @@ router.post("/", async (req, res) => {
     // Derive initial payment_status:
     // - If caller passes it explicitly, use that
     // - Otherwise: COD and SSLCommerz start unpaid; other legacy online methods stay paid
-    const initialPaymentStatus =
-      payment_status ||
-      (payment_method === "cod" || payment_method === "sslcommerz" || !payment_method ? "unpaid" : "paid");
+    const normalizedPaymentMethod = String(payment_method || "cod").toLowerCase();
+    if (!["cod", "sslcommerz", "wallet"].includes(normalizedPaymentMethod)) {
+      await conn.rollback();
+      return res.status(400).json({ success: false, message: "Unsupported payment method" });
+    }
+    const initialPaymentStatus = normalizedPaymentMethod === "wallet" ? "paid" : "unpaid";
 
     const [orderResult] = await conn.query(
       `INSERT INTO orders (
@@ -433,7 +481,7 @@ router.post("/", async (req, res) => {
       [
         user_id, subtotal, shipping_fee, courier_fee, cod_fee, verifiedDiscount, verifiedTotal,
         normalizedCouponCode || null,
-        payment_method     || "cod",
+        normalizedPaymentMethod,
         customer_name,
         customer_phone,
         shipping_address   || null,
@@ -492,7 +540,30 @@ router.post("/", async (req, res) => {
       );
     }
 
+    let walletTransactionId = null;
+    if (normalizedPaymentMethod === "wallet") {
+      const walletReference = `mart-order-${orderNumber}`;
+      const walletPayment = await debitMainWallet({
+        userId: user_id,
+        amount: verifiedTotal,
+        referenceId: walletReference,
+        description: `Mart order ${orderNumber}`,
+      });
+      walletTransactionId = walletPayment.transaction_id;
+    }
+
     await conn.commit();
+
+    if (walletTransactionId) {
+      await saveWalletTransaction({
+        order: { id: orderId, order_number: orderNumber, user_id, total: verifiedTotal },
+        transactionId: walletTransactionId,
+      }).catch((transactionError) => {
+        // The payment is already successful; never report a failed order just
+        // because an audit-row retry is needed.
+        console.error("Save wallet order transaction error:", transactionError.message);
+      });
+    }
 
     // ── Notify every seller who has at least one item in this order ──
     // order_items.seller_id stores sellers.id, but notifications are keyed
@@ -534,7 +605,7 @@ router.post("/", async (req, res) => {
       console.error("Order notification error:", notifyError.message);
     }
 
-    res.json({ success: true, order_id: orderId, order_number: orderNumber });
+    res.json({ success: true, order_id: orderId, order_number: orderNumber, wallet_transaction_id: walletTransactionId });
   } catch (error) {
     await conn.rollback();
     console.error("Create order error:", error);

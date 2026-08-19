@@ -315,6 +315,13 @@ export async function startMartPackageSurjoPayCheckout(payload: { seller_id: num
   );
 }
 
+export async function purchaseMartPackageWithWallet(payload: { seller_id: number; package_id: number }) {
+  return request<{ success: true; data: { purchase_id: number; status: "active"; wallet_transaction_id: string } }>(
+    "/api/mart-packages/purchase/wallet",
+    { method: "POST", body: JSON.stringify(payload) }
+  );
+}
+
 export async function listSellerPackageRequests(sellerId: number) {
   const result = await request<{
     success: true;

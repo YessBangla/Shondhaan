@@ -96,7 +96,7 @@ export const debitWallet = async (req, res) => {
     await connection.execute(
       `UPDATE user_wallets SET cash_balance = ?, coin_balance = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
       [newCashBalance, newCoinBalance, user_id]
-    );
+    );  
 
     const cashTransactionId = cash > 0 ? uuidv4() : null;
     const coinTransactionId = coins > 0 ? uuidv4() : null;

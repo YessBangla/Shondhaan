@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Loader2, Package, X, Sparkles, CheckCircle2 } from "lucide-react";
+import { Loader2, Package, X, Sparkles, CheckCircle2, Wallet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   listMartPackages,
+  purchaseMartPackageWithWallet,
   startMartPackageSurjoPayCheckout,
   type MartPackage,
   type SellerProductAllowance,
@@ -39,13 +40,19 @@ const PackageLimitModal: React.FC<PackageLimitModalProps> = ({
 
   if (!open) return null;
 
-  const handlePurchase = async (pkg: MartPackage) => {
+  const handlePurchase = async (pkg: MartPackage, method: "wallet" | "gateway") => {
     if (!sellerId) {
       toast.error(bn ? "সেলার আইডি পাওয়া যায়নি" : "Seller ID not found");
       return;
     }
     setPurchasingId(pkg.id);
     try {
+      if (method === "wallet") {
+        await purchaseMartPackageWithWallet({ seller_id: sellerId, package_id: pkg.id });
+        toast.success(bn ? "ওয়ালেট থেকে পেমেন্ট সম্পন্ন হয়েছে। প্যাকেজ সক্রিয় করা হয়েছে।" : "Wallet payment complete. Your package is active.");
+        onClose();
+        return;
+      }
       const result = await startMartPackageSurjoPayCheckout({ seller_id: sellerId, package_id: pkg.id });
       window.location.assign(result.data.checkout_url);
       return;
@@ -147,19 +154,30 @@ const PackageLimitModal: React.FC<PackageLimitModalProps> = ({
                         </p>
                       )}
                     </div>
+                    <div className="mt-4 grid grid-cols-2 gap-2">
                     <Button
-                      onClick={() => handlePurchase(pkg)}
+                      onClick={() => handlePurchase(pkg, "wallet")}
                       disabled={isPurchasing}
-                      className="mt-4 h-9 gap-1.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-sm text-white hover:opacity-90"
+                      className="h-9 gap-1 rounded-xl bg-emerald-600 text-xs text-white hover:bg-emerald-700"
+                    >
+                      {isPurchasing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Wallet className="h-3.5 w-3.5" />}
+                      {bn ? "ওয়ালেট" : "Wallet"}
+                    </Button>
+                    <Button
+                      onClick={() => handlePurchase(pkg, "gateway")}
+                      disabled={isPurchasing}
+                      variant="outline"
+                      className="h-9 gap-1 rounded-xl text-xs"
                     >
                       {isPurchasing ? (
                         <Loader2 className="h-3.5 w-3.5 animate-spin" />
                       ) : bn ? (
-                        "কিনুন"
+                        "গেটওয়ে"
                       ) : (
-                        "Buy Package"
+                        "Gateway"
                       )}
                     </Button>
+                    </div>
                   </div>
                 );
               })}
