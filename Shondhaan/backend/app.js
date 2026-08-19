@@ -6,19 +6,16 @@ import adminRoutes from "./routes/admin.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import walletRoutes from "./routes/wallet.route.js";
-// import serviceCatalogRoutes from "./routes/serviceCatalog.routes.js";
+import referralRoutes from "./routes/referral.route.js";
 
 const app = express();
-
 // Middlewares
 app.use(cookieParser());
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
 app.use(corsMiddleware);
-
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
@@ -28,6 +25,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/wallet', walletRoutes);
+app.use("/api/referral", referralRoutes);
 
 // app.use("/api/catalog", serviceCatalogRoutes);
 

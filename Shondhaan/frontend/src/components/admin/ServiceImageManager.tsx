@@ -131,7 +131,6 @@ const ServiceImageManager = () => {
               ) : (
                 <>
                   {s.image_url ? (
-                    // FIXED: Applied getImageSrc here
                     <img src={getImageSrc(s.image_url)} alt={s.title} className="h-full w-full object-cover" />
                   ) : (
                     <div className="h-full w-full flex items-center justify-center">
