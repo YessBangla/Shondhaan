@@ -101,7 +101,8 @@ const hasSidebar =
     "/mart/admin", "/mart/cs", "/mart/my-shop",
     "/mart/inbox", "/yessdeal",
   ];
-  if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) return null;
+  if (location.pathname === "/mart") return null;
+if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) return null;
 
   const handleDashboardClick = async () => {
     const path = await getRoleRedirectPath();

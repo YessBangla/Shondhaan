@@ -12,6 +12,25 @@ function clientIp(req) {
 }
 
 const money = (value) => Math.round(Number(value || 0) * 100) / 100;
+const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+
+async function debitMainWallet({ userId, amount, referenceId, description }) {
+  const response = await fetch(`${walletApiBaseUrl()}/api/wallet/debit`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      amount_cash: amount,
+      amount_coins: 0,
+      module: "MART_PACKAGE",
+      reference_id: referenceId,
+      description,
+    }),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok || !data.success) throw new Error(data.message || "Wallet payment failed");
+  return data;
+}
 
 async function surjoPayRequest(url, body, token, label = "request") {
   if (!url) throw new Error(`SurjoPay ${label} failed: target URL is not set`);
@@ -258,6 +277,62 @@ router.post("/mart-packages/purchase", async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ success: false, message: "Could not submit package request" });
+  }
+});
+
+// Pay for and activate a seller package immediately using the seller's main
+// Shondhaan wallet.  The purchase id is included in the wallet reference so
+// the central wallet ledger protects this endpoint from duplicate debits.
+router.post("/mart-packages/purchase/wallet", async (req, res) => {
+  const { seller_id, package_id } = req.body;
+  if (!seller_id || !package_id) {
+    return res.status(400).json({ success: false, message: "seller_id and package_id required" });
+  }
+
+  const conn = await pool.getConnection();
+  try {
+    await conn.beginTransaction();
+    const [[pkg]] = await conn.query("SELECT * FROM mart_packages WHERE id = ? AND is_active = 1", [package_id]);
+    const [[seller]] = await conn.query("SELECT id, user_id FROM sellers WHERE id = ?", [seller_id]);
+    if (!pkg) throw new Error("Package not found");
+    if (!seller?.user_id) throw new Error("Seller wallet account not found");
+
+    const [purchaseResult] = await conn.query(
+      `INSERT INTO mart_seller_packages
+         (seller_id, package_id, status, product_limit, price_paid, payment_method)
+       VALUES (?, ?, 'pending', ?, ?, 'wallet')`,
+      [seller_id, package_id, pkg.product_limit, pkg.price]
+    );
+    const purchaseId = purchaseResult.insertId;
+    const walletReference = `mart-package-${purchaseId}`;
+    const walletPayment = await debitMainWallet({
+      userId: seller.user_id,
+      amount: money(pkg.price),
+      referenceId: walletReference,
+      description: `Mart package ${pkg.name} (#${purchaseId})`,
+    });
+
+    const expiresAtSql = pkg.duration_days ? `DATE_ADD(NOW(), INTERVAL ${Number(pkg.duration_days)} DAY)` : "NULL";
+    await conn.query(
+      `UPDATE mart_seller_packages
+       SET status = 'active', starts_at = NOW(), expires_at = ${expiresAtSql}, transaction_ref = ?
+       WHERE id = ?`,
+      [walletPayment.transaction_id, purchaseId]
+    );
+    await conn.query(
+      `INSERT INTO mart_package_transactions
+         (package_purchase_id, seller_id, gateway, merchant_order_id, gateway_order_id, amount, status, gateway_payload, verified_at)
+       VALUES (?, ?, 'wallet', ?, ?, ?, 'paid', ?, NOW())`,
+      [purchaseId, seller_id, walletReference, walletPayment.transaction_id, pkg.price, JSON.stringify({ wallet_transaction_id: walletPayment.transaction_id })]
+    );
+    await conn.commit();
+    res.json({ success: true, data: { purchase_id: purchaseId, status: "active", wallet_transaction_id: walletPayment.transaction_id } });
+  } catch (error) {
+    await conn.rollback();
+    console.error("Wallet package purchase error:", error.message);
+    res.status(error.message === "Package not found" ? 404 : 400).json({ success: false, message: error.message || "Could not complete wallet package purchase" });
+  } finally {
+    conn.release();
   }
 });
 

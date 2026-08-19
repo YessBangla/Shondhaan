@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, Check } from "lucide-react";
+import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, Check, Star, Package, Eye, EyeOff } from "lucide-react";
 import { useCmsServices, useCmsCategories, useCmsPackages, CmsService, CmsServicePackage } from "@/hooks/useCmsData";
 import ImageUploader from "./ImageUploader";
 import { toast } from "sonner";
@@ -12,18 +12,16 @@ const slugify = (text: string) => {
     .toString()
     .toLowerCase()
     .trim()
-    .replace(/\s+/g, "-")       // Replace spaces with -
-    .replace(/[^\w\-]+/g, "")   // Remove all non-word chars
-    .replace(/\-\-+/g, "-");    // Replace multiple - with single -
+    .replace(/\s+/g, "-")
+    .replace(/[^\w\-]+/g, "")
+    .replace(/\-\-+/g, "-");
 };
 
-// Predefined list of cities for the dropdown
 const CITY_OPTIONS = [
   "Dhaka", "Chittagong", "Sylhet", "Rajshahi", "Khulna", "Barishal", 
   "Rangpur", "Mymensingh", "Comilla", "Gazipur", "Narayanganj", "Bogura"
 ];
 
-// Helper to fix relative image URLs coming from the backend
 const getStaticBaseUrl = () => {
   try {
     return new URL(INDIVIDUAL_API_BASE_URL).origin;
@@ -40,7 +38,6 @@ const getImageSrc = (url?: string) => {
   return `${STATIC_BASE_URL}${path}`;
 };
 
-// Set numbers to undefined so inputs start empty instead of showing 0
 const empty: any = {
   slug: "", title: "", title_en: "", image_url: "", description: "",
   rating: undefined, total_reviews: undefined, total_orders: undefined, price: undefined,
@@ -61,13 +58,11 @@ const AdminServices = () => {
   const [showCitiesDropdown, setShowCitiesDropdown] = useState(false);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
 
-  // Lock body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = editing ? "hidden" : "auto";
     return () => { document.body.style.overflow = "auto"; };
   }, [editing]);
 
-  // Close city dropdown when clicking outside
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (cityDropdownRef.current && !cityDropdownRef.current.contains(e.target as Node)) {
@@ -80,12 +75,9 @@ const AdminServices = () => {
 
   const startEdit = (s?: CmsService) => {
     const item: any = s ? { ...s } : { ...empty };
-    
-    // Convert 0 to undefined so inputs don't start with 0, making it easier to type a new number
     ["price", "total_reviews", "total_orders", "sort_order", "platform_fee"].forEach(key => {
       if (item[key] === 0) item[key] = undefined;
     });
-    
     setEditing({ ...item });
     setFeaturesText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
     setShowCitiesDropdown(false);
@@ -105,7 +97,6 @@ const AdminServices = () => {
   const handleSave = () => {
     if (!editing?.title || !editing?.slug) { toast.error("টাইটেল ও স্লাগ আবশ্যক"); return; }
     
-    // Convert string inputs to numbers on save
     const payload = {
       ...editing,
       price: editing.price !== undefined && editing.price !== "" ? Number(editing.price) : 0,
@@ -129,17 +120,20 @@ const AdminServices = () => {
 
   return (
     <div className="relative">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-heading text-lg font-bold text-foreground">সার্ভিস ম্যানেজমেন্ট ({services.length})</h3>
-        <button onClick={() => startEdit()} className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white">
-          <Plus className="h-3.5 w-3.5" /> নতুন সার্ভিস
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h3 className="font-heading text-lg font-bold text-foreground">সার্ভিস ম্যানেজমেন্ট</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">{services.length} টি সার্ভিস</p>
+        </div>
+        <button onClick={() => startEdit()} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm">
+          <Plus className="h-4 w-4" /> নতুন সার্ভিস
         </button>
       </div>
 
-      {/* Modal Form rendered via Portal to escape parent overflow constraints */}
+      {/* Modal Form */}
       {editing && createPortal(
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-          {/* Modal Container */}
           <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col bg-card border border-border shadow-2xl rounded-xl overflow-hidden">
             
             {/* Modal Header */}
@@ -152,7 +146,7 @@ const AdminServices = () => {
               </button>
             </div>
 
-            {/* Modal Body (Scrollable) */}
+            {/* Modal Body */}
             <div className="p-6 space-y-5 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -179,7 +173,7 @@ const AdminServices = () => {
                     placeholder="auto-generated-from-english-title" 
                     className={inputClass} 
                   />
-                  <p className="mt-1 text-[10px] text-muted-foreground">English নাম লিখলে অটোমেটিক স্লাগ তৈরি হবে। প্রয়োজনে এডিট করতে পারবেন।</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">English নাম লিখলে অটোমেটিক স্লাগ তৈরি হবে।</p>
                 </div>
                 <div>
                   <label className={labelClass}>ক্যাটেগরি</label>
@@ -281,7 +275,7 @@ const AdminServices = () => {
                 <input value={featuresText} onChange={e => setFeaturesText(e.target.value)} placeholder="কমা দিয়ে লিখুন: দ্রুত সার্ভিস, অভিজ্ঞ টেকনিশিয়ান" className={inputClass} />
               </div>
               
-              {/* Multi-select Cities Dropdown */}
+              {/* Cities Dropdown */}
               <div className="relative" ref={cityDropdownRef}>
                 <label className={labelClass}>সার্ভিস পাওয়া যাবে যে শহরে</label>
                 <button
@@ -353,44 +347,133 @@ const AdminServices = () => {
         document.body
       )}
 
-      {/* Services List */}
-      <div className="space-y-2">
+      {/* Services Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
         {services.map(s => (
-          <div key={s.id} className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="flex items-center justify-between p-3">
-              <div className="flex items-center gap-3">
-                {s.image_url && (
-                    <img
-                      src={
-                        /^https?:\/\//i.test(s.image_url)
-                          ? s.image_url
-                          : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${s.image_url}`
-                      }
-                      alt={s.title}
-                      className="h-10 w-10 rounded-lg object-cover"
-                    />
-                  )}
-                <div>
-                  <p className="text-sm font-medium text-foreground">{s.title}</p>
-                  <p className="text-[10px] text-muted-foreground">/{s.slug} • {s.is_active ? "✅ সক্রিয়" : "❌ নিষ্ক্রিয়"}</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-1">
-                <button onClick={() => setExpandedId(expandedId === s.id ? null : s.id)} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground">
-                  {expandedId === s.id ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </button>
-                <button onClick={() => startEdit(s)} className="p-1.5 rounded-lg hover:bg-secondary text-muted-foreground">
-                  <Edit2 className="h-4 w-4" />
-                </button>
-                <button onClick={() => { if (confirm("মুছে ফেলবেন?")) remove.mutate(s.id); }} className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive">
-                  <Trash2 className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-            {expandedId === s.id && <PackageManager serviceId={s.id} />}
-          </div>
+          <ServiceCard
+            key={s.id}
+            service={s}
+            isExpanded={expandedId === s.id}
+            onToggleExpand={() => setExpandedId(expandedId === s.id ? null : s.id)}
+            onEdit={() => startEdit(s)}
+            onDelete={() => { if (confirm("মুছে ফেলবেন?")) remove.mutate(s.id); }}
+          />
         ))}
       </div>
+    </div>
+  );
+};
+
+const ServiceCard = ({ service: s, isExpanded, onToggleExpand, onEdit, onDelete }: any) => {
+  const category = null; // Get from context if needed
+  
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg hover:border-primary/50 transition-all duration-200">
+      {/* Card Header with Image */}
+      <div className="relative h-32 overflow-hidden bg-gradient-to-br from-primary/10 to-secondary/10">
+        {s.image_url && (
+          <img
+            src={
+              /^https?:\/\//i.test(s.image_url)
+                ? s.image_url
+                : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${s.image_url}`
+            }
+            alt={s.title}
+            className="h-full w-full object-cover"
+          />
+        )}
+        {/* Overlay with status */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
+        <div className="absolute top-2 right-2">
+          {s.is_active ? (
+            <div className="flex items-center gap-1 rounded-full bg-green-500/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+              <Check className="h-2.5 w-2.5" /> সক্রিয়
+            </div>
+          ) : (
+            <div className="flex items-center gap-1 rounded-full bg-red-500/90 px-2 py-0.5 text-[10px] font-bold text-white backdrop-blur-sm">
+              <X className="h-2.5 w-2.5" /> নিষ্ক্রিয়
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card Body */}
+      <div className="p-3.5 space-y-3">
+        {/* Title & Slug */}
+        <div>
+          <h4 className="text-sm font-semibold text-foreground line-clamp-1">{s.title}</h4>
+          <p className="text-[11px] text-muted-foreground">/{s.slug}</p>
+        </div>
+
+        {/* Stats Row */}
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-lg bg-primary/5 border border-primary/20 px-2 py-1.5 text-center">
+            <div className="text-xs font-bold text-primary">{s.price || "0"}</div>
+            <div className="text-[10px] text-muted-foreground">৳ দাম</div>
+          </div>
+          <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/20 px-2 py-1.5 text-center">
+            <div className="flex items-center justify-center gap-0.5">
+              <Star className="h-3 w-3 fill-yellow-500 text-yellow-500" />
+              <span className="text-xs font-bold text-yellow-600">{s.rating?.toFixed(1) || "0"}</span>
+            </div>
+            <div className="text-[10px] text-muted-foreground">{s.total_reviews || 0} রিভিউ</div>
+          </div>
+          <div className="rounded-lg bg-blue-500/5 border border-blue-500/20 px-2 py-1.5 text-center">
+            <div className="text-xs font-bold text-blue-600">{s.total_orders || 0}</div>
+            <div className="text-[10px] text-muted-foreground">অর্ডার</div>
+          </div>
+        </div>
+
+        {/* Fee Info */}
+        {(s.commission_percent || s.platform_fee) && (
+          <div className="rounded-lg bg-secondary/50 px-2.5 py-1.5 text-[10px] space-y-1">
+            {s.commission_percent && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">কমিশন:</span>
+                <span className="font-semibold text-foreground">{s.commission_percent}%</span>
+              </div>
+            )}
+            {s.platform_fee && (
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">ফি:</span>
+                <span className="font-semibold text-foreground">৳{s.platform_fee}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onToggleExpand}
+            className="flex-1 flex items-center justify-center gap-1.5 rounded-lg bg-secondary/50 hover:bg-secondary py-1.5 text-xs font-medium text-foreground transition-colors"
+          >
+            <Package className="h-3.5 w-3.5" />
+            {isExpanded ? "প্যাকেজ লুকান" : "প্যাকেজ"}
+          </button>
+          <button
+            onClick={onEdit}
+            className="p-1.5 rounded-lg hover:bg-primary/10 text-primary transition-colors"
+            title="এডিট"
+          >
+            <Edit2 className="h-4 w-4" />
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 rounded-lg hover:bg-destructive/10 text-destructive transition-colors"
+            title="মুছুন"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Expandable Packages Section */}
+      {isExpanded && (
+        <div className="border-t border-border bg-secondary/20">
+          <PackageManager serviceId={s.id} />
+        </div>
+      )}
     </div>
   );
 };
@@ -403,7 +486,6 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
   const startEdit = (p?: CmsServicePackage) => {
     const item: any = p ? { ...p } : { service_id: serviceId, name: "", price: undefined, original_price: null, features: [], sort_order: 0 };
     
-    // Convert 0 to undefined so inputs don't start with 0
     if (item.price === 0) item.price = undefined;
     if (item.original_price === 0) item.original_price = null;
     
@@ -411,32 +493,34 @@ const PackageManager = ({ serviceId }: { serviceId: string }) => {
     setFeatText(Array.isArray(item.features) ? (item.features as string[]).join(", ") : "");
   };
 
-const handleSave = () => {
-  if (!editing?.name) { toast.error("প্যাকেজ নাম আবশ্যক"); return; }
+  const handleSave = () => {
+    if (!editing?.name) { toast.error("প্যাকেজ নাম আবশ্যক"); return; }
 
-  const payload = { ...editing, features: featText.split(",").map(s => s.trim()).filter(Boolean) };
+    const payload = { ...editing, features: featText.split(",").map(s => s.trim()).filter(Boolean) };
 
-  console.warn("🔥 PACKAGE PAYLOAD:", payload);
+    console.warn("🔥 PACKAGE PAYLOAD:", payload);
 
-  upsert.mutate(payload as any, {
-    onSuccess: () => { toast.success("প্যাকেজ সেভ হয়েছে"); setEditing(null); },
-    onError: (e: any) => toast.error(e.message),
-  });
-};
+    upsert.mutate(payload as any, {
+      onSuccess: () => { toast.success("প্যাকেজ সেভ হয়েছে"); setEditing(null); },
+      onError: (e: any) => toast.error(e.message),
+    });
+  };
+
   return (
-    <div className="border-t border-border bg-secondary/20 px-3 pb-3 pt-2">
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-xs font-semibold text-foreground">প্যাকেজসমূহ ({packages.length})</p>
-        <button onClick={() => startEdit()} className="text-[10px] text-primary font-medium flex items-center gap-1">
-          <Plus className="h-3 w-3" /> নতুন প্যাকেজ
+    <div className="px-3.5 py-3 space-y-3">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-semibold text-foreground">প্যাকেজ ({packages.length})</p>
+        <button onClick={() => startEdit()} className="text-[11px] text-primary font-medium flex items-center gap-1 hover:text-primary/80">
+          <Plus className="h-3.5 w-3.5" /> যোগ করুন
         </button>
       </div>
+
       {editing && (
-        <div className="mb-3 rounded-lg border border-primary/30 bg-card p-3 space-y-2 shadow-sm">
+        <div className="rounded-lg border border-primary/30 bg-card p-3 space-y-2.5 shadow-sm">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <div>
               <label className={labelClass}>প্যাকেজ নাম *</label>
-              <input value={editing.name || ""} onChange={e => setEditing({...editing, name: e.target.value})} placeholder="যেমন: Basic" className={smallInputClass} />
+              <input value={editing.name || ""} onChange={e => setEditing({...editing, name: e.target.value})} placeholder="Basic" className={smallInputClass} />
             </div>
             <div>
               <label className={labelClass}>দাম *</label>
@@ -460,27 +544,47 @@ const handleSave = () => {
             </div>
           </div>
           <div>
-            <label className={labelClass}>প্যাকেজ ফিচার</label>
+            <label className={labelClass}>ফিচার</label>
             <input value={featText} onChange={e => setFeatText(e.target.value)} placeholder="কমা দিয়ে লিখুন" className={smallInputClass} />
           </div>
           <div className="flex gap-2 pt-1">
-            <button onClick={handleSave} className="flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-[11px] text-white"><Save className="h-3 w-3" /> সেভ</button>
-            <button onClick={() => setEditing(null)} className="flex items-center gap-1 rounded border px-3 py-1.5 text-[11px]"><X className="h-3 w-3" /> বাতিল</button>
+            <button onClick={handleSave} className="flex items-center gap-1 rounded bg-primary px-3 py-1.5 text-[11px] text-white hover:bg-primary/90">
+              <Save className="h-3 w-3" /> সেভ
+            </button>
+            <button onClick={() => setEditing(null)} className="flex items-center gap-1 rounded border px-3 py-1.5 text-[11px] hover:bg-secondary">
+              <X className="h-3 w-3" /> বাতিল
+            </button>
           </div>
         </div>
       )}
+
       {packages.length === 0 && !editing && (
-        <p className="text-[11px] text-muted-foreground text-center py-2">কোনো প্যাকেজ নেই। নতুন প্যাকেজ যোগ করুন।</p>
+        <p className="text-[11px] text-muted-foreground text-center py-2">কোনো প্যাকেজ নেই</p>
       )}
-      {packages.map(p => (
-        <div key={p.id} className="flex items-center justify-between rounded-lg bg-card border border-border px-3 py-2 mb-1.5">
-          <span className="text-xs text-foreground font-medium">{p.name} — ৳{p.price} {p.original_price && <span className="line-through text-muted-foreground ml-1">৳{p.original_price}</span>}</span>
-          <div className="flex gap-1">
-            <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1 rounded hover:bg-secondary"><Edit2 className="h-3 w-3" /></button>
-            <button onClick={() => remove.mutate(p.id)} className="text-destructive hover:text-destructive/80 p-1 rounded hover:bg-destructive/10"><Trash2 className="h-3 w-3" /></button>
-          </div>
+
+      {packages.length > 0 && (
+        <div className="space-y-2">
+          {packages.map(p => (
+            <div key={p.id} className="flex items-center justify-between rounded-lg bg-background border border-border px-3 py-2 hover:border-primary/30 transition-colors">
+              <div className="min-w-0 flex-1">
+                <p className="text-xs font-medium text-foreground truncate">{p.name}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  ৳{p.price} 
+                  {p.original_price && <span className="line-through ml-1">৳{p.original_price}</span>}
+                </p>
+              </div>
+              <div className="flex gap-1 shrink-0 ml-2">
+                <button onClick={() => startEdit(p)} className="text-muted-foreground hover:text-primary p-1 rounded hover:bg-secondary">
+                  <Edit2 className="h-3.5 w-3.5" />
+                </button>
+                <button onClick={() => remove.mutate(p.id)} className="text-destructive hover:text-destructive/80 p-1 rounded hover:bg-destructive/10">
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
-      ))}
+      )}
     </div>
   );
 };

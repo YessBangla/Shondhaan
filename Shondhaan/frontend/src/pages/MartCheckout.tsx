@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ShoppingCart, Trash2, Minus, Plus, MapPin, CreditCard, Banknote, Truck, ArrowLeft, CheckCircle2, Tag, X, Navigation, Loader2, Calendar, Home, Briefcase, Plus as PlusIcon, Star, Edit2, Check } from "lucide-react";
+import { ShoppingCart, Trash2, Minus, Plus, MapPin, CreditCard, Banknote, Truck, ArrowLeft, CheckCircle2, Tag, X, Navigation, Loader2, Calendar, Home, Briefcase, Plus as PlusIcon, Star, Edit2, Check, Wallet } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -169,7 +169,7 @@ const MartCheckout = () => {
   const [submitting, setSubmitting] = useState(false);
   const [paymentDialog, setPaymentDialog] = useState<{
     open: boolean;
-    type: "cod" | "online_success" | "ssl_redirect" | "ssl_success" | "ssl_failed" | "ssl_cancelled";
+    type: "cod" | "wallet" | "online_success" | "ssl_redirect" | "ssl_success" | "ssl_failed" | "ssl_cancelled";
     orderId?: string | number | null;
     gatewayPayload?: Record<string, unknown> | null;
   }>({ open: false, type: "cod", orderId: null });
@@ -447,7 +447,7 @@ const MartCheckout = () => {
       setStep("success");
       setPaymentDialog({
         open: true,
-        type: paymentMethod === "cod" ? "cod" : "online_success",
+        type: paymentMethod === "wallet" ? "wallet" : paymentMethod === "cod" ? "cod" : "online_success",
         orderId: result.order_id,
       });
       toast.success(bn ? "অর্ডার সফল!" : "Order placed!");
@@ -461,6 +461,11 @@ const MartCheckout = () => {
     cod: {
       title: "Order placed",
       description: "Cash on Delivery selected. Your order is confirmed and payment will be collected on delivery.",
+      tone: "success",
+    },
+    wallet: {
+      title: "Wallet payment successful",
+      description: "Your order is confirmed and its total has been deducted from your Shondhaan wallet.",
       tone: "success",
     },
     online_success: {
@@ -782,17 +787,25 @@ const MartCheckout = () => {
                     <h2 className="font-bold flex items-center gap-2"><CreditCard className="h-4 w-4 text-primary" /> {bn ? "পেমেন্ট" : "Payment"}</h2>
                     <RadioGroup value={paymentMethod} onValueChange={handlePaymentMethodChange} className="space-y-2">
                       <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50">
-                        <RadioGroupItem value="bkash" />
+                        <RadioGroupItem value="wallet" />
+                        <Wallet className="h-5 w-5 text-emerald-600" />
+                        <div>
+                          <p className="font-medium text-sm">{bn ? "Shondhaan ওয়ালেট" : "Shondhaan Wallet"}</p>
+                          <p className="text-xs text-muted-foreground">{bn ? "ওয়ালেট ব্যালেন্স থেকে এখনই পেমেন্ট করুন" : "Pay now from your wallet balance"}</p>
+                        </div>
+                      </label>
+                      <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50">
+                        <RadioGroupItem value="bkash" disabled />
                         <div className="h-5 w-5 rounded-full bg-pink-600 flex items-center justify-center text-[9px] font-bold text-white">b</div>
                         <div><p className="font-medium text-sm">{bn ? "বিকাশ" : "bKash"}</p><p className="text-xs text-muted-foreground">{bn ? "বিকাশ পেমেন্ট" : "Pay via bKash"}</p></div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50">
-                        <RadioGroupItem value="nagad" />
+                        <RadioGroupItem value="nagad" disabled />
                         <div className="h-5 w-5 rounded-full bg-orange-500 flex items-center justify-center text-[9px] font-bold text-white">N</div>
                         <div><p className="font-medium text-sm">{bn ? "নগদ" : "Nagad"}</p><p className="text-xs text-muted-foreground">{bn ? "নগদ পেমেন্ট" : "Pay via Nagad"}</p></div>
                       </label>
                       <label className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-muted/50">
-                        <RadioGroupItem value="rocket" />
+                        <RadioGroupItem value="rocket" disabled />
                         <div className="h-5 w-5 rounded-full bg-purple-600 flex items-center justify-center text-[9px] font-bold text-white">R</div>
                         <div><p className="font-medium text-sm">{bn ? "রকেট" : "Rocket"}</p><p className="text-xs text-muted-foreground">{bn ? "রকেট পেমেন্ট" : "Pay via Rocket"}</p></div>
                       </label>

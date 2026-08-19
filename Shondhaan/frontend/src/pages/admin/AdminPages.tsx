@@ -36,6 +36,27 @@ export const AdminAccountsPage = () => {
   const { user } = useAuth();
   return <Wrap><AccountsSection userId={user!.id} role="admin" /></Wrap>;
 };
+
+// [WALLET UPDATE] Role-Specific Accounts Pages
+export const AdminServiceAdminAccountsPage = () => {
+  const { user } = useAuth();
+  return <Wrap><AccountsSection userId={user!.id} role="service_admin" /></Wrap>;
+};
+
+export const AdminDealAdminAccountsPage = () => {
+  const { user } = useAuth();
+  return <Wrap><AccountsSection userId={user!.id} role="deal_admin" /></Wrap>;
+};
+
+export const AdminMartAdminAccountsPage = () => {
+  const { user } = useAuth();
+  return <Wrap><AccountsSection userId={user!.id} role="mart_admin" /></Wrap>;
+};
+
+export const AdminJobAdminAccountsPage = () => {
+  const { user } = useAuth();
+  return <Wrap><AccountsSection userId={user!.id} role="job_admin" /></Wrap>;
+};
 export const AdminServicesPage = () => <Wrap><AdminServices /></Wrap>;
 export const AdminServiceImagesPage = () => <Wrap><ServiceImageManager /></Wrap>;
 export const AdminCategoriesPage = () => <Wrap><AdminCategories /></Wrap>;
