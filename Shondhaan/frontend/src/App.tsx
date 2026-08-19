@@ -12,6 +12,7 @@ import { CompareProvider } from "@/contexts/CompareContext";
 import { MartCartProvider } from "@/contexts/MartCartContext";
 import { MartWishlistProvider } from "@/contexts/MartWishlistContext";
 import { MartCompareProvider } from "@/contexts/MartCompareContext";
+import { ReferralProvider } from "./contexts/ReferalContext";
 import CartSidebar from "@/components/CartSidebar";
 import MartCartSidebar from "@/components/MartCartSidebar";
 import CompareBar from "@/components/CompareBar";
@@ -60,7 +61,7 @@ import FabStackPreview from "@/components/FabStackPreview";
 import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
 import MartAdminPanel from "@/components/mart/MartAdminPanel";
-// Lazy-loaded pages — each route loads only when visited
+
 const Index = lazy(() => import("./pages/Index"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
 const Auth = lazy(() => import("./pages/Auth"));
@@ -85,7 +86,6 @@ import {
   AdminRepresentativesPage, AdminLeaderboardPage, AdminReviewsPage,
   AdminCouponsPage, AdminWithdrawalsPage, AdminUsersPage,
   AdminPermissionsPage, AdminSettingsPage,
-  // [WALLET UPDATE] Import role-specific accounts pages
   AdminServiceAdminAccountsPage, AdminDealAdminAccountsPage,
   AdminMartAdminAccountsPage, AdminJobAdminAccountsPage,
 } from "./pages/admin/AdminPages";
@@ -93,6 +93,10 @@ import MartStore from "./pages/MartStore";
 import ServiceMessage from "./pages/ServiceMessage";
 import AdminServices from "./components/admin/AdminServices";
 import ServiceAdminDashboard from "./components/admin/serviceAdmin/ServiceAdminDashboard";
+
+const ReferralLandingPage = lazy(() => import("./pages/ReferralLandingPage"));
+const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const Profile = lazy(() => import("./pages/Profile"));
 const Notifications = lazy(() => import("./pages/Notifications"));
@@ -162,7 +166,6 @@ const JobsStaffLogin = lazy(() => import("./pages/JobsStaffLogin"));
 const MainLogin = lazy(() => import("./pages/MainLogin"));
 const SuperAdminLogin = lazy(() => import("./pages/SuperAdminLogin"));
 
-// ✅ ADDED: Lazy-loaded Payment Redirection Pages
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
 const PaymentFailed = lazy(() => import("./pages/PaymentFailed"));
@@ -170,10 +173,10 @@ const PaymentFailed = lazy(() => import("./pages/PaymentFailed"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 2 * 60 * 1000,      // 2 min — reduces refetches
-      gcTime: 10 * 60 * 1000,         // 10 min cache
-      refetchOnWindowFocus: false,     
-      retry: 1,                       
+      staleTime: 2 * 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+      refetchOnWindowFocus: false,
+      retry: 1,
     },
   },
 });
@@ -183,15 +186,9 @@ function SocketInitializer() {
 
   useEffect(() => {
     if (!user?.id) return;
-
-    // ✅ connect once
     socket.connect();
-
-    // ✅ tell backend who this user is
     setSocketUser(user.id);
-
     console.log("🔥 Socket initialized for user:", user.id);
-
     return () => {
       socket.disconnect();
     };
@@ -199,11 +196,11 @@ function SocketInitializer() {
 
   return null;
 }
+
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashFinish = useCallback(() => setSplashDone(true), []);
 
-  // Show onboarding only on small screens, only first time, only after splash
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (typeof window === "undefined") return false;
     try {
@@ -216,208 +213,205 @@ const App = () => {
   const handleOnboardingFinish = useCallback(() => setShowOnboarding(false), []);
 
   return (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <NetworkStatusBanner />
-      {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
-      {splashDone && showOnboarding && (
-        <OnboardingScreen onFinish={handleOnboardingFinish} />
-      )}
-      <BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <NetworkStatusBanner />
+        {!splashDone && <SplashScreen onFinish={handleSplashFinish} />}
+        {splashDone && showOnboarding && (
+          <OnboardingScreen onFinish={handleOnboardingFinish} />
+        )}
+        <BrowserRouter>
           <LanguageProvider>
-          <AuthProvider>
-          <SocketInitializer /> 
-          <CartProvider>
-          <CompareProvider>
-          <MartCartProvider>
-          <MartWishlistProvider>
-          <MartCompareProvider>
-          <LocationProvider>
-          <SwipeBackGesture />
-          <InstallAppBanner />
-          <IOSInstallGuide />
-          <OfflineFallback />
-          <ShakeToReport />
-          <PushNotificationPrompt />
-          <InAppRatingPrompt />
-          <LiveActivityBar />
-          <ShareTargetReceiver />
-          <OfflineSyncManager />
-          <SmartNotificationScheduler />
-          {/* <VoiceBookingFAB /> */}
-          {/* <LoyaltyWalletCard /> */}
-          <KeyboardShortcuts />
-          <BookingRemindersManager />
-          <AutoDarkMode />
-          <ShakeToUndoManager />
-          <GestureTutorial />
-          <CartAbandonmentNudge />
-          <AIRecommenderBubble />
-          <PriceDropAlertsManager />
-          <SocialProofToaster />
-          <ReadingProgressFab />
-          <ServiceMatchmakerLauncher />
-          {/* <VoiceCartActionsManager /> */}
-          <DynamicIslandActivity />
-          {/* <WhatsAppFloatingButton /> */}
-          {/* <FabStackPreview /> */}
-          <CartSidebar />
-          <MartCartSidebar />
-          <CompareBar />
-          <MartCompareBar />
-          {/* <ChatWidget /> */}
-          <MobileFabHub />
-          <MobileLayerDebugOverlay />
-          {splashDone && <DesktopMegaMenu />}
-          <GlobalLanguageSwitcher />
-          <Suspense fallback={<PageLoader />}>
-          <PageTransition>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/service/:slug" element={<ServiceDetail />} />
-            <Route path="/all-services" element={<AllServices />} />
-            <Route path="/service-message" element={<ServiceMessage />} />
-            <Route path="/compare" element={<Compare />} />
-            <Route path="/auth" element={<Auth />} />
-            <Route path="/auth/callback" element={<AuthCallback />} />
-            <Route path="/main-login" element={<MainLogin />} />
-            <Route path="/super-admin-login" element={<SuperAdminLogin />} />
-            <Route path="/bookings" element={<BookingHistory />} />
-            <Route path="/profile" element={<Profile />} />
-            <Route path="/notifications" element={<Notifications />} />
-            <Route path="/booking-confirmation" element={<BookingConfirmation />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/admin/roles" element={<AdminRoles />} />
-            <Route path="/admin/roles/:role" element={<AdminRoleDetail />} />
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route index element={<Navigate to="/admin/analytics" replace />} />
-              <Route path="analytics" element={<AdminAnalyticsPage />} />
-              <Route path="bookings" element={<AdminBookings />} />
-              <Route path="requests" element={<AdminRequestsPage />} />
-              <Route path="accounts" element={<AdminAccountsPage />} />
-              <Route path="services" element={<AdminServicesPage />} />
-              <Route path="service-images" element={<AdminServiceImagesPage />} />
-              <Route path="categories" element={<AdminCategoriesPage />} />
-              <Route path="offers" element={<AdminOffersPage />} />
-              <Route path="banners" element={<AdminBannersPage />} />
-              <Route path="sections" element={<AdminSectionsPage />} />
-              <Route path="mart-overview" element={<AdminMartOverviewPage />} />
-              <Route path="mart-management" element={<MartAdminPanel />} />
-              <Route path="deal-overview" element={<AdminDealOverviewPage />} />
-              <Route path="deal-categories" element={<AdminDealCategoriesPage />} />
-              <Route path="job-listings" element={<AdminJobListingsPage />} />
-              <Route path="employers" element={<AdminEmployersPage />} />
-              <Route path="contacts" element={<AdminContactsPage />} />
-              <Route path="chat-history" element={<AdminChatHistoryPage />} />
-              <Route path="notifications" element={<AdminNotificationsPage />} />
-              <Route path="jobs" element={<AdminJobsPage />} />
-              <Route path="representatives" element={<AdminRepresentativesPage />} />
-              <Route path="leaderboard" element={<AdminLeaderboardPage />} />
-              <Route path="reviews" element={<AdminReviewsPage />} />
-              <Route path="coupons" element={<AdminCouponsPage />} />
-              <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
-              <Route path="users" element={<AdminUsersPage />} />
-              <Route path="permissions" element={<AdminPermissionsPage />} />
-              <Route path="settings" element={<AdminSettingsPage />} />
-              <Route path="audit-logs" element={<AdminAuditLogs />} />
-              <Route path="payment-ledger" element={<AdminPaymentLedger />} />
-              <Route path="smart-dashboard" element={<AdminSmartDashboard />} />
-              <Route path="approval-queue" element={<AdminApprovalQueue />} />
-              <Route path="disputes" element={<AdminDisputes />} />
-              <Route path="staff-assignments" element={<AdminStaffAssignments />} />
-              <Route path="staff-workload" element={<AdminStaffWorkload />} />
-              <Route path="notification-rules" element={<AdminNotificationRules />} />
-               <Route path="service" element={<ServiceAdminDashboard />} />
-              
-              {/* [WALLET UPDATE] Role-Specific Accounts Routes */}
-              <Route path="service-admin/accounts" element={<AdminServiceAdminAccountsPage />} />
-              <Route path="deal-admin/accounts" element={<AdminDealAdminAccountsPage />} />
-              <Route path="mart-admin/accounts" element={<AdminMartAdminAccountsPage />} />
-              <Route path="job-admin/accounts" element={<AdminJobAdminAccountsPage />} />
-            </Route>
-            <Route path="/checkout" element={<Checkout />} />
-            <Route path="/faq" element={<FAQ />} />
-            <Route path="/terms" element={<TermsAndConditions />} />
-            <Route path="/privacy" element={<PrivacyPolicy />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/contact" element={<ContactUs />} />
-            <Route path="/join" element={<JoinUs />} />
-            <Route path="/dashboard" element={<ClientDashboard />} />
-            <Route path="/user-dashboard" element={<UserDashboard />} />
-            <Route path="/call-center" element={<CallCenterPanel />} />
-            <Route path="/provider" element={<ProviderPanel />} />
-            <Route path="/representative" element={<RepresentativePanel />} />
-            <Route path="/moderator" element={<ModeratorPanel />} />
-            <Route path="/track" element={<TrackLanding />} />
-            <Route path="/track/:token" element={<ServiceTracking />} />
-            <Route path="/supervisor" element={<SupervisorPanel />} />
-            <Route path="/finance" element={<FinancePanel />} />
-            <Route path="/internal" element={<InternalChatHub />} />
-            <Route path="/internal/:slug" element={<InternalServiceChat />} />
-            <Route path="/mart" element={<MartPanel />} />
-            <Route path="/mart/vendor/messages/:conversationId" element={<VendorMessageDetail />} />
-            <Route path="/mart/mart-admin" element={<Navigate to="/admin/mart-management" replace />} />
-            <Route path="/job/admin" element={<Navigate to="/admin/job-listings" replace />} />
-            <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
-            <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
-            <Route path="/mart/home" element={<MartHome />} />
-            <Route path="/mart/MartAdmin" element={<MartStoreShopPage />} />
-            <Route path="/mart/category/:slug" element={<MartCategoryPage />} />
-            <Route path="/mart/product/:slug" element={<MartProductDetail />} />
-            <Route path="/mart/checkout" element={<MartCheckout />} />
-            <Route path="/mart/wishlist" element={<MartWishlist />} />
-            <Route path="/mart/orders" element={<MartOrders />} />
-            <Route path="/mart/compare" element={<MartCompare />} />
-            <Route path="/mart/store" element={<MartStore />} />
-            <Route path="/mart/shop/:slug" element={<MartShopPage />} />
-            <Route path="/mart/my-shop" element={<MartShopPanel />} />
-            <Route path="/mart/inbox" element={<MartInbox />} />
-            <Route path="/super-admin" element={<SuperAdminPanel />} />
-            <Route path="/yessdeal" element={<YessDealPanel />} />
-            <Route path="/deal" element={<DealHome />} />
-            <Route path="/deal/ads" element={<DealAllAds />} />
-            <Route path="/deal/category/:slug" element={<DealCategoryPage />} />
-            <Route path="/deal/ad/:id" element={<DealAdDetail />} />
-            <Route path="/deal/edit/:id" element={<DealEditAd />} />
-            <Route path="/deal/post" element={<DealPostAd />} />
-            <Route path="/deal/my-ads" element={<DealMyAds />} />
-            <Route path="/deal/seller/:userId" element={<DealSellerProfile />} />
-            <Route path="/deal/inbox" element={<DealInbox />} />
-            <Route path="/jobs" element={<JobHome />} />
-            <Route path="/jobs/:id" element={<JobDetail />} />
-            <Route path="/jobs/post" element={<JobPostForm />} />
-            <Route path="/jobs/my" element={<MyJobs />} />
-            <Route path="/jobs/profile" element={<JobSeekerProfile />} />
-            <Route path="/jobs/employers" element={<EmployerList />} />
-            <Route path="/jobs/employer/:id" element={<EmployerProfile />} />
-            <Route path="/employer" element={<EmployerPanel />} />
-            <Route path="/mart/login" element={<MartStaffLogin />} />
-            <Route path="/deal/login" element={<DealStaffLogin />} />
-            <Route path="/jobs/login" element={<JobsStaffLogin />} />
-            <Route path="/mart/store/:vendorId" element={<MartStore />} />
-            {/* ADDED: Payment Gateway Redirection Routes */}
-            <Route path="/payment-success" element={<PaymentSuccess />} />
-            <Route path="/payment-cancel" element={<PaymentCancel />} />
-            <Route path="/payment-failed" element={<PaymentFailed />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-          </PageTransition>
-          </Suspense>
-          <MobileBottomNav />
-          </LocationProvider>
-          </MartCompareProvider>
-          </MartWishlistProvider>
-          </MartCartProvider>
-          </CompareProvider>
-          </CartProvider>
-        </AuthProvider>
-        </LanguageProvider>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
+            <AuthProvider>
+              <SocketInitializer />
+              <ReferralProvider>
+                <CartProvider>
+                  <CompareProvider>
+                    <MartCartProvider>
+                      <MartWishlistProvider>
+                        <MartCompareProvider>
+                          <LocationProvider>
+                            <SwipeBackGesture />
+                            <InstallAppBanner />
+                            <IOSInstallGuide />
+                            <OfflineFallback />
+                            <ShakeToReport />
+                            <PushNotificationPrompt />
+                            <InAppRatingPrompt />
+                            <LiveActivityBar />
+                            <ShareTargetReceiver />
+                            <OfflineSyncManager />
+                            <SmartNotificationScheduler />
+                            <KeyboardShortcuts />
+                            <BookingRemindersManager />
+                            <AutoDarkMode />
+                            <ShakeToUndoManager />
+                            <GestureTutorial />
+                            <CartAbandonmentNudge />
+                            <AIRecommenderBubble />
+                            <PriceDropAlertsManager />
+                            <SocialProofToaster />
+                            <ReadingProgressFab />
+                            <ServiceMatchmakerLauncher />
+                            <DynamicIslandActivity />
+                            <CartSidebar />
+                            <MartCartSidebar />
+                            <CompareBar />
+                            <MartCompareBar />
+                            <MobileFabHub />
+                            <MobileLayerDebugOverlay />
+                            {splashDone && <DesktopMegaMenu />}
+                            <GlobalLanguageSwitcher />
+                            <Suspense fallback={<PageLoader />}>
+                              <PageTransition>
+                                <Routes>
+                                  <Route path="/" element={<Index />} />
+                                  <Route path="/service/:slug" element={<ServiceDetail />} />
+                                  <Route path="/all-services" element={<AllServices />} />
+                                  <Route path="/service-message" element={<ServiceMessage />} />
+                                  <Route path="/compare" element={<Compare />} />
+                                  <Route path="/auth" element={<Auth />} />
+                                  <Route path="/auth/callback" element={<AuthCallback />} />
+                                  <Route path="/main-login" element={<MainLogin />} />
+                                  <Route path="/super-admin-login" element={<SuperAdminLogin />} />
+                                  <Route path="/bookings" element={<BookingHistory />} />
+                                  <Route path="/profile" element={<Profile />} />
+                                  <Route path="/notifications" element={<Notifications />} />
+                                  <Route path="/booking-confirmation" element={<BookingConfirmation />} />
+                                  <Route path="/reset-password" element={<ResetPassword />} />
+
+                                  {/* Referral routes */}
+                                  <Route path="/ref/:code" element={<ReferralLandingPage />} />
+                                  <Route path="/referral" element={<ReferralPage />} />
+
+                                  <Route path="/admin/roles" element={<AdminRoles />} />
+                                  <Route path="/admin/roles/:role" element={<AdminRoleDetail />} />
+                                  <Route path="/admin" element={<AdminLayout />}>
+                                    <Route index element={<Navigate to="/admin/analytics" replace />} />
+                                    <Route path="analytics" element={<AdminAnalyticsPage />} />
+                                    <Route path="bookings" element={<AdminBookings />} />
+                                    <Route path="requests" element={<AdminRequestsPage />} />
+                                    <Route path="accounts" element={<AdminAccountsPage />} />
+                                    <Route path="services" element={<AdminServicesPage />} />
+                                    <Route path="service-images" element={<AdminServiceImagesPage />} />
+                                    <Route path="categories" element={<AdminCategoriesPage />} />
+                                    <Route path="offers" element={<AdminOffersPage />} />
+                                    <Route path="banners" element={<AdminBannersPage />} />
+                                    <Route path="sections" element={<AdminSectionsPage />} />
+                                    <Route path="mart-overview" element={<AdminMartOverviewPage />} />
+                                    <Route path="mart-management" element={<MartAdminPanel />} />
+                                    <Route path="deal-overview" element={<AdminDealOverviewPage />} />
+                                    <Route path="deal-categories" element={<AdminDealCategoriesPage />} />
+                                    <Route path="job-listings" element={<AdminJobListingsPage />} />
+                                    <Route path="employers" element={<AdminEmployersPage />} />
+                                    <Route path="contacts" element={<AdminContactsPage />} />
+                                    <Route path="chat-history" element={<AdminChatHistoryPage />} />
+                                    <Route path="notifications" element={<AdminNotificationsPage />} />
+                                    <Route path="jobs" element={<AdminJobsPage />} />
+                                    <Route path="representatives" element={<AdminRepresentativesPage />} />
+                                    <Route path="leaderboard" element={<AdminLeaderboardPage />} />
+                                    <Route path="reviews" element={<AdminReviewsPage />} />
+                                    <Route path="coupons" element={<AdminCouponsPage />} />
+                                    <Route path="withdrawals" element={<AdminWithdrawalsPage />} />
+                                    <Route path="users" element={<AdminUsersPage />} />
+                                    <Route path="permissions" element={<AdminPermissionsPage />} />
+                                    <Route path="settings" element={<AdminSettingsPage />} />
+                                    <Route path="audit-logs" element={<AdminAuditLogs />} />
+                                    <Route path="payment-ledger" element={<AdminPaymentLedger />} />
+                                    <Route path="smart-dashboard" element={<AdminSmartDashboard />} />
+                                    <Route path="approval-queue" element={<AdminApprovalQueue />} />
+                                    <Route path="disputes" element={<AdminDisputes />} />
+                                    <Route path="staff-assignments" element={<AdminStaffAssignments />} />
+                                    <Route path="staff-workload" element={<AdminStaffWorkload />} />
+                                    <Route path="notification-rules" element={<AdminNotificationRules />} />
+                                    <Route path="service" element={<ServiceAdminDashboard />} />
+                                    <Route path="service-admin/accounts" element={<AdminServiceAdminAccountsPage />} />
+                                    <Route path="deal-admin/accounts" element={<AdminDealAdminAccountsPage />} />
+                                    <Route path="mart-admin/accounts" element={<AdminMartAdminAccountsPage />} />
+                                    <Route path="job-admin/accounts" element={<AdminJobAdminAccountsPage />} />
+                                  </Route>
+                                  <Route path="/checkout" element={<Checkout />} />
+                                  <Route path="/faq" element={<FAQ />} />
+                                  <Route path="/terms" element={<TermsAndConditions />} />
+                                  <Route path="/privacy" element={<PrivacyPolicy />} />
+                                  <Route path="/about" element={<AboutUs />} />
+                                  <Route path="/contact" element={<ContactUs />} />
+                                  <Route path="/join" element={<JoinUs />} />
+                                  <Route path="/dashboard" element={<ClientDashboard />} />
+                                  <Route path="/user-dashboard" element={<UserDashboard />} />
+                                  <Route path="/call-center" element={<CallCenterPanel />} />
+                                  <Route path="/provider" element={<ProviderPanel />} />
+                                  <Route path="/representative" element={<RepresentativePanel />} />
+                                  <Route path="/moderator" element={<ModeratorPanel />} />
+                                  <Route path="/track" element={<TrackLanding />} />
+                                  <Route path="/track/:token" element={<ServiceTracking />} />
+                                  <Route path="/supervisor" element={<SupervisorPanel />} />
+                                  <Route path="/finance" element={<FinancePanel />} />
+                                  <Route path="/internal" element={<InternalChatHub />} />
+                                  <Route path="/internal/:slug" element={<InternalServiceChat />} />
+                                  <Route path="/mart" element={<MartPanel />} />
+                                  <Route path="/mart/vendor/messages/:conversationId" element={<VendorMessageDetail />} />
+                                  <Route path="/mart/mart-admin" element={<Navigate to="/admin/mart-management" replace />} />
+                                  <Route path="/job/admin" element={<Navigate to="/admin/job-listings" replace />} />
+                                  <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
+                                  <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
+                                  <Route path="/mart/home" element={<MartHome />} />
+                                  <Route path="/mart/MartAdmin" element={<MartStoreShopPage />} />
+                                  <Route path="/mart/category/:slug" element={<MartCategoryPage />} />
+                                  <Route path="/mart/product/:slug" element={<MartProductDetail />} />
+                                  <Route path="/mart/checkout" element={<MartCheckout />} />
+                                  <Route path="/mart/wishlist" element={<MartWishlist />} />
+                                  <Route path="/mart/orders" element={<MartOrders />} />
+                                  <Route path="/mart/compare" element={<MartCompare />} />
+                                  <Route path="/mart/store" element={<MartStore />} />
+                                  <Route path="/mart/shop/:slug" element={<MartShopPage />} />
+                                  <Route path="/mart/my-shop" element={<MartShopPanel />} />
+                                  <Route path="/mart/inbox" element={<MartInbox />} />
+                                  <Route path="/super-admin" element={<SuperAdminPanel />} />
+                                  <Route path="/yessdeal" element={<YessDealPanel />} />
+                                  <Route path="/deal" element={<DealHome />} />
+                                  <Route path="/deal/ads" element={<DealAllAds />} />
+                                  <Route path="/deal/category/:slug" element={<DealCategoryPage />} />
+                                  <Route path="/deal/ad/:id" element={<DealAdDetail />} />
+                                  <Route path="/deal/edit/:id" element={<DealEditAd />} />
+                                  <Route path="/deal/post" element={<DealPostAd />} />
+                                  <Route path="/deal/my-ads" element={<DealMyAds />} />
+                                  <Route path="/deal/seller/:userId" element={<DealSellerProfile />} />
+                                  <Route path="/deal/inbox" element={<DealInbox />} />
+                                  <Route path="/jobs" element={<JobHome />} />
+                                  <Route path="/jobs/:id" element={<JobDetail />} />
+                                  <Route path="/jobs/post" element={<JobPostForm />} />
+                                  <Route path="/jobs/my" element={<MyJobs />} />
+                                  <Route path="/jobs/profile" element={<JobSeekerProfile />} />
+                                  <Route path="/jobs/employers" element={<EmployerList />} />
+                                  <Route path="/jobs/employer/:id" element={<EmployerProfile />} />
+                                  <Route path="/employer" element={<EmployerPanel />} />
+                                  <Route path="/mart/login" element={<MartStaffLogin />} />
+                                  <Route path="/deal/login" element={<DealStaffLogin />} />
+                                  <Route path="/jobs/login" element={<JobsStaffLogin />} />
+                                  <Route path="/mart/store/:vendorId" element={<MartStore />} />
+                                  <Route path="/payment-success" element={<PaymentSuccess />} />
+                                  <Route path="/payment-cancel" element={<PaymentCancel />} />
+                                  <Route path="/payment-failed" element={<PaymentFailed />} />
+                                  <Route path="*" element={<NotFound />} />
+                                </Routes>
+                              </PageTransition>
+                            </Suspense>
+                            <MobileBottomNav />
+                          </LocationProvider>
+                        </MartCompareProvider>
+                      </MartWishlistProvider>
+                    </MartCartProvider>
+                  </CompareProvider>
+                </CartProvider>
+              </ReferralProvider>
+            </AuthProvider>
+          </LanguageProvider>
+        </BrowserRouter>
+      </TooltipProvider>
+    </QueryClientProvider>
   );
 };
 

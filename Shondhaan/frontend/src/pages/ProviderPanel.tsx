@@ -366,7 +366,7 @@ const ProviderPanel = () => {
     return (
       <div className="min-h-screen bg-background">
         
-        <div className="pt-[44px] md:pt-[104px] flex flex-col items-center justify-center min-h-[60vh] px-4">
+        <div className=" flex flex-col items-center justify-center min-h-[60vh] px-4">
           <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
           <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সার্ভিস প্রদানকারীদের জন্য।</p>
@@ -380,9 +380,9 @@ const ProviderPanel = () => {
   return (
     <div className="min-h-screen bg-background">
       
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="" />
 
-      <div className="mx-auto max-w-5xl px-4 py-6 md:py-10">
+      <div className="mx-auto max-w-8xl p-2">
         <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
           <ChevronLeft className="h-4 w-4" /> পেছনে যান
         </button>
