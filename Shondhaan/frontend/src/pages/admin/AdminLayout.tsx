@@ -9,6 +9,7 @@ import {
   ScrollText, BookOpenCheck, Inbox, LifeBuoy,
   UserPlus, Sun, Moon, Monitor, Languages, Pin, PinOff, Command as CommandIcon,
   ChevronDown,
+  Coins,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
@@ -183,6 +184,7 @@ const ADMIN_NAV: NavGroup[] = [
     items: [
       { to: "/admin/mart-management?tab=orders", label: "Orders", icon: <ShoppingCart className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=returns", label: "Returns", icon: <RefreshCw className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=rewards", label: "Mart Rewards", icon: <Coins className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=products", label: "Products", icon: <Package className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=vendors", label: "Vendors", icon: <Store className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=package", label: "Packages", icon: <Package className="h-4 w-4" /> },

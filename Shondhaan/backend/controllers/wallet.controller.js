@@ -428,3 +428,93 @@ export const adminAdjustWallet = async (req, res) => {
     if (connection) connection.release();
   }
 };
+
+// ==========================================
+// CREDIT PURCHASE REWARD (COINS) — MART ONLY
+// ==========================================
+
+const COIN_REWARD_THRESHOLD = 1000; // ৳
+const COIN_REWARD_PERCENT = 0.01;   // 1%
+const COIN_REWARD_MODULES = ["MART"]; // only these modules qualify
+
+export const creditPurchaseReward = async (req, res) => {
+  const { user_id, purchase_amount, reference_id, module = "PURCHASE", description } = req.body;
+
+  if (!user_id || !reference_id || purchase_amount == null) {
+    return res.status(400).json({ success: false, message: "user_id, purchase_amount and reference_id are required." });
+  }
+
+  const amount = Number(purchase_amount);
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid purchase amount." });
+  }
+
+  // Only Mart purchases are eligible
+  if (!COIN_REWARD_MODULES.includes(module)) {
+    return res.status(200).json({ success: true, awarded: false, reason: "module_not_eligible", coins_awarded: 0 });
+  }
+
+  // Below threshold — no reward, not an error
+  if (amount <= COIN_REWARD_THRESHOLD) {
+    return res.status(200).json({ success: true, awarded: false, reason: "below_threshold", coins_awarded: 0 });
+  }
+
+  const coinsToAward = Number((amount * COIN_REWARD_PERCENT).toFixed(2));
+  let connection;
+
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+
+    // Idempotency check — never double-reward the same order
+    const [existing] = await connection.execute(
+      `SELECT id FROM wallet_transactions WHERE user_id = ? AND reference_id = ? AND type = 'CREDIT' AND currency_type = 'COIN' AND status = 'COMPLETED' LIMIT 1`,
+      [user_id, reference_id]
+    );
+    if (existing.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({ success: false, message: "Reward already credited for this purchase.", transaction_id: existing[0].id });
+    }
+
+    const [walletRows] = await connection.execute(
+      `SELECT coin_balance FROM user_wallets WHERE user_id = ? FOR UPDATE`,
+      [user_id]
+    );
+
+    let currentCoins = 0;
+    if (walletRows.length === 0) {
+      await connection.execute(
+        `INSERT INTO user_wallets (id, user_id, cash_balance, coin_balance) VALUES (?, ?, 0.00, ?)`,
+        [uuidv4(), user_id, coinsToAward]
+      );
+    } else {
+      currentCoins = Number(walletRows[0].coin_balance || 0);
+      await connection.execute(
+        `UPDATE user_wallets SET coin_balance = ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?`,
+        [currentCoins + coinsToAward, user_id]
+      );
+    }
+
+    const transactionId = uuidv4();
+    await connection.execute(
+      `INSERT INTO wallet_transactions (id, user_id, type, currency_type, amount, module, reference_id, status, description, created_at) VALUES (?, ?, 'CREDIT', 'COIN', ?, ?, ?, 'COMPLETED', ?, CURRENT_TIMESTAMP)`,
+      [transactionId, user_id, coinsToAward, module, reference_id, description || `1% Mart reward on ৳${amount} purchase`]
+    );
+
+    await connection.commit();
+
+    return res.status(200).json({
+      success: true,
+      awarded: true,
+      transaction_id: transactionId,
+      coins_awarded: coinsToAward,
+      new_coin_balance: Number((currentCoins + coinsToAward).toFixed(2)),
+    });
+  } catch (error) {
+    if (connection) try { await connection.rollback(); } catch (e) { console.error("Rollback error:", e); }
+    console.error("Purchase Reward Error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error during reward credit." });
+  } finally {
+    if (connection) connection.release();
+  }
+};
