@@ -1,10 +1,7 @@
-// src/controllers/referral.controller.ts
-
-import { Request, Response, NextFunction } from "express";
 import crypto from "crypto";
-import { getPool } from "@/lib/db";
+import { pool } from "../db/pool.js";
 
-function generateCode(length = 8): string {
+function generateCode(length = 8) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let code = "";
   const bytes = crypto.randomBytes(length);
@@ -14,26 +11,24 @@ function generateCode(length = 8): string {
   return code;
 }
 
-function isValidCode(code: string): boolean {
+function isValidCode(code) {
   return /^[A-Z2-9]{6,12}$/.test(code);
 }
 
-function toWalletUid(id: number): string {
+function toWalletUid(id) {
   return String(id);
 }
 
-type Handler = (req: Request, res: Response, next: NextFunction) => Promise<void>;
-
 // ─── Generate Code ─────────────────────────────────────
 
-const generate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const generate = async (req, res, next) => {
   let conn;
   try {
-    const userId = req.user!.id;
+    const userId = req.user.id;
     const maxUses = req.body.max_uses || 50;
     conn = await getPool().getConnection();
 
-    const [existing]: any = await conn.query(
+    const [existing] = await conn.query(
       `SELECT id, code, used_count, max_uses
        FROM referral_codes
        WHERE user_id = ? AND is_active = 1
@@ -56,7 +51,7 @@ const generate = async (req: Request, res: Response, next: NextFunction): Promis
     let code = "";
     for (let attempt = 0; attempt < 10; attempt++) {
       code = generateCode();
-      const [dup]: any = await conn.query(
+      const [dup] = await conn.query(
         "SELECT 1 FROM referral_codes WHERE code = ?",
         [code]
       );
@@ -86,7 +81,7 @@ const generate = async (req: Request, res: Response, next: NextFunction): Promis
 
 // ─── Validate Code ─────────────────────────────────────
 
-const validate = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const validate = async (req, res, next) => {
   try {
     const { code } = req.params;
 
@@ -95,7 +90,7 @@ const validate = async (req: Request, res: Response, next: NextFunction): Promis
       return;
     }
 
-    const [rows]: any = await getPool().query(
+    const [rows] = await pool.query(
       `SELECT rc.*, u.name AS referrer_name, up.profile_image AS referrer_avatar
        FROM referral_codes rc
        JOIN users u ON u.id = rc.user_id
@@ -132,10 +127,10 @@ const validate = async (req: Request, res: Response, next: NextFunction): Promis
 
 // ─── Apply Referral ────────────────────────────────────
 
-const apply = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const apply = async (req, res, next) => {
   let conn;
   try {
-    const userId = req.user!.id;
+    const userId = req.user.id;
     const { code } = req.body;
 
     if (!code || !isValidCode(code)) {
@@ -147,7 +142,7 @@ const apply = async (req: Request, res: Response, next: NextFunction): Promise<v
     await conn.beginTransaction();
 
     // Already referred?
-    const [already]: any = await conn.query(
+    const [already] = await conn.query(
       "SELECT 1 FROM referrals WHERE referred_user_id = ?",
       [userId]
     );
@@ -159,7 +154,7 @@ const apply = async (req: Request, res: Response, next: NextFunction): Promise<v
     }
 
     // Lock code row
-    const [codeRows]: any = await conn.query(
+    const [codeRows] = await conn.query(
       `SELECT * FROM referral_codes
        WHERE code = ? AND is_active = 1
        AND (expires_at IS NULL OR expires_at > NOW())
@@ -191,7 +186,7 @@ const apply = async (req: Request, res: Response, next: NextFunction): Promise<v
     }
 
     // Create referral
-    const [refResult]: any = await conn.query(
+    const [refResult] = await conn.query(
       `INSERT INTO referrals
          (referral_code_id, referrer_user_id, referred_user_id, expires_at)
        VALUES (?, ?, ?, DATE_ADD(NOW(), INTERVAL 30 DAY))`,
@@ -243,17 +238,17 @@ const apply = async (req: Request, res: Response, next: NextFunction): Promise<v
 
 // ─── Qualify Referral ──────────────────────────────────
 
-const qualify = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const qualify = async (req, res, next) => {
   let conn;
   try {
     const referralId = req.params.referralId;
     const orderId = req.body.order_id;
-    const userId = req.user!.id;
+    const userId = req.user.id;
 
     conn = await getPool().getConnection();
     await conn.beginTransaction();
 
-    const [rows]: any = await conn.query(
+    const [rows] = await conn.query(
       `SELECT r.*, rc.reward_currency, rc.reward_amount,
               rc.referred_reward_type, rc.referred_reward_amount
        FROM referrals r
@@ -323,18 +318,17 @@ const qualify = async (req: Request, res: Response, next: NextFunction): Promise
 
 // ─── Stats ─────────────────────────────────────────────
 
-const stats = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const stats = async (req, res, next) => {
   try {
-    const userId = req.user!.id;
-    const pool = getPool();
+    const userId = req.user.id;
 
-    const [codeRows]: any = await pool.query(
+    const [codeRows] = await pool.query(
       `SELECT code, used_count, max_uses, created_at, expires_at
        FROM referral_codes WHERE user_id = ? AND is_active = 1`,
       [userId]
     );
 
-    const [referralRows]: any = await pool.query(
+    const [referralRows] = await pool.query(
       `SELECT r.status, r.created_at, r.qualified_at, r.rewarded_at,
               u.name AS referred_name, up.profile_image AS referred_avatar
        FROM referrals r
@@ -345,7 +339,7 @@ const stats = async (req: Request, res: Response, next: NextFunction): Promise<v
       [userId]
     );
 
-    const [rewardRows]: any = await pool.query(
+    const [rewardRows] = await pool.query(
       `SELECT id, role, reward_currency, reward_amount, status,
               created_at, claimed_at, expires_at
        FROM referral_rewards WHERE user_id = ?
@@ -355,11 +349,11 @@ const stats = async (req: Request, res: Response, next: NextFunction): Promise<v
 
     const code = codeRows[0] || null;
     const totalEarned = rewardRows
-      .filter((r: any) => r.status === "claimed")
-      .reduce((s: number, r: any) => s + Number(r.reward_amount), 0);
+      .filter((r) => r.status === "claimed")
+      .reduce((s, r) => s + Number(r.reward_amount), 0);
     const pendingRewards = rewardRows
-      .filter((r: any) => r.status === "available")
-      .reduce((s: number, r: any) => s + Number(r.reward_amount), 0);
+      .filter((r) => r.status === "available")
+      .reduce((s, r) => s + Number(r.reward_amount), 0);
 
     res.json({
       code: code
@@ -369,9 +363,9 @@ const stats = async (req: Request, res: Response, next: NextFunction): Promise<v
       rewards: rewardRows,
       summary: {
         total_referred: referralRows.length,
-        pending: referralRows.filter((r: any) => r.status === "pending").length,
-        qualified: referralRows.filter((r: any) => r.status === "qualified").length,
-        rewarded: referralRows.filter((r: any) => r.status === "rewarded").length,
+        pending: referralRows.filter((r) => r.status === "pending").length,
+        qualified: referralRows.filter((r) => r.status === "qualified").length,
+        rewarded: referralRows.filter((r) => r.status === "rewarded").length,
         total_earned: totalEarned,
         pending_rewards: pendingRewards,
       },
@@ -383,17 +377,17 @@ const stats = async (req: Request, res: Response, next: NextFunction): Promise<v
 
 // ─── Claim Reward ──────────────────────────────────────
 
-const claim = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const claim = async (req, res, next) => {
   let conn;
   try {
     const rewardId = req.params.rewardId;
-    const userId = req.user!.id;
+    const userId = req.user.id;
     const walletUid = toWalletUid(userId);
 
     conn = await getPool().getConnection();
     await conn.beginTransaction();
 
-    const [rows]: any = await conn.query(
+    const [rows] = await conn.query(
       `SELECT * FROM referral_rewards
        WHERE id = ? AND user_id = ? AND status = 'available'
        FOR UPDATE`,
@@ -451,11 +445,11 @@ const claim = async (req: Request, res: Response, next: NextFunction): Promise<v
 
 // ─── Qualify By Order ──────────────────────────────────
 
-const qualifyByOrder = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+const qualifyByOrder = async (req, res, next) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user.id;
 
-    const [rows]: any = await getPool().query(
+    const [rows] = await pool.query(
       `SELECT id FROM referrals
        WHERE referred_user_id = ? AND status = 'pending'
        AND expires_at > NOW()

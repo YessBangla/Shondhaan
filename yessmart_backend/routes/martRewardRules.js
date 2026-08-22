@@ -55,7 +55,7 @@ router.get("/match", async (req, res) => {
   try {
     const [rows] = await pool.query(
       `SELECT * FROM mart_reward_rules
-       WHERE is_active = 1 AND min_purchase_amount < ?
+      WHERE is_active = 1 AND min_purchase_amount <= ?
        ORDER BY min_purchase_amount DESC LIMIT 1`,
       [amount]
     );

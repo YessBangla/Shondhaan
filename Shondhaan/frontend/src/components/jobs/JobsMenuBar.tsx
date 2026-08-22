@@ -20,6 +20,7 @@ interface MenuItem {
 
 interface JobsMenuBarProps {
   flushWithHeader?: boolean;
+  
 }
 
 const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {

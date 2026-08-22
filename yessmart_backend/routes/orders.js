@@ -138,6 +138,47 @@ const safeJsonStringify = (value) => {
 // reference_id as the idempotency key.
 const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
 
+const getMartRewardCoins = async (amount) => {
+  const [rows] = await pool.query(
+    `SELECT reward_type, reward_value
+     FROM mart_reward_rules
+    WHERE is_active = 1 AND min_purchase_amount <= ?
+     ORDER BY min_purchase_amount DESC LIMIT 1`,
+    [amount]
+  );
+
+  const rule = rows[0];
+  if (!rule) return 0;
+
+  // reward_value is the number of coins to credit once the minimum is met.
+  const reward = Number(rule.reward_value);
+  return Number.isFinite(reward) && reward > 0 ? Number(reward.toFixed(2)) : 0;
+};
+
+const awardMartReward = async ({ userId, orderNumber, amount }) => {
+  const rewardCoins = await getMartRewardCoins(amount);
+  if (!rewardCoins) return null;
+
+  try {
+    const response = await axios.post(
+      `${walletApiBaseUrl()}/api/wallet/credit-purchase-reward`,
+      {
+        user_id: userId,
+        purchase_amount: amount,
+        reward_coins: rewardCoins,
+        module: "MART",
+        reference_id: `mart-reward-${orderNumber}`,
+        description: `Mart reward for order ${orderNumber}`,
+      },
+      { timeout: 15000 }
+    );
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 409) return error.response.data;
+    throw new Error(error.response?.data?.message || error.message || "Mart reward credit failed");
+  }
+};
+
 const debitMainWallet = async ({ userId, amount, referenceId, description }) => {
   try {
     const response = await axios.post(
@@ -565,6 +606,12 @@ router.post("/", async (req, res) => {
       });
     }
 
+    if (normalizedPaymentMethod === "cod" || initialPaymentStatus === "paid") {
+      await awardMartReward({ userId: user_id, orderNumber, amount: verifiedTotal }).catch((rewardError) => {
+        console.error(`Mart reward credit failed for order ${orderNumber}:`, rewardError.message);
+      });
+    }
+
     // ── Notify every seller who has at least one item in this order ──
     // order_items.seller_id stores sellers.id, but notifications are keyed
     // by the seller's login user_id, so we resolve sellers.id -> sellers.user_id.
@@ -807,6 +854,23 @@ router.all("/sslcommerz/:status", async (req, res) => {
         [verified ? "paid" : "unpaid", orderId]
       );
 
+      if (verified) {
+        const [orderRows] = await pool.query(
+          `SELECT user_id, order_number, total FROM orders WHERE id = ? LIMIT 1`,
+          [orderId]
+        );
+        const order = orderRows[0];
+        if (order) {
+          await awardMartReward({
+            userId: order.user_id,
+            orderNumber: order.order_number,
+            amount: Number(order.total || 0),
+          }).catch((rewardError) => {
+            console.error(`Mart reward credit failed for order ${order.order_number}:`, rewardError.message);
+          });
+        }
+      }
+
       await saveSslTransactionReturn({
         orderId,
         transactionId,
@@ -887,7 +951,7 @@ router.put("/:id", async (req, res) => {
   try {
     // Step 1: Fetch current order to check payment_method & payment_status
     const [orderRows] = await pool.query(
-      `SELECT payment_method, payment_status FROM orders WHERE id = ? LIMIT 1`,
+      `SELECT user_id, order_number, total, payment_method, payment_status FROM orders WHERE id = ? LIMIT 1`,
       [req.params.id]
     );
 
@@ -973,6 +1037,21 @@ router.put("/:id", async (req, res) => {
       } else {
         console.warn(`⚠️  delivery_requests not updated — all rows may be 'declined'`);
       }
+    }
+
+    const shouldRetryReward =
+      (status === "delivered" && payment_method === "cod") ||
+      (payment_method !== "cod" &&
+        ["confirmed", "processing", "shipped", "delivered"].includes(status));
+
+    if (shouldRetryReward) {
+      await awardMartReward({
+        userId: orderRows[0].user_id,
+        orderNumber: orderRows[0].order_number,
+        amount: Number(orderRows[0].total || 0),
+      }).catch((rewardError) => {
+        console.error(`Mart reward credit failed for order ${orderRows[0].order_number}:`, rewardError.message);
+      });
     }
 
     res.json({ success: true, message: `Order status updated to ${status}` });

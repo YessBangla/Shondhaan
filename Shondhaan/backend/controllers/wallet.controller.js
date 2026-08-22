@@ -433,15 +433,13 @@ export const adminAdjustWallet = async (req, res) => {
 // CREDIT PURCHASE REWARD (COINS) — MART ONLY
 // ==========================================
 
-const COIN_REWARD_THRESHOLD = 1000; // ৳
-const COIN_REWARD_PERCENT = 0.01;   // 1%
 const COIN_REWARD_MODULES = ["MART"]; // only these modules qualify
 
 export const creditPurchaseReward = async (req, res) => {
-  const { user_id, purchase_amount, reference_id, module = "PURCHASE", description } = req.body;
+  const { user_id, purchase_amount, reward_coins, reference_id, module = "PURCHASE", description } = req.body;
 
-  if (!user_id || !reference_id || purchase_amount == null) {
-    return res.status(400).json({ success: false, message: "user_id, purchase_amount and reference_id are required." });
+  if (!user_id || !reference_id || purchase_amount == null || reward_coins == null) {
+    return res.status(400).json({ success: false, message: "user_id, purchase_amount, reward_coins and reference_id are required." });
   }
 
   const amount = Number(purchase_amount);
@@ -454,12 +452,10 @@ export const creditPurchaseReward = async (req, res) => {
     return res.status(200).json({ success: true, awarded: false, reason: "module_not_eligible", coins_awarded: 0 });
   }
 
-  // Below threshold — no reward, not an error
-  if (amount <= COIN_REWARD_THRESHOLD) {
-    return res.status(200).json({ success: true, awarded: false, reason: "below_threshold", coins_awarded: 0 });
+  const coinsToAward = Number(reward_coins);
+  if (!Number.isFinite(coinsToAward) || coinsToAward <= 0) {
+    return res.status(400).json({ success: false, message: "Invalid reward coin amount." });
   }
-
-  const coinsToAward = Number((amount * COIN_REWARD_PERCENT).toFixed(2));
   let connection;
 
   try {
@@ -498,7 +494,7 @@ export const creditPurchaseReward = async (req, res) => {
     const transactionId = uuidv4();
     await connection.execute(
       `INSERT INTO wallet_transactions (id, user_id, type, currency_type, amount, module, reference_id, status, description, created_at) VALUES (?, ?, 'CREDIT', 'COIN', ?, ?, ?, 'COMPLETED', ?, CURRENT_TIMESTAMP)`,
-      [transactionId, user_id, coinsToAward, module, reference_id, description || `1% Mart reward on ৳${amount} purchase`]
+      [transactionId, user_id, coinsToAward, module, reference_id, description || `Mart reward on purchase of ${amount}`]
     );
 
     await connection.commit();

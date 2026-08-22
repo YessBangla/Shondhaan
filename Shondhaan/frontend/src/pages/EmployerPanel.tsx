@@ -691,7 +691,7 @@ const EmployerPanel = () => {
     return (
       <JobsPageTransition>
         <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" />
-        <JobsMenuBar />
+        <JobsMenuBar  />
         <div className="pt-[16px]">
           <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white py-8">
             <div className="max-w-3xl mx-auto px-4 text-center">
