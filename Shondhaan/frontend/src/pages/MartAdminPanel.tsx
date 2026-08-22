@@ -5,7 +5,8 @@ import {
   Package, ShoppingCart, Users, Search,
   BarChart3, DollarSign, Loader2, MessageCircle, Eye, 
   Shield, Store, FolderTree, Image, Tag, RotateCcw, ImageIcon, Trash2, AlertTriangle,
-  Wallet, UserCheck, Truck
+  Wallet, UserCheck, Truck,
+  Coins
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +25,7 @@ import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer
 } from "recharts";
+import MartRewardsPanel from "@/pages/mart/MartRewardsPanel";
 import MartCategoryManager from "@/components/mart/MartCategoryManager";
 import MartBannerManager from "@/components/mart/MartBannerManager";
 import MartCouponManager from "@/components/mart/MartCouponManager";
@@ -307,7 +309,7 @@ const MartAdminPanel = () => {
     { value: "banners", label: bn ? "ব্যানার" : "Banners", icon: <Image />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "coupons", label: bn ? "কুপন" : "Coupons", icon: <Tag />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "analytics", label: bn ? "রিপোর্ট" : "Analytics", icon: <BarChart3 />, group: bn ? "পরিসংখ্যান" : "Analytics" },
-
+{ value: "rewards", label: bn ? "মার্ট রিওয়ার্ড" : "Mart Rewards", icon: <Coins />, group: bn ? "ফাইন্যান্স" : "Finance" },
     // ── Added: same "সন্ধান মার্ট" group/items as on SuperAdminPanel ──
     { value: "mart-overview", label: "মার্ট ওভারভিউ", icon: <ShoppingCart />, group: "সন্ধান মার্ট" },
     { value: "kyc verification", label: "SELLER KYC VERIFICATION", icon: <UserCheck />, group: "সন্ধান মার্ট" },
@@ -510,7 +512,10 @@ const MartAdminPanel = () => {
 {activeTab === "wallet" && (
   <MartWalletManager bn={bn} />
 )}
-
+{/* Mart Rewards */}
+{activeTab === "rewards" && (
+  <MartRewardsPanel bn={bn} />
+)}
                 {/* Withdrawals — placeholder until withdrawal table is confirmed */}
                 {activeTab === "withdrawals" && (
                   <div className="py-12 text-center text-muted-foreground">

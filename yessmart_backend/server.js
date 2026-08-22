@@ -30,6 +30,7 @@ const createWishlistTable = require("./database/createWishlist.table"); // Impor
 const createMessagesTable = require("./database/Createmessage.table"); // Import the createMessagesTable function
 const createUserProfileTable = require("./database/user_profile.table");
 const createBannersTable = require("./database/banners.table"); // ★ NEW — banners table for mart home carousel
+const createMartRewardTables = require("./database/mart_reward_rules"); // ★ NEW — mart_reward_rules table for mart reward rules
 // create table
 
 const categoriesRoutes = require("./routes/categories");
@@ -182,7 +183,7 @@ app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 app.use("/api/transactions", transactionsRoutes); // ★ NEW — transactions routes
 app.use("/api/mart-wallets", martWalletRoutes);
 app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
-
+app.use("/api/mart-reward-rules", require("./routes/martRewardRules")); // ★ NEW — mart reward rules routes (defines /api/mart-reward-rules, /api/mart-reward-rules/active, etc.)
 server.listen(PORT, async () => {
   const backendBaseUrl = getBackendBaseUrl();
   console.log(`Server running on ${backendBaseUrl}`);
@@ -215,6 +216,7 @@ server.listen(PORT, async () => {
     await createMartSellerPackagesTable(); // ★ NEW — Create the mart_seller_packages table
     await createMartPackageTransactionsTable(); // Payment audit trail for package purchases
     await createMartWalletTables(); // Seller wallet balances and adjustment audit trail
+    await createMartRewardTables(); // ★ NEW — Create the mart_reward_rules table
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);
