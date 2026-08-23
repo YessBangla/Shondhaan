@@ -9,7 +9,7 @@ import {
   ScrollText, BookOpenCheck, Inbox, LifeBuoy,
   UserPlus, Sun, Moon, Monitor, Languages, Pin, PinOff, Command as CommandIcon,
   ChevronDown,
-  Coins,
+  Coins,  Gift,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
@@ -161,6 +161,17 @@ const NAV: NavGroup[] = [
       { to: "/admin/coupons", label: "কুপন", icon: <Tag className="h-4 w-4" /> },
       { to: "/admin/withdrawals", label: "উইথড্রয়াল", icon: <Banknote className="h-4 w-4" /> },
       { to: "/admin/payment-ledger", label: "পেমেন্ট লেজার", icon: <BookOpenCheck className="h-4 w-4" /> },
+    ],
+  },
+    {
+    label: "রেফারেল",
+    accent: "from-violet-500 to-purple-600",
+    dot: "bg-violet-500",
+    items: [
+      { to: "/admin/referral-codes", label: "রেফারেল কোড", icon: <Gift className="h-4 w-4" /> },
+      { to: "/admin/referral-settings", label: "রেফারেল সেটিংস", icon: <Settings className="h-4 w-4" /> },
+      { to: "/admin/referral-transactions", label: "রিওয়ার্ড ট্রানজেকশন", icon: <Coins className="h-4 w-4" /> },
+      { to: "/admin/referral-report", label: "রেফারেল রিপোর্ট", icon: <BarChart3 className="h-4 w-4" /> },
     ],
   },
   {
@@ -383,7 +394,7 @@ const AdminLayout = () => {
       n: { to: "/admin/notifications", label: "নোটিফিকেশন" },
       p: { to: "/admin/permissions", label: "পারমিশন" },
       t: { to: "/admin/staff-assignments", label: "স্টাফ অ্যাসাইনমেন্ট" },
-      f: { to: "/admin/payment-ledger", label: "ফিনান্স" },
+      e: { to: "/admin/referral-codes", label: "রেফারেল" },
       g: { to: "/admin/settings", label: "সেটিংস" },
     };
     const onKey = (e: KeyboardEvent) => {
@@ -939,6 +950,7 @@ const AdminLayout = () => {
           { keys: "g p", label: "পারমিশন" },
           { keys: "g t", label: "স্টাফ অ্যাসাইনমেন্ট" },
           { keys: "g f", label: "ফিনান্স / লেজার" },
+                    { keys: "g e", label: "রেফারেল" },
           { keys: "g g", label: "সেটিংস" },
           { keys: "Esc", label: "বন্ধ করুন" },
         ]}

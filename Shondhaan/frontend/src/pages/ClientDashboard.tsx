@@ -6,7 +6,8 @@ import {
   Package, Star, Bell, ClipboardList, CheckCircle2,
   FileSearch, Wallet, LogOut, Settings, Store,
   Home, Camera, MessageSquare, Mail,
-  TrendingUp, BarChart3, PieChart, ArrowUpRight
+  TrendingUp, BarChart3, PieChart, ArrowUpRight,
+  Gift
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -29,8 +30,8 @@ import { getMySqlAuth, saveMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 import ProfileContent from "@/components/ProfileContent";
-// ✅ ADDED: Import the ServiceMessage page so we can render it directly inside the tab
 import ServiceMessage from "@/pages/ServiceMessage";
+import ReferralTab from "@/components/client/ReferralTab";
 
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -366,7 +367,7 @@ const ClientDashboard = () => {
 
   const deleteReview = async (id: string) => {
     if (!confirm(bn ? "রিভিউ মুছে ফেলবেন?" : "Delete review?")) return;
-    setReviews(prev => prev.filter(r => r.id !== id)); 
+    setReviews(prev => prev.filter(r => r.id !== id));
     toast.success(bn ? "মুছে ফেলা হয়েছে" : "Deleted");
   };
 
@@ -405,6 +406,7 @@ const ClientDashboard = () => {
           { value: "deal-favorites", label: bn ? "ফেভারিট" : "Favorites", icon: <Heart className="h-5 w-5" /> },
           { value: "deal-messages", label: bn ? "মেসেজ" : "Messages", icon: <MessageSquare className="h-5 w-5" /> },
           { value: "payments", label: bn ? "পেমেন্ট" : "Payments", icon: <Wallet className="h-5 w-5" />, group: bn ? "আর্থিক" : "Finance" },
+          { value: "referral", label: bn ? "রেফারেল" : "Referral", icon: <Gift className="h-5 w-5" />, group: bn ? "আর্থিক" : "Finance" },
           { value: "reviews", label: bn ? "রিভিউ" : "Reviews", icon: <Star className="h-5 w-5" />, group: bn ? "অন্যান্য" : "Others" },
           { value: "notifications", label: bn ? "নোটিফিকেশন" : "Notifications", icon: <Bell className="h-5 w-5" /> },
           { value: "job", label: bn ? "আমার আবেদনসমূহ" : "My Applications", icon: <User className="h-5 w-5" />, group: bn ? "চাকরি" : "Job" },
@@ -415,16 +417,16 @@ const ClientDashboard = () => {
         panelIcon={<Store className="h-5 w-5" />}
         profileImageUrl={profile.profile_image_url || undefined}
         offsetForDesktopMegaMenu
-        >
+      >
         {(activeTab, setTab) => (
           <div className="bg-slate-50 min-h-screen">
-            
+
             {/* === DASHBOARD TAB === */}
             {activeTab === "dashboard" && (
               <div className="space-y-6">
-                
+
                 {/* Hero Profile Banner */}
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
@@ -434,10 +436,10 @@ const ClientDashboard = () => {
                   <div className="h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   </div>
-                  
+
                   <div className="px-6 pb-6 relative">
                     <div className="flex items-end justify-between -mt-14 mb-4">
-                      <motion.div 
+                      <motion.div
                         initial={{ scale: 0.8 }}
                         animate={{ scale: 1 }}
                         transition={{ delay: 0.2 }}
@@ -454,21 +456,21 @@ const ClientDashboard = () => {
                         </div>
                         <div className="absolute bottom-3 right-3 h-5 w-5 bg-green-500 border-4 border-white rounded-full shadow-md"></div>
                       </motion.div>
-                      
-                      <motion.div 
+
+                      <motion.div
                         initial={{ opacity: 0, x: 20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
                         className="flex gap-2 mb-2"
-                        >
-                        <button 
-                          onClick={() => setTab("profile")} 
+                      >
+                        <button
+                          onClick={() => setTab("profile")}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-all border border-slate-200 shadow-sm"
                         >
                           <Settings className="h-3.5 w-3.5" /> {bn ? "এডিট" : "Edit"}
                         </button>
-                        <button 
-                          onClick={handleSignOut} 
+                        <button
+                          onClick={handleSignOut}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 hover:bg-red-100 px-4 py-2 text-xs font-semibold text-red-600 transition-all border border-red-200 shadow-sm"
                         >
                           <LogOut className="h-3.5 w-3.5" /> {bn ? "লগআউট" : "Logout"}
@@ -492,12 +494,12 @@ const ClientDashboard = () => {
                       </div>
                       <div className="mt-2 flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-500">
                         <span className="inline-flex items-center gap-2">
-                          <Mail className="h-4 w-4 text-userprimary" /> 
+                          <Mail className="h-4 w-4 text-userprimary" />
                           {user?.email}
                         </span>
                         {profile.phone && (
                           <span className="inline-flex items-center gap-2">
-                            <Phone className="h-4 w-4 text-userprimary" /> 
+                            <Phone className="h-4 w-4 text-userprimary" />
                             {profile.phone}
                           </span>
                         )}
@@ -506,7 +508,7 @@ const ClientDashboard = () => {
                   </div>
                 </motion.div>
 
-                
+
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                   {[
@@ -539,7 +541,7 @@ const ClientDashboard = () => {
                 {/* Premium Graph Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                   {/* Area Chart Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
@@ -566,7 +568,7 @@ const ClientDashboard = () => {
                   </motion.div>
 
                   {/* Stats Card */}
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
@@ -578,7 +580,7 @@ const ClientDashboard = () => {
                       </div>
                       {bn ? "ব্যবহার বিভাজন" : "Usage Split"}
                     </h3>
-                    
+
                     <div className="flex-1 flex flex-col justify-center space-y-4">
                       {[
                         { label: "Services", value: bookings.length, color: "bg-userprimaryshade", width: `${Math.min(bookings.length * 10, 100)}%` },
@@ -634,7 +636,7 @@ const ClientDashboard = () => {
             {/* === BOOKINGS TAB === */}
             {activeTab === "bookings" && (
               bookings.length === 0 ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="text-center py-20 rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -644,8 +646,8 @@ const ClientDashboard = () => {
                   </div>
                   <p className="text-base font-semibold text-slate-900">{bn ? "কোনো বুকিং নেই" : "No bookings yet"}</p>
                   <p className="text-sm text-slate-500 mt-1 mb-4">{bn ? "আপনার প্রথম সার্ভিস বুক করুন" : "Book your first service today"}</p>
-                  <button 
-                    onClick={() => navigate("/")} 
+                  <button
+                    onClick={() => navigate("/")}
                     className="inline-flex items-center gap-2 rounded-xl bg-userprimary px-5 py-2.5 text-sm font-semibold text-white hover:userprimary transition-colors"
                   >
                     <ClipboardList className="h-4 w-4" /> {bn ? "সার্ভিস দেখুন" : "Browse Services"}
@@ -653,7 +655,7 @@ const ClientDashboard = () => {
                 </motion.div>
               ) : (
                 <div className="space-y-4">
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
@@ -685,7 +687,6 @@ const ClientDashboard = () => {
             )}
 
             {/* === OTHER TABS === */}
-            {/* ✅ FIXED: Rendering the ServiceMessage component directly inside the tab like other pages! */}
             {activeTab === "messages" && <ServiceMessage />}
             {activeTab === "requests" && <ServiceRequestsTab userPhone={profile.phone} />}
             {activeTab === "mart-orders" && (<MartOrdersTab orders={martOrders as any} onRefresh={fetchMartOrders} apiBase={`${MART_API_BASE}/api`} />)}
@@ -693,12 +694,18 @@ const ClientDashboard = () => {
             {activeTab === "deal-favorites" && <DealSection activeTab="favorites" />}
             {activeTab === "deal-messages" && <DealSection activeTab="messages" />}
             {activeTab === "payments" && <PaymentHistoryTab bookings={bookings} martOrders={martOrders} />}
+
+            {/* === REFERRAL TAB === */}
+            {activeTab === "referral" && (
+              <ReferralTab onNavigateToPayments={() => setTab("payments")} />
+            )}
+
             {activeTab === "job" && <JobApplicationsTab bn={bn} />}
 
             {/* === REVIEWS TAB === */}
             {activeTab === "reviews" && (
               reviews.length === 0 ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="text-center py-20 rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -711,8 +718,8 @@ const ClientDashboard = () => {
               ) : (
                 <div className="space-y-3">
                   {reviews.map(r => (
-                    <motion.div 
-                      key={r.id} 
+                    <motion.div
+                      key={r.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm space-y-2"
@@ -739,7 +746,7 @@ const ClientDashboard = () => {
             {/* === NOTIFICATIONS TAB === */}
             {activeTab === "notifications" && (
               notifications.length === 0 ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   className="text-center py-20 rounded-2xl border border-slate-200 bg-white shadow-sm"
@@ -757,11 +764,11 @@ const ClientDashboard = () => {
                     </button>
                   )}
                   {notifications.map(n => (
-                    <motion.div 
-                      key={n.id} 
+                    <motion.div
+                      key={n.id}
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
-                      onClick={() => !n.is_read && markAsRead(n.id)} 
+                      onClick={() => !n.is_read && markAsRead(n.id)}
                       className={`rounded-xl border p-4 cursor-pointer transition-all ${n.is_read ? "bg-white border-slate-200 opacity-60" : "bg-blue-50/50 border-blue-200"}`}
                     >
                       <div className="flex items-start justify-between gap-2">
@@ -780,21 +787,21 @@ const ClientDashboard = () => {
               )
             )}
 
-          {/* === PROFILE TAB === */}
-{activeTab === "profile" && (
-  <div className="max-w-2xl mx-auto">
-    <ProfileContent
-      onProfileUpdated={(updated) => {
-        setProfile({
-          display_name: updated.display_name,
-          phone: updated.phone,
-          address: updated.address,
-          profile_image_url: updated.profile_image_url || "",
-        });
-      }}
-    />
-  </div>
-)}
+            {/* === PROFILE TAB === */}
+            {activeTab === "profile" && (
+              <div className="max-w-2xl mx-auto">
+                <ProfileContent
+                  onProfileUpdated={(updated) => {
+                    setProfile({
+                      display_name: updated.display_name,
+                      phone: updated.phone,
+                      address: updated.address,
+                      profile_image_url: updated.profile_image_url || "",
+                    });
+                  }}
+                />
+              </div>
+            )}
           </div>
         )}
       </PanelSidebarTabs>

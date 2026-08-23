@@ -1,6 +1,8 @@
 import { v4 as uuidv4 } from "uuid";
 import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
+const CENTRAL_API_BASE_URL = process.env.CENTRAL_API_BASE_URL || "http://localhost:5000";
+
 const allowedStatuses = [
   "pending",
   "confirmed",
@@ -32,12 +34,76 @@ const formatBooking = (booking) => ({
     booking.payment_status === "paid" ? Number(booking.payment_amount || 0) : 0,
   service_charge_amount: Number(booking.payment_amount || 0),
   due_amount: calculateDueAmount(booking),
-  // [WALLET UPDATE] Return new wallet fields
   payment_method: booking.payment_method || "gateway",
   wallet_cash_used: Number(booking.wallet_cash_used || 0),
   wallet_coins_used: Number(booking.wallet_coins_used || 0),
   provider_payout_status: booking.provider_payout_status || "unpaid",
+  referral_code: booking.referral_code || null,
+  referral_id: booking.referral_id || null,
+  referral_status: booking.referral_status || null,
 });
+
+// Non-blocking call to central backend for referral reservation
+const reserveReferralViaApi = (userId, code, bookingId, orderAmount) => {
+  fetch(`${CENTRAL_API_BASE_URL}/api/referral-settlement/reserve`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      code,
+      booking_id: bookingId,
+      order_amount: orderAmount,
+    }),
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      if (!result.success) {
+        console.log(`[Referral] Reserve skipped: ${result.reason}`);
+      } else {
+        console.log(`[Referral] Reserved: ${result.referral_id}`);
+        // Update booking with referral_id
+        pool
+          .execute(
+            "UPDATE bookings SET referral_id = ?, referral_status = ? WHERE id = ?",
+            [result.referral_id || null, "reserved", bookingId]
+          )
+          .catch(() => {});
+      }
+    })
+    .catch((err) => {
+      console.error("[Referral] Reserve failed (non-blocking):", err.message);
+    });
+};
+
+// Non-blocking call to central backend for referral settlement
+const settleReferralViaApi = (userId, bookingId, orderAmount) => {
+  fetch(`${CENTRAL_API_BASE_URL}/api/referral-settlement/settle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      user_id: userId,
+      booking_id: bookingId,
+      order_amount: orderAmount,
+    }),
+  })
+    .then((res) => res.json())
+    .then((result) => {
+      if (!result.success) {
+        console.log(`[Referral] Settle skipped: ${result.reason}`);
+      } else {
+        console.log(`[Referral] Settled: ${result.referral_id}, credited: ${result.credred}`);
+        pool
+          .execute(
+            "UPDATE bookings SET referral_status = ? WHERE id = ?",
+            ["rewarded", bookingId]
+          )
+          .catch(() => {});
+      }
+    })
+    .catch((err) => {
+      console.error("[Referral] Settle failed (non-blocking):", err.message);
+    });
+};
 
 export const createBooking = async (req, res) => {
   try {
@@ -46,8 +112,8 @@ export const createBooking = async (req, res) => {
     const {
       user_id,
       service_id,
-      booked_by,      
-      booker_name,         
+      booked_by,
+      booker_name,
       booker_phone,
       package_id,
       service_slug,
@@ -61,12 +127,13 @@ export const createBooking = async (req, res) => {
       booking_time,
       note,
       platform_fee_amount,
-      // [WALLET UPDATE] New fields from frontend
       payment_method,
       payment_status,
       wallet_cash_used,
       wallet_coins_used,
+      referral_code,
     } = req.body;
+
     if (
       !user_id ||
       !service_slug ||
@@ -108,7 +175,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    // Fallback logic: Calculate fee from DB if not provided by frontend
     if (platformFeeAmount === 0) {
       let serviceRows = [];
       if (service_id) {
@@ -126,12 +192,10 @@ export const createBooking = async (req, res) => {
       if (serviceRows.length) {
         const dbService = serviceRows[0];
         const flatFee = Number(dbService.platform_fee || 0);
-        
+
         if (flatFee > 0) {
-          // Use flat fee if it exists in DB
           platformFeeAmount = flatFee;
         } else {
-          // Calculate from commission_percent
           const commission = Number(dbService.commission_percent || 0);
           platformFeeAmount = price * (commission / 100);
         }
@@ -140,14 +204,11 @@ export const createBooking = async (req, res) => {
 
     platformFeeAmount = money(platformFeeAmount);
 
-    // [WALLET UPDATE] Determine payment method and wallet amounts
     const finalPaymentMethod = allowedPaymentMethods.includes(payment_method) ? payment_method : "gateway";
     const finalWalletCash = money(wallet_cash_used || 0);
     const finalWalletCoins = money(wallet_coins_used || 0);
 
-    // Booking starts pending until service charge payment is successful.
     const finalStatus = "pending";
-    // [WALLET UPDATE] Respect payment_status from frontend (for wallet payments), default to "unpaid"
     const finalPaymentStatus = allowedPaymentStatuses.includes(payment_status) ? payment_status : "unpaid";
 
     await pool.execute(
@@ -177,9 +238,11 @@ export const createBooking = async (req, res) => {
         payment_method,
         wallet_cash_used,
         wallet_coins_used,
-        provider_payout_status
+        provider_payout_status,
+        referral_code,
+        referral_status
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -206,9 +269,16 @@ export const createBooking = async (req, res) => {
         finalPaymentMethod,
         finalWalletCash,
         finalWalletCoins,
-        "unpaid" // Default provider payout to unpaid (Escrow)
+        "unpaid",
+        referral_code ? String(referral_code).trim().toUpperCase() : null,
+        referral_code ? "pending" : null,
       ]
     );
+
+    // Fire-and-forget referral reservation via central API
+    if (referral_code) {
+      reserveReferralViaApi(user_id, referral_code, id, platformFeeAmount);
+    }
 
     const [rows] = await pool.execute(
       `
@@ -238,7 +308,7 @@ export const getBookings = async (req, res) => {
   try {
     const {
       user_id,
-      booked_by, // 👈 new
+      booked_by,
       status,
       payment_status,
       service_slug,
@@ -260,7 +330,6 @@ export const getBookings = async (req, res) => {
       values.push(user_id);
     }
 
-    // 👈 New filter for fetching bookings made by a specific user/agent
     if (booked_by) {
       query += ` AND booked_by = ?`;
       values.push(booked_by);
@@ -271,7 +340,6 @@ export const getBookings = async (req, res) => {
       values.push(status);
     }
 
-    // Updated fallback: Only default to 'paid' if neither user_id nor booked_by is provided
     if (payment_status) {
       query += ` AND payment_status = ?`;
       values.push(payment_status);
@@ -434,9 +502,9 @@ export const updateBooking = async (req, res) => {
       customer_name,
       customer_phone,
       customer_address,
-      booked_by,       // 👈 new
-      booker_name,     // 👈 new
-      booker_phone,    // 👈 new
+      booked_by,
+      booker_name,
+      booker_phone,
       booking_date,
       booking_time,
       note,
@@ -566,7 +634,6 @@ export const updateBookingStatus = async (req, res) => {
 export const updatePaymentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    // [WALLET UPDATE] Added wallet_cash_used and wallet_coins_used
     const { payment_status, payment_method, payment_transaction_id, wallet_cash_used, wallet_coins_used } = req.body;
 
     if (!payment_status) {
@@ -597,7 +664,6 @@ export const updatePaymentStatus = async (req, res) => {
       });
     }
 
-    // [WALLET UPDATE] Update payment method, transaction ID, and wallet amounts
     await pool.execute(
       `
       UPDATE bookings
@@ -614,15 +680,24 @@ export const updatePaymentStatus = async (req, res) => {
       WHERE id = ?
       `,
       [
-        payment_status, 
-        allowedPaymentMethods.includes(payment_method) ? payment_method : null, 
+        payment_status,
+        allowedPaymentMethods.includes(payment_method) ? payment_method : null,
         payment_transaction_id || null,
         wallet_cash_used !== undefined ? money(wallet_cash_used) : null,
         wallet_coins_used !== undefined ? money(wallet_coins_used) : null,
-        payment_status, 
-        id
+        payment_status,
+        id,
       ]
     );
+
+    // Fire-and-forget referral settlement via central API
+    if (payment_status === "paid" && existing[0].referral_status === "reserved") {
+      settleReferralViaApi(
+        existing[0].user_id,
+        id,
+        existing[0].platform_fee_amount || existing[0].payment_amount
+      );
+    }
 
     const [rows] = await pool.execute(
       `
@@ -728,6 +803,7 @@ export const assignBookingProvider = async (req, res) => {
     });
   }
 };
+
 export const deleteBooking = async (req, res) => {
   try {
     const { id } = req.params;

@@ -7,6 +7,8 @@ import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import walletRoutes from "./routes/wallet.route.js";
 import referralRoutes from "./routes/referral.route.js";
+import referralSettlementRoutes from "./routes/referralSettlement.routes.js";
+import referralAdminRoutes from "./routes/referralAdmin.routes.js";
 
 const app = express();
 // Middlewares
@@ -26,6 +28,10 @@ app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use('/api/wallet', walletRoutes);
 app.use("/api/referral", referralRoutes);
+
+app.use("/api/referral/admin", referralAdminRoutes);
+
+app.use("/api/referral-settlement", referralSettlementRoutes);
 
 // app.use("/api/catalog", serviceCatalogRoutes);
 

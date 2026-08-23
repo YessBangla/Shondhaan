@@ -40,6 +40,9 @@ export const ensurePlatformFeeSchema = () => {
         { name: "assigned_to", type: "VARCHAR(255) NULL", after: "provider_id" },
         { name: "cancel_reason", type: "TEXT NULL", after: "assigned_to" },
         { name: "note", type: "TEXT NULL", after: "cancel_reason" },
+        { name: "referral_code", type: "VARCHAR(16) NULL", after: "note" },
+        { name: "referral_id", type: "INT NULL", after: "referral_code" },
+        { name: "referral_status", type: "VARCHAR(50) NULL", after: "referral_id" },
       ];
 
       for (const col of columnsToEnsure) {

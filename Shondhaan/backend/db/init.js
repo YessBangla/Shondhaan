@@ -230,6 +230,121 @@ export async function initDatabase() {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_wallets (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL UNIQUE,
+      cash_balance DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      coin_balance DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_user_wallets_user_id (user_id)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_transactions (
+      id VARCHAR(64) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      type ENUM('CREDIT','DEBIT') NOT NULL,
+      currency_type ENUM('CASH','COIN') NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      module VARCHAR(50) NOT NULL,
+      reference_id VARCHAR(100) NULL,
+      status ENUM('PENDING','COMPLETED','FAILED') NOT NULL DEFAULT 'COMPLETED',
+      description TEXT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      INDEX idx_wallet_transactions_user_id (user_id),
+      INDEX idx_wallet_transactions_reference (reference_id),
+      INDEX idx_wallet_transactions_module (module)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS referral_settings (
+      id TINYINT PRIMARY KEY DEFAULT 1,
+      is_enabled TINYINT(1) NOT NULL DEFAULT 1,
+      max_uses INT NOT NULL DEFAULT 50,
+      code_valid_days INT NOT NULL DEFAULT 90,
+      qualification_window_days INT NOT NULL DEFAULT 30,
+      reward_valid_days INT NOT NULL DEFAULT 60,
+      referrer_reward_currency ENUM('CASH','COIN') NOT NULL DEFAULT 'CASH',
+      referrer_reward_amount DECIMAL(10,2) NOT NULL DEFAULT 50.00,
+      referred_reward_currency ENUM('CASH','COIN') NOT NULL DEFAULT 'CASH',
+      referred_reward_amount DECIMAL(10,2) NOT NULL DEFAULT 20.00,
+      min_order_amount DECIMAL(10,2) NULL,
+      updated_by INT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    )
+  `);
+
+  await pool.query(`
+    INSERT INTO referral_settings (id)
+    VALUES (1)
+    ON DUPLICATE KEY UPDATE id = id
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS referral_codes (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL,
+      code VARCHAR(16) NOT NULL UNIQUE,
+      max_uses INT NOT NULL DEFAULT 50,
+      used_count INT NOT NULL DEFAULT 0,
+      reward_currency ENUM('CASH','COIN') NOT NULL DEFAULT 'CASH',
+      reward_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      referred_reward_type VARCHAR(32) NOT NULL DEFAULT 'WALLET_CASH',
+      referred_reward_amount DECIMAL(10,2) NOT NULL DEFAULT 0.00,
+      min_order_amount DECIMAL(10,2) NULL,
+      is_active TINYINT(1) NOT NULL DEFAULT 1,
+      expires_at TIMESTAMP NULL DEFAULT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_referral_codes_user_id (user_id),
+      INDEX idx_referral_codes_active (is_active)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS referrals (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      referral_code_id INT NOT NULL,
+      referrer_user_id INT NOT NULL,
+      referred_user_id INT NOT NULL,
+      status ENUM('pending','qualified','rewarded','expired') NOT NULL DEFAULT 'pending',
+      qualified_at TIMESTAMP NULL DEFAULT NULL,
+      rewarded_at TIMESTAMP NULL DEFAULT NULL,
+      expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY uk_referrals_code_referred (referral_code_id, referred_user_id),
+      KEY idx_referrals_referrer (referrer_user_id),
+      KEY idx_referrals_referred (referred_user_id),
+      KEY idx_referrals_status (status)
+    )
+  `);
+
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS referral_rewards (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      referral_id INT NOT NULL,
+      user_id INT NOT NULL,
+      role ENUM('referrer','referred') NOT NULL,
+      reward_currency ENUM('CASH','COIN') NOT NULL DEFAULT 'CASH',
+      reward_amount DECIMAL(10,2) NOT NULL,
+      status ENUM('pending','available','claimed','expired') NOT NULL DEFAULT 'pending',
+      order_id VARCHAR(100) DEFAULT NULL,
+      claimed_at TIMESTAMP NULL DEFAULT NULL,
+      expires_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      KEY idx_referral_rewards_user_id (user_id),
+      KEY idx_referral_rewards_status (status),
+      KEY idx_referral_rewards_referral_id (referral_id)
+    )
+  `);
+
+  await ensureTableColumn("referral_codes", "min_order_amount", "ALTER TABLE referral_codes ADD COLUMN min_order_amount DECIMAL(10,2) NULL AFTER referred_reward_amount");
+  await ensureTableColumn("referral_settings", "updated_by", "ALTER TABLE referral_settings ADD COLUMN updated_by INT NULL AFTER min_order_amount");
+
   const columns = [
     ["shop_name", "ALTER TABLE users ADD COLUMN shop_name VARCHAR(255) NULL"],
     ["shop_type", "ALTER TABLE users ADD COLUMN shop_type VARCHAR(50) NULL AFTER shop_name"],

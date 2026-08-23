@@ -94,8 +94,8 @@ import ServiceMessage from "./pages/ServiceMessage";
 import AdminServices from "./components/admin/AdminServices";
 import ServiceAdminDashboard from "./components/admin/serviceAdmin/ServiceAdminDashboard";
 
-const ReferralLandingPage = lazy(() => import("./pages/ReferralLandingPage"));
-const ReferralPage = lazy(() => import("./pages/ReferralPage"));
+const ReferralLandingPage = lazy(() => import("./pages/referal/ReferralLandingPage"));
+const ReferralPage = lazy(() => import("./pages/referal/ReferralPage"));
 
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));
 const Profile = lazy(() => import("./pages/Profile"));
@@ -165,6 +165,11 @@ const DealStaffLogin = lazy(() => import("./pages/DealStaffLogin"));
 const JobsStaffLogin = lazy(() => import("./pages/JobsStaffLogin"));
 const MainLogin = lazy(() => import("./pages/MainLogin"));
 const SuperAdminLogin = lazy(() => import("./pages/SuperAdminLogin"));
+
+const AdminReferralCodes = lazy(() => import("./pages/referal/ReferralCodes"));
+const AdminReferralSettings = lazy(() => import("./pages/referal/ReferralSettings"));
+const AdminReferralTransactions = lazy(() => import("./pages/referal/ReferralTransactions"));
+const AdminReferralReport = lazy(() => import("./pages/referal/ReferralReport"));
 
 const PaymentSuccess = lazy(() => import("./pages/PaymentSuccess"));
 const PaymentCancel = lazy(() => import("./pages/PaymentCancel"));
@@ -331,6 +336,12 @@ const App = () => {
                                     <Route path="deal-admin/accounts" element={<AdminDealAdminAccountsPage />} />
                                     <Route path="mart-admin/accounts" element={<AdminMartAdminAccountsPage />} />
                                     <Route path="job-admin/accounts" element={<AdminJobAdminAccountsPage />} />
+                                    <Route path="job-admin/accounts" element={<AdminJobAdminAccountsPage />} />
+                                    <Route path="referral-codes" element={<AdminReferralCodes />} />
+                                    <Route path="referral-settings" element={<AdminReferralSettings />} />
+                                    <Route path="referral-transactions" element={<AdminReferralTransactions />} />
+                                    <Route path="referral-report" element={<AdminReferralReport />} />
+                                
                                   </Route>
                                   <Route path="/checkout" element={<Checkout />} />
                                   <Route path="/faq" element={<FAQ />} />

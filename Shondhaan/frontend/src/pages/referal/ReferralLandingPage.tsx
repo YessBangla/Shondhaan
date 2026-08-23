@@ -5,6 +5,7 @@ import { Gift, ArrowRight, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useReferral } from "@/contexts/ReferalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { cn } from "@/lib/utils";
 
 export default function ReferralLandingPage() {
   const { code } = useParams<{ code: string }>();
@@ -22,6 +23,7 @@ export default function ReferralLandingPage() {
   useEffect(() => {
     if (!code) navigate("/", { replace: true });
   }, [code, navigate]);
+
   const handleManualApply = async () => {
     if (!pendingCode) return;
     setApplying(true);
@@ -32,6 +34,7 @@ export default function ReferralLandingPage() {
       setTimeout(() => navigate("/", { replace: true }), 2000);
     }
   };
+
   // If already applied via context auto-apply
   useEffect(() => {
     if (applied && !applyResult) {
@@ -40,7 +43,9 @@ export default function ReferralLandingPage() {
       return () => clearTimeout(t);
     }
   }, [applied, applyResult, navigate]);
+
   if (!code) return null;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-background px-4">
       <motion.div
@@ -59,6 +64,7 @@ export default function ReferralLandingPage() {
             <XCircle className="h-10 w-10 text-red-400" />
           )}
         </div>
+
         {/* Loading */}
         {validatedCode === null && (
           <>
@@ -70,6 +76,7 @@ export default function ReferralLandingPage() {
             </p>
           </>
         )}
+
         {/* Invalid */}
         {validatedCode && !isValid && (
           <>
@@ -89,6 +96,7 @@ export default function ReferralLandingPage() {
             </button>
           </>
         )}
+
         {/* Valid */}
         {isValid && validatedCode && (
           <>
@@ -99,11 +107,13 @@ export default function ReferralLandingPage() {
                 className="mx-auto mb-3 h-16 w-16 rounded-full border-2 border-primary/20 object-cover"
               />
             )}
+
             <h1 className="text-lg font-bold text-foreground">
               {bn
                 ? `${validatedCode.referrer_name} আপনাকে আমন্ত্রণ জানিয়েছেন!`
                 : `${validatedCode.referrer_name} invited you!`}
             </h1>
+
             <div className="mt-4 rounded-xl bg-primary/5 border border-primary/10 p-4">
               <p className="text-xs font-medium uppercase tracking-wider text-primary/70">
                 {bn ? "আপনার উপহার" : "Your Gift"}
@@ -150,6 +160,8 @@ export default function ReferralLandingPage() {
                 </button>
               </div>
             )}
+
+            {/* CTA: not logged in */}
             {!isAuth && !applyResult && !applying && (
               <button
                 onClick={() => navigate(`/auth?ref=${code}`)}
@@ -159,6 +171,7 @@ export default function ReferralLandingPage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
             )}
+
             {/* CTA: logged in but auto-apply didn't fire (edge case) */}
             {isAuth && !applyResult && !applying && !applied && (
               <button
@@ -169,6 +182,7 @@ export default function ReferralLandingPage() {
                 <ArrowRight className="h-4 w-4" />
               </button>
             )}
+
             <button
               onClick={() => navigate("/")}
               className="mt-3 text-xs text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
@@ -181,4 +195,3 @@ export default function ReferralLandingPage() {
     </div>
   );
 }
-

@@ -3,14 +3,14 @@ import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Menu, Search, Sun, Moon, Monitor,
   Languages, Pin, PinOff, Command as CommandIcon, Sparkles, ChevronDown,
-  Home, RotateCcw, LogOut, Wallet, Plus, Coins, // [WALLET UPDATE] Added icons
+  Home, RotateCcw, LogOut, Wallet, Plus, Coins,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { getMySqlAuth } from "@/lib/mysqlAuth"; // [WALLET UPDATE] Added for auth token
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 import NotificationBell from "@/components/NotificationBell";
 import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
@@ -49,11 +49,9 @@ interface PanelSidebarTabsProps {
   embedded?: boolean;
 }
 
-// Custom premium scrollbar classes
 const customScrollbar = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-500/50 [&::-webkit-scrollbar]:transition-colors";
 
-// [WALLET UPDATE] Central Wallet API Base URL
-const WALLET_API_BASE_URL = "http://localhost:5000"; 
+const WALLET_API_BASE_URL = "http://localhost:5000";
 
 const PanelSidebarTabs = ({
   items,
@@ -75,7 +73,6 @@ const PanelSidebarTabs = ({
   const [activeTab, setActiveTabState] = useState(defaultValue);
   const requestedTab = searchParams.get("tab");
 
-  // [WALLET UPDATE] State for Wallet balances
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
 
@@ -107,7 +104,6 @@ const PanelSidebarTabs = ({
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
-  // [WALLET UPDATE] Fetch Wallet Balance Effect (FIXED DATA EXTRACTION)
   useEffect(() => {
     const fetchWallet = async () => {
       if (!user?.id) return;
@@ -121,8 +117,7 @@ const PanelSidebarTabs = ({
         });
         if (res.ok) {
           const data = await res.json();
-          // FIX: Extract the 'wallet' object from the response
-          const walletData = data.wallet || data; 
+          const walletData = data.wallet || data;
           setWalletBalance(Number(walletData.cash_balance || 0));
           setWalletCoins(Number(walletData.coin_balance || 0));
         }
@@ -204,26 +199,17 @@ const PanelSidebarTabs = ({
   const pinnedItems = useMemo(() => items.filter((i) => pinned.includes(i.value)), [items, pinned]);
 
   const handleSelect = useCallback((value: string) => {
-    // 1. Update the URL so it behaves like a real page navigation
     setSearchParams(prev => {
       prev.set("tab", value);
       return prev;
     });
-
-    // 2. Update internal state immediately for a snappy UI
     setActiveTabState(value);
-
-    // 3. Scroll to top to mimic a real page load
     window.scrollTo({ top: 0, behavior: "smooth" });
-
-    // 4. Update recent history
     setRecent((prev) => {
       const next = prev.filter((v) => v !== value);
       next.unshift(value);
       return next.slice(0, 10);
     });
-
-    // 5. Close mobile drawer if open
     setMobileOpen(false);
   }, [setSearchParams]);
 
@@ -298,27 +284,24 @@ const PanelSidebarTabs = ({
       (i) => i.label.toLowerCase().includes(q) || (i.group || "").toLowerCase().includes(q)
     );
   }, [items, paletteQuery]);
-  
+
   const initials = useMemo(() => {
-    // Fallback to standard auth context user structure
     const src = (user as any)?.user_metadata?.full_name || (user as any)?.email || "U";
     return String(src).trim().slice(0, 1).toUpperCase();
   }, [user]);
 
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
 
-  // Premium Dark Gradient Sidebar Content
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
     <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
       {/* User Profile Mini Card */}
       {(!collapsed || inDrawer) && user && (
         <div className="px-3 pt-4">
-          {/* user image-name */}
-          <div 
+          <div
             ref={profileMenuRef}
-            className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer" 
+            className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer"
             onClick={() => setProfileMenuOpen(o => !o)}
-            >
+          >
             <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
               {profileImageUrl ? (
                 <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
@@ -332,10 +315,10 @@ const PanelSidebarTabs = ({
             </div>
             <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
           </div>
-          
+
           <AnimatePresence>
             {profileMenuOpen && (
-              <motion.div 
+              <motion.div
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
@@ -353,27 +336,27 @@ const PanelSidebarTabs = ({
         </div>
       )}
 
-      {/* [WALLET UPDATE] Wallet Balance Card */}
+      {/* Wallet Balance Card */}
       {(!collapsed || inDrawer) && user && (
-<div className="px-2.5 pt-3">
-  <div className="rounded-lg bg-gradient-to-br from-primary to-green-700 p-2 text-white shadow-lg">
-    <div className="flex items-center justify-between">
-      <span className="text-[10px] font-semibold opacity-90 flex items-center gap-1">
-        <Wallet className="h-3 w-3" /> Shondhaan Wallet
-      </span>
-      <span className="text-[9px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
-        <Coins className="h-2 w-2" /> {walletCoins}
-      </span>
-    </div>
-    <p className="text-base font-bold tracking-tight mt-0.5">৳ {walletBalance.toFixed(2)}</p>
-    <button 
-      onClick={() => navigate("/wallet")} 
-      className="mt-1.5 w-full bg-white/20 hover:bg-white/30 rounded-md py-1 text-[11px] font-semibold flex items-center justify-center gap-0.5 transition-colors"
-    >
-      <Plus className="h-2.5 w-2.5" /> টাকা যোগ করুন
-    </button>
-  </div>
-</div>
+        <div className="px-2.5 pt-3">
+          <div className="rounded-lg bg-gradient-to-br from-primary to-green-700 p-2 text-white shadow-lg">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold opacity-90 flex items-center gap-1">
+                <Wallet className="h-3 w-3" /> Shondhaan Wallet
+              </span>
+              <span className="text-[9px] font-bold bg-white/20 px-1.5 py-0.5 rounded-full flex items-center gap-0.5">
+                <Coins className="h-2 w-2" /> {walletCoins}
+              </span>
+            </div>
+            <p className="text-base font-bold tracking-tight mt-0.5">৳ {walletBalance.toFixed(2)}</p>
+            <button
+              onClick={() => navigate("/wallet")}
+              className="mt-1.5 w-full bg-white/20 hover:bg-white/30 rounded-md py-1 text-[11px] font-semibold flex items-center justify-center gap-0.5 transition-colors"
+            >
+              <Plus className="h-2.5 w-2.5" /> টাকা যোগ করুন
+            </button>
+          </div>
+        </div>
       )}
 
       {/* Search */}
@@ -653,7 +636,7 @@ const PanelSidebarTabs = ({
   );
 };
 
-// ── NavBtn (Refined Dark Style) ──────────────────────────────────────────
+// ── NavBtn ──────────────────────────────────────────────────────────────────
 const NavBtn = ({
   item, active, onClick, onPin, pinned, collapsed,
 }: {
@@ -731,7 +714,7 @@ const NavBtn = ({
   </div>
 );
 
-// ── CommandPalette (Spotlight Style) ───────────────────────────────────────────
+// ── CommandPalette ───────────────────────────────────────────────────────────
 const CommandPalette = ({
   query, setQuery, items, allItems, recentValues, onSelect, onClose,
   onCycleTheme, themeMode, onToggleLanguage, language, onSignOut, onNavigate,
