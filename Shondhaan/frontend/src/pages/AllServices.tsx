@@ -691,8 +691,7 @@ const CategorySidebar = ({
       <div className="fixed left-0 right-0 top-[52px] z-30 border-b border-border bg-background md:hidden">
         <div
           className="flex gap-2 overflow-x-auto px-4 py-2.5"
-          style={{ scrollbarWidth: "none" }}
-        >
+          style={{ scrollbarWidth: "none" }}>
           {categories.map((cat) => (
             <button
               type="button"
@@ -774,7 +773,7 @@ const CategorySections = ({
             ref={(el) => {
               sectionRefs.current[cat.id] = el;
             }}
-            className={index > 0 ? "mt-10" : ""}
+            className={index > 0 ? "mb-10" : ""}
           >
             <div className="mb-4 flex items-center gap-3 border-b border-border px-1 pb-3">
             {cat.icon_url && (
@@ -885,7 +884,7 @@ const CmsServiceCard = ({
       }}
       whileHover={{ y: -2 }}
       className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
-    >
+      >
       <div className="relative aspect-[4/3] overflow-hidden yess-wm">
       <img
           src={getServiceImage(
