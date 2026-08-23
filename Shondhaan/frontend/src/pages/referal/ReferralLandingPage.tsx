@@ -5,7 +5,6 @@ import { Gift, ArrowRight, CheckCircle2, XCircle, Loader2 } from "lucide-react";
 import { useReferral } from "@/contexts/ReferalContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { cn } from "@/lib/utils";
 
 export default function ReferralLandingPage() {
   const { code } = useParams<{ code: string }>();
@@ -23,7 +22,6 @@ export default function ReferralLandingPage() {
   useEffect(() => {
     if (!code) navigate("/", { replace: true });
   }, [code, navigate]);
-
   const handleManualApply = async () => {
     if (!pendingCode) return;
     setApplying(true);
@@ -34,7 +32,6 @@ export default function ReferralLandingPage() {
       setTimeout(() => navigate("/", { replace: true }), 2000);
     }
   };
-
   // If already applied via context auto-apply
   useEffect(() => {
     if (applied && !applyResult) {
@@ -43,7 +40,6 @@ export default function ReferralLandingPage() {
       return () => clearTimeout(t);
     }
   }, [applied, applyResult, navigate]);
-
   if (!code) return null;
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-primary/5 to-background px-4">
