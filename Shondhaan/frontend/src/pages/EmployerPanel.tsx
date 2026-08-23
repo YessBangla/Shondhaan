@@ -686,189 +686,280 @@ const EmployerPanel = () => {
     );
   }
 
-  // Company Profile Setup (bdjobs-style registration form)
-  if (showSetup || !profile) {
-    return (
-      <JobsPageTransition>
-        <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" />
-        <JobsMenuBar  />
-        <div className="pt-[16px]">
-          <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white py-8">
-            <div className="max-w-3xl mx-auto px-4 text-center">
-              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 inline-block mb-3">
-                <Building2 className="h-8 w-8" />
-              </div>
+ // ============================================================
+// REPLACE your entire `if (showSetup || !profile) { return (...) }`
+// JSX block with this. Same state fields, same handlers — only the
+// visual styling/layout changed to match the reference screenshot.
+// ============================================================
+
+if (showSetup || !profile) {
+  return (
+    <JobsPageTransition>
+      {/* <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" /> */}
+      {/* <JobsMenuBar /> */}
+
+      {/* ── Hero banner ── */}
+      <div className="bg-gradient-to-br from-green-600 to-green-800 text-white pt-8 pb-16">
+        <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 flex-wrap">
+          <div className="flex items-center gap-4">
+            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 shrink-0">
+              <Building2 className="h-8 w-8" />
+            </div>
+            <div>
               <h1 className="text-2xl font-extrabold">Employer Registration Form</h1>
-              <p className="text-blue-200 text-sm mt-1">আপনার অ্যাকাউন্ট তৈরি করুন এবং সেরা প্রতিভা খুঁজুন</p>
+              <p className="text-white/80 text-sm mt-1">আপনার অ্যাকাউন্ট তৈরি করুন এবং সেরা প্রতিভা খুঁজুন</p>
             </div>
           </div>
-          <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4" /> Tell Us About Your Company
-              </h2>
-
-              {/* Company Logo */}
-              <div className="mb-4">
-                <label className="text-xs font-medium mb-1 block">Company Logo</label>
-                <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    {formData.company_logo_url ? (
-                      <img
-                        src={formData.company_logo_url}
-                        alt="Logo preview"
-                        className="h-full w-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      value={formData.company_logo_url}
-                      onChange={e => setFormData(p => ({ ...p, company_logo_url: e.target.value }))}
-                      placeholder="https://your-logo-url.com/logo.png"
-                    />
-                    <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-medium text-primary cursor-pointer hover:underline">
-                        {logoUploading ? "আপলোড হচ্ছে..." : "অথবা ফাইল থেকে আপলোড করুন"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={logoUploading}
-                          onChange={handleLogoFileChange}
-                        />
-                      </label>
-                      {formData.company_logo_url && (
-                        <button
-                          type="button"
-                          className="text-[11px] text-destructive hover:underline"
-                          onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
-                        >
-                          মুছুন
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      লোগোর সরাসরি ইমেজ লিংক দিন (jpg/png/webp), অথবা ২MB পর্যন্ত ফাইল আপলোড করুন
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Company Name *</label>
-                  <Input value={formData.company_name} onChange={e => setFormData(p => ({ ...p, company_name: e.target.value }))} placeholder="Type Company Name" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">কোম্পানির নাম (বাংলায়)</label>
-                  <Input value={formData.company_name_bn} onChange={e => setFormData(p => ({ ...p, company_name_bn: e.target.value }))} placeholder="কোম্পানির নাম লিখুন" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Year of Establishment *</label>
-                  <Input type="number" value={formData.establishment_year} onChange={e => setFormData(p => ({ ...p, establishment_year: parseInt(e.target.value) }))} placeholder="Type Company's Establishment Year" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Number of Employees *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {["1-25", "26-50", "51-100", "101-500", "501-1000", "1000+"].map(c => (
-                      <button key={c} type="button" onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${formData.employee_count === c ? "bg-primary text-white border-primary" : "bg-background border-input hover:bg-muted"}`}>
-                        {c}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <MapPin className="h-4 w-4" /> Company Address *
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">বিভাগ</label>
-                  <Input value={formData.division} onChange={e => setFormData(p => ({ ...p, division: e.target.value }))} placeholder="Select Division" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">জেলা</label>
-                  <Input value={formData.district} onChange={e => setFormData(p => ({ ...p, district: e.target.value }))} placeholder="Select District" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">থানা</label>
-                  <Input value={formData.thana} onChange={e => setFormData(p => ({ ...p, thana: e.target.value }))} placeholder="Select Thana" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">বিস্তারিত ঠিকানা</label>
-                <textarea className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} placeholder="Write Company Detail Address" />
-              </div>
-            </div>
-
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Briefcase className="h-4 w-4" /> Industry Type *
-              </h2>
-              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={formData.industry_type} onChange={e => setFormData(p => ({ ...p, industry_type: e.target.value }))}>
-                <option value="">নির্বাচন করুন</option>
-                {INDUSTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-              </select>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">কোম্পানির ধরন</label>
-                <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={formData.company_type} onChange={e => setFormData(p => ({ ...p, company_type: e.target.value }))}>
-                  <option value="private">প্রাইভেট লিমিটেড</option>
-                  <option value="government">সরকারি</option>
-                  <option value="semi-government">আধা-সরকারি</option>
-                  <option value="ngo">এনজিও</option>
-                  <option value="multinational">মাল্টিন্যাশনাল</option>
-                  <option value="partnership">পার্টনারশিপ</option>
-                  <option value="proprietorship">একমালিকানা</option>
-                  <option value="startup">স্টার্টআপ</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4" /> Contact Information
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">যোগাযোগকারীর নাম</label>
-                  <Input value={formData.contact_person} onChange={e => setFormData(p => ({ ...p, contact_person: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ফোন নম্বর</label>
-                  <Input value={formData.contact_phone} onChange={e => setFormData(p => ({ ...p, contact_phone: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ইমেইল</label>
-                  <Input value={formData.contact_email} onChange={e => setFormData(p => ({ ...p, contact_email: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ওয়েবসাইট</label>
-                  <Input value={formData.website_url} onChange={e => setFormData(p => ({ ...p, website_url: e.target.value }))} placeholder="https://" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">কোম্পানি সম্পর্কে</label>
-                <textarea className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="কোম্পানির সংক্ষিপ্ত বিবরণ লিখুন..." />
-              </div>
-            </div>
-
-            <Button onClick={saveProfile} className="w-full h-12 text-base font-bold">
-              <CheckCircle className="h-5 w-5 mr-2" /> প্রোফাইল সেভ করুন
-            </Button>
+          <div className="text-right hidden sm:block">
+            <p className="text-white/80 text-xs">Over</p>
+            <p className="text-2xl font-extrabold leading-tight">45000+</p>
+            <p className="text-white/80 text-xs">companies trusted us!</p>
           </div>
         </div>
-      </JobsPageTransition>
-    );
-  }
+      </div>
 
+      {/* ── Form card, overlapping the banner ── */}
+      <div className="max-w-7xl mx-auto px-4 -mt-10 pb-10 space-y-6 relative">
+
+        <div className="border rounded-xl p-5 bg-card shadow-sm">
+          <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+            <Users className="h-4 w-4" /> Tell Us About Your Company
+          </h2>
+
+          {/* Company Logo */}
+          <div className="mb-4">
+            <label className="text-xs font-medium mb-1 block">Company Logo</label>
+            <div className="flex items-center gap-3">
+              <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
+                {formData.company_logo_url ? (
+                  <img
+                    src={formData.company_logo_url}
+                    alt="Logo preview"
+                    className="h-full w-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <Building2 className="h-6 w-6 text-muted-foreground" />
+                )}
+              </div>
+              <div className="flex-1 space-y-2">
+                <Input
+                  value={formData.company_logo_url}
+                  onChange={e => setFormData(p => ({ ...p, company_logo_url: e.target.value }))}
+                  placeholder="https://your-logo-url.com/logo.png"
+                  className="h-10 rounded-md"
+                />
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-medium text-primary cursor-pointer hover:underline">
+                    {logoUploading ? "আপলোড হচ্ছে..." : "অথবা ফাইল থেকে আপলোড করুন"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      disabled={logoUploading}
+                      onChange={handleLogoFileChange}
+                    />
+                  </label>
+                  {formData.company_logo_url && (
+                    <button
+                      type="button"
+                      className="text-[11px] text-destructive hover:underline"
+                      onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
+                    >
+                      মুছুন
+                    </button>
+                  )}
+                </div>
+                <p className="text-[10px] text-muted-foreground">
+                  লোগোর সরাসরি ইমেজ লিংক দিন (jpg/png/webp), অথবা ২MB পর্যন্ত ফাইল আপলোড করুন
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium mb-1 block">Company Name <span className="text-destructive">*</span></label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.company_name}
+                onChange={e => setFormData(p => ({ ...p, company_name: e.target.value }))}
+                placeholder="Type Company Name"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">কোম্পানির নাম (বাংলায়)</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.company_name_bn}
+                onChange={e => setFormData(p => ({ ...p, company_name_bn: e.target.value }))}
+                placeholder="Type Company Name"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">Year of Establishment <span className="text-destructive">*</span></label>
+              <Input
+                type="number"
+                className="h-10 rounded-md"
+                value={formData.establishment_year}
+                onChange={e => setFormData(p => ({ ...p, establishment_year: parseInt(e.target.value) }))}
+                placeholder="Type Company's Establishment Year"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">Number of Employees <span className="text-destructive">*</span></label>
+              <div className="flex flex-wrap gap-2 pt-1">
+                {["1-25", "26-50", "51-100", "101-500", "501-1000", "1000+"].map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
+                    className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                      formData.employee_count === c
+                        ? "bg-green-600 text-white border-green-600"
+                        : "bg-background border-input hover:bg-muted"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border rounded-xl p-5 bg-card shadow-sm">
+          <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+            <MapPin className="h-4 w-4" /> Company Address <span className="text-destructive">*</span>
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className="text-xs font-medium mb-1 block">বিভাগ</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.division}
+                onChange={e => setFormData(p => ({ ...p, division: e.target.value }))}
+                placeholder="Select Division"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">জেলা</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.district}
+                onChange={e => setFormData(p => ({ ...p, district: e.target.value }))}
+                placeholder="Select District"
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">থানা</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.thana}
+                onChange={e => setFormData(p => ({ ...p, thana: e.target.value }))}
+                placeholder="Select Thana"
+              />
+            </div>
+          </div>
+          <div className="mt-4">
+            <label className="text-xs font-medium mb-1 block">বিস্তারিত ঠিকানা</label>
+            <textarea
+              className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={formData.address}
+              onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
+              placeholder="Write Company Detail Address"
+            />
+          </div>
+        </div>
+
+        <div className="border rounded-xl p-5 bg-card shadow-sm">
+          <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+            <Briefcase className="h-4 w-4" /> Industry Type <span className="text-destructive">*</span>
+          </h2>
+          <select
+            className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+            value={formData.industry_type}
+            onChange={e => setFormData(p => ({ ...p, industry_type: e.target.value }))}
+          >
+            <option value="">নির্বাচন করুন</option>
+            {INDUSTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          </select>
+          <div className="mt-3">
+            <label className="text-xs font-medium mb-1 block">কোম্পানির ধরন</label>
+            <select
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={formData.company_type}
+              onChange={e => setFormData(p => ({ ...p, company_type: e.target.value }))}
+            >
+              <option value="private">প্রাইভেট লিমিটেড</option>
+              <option value="government">সরকারি</option>
+              <option value="semi-government">আধা-সরকারি</option>
+              <option value="ngo">এনজিও</option>
+              <option value="multinational">মাল্টিন্যাশনাল</option>
+              <option value="partnership">পার্টনারশিপ</option>
+              <option value="proprietorship">একমালিকানা</option>
+              <option value="startup">স্টার্টআপ</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="border rounded-xl p-5 bg-card shadow-sm">
+          <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+            <Users className="h-4 w-4" /> Contact Information
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className="text-xs font-medium mb-1 block">যোগাযোগকারীর নাম</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.contact_person}
+                onChange={e => setFormData(p => ({ ...p, contact_person: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">ফোন নম্বর</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.contact_phone}
+                onChange={e => setFormData(p => ({ ...p, contact_phone: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">ইমেইল</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.contact_email}
+                onChange={e => setFormData(p => ({ ...p, contact_email: e.target.value }))}
+              />
+            </div>
+            <div>
+              <label className="text-xs font-medium mb-1 block">ওয়েবসাইট</label>
+              <Input
+                className="h-10 rounded-md"
+                value={formData.website_url}
+                onChange={e => setFormData(p => ({ ...p, website_url: e.target.value }))}
+                placeholder="https://"
+              />
+            </div>
+          </div>
+          <div className="mt-3">
+            <label className="text-xs font-medium mb-1 block">কোম্পানি সম্পর্কে</label>
+            <textarea
+              className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+              value={formData.description}
+              onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+              placeholder="কোম্পানির সংক্ষিপ্ত বিবরণ লিখুন..."
+            />
+          </div>
+        </div>
+
+        <Button onClick={saveProfile} className="w-full h-12 text-base font-bold rounded-lg bg-green-600 hover:bg-green-700 text-white">
+          <CheckCircle className="h-5 w-5 mr-2" /> প্রোফাইল সেভ করুন
+        </Button>
+      </div>
+    </JobsPageTransition>
+  );
+}
   const filteredSeekers = seekers; // filtering now happens server-side via seekerSearch
 
   const pipelineApps = applications.filter(a => {
