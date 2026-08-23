@@ -53,7 +53,7 @@ export const translations = {
   "whyChoose.title": { bn: "কারণ আমরা আপনার নিরাপত্তার কথা ভাবি..", en: "Because We Care About Your Safety.." },
   "whyChoose.mask": { bn: "মাস্ক\nনিশ্চিত", en: "Mask\nGuaranteed" },
   "whyChoose.support": { bn: "২৪/৭\nসাপোর্ট", en: "24/7\nSupport" },
-  "whyChoose.sanitize": { bn: "হ্যান্ড ও\nইকুইপমেন্ট\nস্যানিটাইজ", en: "Hand &\nEquipment\nSanitized" },
+  "whyChoose.sanitize": { bn: "হ্যান্ড ও ইকুইপমেন্ট\nস্যানিটাইজ", en: "Hand &\nEquipment\nSanitized" },
   "whyChoose.gloves": { bn: "গ্লাভস\nনিশ্চিত", en: "Gloves\nGuaranteed" },
   "whyChoose.providers": { bn: "সার্ভিস প্রোভাইডার", en: "Service Providers" },
   "whyChoose.orders": { bn: "সম্পন্ন অর্ডার", en: "Completed Orders" },

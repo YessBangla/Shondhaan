@@ -1,6 +1,7 @@
 import { useRef, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { ChevronRight, ChevronLeft, MoreHorizontal } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { TranslationKey } from "@/i18n/translations";
@@ -173,7 +174,7 @@ const CategoryCard = ({
     className="group flex shrink-0 flex-col items-center gap-2 transition-all md:w-[110px]"
   >
     <motion.div 
-      className={`flex h-20 w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
+      className={`flex h-10 w-10 md:h-20 md:w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
         selected 
           ? "border-primary" 
           : ""
@@ -349,92 +350,40 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
   };
   return (
     <>
-    {/* Mobile: Premium tiles with header - positioned over banner */}
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.4, delay: 0.1 }}
-      className="md:hidden px-4"
-      style={{
-        marginTop: '-40px',
-        position: 'relative',
-        zIndex: 20,
-      }}
-    >
-      <div className="mx-0 p-4 bg-white/75 backdrop-blur-lg border border-white/30 rounded-2xl shadow-xl mb-0">
-        <div className="mb-4 flex items-center justify-between">
-          <h3 className="text-base font-bold bg-gradient-to-r from-blue-600 to-emerald-600 bg-clip-text text-transparent">
-            {bn ? "ক্যাটেগরি" : "Categories"}
-          </h3>
-          <motion.button
-            onClick={showAllCategories}
-            // whileHover={{ scale: 1.05 }}
-            // whileTap={{ scale: 0.95 }}
-            className="text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-500 text-white px-3 py-1.5 rounded-full shadow-md hover:shadow-lg"
-          >
-            {bn ? "সব দেখুন" : "View all"}
-          </motion.button>
-        </div>
-      <div className="grid grid-cols-4 gap-y-4 gap-x-2">
-        {categoryItems.slice(0, 7).map((item, i) => (
-          <MobileCategoryTile key={item.key} index={i} icon={item.icon} label={item.label} selected={item.selected} onClick={item.onClick} />
-        ))}
-        <motion.button
-          onClick={showAllCategories}
-          whileHover={{ y: -2 }}
-          whileTap={{ scale: 0.92 }}
-          className="press flex flex-col items-center gap-2 min-h-[100px]"
-          aria-label={bn ? "সব ক্যাটেগরি" : "All categories"}
-        >
-          <div className={`flex h-16 w-16 items-center justify-center rounded-3xl bg-gradient-to-br from-slate-100 to-slate-50 p-2 shadow-md transition-all ${
-            selectedCategoryId === "all" 
-              ? "ring-2 ring-emerald-400 bg-gradient-to-br from-blue-500 to-emerald-500" 
-              : "hover:shadow-lg"
-          }`}>
-            <MoreHorizontal className={`h-6 w-6 ${selectedCategoryId === "all" ? "text-white" : "text-slate-600"}`} />
-          </div>
-          <span className={`line-clamp-1 text-center text-[11px] font-semibold leading-tight transition-colors ${
-            selectedCategoryId === "all" 
-              ? "text-emerald-600 font-bold" 
-              : "text-slate-700"
-          }`}>
-            {bn ? "আরও" : "More"}
-          </span>
-        </motion.button>
-      </div>
-      </div>
-    </motion.div>
-
+  
     {/* Desktop / tablet: Premium card style - positioned over banner with glass effect */}
-    <motion.div
+  <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
-      className="app-container relative z-20 hidden md:block"
+      className="app-container relative z-20 block mt-[30px] sm:-mt-[60px]"
       style={{
-        marginTop: '-60px',
         position: 'relative',
-      }}
-    >
-      <div className="p-4 bg-white/80 backdrop-blur-xl border border-white/40 rounded-3xl shadow hover:shadow-3xl transition-shadow duration-300">
+      }}>
+      <div className="flex md:hidden">
+        <h2 className="font-bold m-0 p-0 w-full">{bn ? "ক্যাটাগরি" : "Categories"}</h2>
+        <Link to="/all-services" className="text-xs text-nowrap font-semibold text-primary flex">
+          {bn ? "সব দেখুন" : "See all"} <ChevronRight className="h-3 w-3 my-auto font-semibold" />
+        </Link>
+      </div>
+      <div className="p-4 bg-transparent md:bg-white/80 backdrop-blur-xl border border-white/40 md:rounded-3xl md:shadow hover:shadow-3xl transition-shadow duration-300">
+
         <div className="relative group">
           {/* Premium Scroll buttons */}
           <motion.button
             onClick={() => scroll("left")}
             // whileHover={{ scale: 1.1, x: -2 }}
             // whileTap={{ scale: 0.95 }}
-            className="absolute -left-9 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl md:flex"
-            aria-label="Scroll left"
-          >
+            className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl md:flex"
+            aria-label="Scroll left">
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
           <motion.button
             onClick={() => scroll("right")}
             // whileHover={{ scale: 1.1, x: 2 }}
             // whileTap={{ scale: 0.95 }}
-            className="absolute -right-9 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl md:flex"
-            aria-label="Scroll right"
-          >
+            className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl md:flex"
+            aria-label="Scroll right">
             <ChevronRight className="h-5 w-5" />
           </motion.button>
 

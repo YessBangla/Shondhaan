@@ -188,13 +188,13 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
             type="button"
             onClick={() => setOpen(!open)}
             aria-label={bn ? "অবস্থান নির্বাচন করুন" : "Choose location"}
-            className="press flex h-9 min-w-0 max-w-full flex-1 items-center gap-1 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/90 backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary active:scale-[0.97]"
+            className="press flex h-9 min-w-0 max-w-full flex-1 items-center gap-1 rounded-xl border shadow border-gray-400 bg-background/60 px-2.5 text-foreground/90 backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary active:scale-[0.97]"
           >
-            <MapPin className="h-[14px] w-[14px] shrink-0 text-white" strokeWidth={2.2} />
-            <span className="min-w-0 flex-1 text-white truncate text-left text-[11.5px] font-semibold leading-none tracking-tight">
+            <MapPin className="h-[14px] w-[14px] shrink-0 text-foreground" strokeWidth={2.2} />
+            <span className="min-w-0 flex-1 text-foreground truncate text-left text-[11.5px] font-semibold leading-none tracking-tight">
               {displayText}
             </span>
-            <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+            <ChevronDown className="h-3 w-3 shrink-0 text-primary" />
           </button>
           <button
             type="button"
@@ -202,7 +202,7 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
             disabled={locating}
             aria-label={bn ? "বর্তমান অবস্থান" : "Current location"}
             title={bn ? "বর্তমান অবস্থান" : "Current location"}
-            className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border/70 bg-background/60 text-primary backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary disabled:opacity-50 active:scale-[0.95]"
+            className="press flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-gray-400 shadow bg-background/60 text-primary backdrop-blur transition-colors hover:border-primary/40 hover:bg-primary hover:text-white disabled:opacity-50 active:scale-[0.95]"
           >
             <Navigation className={`h-[14px] w-[14px] ${locating ? "animate-pulse" : ""}`} strokeWidth={2.2} />
           </button>
@@ -237,7 +237,7 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setSelectedDistrict(null); }}
                 placeholder={t("location.searchPlaceholder") || "Search division, district or thana..."}
-                className="flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
+                className="flex-1 bg-transparent text-sm p-2 text-foreground outline-none placeholder:text-foreground"
               />
               {search && (
                 <button onClick={() => setSearch("")} className="text-muted-foreground hover:text-foreground">

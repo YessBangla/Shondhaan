@@ -55,7 +55,7 @@
     --primary-dark: 152 65% 30%;
 
     /* Mobile accent (per mobile mockup) */
-    --mobile-accent: 258 70% 58%;
+    --mobile-accent: 208, 79%, 28%; 
     --mobile-accent-foreground: 0 0% 100%;
     --mobile-accent-soft: 258 100% 97%;
 
@@ -171,8 +171,8 @@
   :root {
     --primary: 208, 79%, 28%;
     --primary-foreground: 0 0% 100%;
-    --ring: 258 70% 58%;
-    --accent: 258 70% 58%;
+    --ring: 208, 79%, 28%;
+    --accent: 208, 79%, 28%;
     --accent-foreground: 0 0% 100%;
     --popover: 208, 79%, 28%;
     --popover-foreground: 210 11% 15%;

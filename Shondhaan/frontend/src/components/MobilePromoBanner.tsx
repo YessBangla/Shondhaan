@@ -20,18 +20,18 @@ const MobilePromoBanner = () => {
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: 0.15 }}
-      className="md:hidden mt-4 mx-4 w-[calc(100%-2rem)] flex items-center gap-3 rounded-2xl bg-gradient-to-r from-primary to-primary/80 px-4 py-3 text-left text-white shadow-md active:scale-[0.98] transition-transform"
+      className="md:hidden my-4 mx-4 w-[calc(100%-2rem)] flex items-center gap-3 rounded-xl bg-gradient-to-r from-primary to-green-600 px-4 py-3 text-left shadow-md active:scale-[0.98] transition-transform"
     >
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-bold leading-tight">
-          {bn ? "প্রথম অর্ডারে ২০% ছাড়!" : "20% off on your first order!"}
+        <p className="text-sm text-white font-bold leading-tight">
+          {bn ? "প্রথম বুকিংয়ে পাচ্ছেন ২০% ছাড়!" : "20% off on your first Booking!"}
         </p>
-        <p className="mt-0.5 text-[11px] opacity-90 leading-tight">
+        <p className="mt-0.5 text-[11px] leading-tight text-white">
           {bn ? "সন্ধানের সাথে থাকুন, সুরক্ষিত ও নিশ্চিন্তে।" : "Stay with Shondhaan — safe & worry-free."}
         </p>
       </div>
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/20">
-        <Gift className="h-5 w-5" />
+        <Gift className="h-5 w-5 text-white" />
       </div>
     </motion.button>
   );

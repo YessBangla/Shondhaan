@@ -467,7 +467,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
             viewport={{ once: true, margin: "-50px" }}
             transition={{ duration: 0.5 }}
           >
-            <div className="mb-5 flex items-center justify-between px-4 md:mb-6 md:px-0">
+            <div className="mb-5 flex items-center justify-between md:mb-6 md:px-0">
               <h2 className="font-heading text-xl font-bold text-foreground md:text-3xl">{heading}</h2>
               {viewAllLink && (
                 <button
@@ -487,13 +487,12 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
               <button onClick={() => scroll("right")} className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full bg-background shadow-md border border-border h-9 w-9 text-muted-foreground hover:text-foreground opacity-0 transition-opacity group-hover/section:opacity-100 md:flex cursor-pointer">
                 <ChevronRight className="h-4 w-4" />
               </button>
-
-              <div 
-                ref={scrollRef} 
-                onClickCapture={handleContainerClickCapture}
-                className={`flex gap-3 px-4 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
-                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                >
+                <div 
+                  ref={scrollRef} 
+                  onClickCapture={handleContainerClickCapture}
+                  className={`flex gap-3 px-0 pb-2 overflow-x-auto md:gap-5 md:px-0 ${isDragging ? "cursor-grabbing select-none" : "cursor-grab"}`}
+                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
                   {services.map((service) => (
                     <ServiceCardWrapper
                       key={service.title}
@@ -523,7 +522,8 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                       onShare={handleShare}
                       isInCompareList={service.slug ? isInCompare(service.slug) : false}
                     />
-                  ))}              </div>
+                  ))}
+                </div>
             </div>
           </motion.div>
         </motion.div>

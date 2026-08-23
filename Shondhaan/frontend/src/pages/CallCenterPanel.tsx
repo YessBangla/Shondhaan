@@ -458,7 +458,7 @@ const CallCenterPanel = () => {
       return;
     }
     setSubmitting(false);
-    toast.success("বুকিং তৈরি হয়েছে");
+    toast.success(" তৈরি হয়েছে");
     setShowNewBooking(false);
     setNewBooking({ 
       service_id: "", service_title: "", service_slug: "", 
@@ -515,7 +515,7 @@ const CallCenterPanel = () => {
           <PanelSidebarTabs
             items={[
               { value: "search", label: "কাস্টমার সার্চ", icon: <Search className="h-4 w-4" />, group: "সার্চ" },
-              { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
+              { value: "new-booking", label: "নতুন ", icon: <Plus className="h-4 w-4" /> },
               { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
               { value: "requests", label: "সার্ভিস অনুরোধ", icon: <FileText className="h-4 w-4" /> },
               { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
