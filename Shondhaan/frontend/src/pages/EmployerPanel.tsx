@@ -20,6 +20,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import Navbar from "@/components/Navbar";
+import DesktopMegaMenu from "@/components/DesktopMegaMenu";
 
 const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL;
 
@@ -695,11 +697,12 @@ const EmployerPanel = () => {
 if (showSetup || !profile) {
   return (
     <JobsPageTransition>
-      {/* <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" /> */}
+      <div className="pt-[20px] md:pt-[30px] bg-blue-700 md:bg-card" />
       {/* <JobsMenuBar /> */}
-
+<Navbar/>
+{/* <DesktopMegaMenu/> */}
       {/* ── Hero banner ── */}
-      <div className="bg-gradient-to-br from-green-600 to-green-800 text-white pt-8 pb-16">
+      <div className="bg-gradient-to-br from-primary to-green-600 text-white pt-8 pb-16">
         <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 flex-wrap">
           <div className="flex items-center gap-4">
             <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 shrink-0">
@@ -719,7 +722,7 @@ if (showSetup || !profile) {
       </div>
 
       {/* ── Form card, overlapping the banner ── */}
-      <div className="max-w-7xl mx-auto px-4 -mt-10 pb-10 space-y-6 relative">
+      <div className="max-w-4xl mx-auto px-4 -mt-10 pb-10 space-y-6 relative">
 
         <div className="border rounded-xl p-5 bg-card shadow-sm">
           <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
@@ -816,7 +819,7 @@ if (showSetup || !profile) {
                     onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
                     className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
                       formData.employee_count === c
-                        ? "bg-green-600 text-white border-green-600"
+                        ? "bg-primary text-white border-primary hover:bg-primary/90"
                         : "bg-background border-input hover:bg-muted"
                     }`}
                   >
@@ -953,7 +956,7 @@ if (showSetup || !profile) {
           </div>
         </div>
 
-        <Button onClick={saveProfile} className="w-full h-12 text-base font-bold rounded-lg bg-green-600 hover:bg-green-700 text-white">
+        <Button onClick={saveProfile} className="w-full h-12 text-base font-bold rounded-lg bg-primary hover:bg-primary/90 text-white">
           <CheckCircle className="h-5 w-5 mr-2" /> প্রোফাইল সেভ করুন
         </Button>
       </div>
