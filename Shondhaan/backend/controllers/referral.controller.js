@@ -1,11 +1,5 @@
-// src/controllers/referral.controller.ts
-
 import crypto from "crypto";
 import { pool } from "../db/pool.js";
-
-function getPool() {
-  return pool;
-}
 
 function generateCode(length = 8) {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -24,7 +18,6 @@ function isValidCode(code) {
 function toWalletUid(id) {
   return String(id);
 }
-
 
 // ─── Generate Code ─────────────────────────────────────
 
@@ -97,7 +90,7 @@ const validate = async (req, res, next) => {
       return;
     }
 
-    const [rows] = await getPool().query(
+    const [rows] = await pool.query(
       `SELECT rc.*, u.name AS referrer_name, up.profile_image AS referrer_avatar
        FROM referral_codes rc
        JOIN users u ON u.id = rc.user_id
@@ -328,7 +321,6 @@ const qualify = async (req, res, next) => {
 const stats = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    const pool = getPool();
 
     const [codeRows] = await pool.query(
       `SELECT code, used_count, max_uses, created_at, expires_at
@@ -457,7 +449,7 @@ const qualifyByOrder = async (req, res, next) => {
   try {
     const userId = req.user.id;
 
-    const [rows] = await getPool().query(
+    const [rows] = await pool.query(
       `SELECT id FROM referrals
        WHERE referred_user_id = ? AND status = 'pending'
        AND expires_at > NOW()

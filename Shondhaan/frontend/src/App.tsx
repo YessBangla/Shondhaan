@@ -94,7 +94,7 @@ import ServiceMessage from "./pages/ServiceMessage";
 import AdminServices from "./components/admin/AdminServices";
 import ServiceAdminDashboard from "./components/admin/serviceAdmin/ServiceAdminDashboard";
 
-const ReferralLandingPage = lazy(() => import("./pages/ReferralLandingPage"));
+const ReferralLandingPage = lazy(() => import("./pages/referal/ReferralLandingPage"));
 const ReferralPage = lazy(() => import("./pages/ReferralPage"));
 
 const BookingHistory = lazy(() => import("./pages/BookingHistory"));

@@ -3,9 +3,13 @@ import { Plus, Pencil, Trash2, Power } from "lucide-react";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { toast } from "sonner";
 
-const WALLET_API_BASE_URL = "http://localhost:5000";
+const MART_API_BASE_URL = (
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "http://localhost:8081"
+).replace(/\/+$/, "");
 
-const emptyForm = { id: null, label: "", min_purchase_amount: "", reward_type: "PERCENTAGE", reward_value: "", is_active: true };
+const emptyForm = { id: null, label: "", min_purchase_amount: "", reward_type: "FIXED", reward_value: "", is_active: true };
 
 const authHeaders = () => {
   const auth = getMySqlAuth();
@@ -25,7 +29,7 @@ const MartRewardsPanel = () => {
   const fetchRules = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${WALLET_API_BASE_URL}/api/wallet/mart-admin/reward-rules`, { headers: authHeaders() });
+      const res = await fetch(`${MART_API_BASE_URL}/api/mart-reward-rules`, { headers: authHeaders() });
       const data = await res.json();
       if (data.success) setRules(data.data);
       else toast.error(data.message || "Failed to load reward rules");
@@ -44,7 +48,7 @@ const MartRewardsPanel = () => {
       id: rule.id,
       label: rule.label || "",
       min_purchase_amount: rule.min_purchase_amount,
-      reward_type: rule.reward_type,
+      reward_type: "FIXED",
       reward_value: rule.reward_value,
       is_active: Boolean(rule.is_active),
     });
@@ -55,7 +59,7 @@ const MartRewardsPanel = () => {
     e.preventDefault();
     setSaving(true);
     const isEdit = form.id != null;
-    const url = `${WALLET_API_BASE_URL}/api/wallet/mart-admin/reward-rules${isEdit ? `/${form.id}` : ""}`;
+    const url = `${MART_API_BASE_URL}/api/mart-reward-rules${isEdit ? `/${form.id}` : ""}`;
     try {
       const res = await fetch(url, {
         method: isEdit ? "PUT" : "POST",
@@ -79,7 +83,7 @@ const MartRewardsPanel = () => {
 
   const toggleActive = async (rule) => {
     try {
-      const res = await fetch(`${WALLET_API_BASE_URL}/api/wallet/mart-admin/reward-rules/${rule.id}/toggle`, {
+      const res = await fetch(`${MART_API_BASE_URL}/api/mart-reward-rules/${rule.id}/toggle`, {
         method: "PATCH",
         headers: authHeaders(),
       });
@@ -95,7 +99,7 @@ const MartRewardsPanel = () => {
   const deleteRule = async (rule) => {
     if (!confirm(`Delete reward rule "${rule.label || rule.id}"?`)) return;
     try {
-      const res = await fetch(`${WALLET_API_BASE_URL}/api/wallet/mart-admin/reward-rules/${rule.id}`, {
+      const res = await fetch(`${MART_API_BASE_URL}/api/mart-reward-rules/${rule.id}`, {
         method: "DELETE",
         headers: authHeaders(),
       });
@@ -147,7 +151,7 @@ const MartRewardsPanel = () => {
                 <td className="px-3 py-2">{rule.label || "—"}</td>
                 <td className="px-3 py-2">৳{Number(rule.min_purchase_amount).toLocaleString()}+</td>
                 <td className="px-3 py-2">
-                  {rule.reward_type === "PERCENTAGE" ? `${rule.reward_value}% of order` : `${rule.reward_value} coins flat`}
+                  {rule.reward_value} coins
                 </td>
                 <td className="px-3 py-2">
                   <button
@@ -204,19 +208,12 @@ const MartRewardsPanel = () => {
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs font-medium text-muted-foreground">Reward Type</label>
-                <select
-                  value={form.reward_type}
-                  onChange={(e) => setForm({ ...form, reward_type: e.target.value })}
-                  className="w-full mt-1 rounded-lg border border-border px-3 py-2 text-sm bg-background"
-                >
-                  <option value="PERCENTAGE">Percentage</option>
-                  <option value="FIXED">Fixed coins</option>
-                </select>
+                  <label className="text-xs font-medium text-muted-foreground">Reward</label>
+                  <div className="w-full mt-1 rounded-lg border border-border px-3 py-2 text-sm bg-background">Fixed coins</div>
               </div>
               <div>
                 <label className="text-xs font-medium text-muted-foreground">
-                  {form.reward_type === "PERCENTAGE" ? "Percent (%)" : "Coins"}
+                  Coins
                 </label>
                 <input
                   type="number" min="0" step="0.01" required
