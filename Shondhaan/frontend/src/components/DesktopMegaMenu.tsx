@@ -94,7 +94,7 @@ const hasSidebar =
   }, [user]);
 
   const hiddenPaths = [
-    "/auth", "/reset-password", "/employer/register",
+    "/auth", "/reset-password", "/employer",
     "/main-login", "/mart/login", "/deal/login", "/jobs/login",
     "/admin", "/call-center", "/provider", "/representative",
     "/moderator", "/supervisor", "/finance", "/internal", "/super-admin",

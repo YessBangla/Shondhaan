@@ -913,56 +913,54 @@ const EmployerPanel = () => {
               <Users className="h-4 w-4" /> Tell Us About Your Company
             </h2>
 
-            {/* Company Logo */}
-            <div className="mb-4">
-              <label className="text-xs font-medium mb-1 block">Company Logo</label>
-              <div className="flex items-center gap-3">
-                <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                  {formData.company_logo_url ? (
-                    <img
-                      src={formData.company_logo_url}
-                      alt="Logo preview"
-                      className="h-full w-full object-cover"
-                      onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                    />
-                  ) : (
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                  )}
-                </div>
-                <div className="flex-1 space-y-2">
-                  <Input
-                    value={formData.company_logo_url}
-                    onChange={e => setFormData(p => ({ ...p, company_logo_url: e.target.value }))}
-                    placeholder="https://your-logo-url.com/logo.png"
-                    className="h-10 rounded-md"
-                  />
-                  <div className="flex items-center gap-2">
-                    <label className="text-[11px] font-medium text-primary cursor-pointer hover:underline">
-                      {logoUploading ? "আপলোড হচ্ছে..." : "অথবা ফাইল থেকে আপলোড করুন"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        disabled={logoUploading}
-                        onChange={handleLogoFileChange}
-                      />
-                    </label>
-                    {formData.company_logo_url && (
-                      <button
-                        type="button"
-                        className="text-[11px] text-destructive hover:underline"
-                        onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
-                      >
-                        মুছুন
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-[10px] text-muted-foreground">
-                    লোগোর সরাসরি ইমেজ লিংক দিন (jpg/png/webp), অথবা ২MB পর্যন্ত ফাইল আপলোড করুন
-                  </p>
-                </div>
-              </div>
-            </div>
+          {/* Company Logo */}
+<div className="mb-4">
+  <label className="text-xs font-medium mb-1 block">Company Logo</label>
+  <div className="flex items-center gap-3">
+    <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
+      {formData.company_logo_url ? (
+        <img
+          src={formData.company_logo_url}
+          alt="Logo preview"
+          className="h-full w-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+      ) : (
+        <Building2 className="h-6 w-6 text-muted-foreground" />
+      )}
+    </div>
+    <div className="flex-1 space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="inline-flex items-center gap-1.5 text-xs font-medium text-primary cursor-pointer hover:underline border border-input rounded-md px-3 py-2 bg-background hover:bg-muted transition-colors">
+          {logoUploading
+            ? "আপলোড হচ্ছে..."
+            : formData.company_logo_url
+            ? "লোগো পরিবর্তন করুন"
+            : "লোগো আপলোড করুন"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={logoUploading}
+            onChange={handleLogoFileChange}
+          />
+        </label>
+        {formData.company_logo_url && (
+          <button
+            type="button"
+            className="text-[11px] text-destructive hover:underline"
+            onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
+          >
+            মুছুন
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        JPG/PNG/WebP ফরম্যাট, সর্বোচ্চ ২MB
+      </p>
+    </div>
+  </div>
+</div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
