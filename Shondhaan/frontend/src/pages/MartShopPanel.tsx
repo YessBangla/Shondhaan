@@ -12,6 +12,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 import AddProductForm from "@/components/mart/AddProductForm";
 import BackToHomeButton from "@/components/BackToHomeButton";
+import Navbar from "@/components/Navbar";
 
 const MartShopPanel = () => {
   const navigate = useNavigate();
@@ -174,8 +175,8 @@ const MartShopPanel = () => {
   if (!shop) {
     return (
       <div className="min-h-screen bg-background">
-        
-        <div className="pt-[44px] md:pt-[104px]" />
+        <Navbar />
+        <div className="mt-[44px] md:mt-[30px]" />
         <div className="max-w-lg mx-auto px-4 py-8">
           {/* <BackToHomeButton /> */}
           <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -238,7 +239,7 @@ const MartShopPanel = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      
+      <Navbar />
       <div className="pt-[44px] md:pt-[104px]" />
       <div className="mx-auto max-w-6xl px-0 md:px-4 py-0 md:py-6">
         <PanelSidebarTabs

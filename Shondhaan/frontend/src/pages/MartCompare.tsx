@@ -93,7 +93,7 @@ const MartCompare = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[0px]" />
 
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
         <div className="app-container py-4 flex items-center justify-between">

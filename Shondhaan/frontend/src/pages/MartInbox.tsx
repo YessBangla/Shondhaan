@@ -9,6 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useMartConversations } from "@/hooks/useMartChat";
 import MartChatModal from "@/components/mart/MartChatModal";
+import Navbar from "@/components/Navbar";
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -57,9 +58,9 @@ const MartInbox = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      
-      <div className="pt-[44px] md:pt-[104px]" />
-      <div className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10">
+      <Navbar />
+      <div className="px-4 md:px-0 mt-[100px] md:mt-[20px]" />
+      <div className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10 border shadow rounded-xl">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/mart")}>
             <ChevronLeft className="h-5 w-5" />
@@ -84,15 +85,15 @@ const MartInbox = () => {
           <div className="flex justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
           </div>
-        ) : filtered.length === 0 ? (
-          <div className="text-center py-16">
-            <p className="text-4xl mb-3">📭</p>
-            <p className="text-muted-foreground">{bn ? "কোনো মেসেজ নেই" : "No messages yet"}</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              {bn ? "পণ্যের পেজে চ্যাট বাটনে ক্লিক করে কথোপকথন শুরু করুন" : "Click chat on any product to start a conversation"}
-            </p>
-          </div>
-        ) : (
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-16">
+              <p className="text-4xl mb-3">📭</p>
+              <p className="text-muted-foreground">{bn ? "কোনো মেসেজ নেই" : "No messages yet"}</p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {bn ? "পণ্যের পেজে চ্যাট বাটনে ক্লিক করে কথোপকথন শুরু করুন" : "Click chat on any product to start a conversation"}
+              </p>
+            </div>
+          ) : (
           <div className="space-y-2">
             {filtered.map((conv) => (
               <Card
