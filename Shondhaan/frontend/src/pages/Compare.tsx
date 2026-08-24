@@ -212,20 +212,23 @@ const Compare = () => {
   });
 
   const serviceIds = compareList.map((s) => s.id);
-  const { data: allPackages = [] } = useQuery({
-    queryKey: ["compare-packages", serviceIds],
-    queryFn: async () => {
-      if (serviceIds.length === 0) return [];
-      const { data, error } = await (supabase as any)
-        .from("cms_service_packages")
-        .select("*")
-        .in("service_id", serviceIds)
-        .order("sort_order");
-      if (error) throw error;
-      return data as CmsServicePackage[];
-    },
-    enabled: serviceIds.length > 0,
-  });
+const { data: rawPackages } = useQuery({
+  queryKey: ["compare-packages", serviceIds],
+  queryFn: async () => {
+    if (serviceIds.length === 0) return [];
+    const { data, error } = await (supabase as any)
+      .from("cms_service_packages")
+      .select("*")
+      .in("service_id", serviceIds)
+      .order("sort_order");
+    if (error) throw error;
+    return data as CmsServicePackage[];
+  },
+  enabled: serviceIds.length > 0,
+});
+
+// Null-safe fallback - handles both null and undefined
+const allPackages = rawPackages ?? [];
 
   if (compareList.length < 2) {
     return (
