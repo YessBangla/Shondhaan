@@ -6,6 +6,7 @@ import {
   getAllWallets,
   getAllTransactions,
   adminAdjustWallet,
+  creditPurchaseReward,
 } from "../controllers/wallet.controller.js";
 import {
   requireAdminPanelAccess,
@@ -21,6 +22,7 @@ const router = express.Router();
 // USER ROUTES
 // ==========================================
 router.post("/debit", debitWallet);
+router.post("/credit-purchase-reward", creditPurchaseReward);
 router.get("/balance/:user_id", getBalance);
 
 // ==========================================
