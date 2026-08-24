@@ -133,7 +133,7 @@ const ServiceTracking = () => {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-        <main className="pt-[44px] md:pt-[104px] flex items-center justify-center min-h-[70vh] px-4">
+        <main className="pt-[44px] md:pt-[104px] md:pb-[104px] flex items-center justify-center min-h-[70vh] px-4">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}

@@ -574,12 +574,12 @@ const MartHome = () => {
       )}
 
       <Navbar />
-      <PlatformSwitcher className="md:hidden" />
+      <PlatformSwitcher className="hidden" />
 
-      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-9">
+      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[80px] md:mt-[30px]">
         <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
-          <div className="app-container py-3">
-            <div className="grid grid-flow-col auto-cols-[78%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
+          <div className="app-container md:py-3">
+            <div className="grid grid-cols-4 auto-cols-[100%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
               {[
                 {
                   icon: <Truck className="h-4.5 w-4.5" />,
@@ -612,16 +612,16 @@ const MartHome = () => {
               ].map((b, i) => (
                 <div
                   key={i}
-                  className={`group relative overflow-hidden rounded-2xl border bg-gradient-to-br ${b.card} px-3.5 py-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 shrink-0`}
+                  className={`group relative overflow-hidden rounded-0 md:rounded-2xl md:border bg-transparent md:bg-gradient-to-br ${b.card} px-0 md:px-3.5 py-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 shrink-0`}
                 >
                   <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/45 dark:bg-white/5" />
-                  <div className="relative flex items-center gap-3">
+                  <div className="relative flex flex-col md:flex-row items-center gap-3">
                     <div className={`h-9 w-9 rounded-xl ${b.iconBox} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
                       {b.icon}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[12px] md:text-[13px] font-extrabold text-foreground leading-tight">{b.label}</p>
-                      <p className="text-[10px] md:text-[11px] text-muted-foreground mt-0.5 line-clamp-1">{b.sub}</p>
+                      <p className="text-[12px] md:text-[13px] text-center font-extrabold text-foreground leading-tight">{b.label}</p>
+                      <p className="hidden md:block text-[10px] md:text-[11px] text-center text-muted-foreground mt-0.5 line-clamp-1">{b.sub}</p>
                     </div>
                   </div>
                 </div>

@@ -10,6 +10,7 @@ import { useMartCart } from "@/contexts/MartCartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import MartChatModal from "@/components/mart/MartChatModal";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
 
@@ -157,7 +158,7 @@ const ProductCard = ({
         type="button"
         disabled={product.stock <= 0}
         onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-foreground text-xs font-semibold py-2 px-3 hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
         {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
@@ -415,13 +416,13 @@ const MartStore = () => {
   return (
     <>
     <div className="min-h-screen bg-muted/30">
-
+    <Navbar />
       {/* ════ Store Header ════ */}
       <div className="relative bg-background border-b">
 
         {/* Cover image */}
         <div
-          className="h-32 md:h-40 bg-gradient-to-r from-primary via-primary/80 to-primary/50"
+          className="h-40 md:h-50 bg-gradient-to-r from-primary to-green-600"
           style={
             seller.banner_url
               ? {
@@ -437,7 +438,7 @@ const MartStore = () => {
           <div className="relative">
 
             {/* Avatar */}
-            <div className="absolute -top-12 left-4">
+            <div className="absolute -top-12 left-2 md:left-4">
               <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
                 {seller.profile_image_url ? (
                   <img
@@ -454,16 +455,16 @@ const MartStore = () => {
 
             {/* Store info */}
             <div className="pt-3 md:pt-4 md:pl-32 pb-5">
-              <div className="flex items-center flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
+              <div className="pt-8 md:pt-0 flex md:items-center flex-col lg:flex-row lg:items-end lg:justify-between gap-4">
 
                 <div>
-                  <h1 className="text-2xl md:text-3xl font-bold">
+                  <h1 className="absolute md:relative left-[100px] md:left-0 top-0 md:top-[-15px] text-2xl md:text-3xl font-bold">
                     {seller.shop_name || seller.seller_name}
                   </h1>
                   {/* {seller.shop_name && seller.seller_name && (
                     <p className="text-muted-foreground mt-1">by {seller.seller_name}</p>
                   )} */}
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                  <div className="flex flex-wrap items-center gap-2 mt-0">
                     {seller.seller_verified === 1 && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
                         <ShieldCheck className="h-4 w-4" /> Verified Store
@@ -475,68 +476,62 @@ const MartStore = () => {
                       </span>
                     )}
                     {/* Meta info */}
-              <div className=" flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
-                
-                
-                
-                <div className="flex items-center gap-1.5">
-                  <Package className="h-4 w-4 text-primary" />
-                  <span>{seller.total_products ?? products.length} Products</span>
-                </div>
-              </div>
+                    <div className=" flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
+                      <div className="flex items-center gap-1.5">
+                        <Package className="h-4 w-4 text-primary" />
+                        <span>{seller.total_products ?? products.length} Products</span>
+                      </div>
+                    </div>
                   </div>
                 </div>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleFollow}
+                    className="
+                      group flex items-center gap-2
+                      px-5 py-2.5
+                      rounded-xl
+                      bg-primary
+                      text-white
+                      font-medium
+                      justify-center
+                      shadow-sm
+                      hover:shadow-md
+                      hover:-translate-y-0.5
+                      transition-all duration-300
+                      w-full
+                    "
+                  >
+                    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span>{following ? "Following" : "Follow"}</span>
+                  </button>
 
-                
-
-
-
-<div className="flex items-center gap-3">
-  <button
-    type="button"
-    onClick={handleFollow}
-    className="
-      group flex items-center gap-2
-      px-5 py-2.5
-      rounded-xl
-      bg-primary
-      text-primary-foreground
-      font-medium
-      shadow-sm
-      hover:shadow-md
-      hover:-translate-y-0.5
-      transition-all duration-300
-    "
-  >
-    <UserPlus className="w-4 h-4 transition-transform group-hover:scale-110" />
-    <span>{following ? "Following" : "Follow"}</span>
-  </button>
-
-  <button
-    type="button"
-    onClick={handleOpenChat}
-    className="
-      group flex items-center gap-2
-      px-5 py-2.5
-      rounded-xl
-      bg-background
-      border border-border
-      text-foreground
-      font-medium
-      shadow-sm
-      hover:bg-muted/60
-      hover:border-primary/20
-      hover:-translate-y-0.5
-      hover:shadow-md
-      transition-all duration-300
-    "
-  >
-    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
-    <span>Chat</span>
-  </button>
-</div>
+                  <button
+                    type="button"
+                    onClick={handleOpenChat}
+                    className="
+                      group flex items-center justify-center gap-2
+                      px-5 py-2.5
+                      rounded-xl
+                      bg-background
+                      border border-border
+                      text-foreground
+                      font-medium
+                      shadow-sm
+                      hover:bg-muted/60
+                      hover:border-primary/20
+                      hover:-translate-y-0.5
+                      hover:shadow-md
+                      transition-all duration-300
+                      w-full
+                    "
+                  >
+                    <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+                    <span>Chat</span>
+                  </button>
+                </div>
               </div>
-
              
             </div>
 

@@ -27,7 +27,7 @@ import { bn as bnLocale } from "date-fns/locale";
 import { haptic } from "@/lib/haptics";
 import { useSEO } from "@/hooks/useSEO";
 
-const FREE_SHIPPING_MIN = 500;
+const FREE_SHIPPING_MIN = 50000;
 const COURIER_FEE_MIN = 45;
 const COURIER_FEE_MAX = 70;
 const MART_API_BASE =
@@ -735,8 +735,8 @@ const MartProductDetail = () => {
                   {[
                     { label: bn ? "ঢাকার ভেতর" : "Inside Dhaka", value: `৳60 · 2-3 ${bn ? "দিন" : "days"}` },
                     { label: bn ? "ঢাকার বাইরে" : "Outside Dhaka", value: `৳120 · 3-5 ${bn ? "দিন" : "days"}` },
-                    { label: bn ? "কুরিয়ার ফি" : "Courier Fee (per item)", value: `৳${COURIER_FEE_MIN}-৳${COURIER_FEE_MAX}` },
-                    { label: bn ? "৳৫০০+ অর্ডারে" : "Orders ৳500+", value: bn ? "ফ্রি ডেলিভারি ✓" : "Free Delivery ✓", highlight: true },
+                    // { label: bn ? "কুরিয়ার ফি" : "Courier Fee (per item)", value: `৳${COURIER_FEE_MIN}-৳${COURIER_FEE_MAX}` },
+                    // { label: bn ? "৳৫০০+ অর্ডারে" : "Orders ৳500+", value: bn ? "ফ্রি ডেলিভারি ✓" : "Free Delivery ✓", highlight: true },
                   ].map(({ label, value, highlight }) => (
                     <div key={label} className="flex justify-between py-3 text-sm">
                       <span className="text-gray-500">{label}</span>
