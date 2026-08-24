@@ -16,6 +16,8 @@ import { useTheme } from "@/hooks/useTheme";
 import { Sun, Moon, Monitor, Mic, Vibrate, QrCode } from "lucide-react";
 import QRScannerSheet from "@/components/QRScannerSheet";
 import { getMobileFloatingBottom, mobileNavBottom, MOBILE_BOTTOM_NAV_HEIGHT, MOBILE_BOTTOM_NAV_GAP } from "@/lib/mobileBottomOffsets";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import {
   resolveMobileNavTabs,
   isTabActive,
@@ -359,12 +361,22 @@ const MobileBottomNav = () => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed left-0 right-0 z-[56] max-h-[calc(100dvh-var(--app-header-h,0px)-108px)] overflow-hidden rounded-t-2xl glass-strong md:hidden"
               style={{
-                bottom: getMobileFloatingBottom(0),
+                bottom: 0,
                 maxHeight: `calc(100dvh - var(--app-header-h, 0px) - env(safe-area-inset-bottom, 0px) - ${MOBILE_BOTTOM_NAV_HEIGHT + MOBILE_BOTTOM_NAV_GAP + 20}px)`,
               }}
-            >
+              >
               <div className="flex justify-center pt-3 pb-2">
                 <div className="h-1 w-10 rounded-full bg-muted-foreground/30" />
+                <div className="absolute right-2 text-muted-foreground">
+                  <button
+                    type="button"
+                    onClick={() => setMoreOpen(false)}
+                    className="absolute right-3 top-2 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                    aria-label="Close"
+                    >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </div>
               </div>
               <div className="max-h-[inherit] overflow-y-auto px-4 pb-3 overscroll-contain">
                 <h3 className="text-sm font-semibold text-foreground mb-3">
@@ -372,8 +384,8 @@ const MobileBottomNav = () => {
                 </h3>
                 <button
                   onClick={() => { haptic("selection"); cycle(); }}
-                  className="mb-3 flex w-full items-center justify-between rounded-xl border border-border/40 bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary"
-                >
+                  className="mb-3 flex w-full items-center justify-between rounded-xl border shadow bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary"
+                  >
                   <span className="flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <ThemeIcon className="h-4 w-4" />
@@ -384,10 +396,11 @@ const MobileBottomNav = () => {
                   </span>
                   <span className="text-xs font-semibold text-primary">{themeLabel}</span>
                 </button>
+
                 <button
                   onClick={cycleHaptic}
-                  className="mb-3 flex w-full items-center justify-between rounded-xl border border-border/40 bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary"
-                >
+                  className="mb-3 flex w-full items-center justify-between rounded-xl border shadow bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary"
+                  >
                   <span className="flex items-center gap-3">
                     <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
                       <Vibrate className="h-4 w-4" />
@@ -398,6 +411,7 @@ const MobileBottomNav = () => {
                   </span>
                   <span className="text-xs font-semibold text-primary">{hapticLabel}</span>
                 </button>
+
                 <div className="grid grid-cols-3 gap-2">
                   {moreItems.map((item) => (
                     <button
@@ -415,7 +429,7 @@ const MobileBottomNav = () => {
                       className={`flex flex-col items-center gap-1.5 rounded-xl p-3 transition-colors ${
                         routerLocation.pathname === item.path
                           ? "bg-primary/10 text-primary"
-                          : "bg-secondary/50 text-muted-foreground hover:bg-secondary hover:text-foreground active:bg-secondary"
+                          : "bg-secondary/50 border shadow text-muted-foreground hover:bg-secondary hover:text-foreground active:bg-secondary"
                       }`}
                     >
                       <item.icon className="h-5 w-5" strokeWidth={1.5} />

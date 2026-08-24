@@ -342,7 +342,7 @@ const MartProductReviews = ({ productId, productName, productUrl, vendorId, onSt
           />
           <Button onClick={handleSubmit} disabled={submitting} size="sm">
             {submitting ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
-            {bn ? "রিভিউ জমা দিন" : "Submit Review"}
+            {bn ? "আপনার রিভিউ দিন" : "Submit Review"}
           </Button>
         </div>
       )}

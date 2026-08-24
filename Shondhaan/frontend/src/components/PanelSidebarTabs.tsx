@@ -463,12 +463,12 @@ const PanelSidebarTabs = ({
   );
 
   return (
-    <div className={cn("flex w-full", !embedded && "min-h-screen", offsetForDesktopMegaMenu && "md:pt-2")}>
+    <div className={cn("flex w-full", !embedded && "min-h-screen", offsetForDesktopMegaMenu && "md:pt-0")}>
       {/* Desktop sidebar */}
       {!embedded && <aside
         className={cn(
-          "hidden md:flex flex-col shrink-0 sticky self-start transition-[width] duration-300 ease-in-out z-30 shadow-2xl",
-          offsetForDesktopMegaMenu ? "top-10 h-[calc(100vh-2.5rem)]" : "top-0 h-screen",
+          "hidden md:flex flex-col shrink-0 sticky self-start transition-[width] duration-300 ease-in-out z-30 border shadow-2xl",
+          offsetForDesktopMegaMenu ? "top-0 h-[calc(100vh)]" : "top-0 h-screen",
           collapsed ? "w-[80px]" : "w-[280px]"
         )}
       >
@@ -501,12 +501,24 @@ const PanelSidebarTabs = ({
 
       {/* Main content */}
       <div className={cn("flex-1 min-w-0 flex flex-col", !embedded && "bg-slate-50 dark:bg-slate-950")}>
-        {!embedded && <header className={cn(
-          "sticky z-40 border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl",
-          offsetForDesktopMegaMenu ? "top-0 md:top-10" : "top-0"
-        )}>
-          <div className="h-1 py-2 w-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500" />
-        </header>}
+        {!embedded && (
+          <header className="sticky top-0 z-40 h-auto py-3 border-b border-gray-300 bg-gray-200">
+            <div className="flex h-full items-center gap-4 px-4 md:px-6">
+              <button
+                type="button"
+                onClick={() => setMobileOpen(true)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 hover:bg-gray-300 md:hidden"
+                aria-label="Open menu"
+              >
+                <Menu className="h-6 w-6" />
+              </button>
+
+              <h1 className="text-xl font-semibold text-gray-800">
+                Dashboard
+              </h1>
+            </div>
+          </header>
+        )}
 
         <main className="flex-1 min-w-0">
           <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-2 py-2")}>

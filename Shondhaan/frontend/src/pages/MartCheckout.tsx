@@ -561,7 +561,7 @@ const MartCheckout = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[40px]" />
+      <div className="pt-[100px] md:pt-[40px]" />
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Steps indicator */}
         <div className="flex items-center justify-center gap-2 mb-6 text-white">

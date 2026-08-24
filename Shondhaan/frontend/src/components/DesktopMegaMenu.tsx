@@ -98,8 +98,8 @@ const hasSidebar =
     "/main-login", "/mart/login", "/deal/login", "/jobs/login",
     "/admin", "/call-center", "/provider", "/representative",
     "/moderator", "/supervisor", "/finance", "/internal", "/super-admin",
-    "/mart/admin", "/mart/cs", "/mart/my-shop",
-    "/mart/inbox", "/yessdeal",
+    "/mart/admin", "/mart/cs",
+    "/yessdeal", "/dashboard",
   ];
   if (location.pathname === "/mart") return null;
 if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) return null;
