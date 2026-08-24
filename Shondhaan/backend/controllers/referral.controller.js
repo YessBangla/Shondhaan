@@ -38,7 +38,6 @@ async function getSettings(conn = pool) {
     min_order_amount: null,
   };
 }
-
 async function ensureWallet(conn, userId) {
   const walletUserId = String(userId);
   const [rows] = await conn.query("SELECT id FROM user_wallets WHERE user_id = ? LIMIT 1", [walletUserId]);
@@ -50,7 +49,6 @@ async function ensureWallet(conn, userId) {
   );
   return walletUserId;
 }
-
 async function creditReward(conn, reward) {
   const walletUserId = await ensureWallet(conn, reward.user_id);
   const balanceCol = reward.reward_currency === "COIN" ? "coin_balance" : "cash_balance";

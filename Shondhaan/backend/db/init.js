@@ -359,10 +359,8 @@ export async function initDatabase() {
   for (const [column, alterSql] of columns) {
     await ensureTableColumn("users", column, alterSql);
   }
-
   // This line applies the new ENUM values to your existing table
   await pool.query(`ALTER TABLE users MODIFY COLUMN type ${USER_TYPE_ENUM}`);
-
   const [emailIndexExists] = await pool.execute(
     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_email'",
     [DB_NAME],
