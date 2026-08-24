@@ -2,7 +2,7 @@
 
 import { Router } from "express";
 import { referralController } from "../controllers/referral.controller.js";
-import { requireLoggedIn } from "../middleware/auth.middleware.js";
+import { requireLoggedIn, requireServiceAdmin } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
@@ -13,5 +13,8 @@ router.post("/qualify/:referralId", requireLoggedIn, referralController.qualify)
 router.post("/qualify-by-order/:orderId", requireLoggedIn, referralController.qualifyByOrder);
 router.get("/stats", requireLoggedIn, referralController.stats);
 router.post("/claim/:rewardId", requireLoggedIn, referralController.claim);
+router.get("/admin/settings", requireServiceAdmin, referralController.getSettings);
+router.put("/admin/settings", requireServiceAdmin, referralController.updateSettings);
+router.get("/admin/codes", requireServiceAdmin, referralController.adminList);
 
 export default router;
