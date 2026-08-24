@@ -341,7 +341,7 @@ const MartOrders = () => {
     <div className="min-h-screen bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[55px] md:pt-[10px]" />
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="icon" onClick={() => navigate("/mart/home")}>

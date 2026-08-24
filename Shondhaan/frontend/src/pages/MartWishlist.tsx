@@ -31,7 +31,7 @@ const MartWishlist = () => {
     <div className="min-h-screen bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <div className="pt-[44px] md:pt-[104px]" />
+      <div className="pt-[44px] md:pt-[0px]" />
 
       {/* Header */}
       <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
@@ -59,7 +59,7 @@ const MartWishlist = () => {
         </div>
       </div>
 
-      <div className="app-container py-5 pb-28 md:pb-8">
+      <div className="app-container py-0 pb-28 md:pb-8">
         {items.length > 0 ? (
           <AnimatePresence mode="popLayout">
             <div className="space-y-3">
@@ -164,7 +164,7 @@ const MartWishlist = () => {
             </motion.div>
           </AnimatePresence>
         ) : (
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-20">
+          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="text-center py-5">
             <div className="w-24 h-24 mx-auto mb-5 rounded-full bg-muted/50 flex items-center justify-center">
               <Heart className="h-12 w-12 text-muted-foreground/30" />
             </div>

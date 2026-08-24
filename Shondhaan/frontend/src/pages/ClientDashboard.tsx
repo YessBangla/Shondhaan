@@ -394,7 +394,7 @@ const ClientDashboard = () => {
 
   return (
     <>
-      <Navbar />
+      {/* <Navbar /> */}
       <PanelSidebarTabs
         items={[
           { value: "dashboard", label: bn ? "ড্যাশবোর্ড" : "Dashboard", icon: <Home className="h-5 w-5" />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },

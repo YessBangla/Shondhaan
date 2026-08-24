@@ -421,18 +421,20 @@ const MartStore = () => {
       <div className="relative bg-background border-b">
 
         {/* Cover image */}
+        <div className="md:app-container">
         <div
           className="h-40 md:h-50 bg-gradient-to-r from-primary to-green-600"
           style={
             seller.banner_url
-              ? {
-                  backgroundImage:    `url(${seller.banner_url})`,
-                  backgroundSize:     "cover",
-                  backgroundPosition: "center",
-                }
-              : {}
+            ? {
+              backgroundImage:    `url(${seller.banner_url})`,
+              backgroundSize:     "cover",
+              backgroundPosition: "center",
+            }
+            : {}
           }
-        />
+          />
+        </div>
 
         <div className="app-container">
           <div className="relative">
