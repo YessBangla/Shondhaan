@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -6,7 +6,7 @@ import {
   Eye, Plus, FileText, BookmarkPlus, Clock, Video, UserCheck,
   BarChart3, Settings, Bookmark, CalendarCheck, Package, CheckCircle,
   XCircle, ArrowRight, Award, TrendingUp, Lock, Zap, Crown, Pencil, Bell,
-  Wallet, CreditCard
+  Wallet, CreditCard, ChevronDown, Loader2, Check
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { hasStaffRoleAccess } from "@/lib/roleAccess";
@@ -20,8 +20,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import Navbar from "@/components/Navbar";
+import DesktopMegaMenu from "@/components/DesktopMegaMenu";
 
 const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL;
+const GEO_API_BASE = "https://bdapi.vercel.app/api/v.1";
 
 function getAuthHeaders() {
   const auth = getMySqlAuth();
@@ -78,6 +81,125 @@ interface EmployerProfile {
   total_hires: number;
 }
 
+// ── Live BD geo data shape (from bdapi.vercel.app) ──
+interface GeoOption {
+  id: string;
+  name: string;
+  bn_name?: string;
+}
+
+/**
+ * Live searchable dropdown for Division / District / Thana.
+ * Options are fetched from a real API (see EmployerPanel effects below)
+ * and filtered client-side as the user types.
+ */
+function SearchableAreaSelect({
+  label,
+  placeholder,
+  value,
+  options,
+  loading,
+  disabled,
+  onSelect,
+}: {
+  label: string;
+  placeholder: string;
+  value: string;
+  options: GeoOption[];
+  loading?: boolean;
+  disabled?: boolean;
+  onSelect: (opt: GeoOption) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const wrapRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setQuery("");
+      }
+    };
+    document.addEventListener("mousedown", onClick);
+    return () => document.removeEventListener("mousedown", onClick);
+  }, []);
+
+  const filtered = query
+    ? options.filter(
+        (o) =>
+          o.name.toLowerCase().includes(query.toLowerCase()) ||
+          (o.bn_name || "").includes(query)
+      )
+    : options;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <label className="text-xs font-medium mb-1 block">{label}</label>
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setOpen((o) => !o)}
+        className={`w-full h-10 rounded-md border border-input bg-background px-3 text-sm text-left flex items-center justify-between disabled:opacity-50 disabled:cursor-not-allowed ${
+          !value ? "text-muted-foreground" : ""
+        }`}
+      >
+        <span className="truncate">{value || placeholder}</span>
+        {loading ? (
+          <Loader2 className="h-3.5 w-3.5 animate-spin shrink-0 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-3.5 w-3.5 shrink-0 opacity-50" />
+        )}
+      </button>
+
+      {open && !disabled && (
+        <div className="absolute z-20 mt-1 w-full rounded-md border border-input bg-card shadow-lg overflow-hidden">
+          <div className="p-2 border-b">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <input
+                autoFocus
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="খুঁজুন..."
+                className="w-full h-8 rounded-md border border-input bg-background pl-8 pr-2 text-xs"
+              />
+            </div>
+          </div>
+          <div className="max-h-52 overflow-y-auto">
+            {loading ? (
+              <p className="px-3 py-2 text-xs text-muted-foreground">লোড হচ্ছে...</p>
+            ) : filtered.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-muted-foreground">কোনো ফলাফল নেই</p>
+            ) : (
+              filtered.map((o) => (
+                <button
+                  key={o.id}
+                  type="button"
+                  onClick={() => {
+                    onSelect(o);
+                    setOpen(false);
+                    setQuery("");
+                  }}
+                  className={`w-full text-left px-3 py-2 text-xs hover:bg-muted flex items-center justify-between ${
+                    value === o.name ? "bg-primary/5 text-primary font-medium" : ""
+                  }`}
+                >
+                  <span>
+                    {o.name}
+                    {o.bn_name ? ` (${o.bn_name})` : ""}
+                  </span>
+                  {value === o.name && <Check className="h-3.5 w-3.5" />}
+                </button>
+              ))
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // BDJobs-style industry types
 const INDUSTRY_TYPES = [
   "তথ্যপ্রযুক্তি (IT)", "সফটওয়্যার/ডাটা", "ই-কমার্স", "এফ-কমার্স",
@@ -132,6 +254,74 @@ const EmployerPanel = () => {
     division: "", district: "", thana: "", address: "",
     contact_person: "", contact_phone: "", contact_email: ""
   });
+
+  // ── Live BD geo data (Division → District → Thana) ──
+  const [divisions, setDivisions] = useState<GeoOption[]>([]);
+  const [districts, setDistricts] = useState<GeoOption[]>([]);
+  const [thanas, setThanas] = useState<GeoOption[]>([]);
+  const [divisionsLoading, setDivisionsLoading] = useState(false);
+  const [districtsLoading, setDistrictsLoading] = useState(false);
+  const [thanasLoading, setThanasLoading] = useState(false);
+  const [selectedDivisionId, setSelectedDivisionId] = useState("");
+  const [selectedDistrictId, setSelectedDistrictId] = useState("");
+
+  // Load all 8 divisions once, when the registration/edit form is open.
+  useEffect(() => {
+    if (!(showSetup || !profile)) return;
+    if (divisions.length > 0) return;
+    setDivisionsLoading(true);
+    fetch(`${GEO_API_BASE}/division`)
+      .then((res) => res.json())
+      .then((json) => setDivisions(json?.data || []))
+      .catch(() => toast.error("বিভাগের তালিকা লোড করা যায়নি"))
+      .finally(() => setDivisionsLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showSetup, profile]);
+
+  // Load districts live whenever a division is picked.
+  useEffect(() => {
+    if (!selectedDivisionId) { setDistricts([]); return; }
+    setDistrictsLoading(true);
+    fetch(`${GEO_API_BASE}/district/${selectedDivisionId}`)
+      .then((res) => res.json())
+      .then((json) => setDistricts(json?.data || []))
+      .catch(() => toast.error("জেলার তালিকা লোড করা যায়নি"))
+      .finally(() => setDistrictsLoading(false));
+  }, [selectedDivisionId]);
+
+  // Load thanas/upazilas live whenever a district is picked.
+  useEffect(() => {
+    if (!selectedDistrictId) { setThanas([]); return; }
+    setThanasLoading(true);
+    fetch(`${GEO_API_BASE}/upazilla/${selectedDistrictId}`)
+      .then((res) => res.json())
+      .then((json) => setThanas(json?.data || []))
+      .catch(() => toast.error("থানার তালিকা লোড করা যায়নি"))
+      .finally(() => setThanasLoading(false));
+  }, [selectedDistrictId]);
+
+  // Editing an existing profile pre-fills formData.division/district as plain
+  // strings (from your DB) without an id. Once the live lists load, resolve
+  // the matching id so the cascading dropdowns keep working after "সম্পাদনা".
+  useEffect(() => {
+    if (formData.division && !selectedDivisionId && divisions.length) {
+      const match = divisions.find(
+        (d) => d.name === formData.division || d.bn_name === formData.division
+      );
+      if (match) setSelectedDivisionId(match.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [divisions, formData.division]);
+
+  useEffect(() => {
+    if (formData.district && !selectedDistrictId && districts.length) {
+      const match = districts.find(
+        (d) => d.name === formData.district || d.bn_name === formData.district
+      );
+      if (match) setSelectedDistrictId(match.id);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [districts, formData.district]);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/main-login", { replace: true });
@@ -690,180 +880,276 @@ const EmployerPanel = () => {
   if (showSetup || !profile) {
     return (
       <JobsPageTransition>
-        <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" />
-        <JobsMenuBar  />
-        <div className="pt-[16px]">
-          <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white py-8">
-            <div className="max-w-3xl mx-auto px-4 text-center">
-              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 inline-block mb-3">
+        <div className="pt-[20px] md:pt-[28px] bg-blue-700 md:bg-card" />
+        {/* <JobsMenuBar /> */}
+        <Navbar />
+        {/* <DesktopMegaMenu/> */}
+
+        {/* ── Hero banner ── */}
+        <div className="bg-gradient-to-br from-primary to-green-700 text-white pt-8 pb-16">
+          <div className="max-w-7xl mx-auto px-4 flex items-center justify-between gap-4 flex-wrap">
+            <div className="flex items-center gap-4">
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-3 shrink-0">
                 <Building2 className="h-8 w-8" />
               </div>
-              <h1 className="text-2xl font-extrabold">Employer Registration Form</h1>
-              <p className="text-blue-200 text-sm mt-1">আপনার অ্যাকাউন্ট তৈরি করুন এবং সেরা প্রতিভা খুঁজুন</p>
+              <div>
+                <h1 className="text-2xl font-extrabold">Employer Registration Form</h1>
+                <p className="text-white/80 text-sm mt-1">আপনার অ্যাকাউন্ট তৈরি করুন এবং সেরা প্রতিভা খুঁজুন</p>
+              </div>
+            </div>
+            <div className="text-right hidden sm:block">
+              <p className="text-white/80 text-xs">Over</p>
+              <p className="text-2xl font-extrabold leading-tight">45000+</p>
+              <p className="text-white/80 text-xs">companies trusted us!</p>
             </div>
           </div>
-          <div className="max-w-3xl mx-auto px-4 py-8 space-y-6">
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4" /> Tell Us About Your Company
-              </h2>
+        </div>
 
-              {/* Company Logo */}
-              <div className="mb-4">
-                <label className="text-xs font-medium mb-1 block">Company Logo</label>
-                <div className="flex items-center gap-3">
-                  <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
-                    {formData.company_logo_url ? (
-                      <img
-                        src={formData.company_logo_url}
-                        alt="Logo preview"
-                        className="h-full w-full object-cover"
-                        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                      />
-                    ) : (
-                      <Building2 className="h-6 w-6 text-muted-foreground" />
-                    )}
-                  </div>
-                  <div className="flex-1 space-y-2">
-                    <Input
-                      value={formData.company_logo_url}
-                      onChange={e => setFormData(p => ({ ...p, company_logo_url: e.target.value }))}
-                      placeholder="https://your-logo-url.com/logo.png"
-                    />
-                    <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-medium text-primary cursor-pointer hover:underline">
-                        {logoUploading ? "আপলোড হচ্ছে..." : "অথবা ফাইল থেকে আপলোড করুন"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          disabled={logoUploading}
-                          onChange={handleLogoFileChange}
-                        />
-                      </label>
-                      {formData.company_logo_url && (
-                        <button
-                          type="button"
-                          className="text-[11px] text-destructive hover:underline"
-                          onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
-                        >
-                          মুছুন
-                        </button>
-                      )}
-                    </div>
-                    <p className="text-[10px] text-muted-foreground">
-                      লোগোর সরাসরি ইমেজ লিংক দিন (jpg/png/webp), অথবা ২MB পর্যন্ত ফাইল আপলোড করুন
-                    </p>
-                  </div>
-                </div>
+        {/* ── Form card, overlapping the banner ── */}
+        <div className="max-w-4xl mx-auto px-4 -mt-10 pb-10 space-y-6 relative">
+
+          <div className="border rounded-xl p-5 bg-card shadow-sm">
+            <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+              <Users className="h-4 w-4" /> Tell Us About Your Company
+            </h2>
+
+          {/* Company Logo */}
+<div className="mb-4">
+  <label className="text-xs font-medium mb-1 block">Company Logo</label>
+  <div className="flex items-center gap-3">
+    <div className="h-16 w-16 rounded-lg border border-dashed border-input bg-muted flex items-center justify-center overflow-hidden shrink-0">
+      {formData.company_logo_url ? (
+        <img
+          src={formData.company_logo_url}
+          alt="Logo preview"
+          className="h-full w-full object-cover"
+          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        />
+      ) : (
+        <Building2 className="h-6 w-6 text-muted-foreground" />
+      )}
+    </div>
+    <div className="flex-1 space-y-2">
+      <div className="flex items-center gap-2">
+        <label className="inline-flex items-center gap-1.5 text-xs font-medium text-primary cursor-pointer hover:underline border border-input rounded-md px-3 py-2 bg-background hover:bg-muted transition-colors">
+          {logoUploading
+            ? "আপলোড হচ্ছে..."
+            : formData.company_logo_url
+            ? "লোগো পরিবর্তন করুন"
+            : "লোগো আপলোড করুন"}
+          <input
+            type="file"
+            accept="image/*"
+            className="hidden"
+            disabled={logoUploading}
+            onChange={handleLogoFileChange}
+          />
+        </label>
+        {formData.company_logo_url && (
+          <button
+            type="button"
+            className="text-[11px] text-destructive hover:underline"
+            onClick={() => setFormData(p => ({ ...p, company_logo_url: "" }))}
+          >
+            মুছুন
+          </button>
+        )}
+      </div>
+      <p className="text-[10px] text-muted-foreground">
+        JPG/PNG/WebP ফরম্যাট, সর্বোচ্চ ২MB
+      </p>
+    </div>
+  </div>
+</div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium mb-1 block">Company Name <span className="text-destructive">*</span></label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.company_name}
+                  onChange={e => setFormData(p => ({ ...p, company_name: e.target.value }))}
+                  placeholder="Type Company Name"
+                />
               </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Company Name *</label>
-                  <Input value={formData.company_name} onChange={e => setFormData(p => ({ ...p, company_name: e.target.value }))} placeholder="Type Company Name" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">কোম্পানির নাম (বাংলায়)</label>
-                  <Input value={formData.company_name_bn} onChange={e => setFormData(p => ({ ...p, company_name_bn: e.target.value }))} placeholder="কোম্পানির নাম লিখুন" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Year of Establishment *</label>
-                  <Input type="number" value={formData.establishment_year} onChange={e => setFormData(p => ({ ...p, establishment_year: parseInt(e.target.value) }))} placeholder="Type Company's Establishment Year" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">Number of Employees *</label>
-                  <div className="flex flex-wrap gap-2">
-                    {["1-25", "26-50", "51-100", "101-500", "501-1000", "1000+"].map(c => (
-                      <button key={c} type="button" onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
-                        className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${formData.employee_count === c ? "bg-primary text-white border-primary" : "bg-background border-input hover:bg-muted"}`}>
-                        {c}
-                      </button>
-                    ))}
-                  </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">কোম্পানির নাম (বাংলায়)</label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.company_name_bn}
+                  onChange={e => setFormData(p => ({ ...p, company_name_bn: e.target.value }))}
+                  placeholder="Type Company Name"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Year of Establishment <span className="text-destructive">*</span></label>
+                <Input
+                  type="number"
+                  className="h-10 rounded-md"
+                  value={formData.establishment_year}
+                  onChange={e => setFormData(p => ({ ...p, establishment_year: parseInt(e.target.value) }))}
+                  placeholder="Type Company's Establishment Year"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">Number of Employees <span className="text-destructive">*</span></label>
+                <div className="flex flex-wrap gap-2 pt-1">
+                  {["1-25", "26-50", "51-100", "101-500", "501-1000", "1000+"].map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setFormData(p => ({ ...p, employee_count: c }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                        formData.employee_count === c
+                          ? "bg-primary text-white border-primary hover:bg-primary/90"
+                          : "bg-background border-input hover:bg-muted"
+                      }`}
+                    >
+                      {c}
+                    </button>
+                  ))}
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <MapPin className="h-4 w-4" /> Company Address *
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">বিভাগ</label>
-                  <Input value={formData.division} onChange={e => setFormData(p => ({ ...p, division: e.target.value }))} placeholder="Select Division" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">জেলা</label>
-                  <Input value={formData.district} onChange={e => setFormData(p => ({ ...p, district: e.target.value }))} placeholder="Select District" />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">থানা</label>
-                  <Input value={formData.thana} onChange={e => setFormData(p => ({ ...p, thana: e.target.value }))} placeholder="Select Thana" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">বিস্তারিত ঠিকানা</label>
-                <textarea className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.address} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} placeholder="Write Company Detail Address" />
-              </div>
+          <div className="border rounded-xl p-5 bg-card shadow-sm">
+            <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+              <MapPin className="h-4 w-4" /> Company Address <span className="text-destructive">*</span>
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <SearchableAreaSelect
+                label="বিভাগ"
+                placeholder="Select Division"
+                value={formData.division}
+                options={divisions}
+                loading={divisionsLoading}
+                onSelect={(opt) => {
+                  setFormData((p) => ({ ...p, division: opt.name, district: "", thana: "" }));
+                  setSelectedDivisionId(opt.id);
+                  setSelectedDistrictId("");
+                  setDistricts([]);
+                  setThanas([]);
+                }}
+              />
+              <SearchableAreaSelect
+                label="জেলা"
+                placeholder={selectedDivisionId ? "Select District" : "আগে বিভাগ নির্বাচন করুন"}
+                value={formData.district}
+                options={districts}
+                loading={districtsLoading}
+                disabled={!selectedDivisionId}
+                onSelect={(opt) => {
+                  setFormData((p) => ({ ...p, district: opt.name, thana: "" }));
+                  setSelectedDistrictId(opt.id);
+                  setThanas([]);
+                }}
+              />
+              <SearchableAreaSelect
+                label="থানা"
+                placeholder={selectedDistrictId ? "Select Thana" : "আগে জেলা নির্বাচন করুন"}
+                value={formData.thana}
+                options={thanas}
+                loading={thanasLoading}
+                disabled={!selectedDistrictId}
+                onSelect={(opt) => setFormData((p) => ({ ...p, thana: opt.name }))}
+              />
             </div>
+            <div className="mt-4">
+              <label className="text-xs font-medium mb-1 block">বিস্তারিত ঠিকানা</label>
+              <textarea
+                className="w-full min-h-[60px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={formData.address}
+                onChange={e => setFormData(p => ({ ...p, address: e.target.value }))}
+                placeholder="Write Company Detail Address"
+              />
+            </div>
+          </div>
 
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Briefcase className="h-4 w-4" /> Industry Type *
-              </h2>
-              <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={formData.industry_type} onChange={e => setFormData(p => ({ ...p, industry_type: e.target.value }))}>
-                <option value="">নির্বাচন করুন</option>
-                {INDUSTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+          <div className="border rounded-xl p-5 bg-card shadow-sm">
+            <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+              <Briefcase className="h-4 w-4" /> Industry Type <span className="text-destructive">*</span>
+            </h2>
+            <select
+              className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+              value={formData.industry_type}
+              onChange={e => setFormData(p => ({ ...p, industry_type: e.target.value }))}
+            >
+              <option value="">নির্বাচন করুন</option>
+              {INDUSTRY_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+            <div className="mt-3">
+              <label className="text-xs font-medium mb-1 block">কোম্পানির ধরন</label>
+              <select
+                className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm"
+                value={formData.company_type}
+                onChange={e => setFormData(p => ({ ...p, company_type: e.target.value }))}
+              >
+                <option value="private">প্রাইভেট লিমিটেড</option>
+                <option value="government">সরকারি</option>
+                <option value="semi-government">আধা-সরকারি</option>
+                <option value="ngo">এনজিও</option>
+                <option value="multinational">মাল্টিন্যাশনাল</option>
+                <option value="partnership">পার্টনারশিপ</option>
+                <option value="proprietorship">একমালিকানা</option>
+                <option value="startup">স্টার্টআপ</option>
               </select>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">কোম্পানির ধরন</label>
-                <select className="w-full h-10 rounded-md border border-input bg-background px-3 text-sm" value={formData.company_type} onChange={e => setFormData(p => ({ ...p, company_type: e.target.value }))}>
-                  <option value="private">প্রাইভেট লিমিটেড</option>
-                  <option value="government">সরকারি</option>
-                  <option value="semi-government">আধা-সরকারি</option>
-                  <option value="ngo">এনজিও</option>
-                  <option value="multinational">মাল্টিন্যাশনাল</option>
-                  <option value="partnership">পার্টনারশিপ</option>
-                  <option value="proprietorship">একমালিকানা</option>
-                  <option value="startup">স্টার্টআপ</option>
-                </select>
-              </div>
             </div>
-
-            <div className="border rounded-xl p-5 bg-card">
-              <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
-                <Users className="h-4 w-4" /> Contact Information
-              </h2>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-xs font-medium mb-1 block">যোগাযোগকারীর নাম</label>
-                  <Input value={formData.contact_person} onChange={e => setFormData(p => ({ ...p, contact_person: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ফোন নম্বর</label>
-                  <Input value={formData.contact_phone} onChange={e => setFormData(p => ({ ...p, contact_phone: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ইমেইল</label>
-                  <Input value={formData.contact_email} onChange={e => setFormData(p => ({ ...p, contact_email: e.target.value }))} />
-                </div>
-                <div>
-                  <label className="text-xs font-medium mb-1 block">ওয়েবসাইট</label>
-                  <Input value={formData.website_url} onChange={e => setFormData(p => ({ ...p, website_url: e.target.value }))} placeholder="https://" />
-                </div>
-              </div>
-              <div className="mt-3">
-                <label className="text-xs font-medium mb-1 block">কোম্পানি সম্পর্কে</label>
-                <textarea className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={formData.description} onChange={e => setFormData(p => ({ ...p, description: e.target.value }))} placeholder="কোম্পানির সংক্ষিপ্ত বিবরণ লিখুন..." />
-              </div>
-            </div>
-
-            <Button onClick={saveProfile} className="w-full h-12 text-base font-bold">
-              <CheckCircle className="h-5 w-5 mr-2" /> প্রোফাইল সেভ করুন
-            </Button>
           </div>
+
+          <div className="border rounded-xl p-5 bg-card shadow-sm">
+            <h2 className="text-sm font-bold text-primary mb-4 flex items-center gap-2 pb-3 border-b">
+              <Users className="h-4 w-4" /> Contact Information
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium mb-1 block">যোগাযোগকারীর নাম</label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.contact_person}
+                  onChange={e => setFormData(p => ({ ...p, contact_person: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">ফোন নম্বর</label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.contact_phone}
+                  onChange={e => setFormData(p => ({ ...p, contact_phone: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">ইমেইল</label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.contact_email}
+                  onChange={e => setFormData(p => ({ ...p, contact_email: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="text-xs font-medium mb-1 block">ওয়েবসাইট</label>
+                <Input
+                  className="h-10 rounded-md"
+                  value={formData.website_url}
+                  onChange={e => setFormData(p => ({ ...p, website_url: e.target.value }))}
+                  placeholder="https://"
+                />
+              </div>
+            </div>
+            <div className="mt-3">
+              <label className="text-xs font-medium mb-1 block">কোম্পানি সম্পর্কে</label>
+              <textarea
+                className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={formData.description}
+                onChange={e => setFormData(p => ({ ...p, description: e.target.value }))}
+                placeholder="কোম্পানির সংক্ষিপ্ত বিবরণ লিখুন..."
+              />
+            </div>
+          </div>
+
+          <Button onClick={saveProfile} className="w-full h-12 text-base font-bold rounded-lg bg-primary hover:bg-primary/90 text-white">
+            <CheckCircle className="h-5 w-5 mr-2" /> প্রোফাইল সেভ করুন
+          </Button>
         </div>
       </JobsPageTransition>
     );
