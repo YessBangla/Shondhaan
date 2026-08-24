@@ -7,12 +7,58 @@ import JobsPageTransition from "@/components/jobs/JobsPageTransition";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
-import { useJobDetail, useApplyJob, useRelatedJobs, useIncrementJobView, useSaveJob, useSavedJobs, useJobSeekerProfile, JOB_TYPES, JOB_CATEGORIES, EDUCATION_LEVELS, GENDER_OPTIONS, COMPANY_TYPES } from "@/hooks/useJobData";
-import { Briefcase, MapPin, Clock, Building2, Banknote, Users, Calendar, Phone, Mail, ArrowLeft, Send, Eye, GraduationCap, User2, Building, AlertCircle, Share2, Bookmark, BookmarkCheck, Printer, CheckCircle2, ChevronRight, Video, Facebook, Linkedin, Globe } from "lucide-react";
+import {
+  useJobDetail,
+  useApplyJob,
+  useRelatedJobs,
+  useIncrementJobView,
+  useSaveJob,
+  useSavedJobs,
+  useJobSeekerProfile,
+  JOB_TYPES,
+  JOB_CATEGORIES,
+  EDUCATION_LEVELS,
+  GENDER_OPTIONS,
+  COMPANY_TYPES,
+} from "@/hooks/useJobData";
+import {
+  Briefcase,
+  MapPin,
+  Clock,
+  Building2,
+  Banknote,
+  Users,
+  Calendar,
+  Phone,
+  Mail,
+  ArrowLeft,
+  Send,
+  Eye,
+  GraduationCap,
+  User2,
+  Building,
+  AlertCircle,
+  Share2,
+  Bookmark,
+  BookmarkCheck,
+  Printer,
+  CheckCircle2,
+  ChevronRight,
+  Video,
+  Facebook,
+  Linkedin,
+  Globe,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,14 +71,23 @@ import { toast } from "sonner";
 import CompanyLogo from "@/components/jobs/CompanyLogo";
 
 // ── Tab config ──────────────────────────────────────────────────────
-type TabKey = "all" | "requirements" | "responsibilities" | "salary" | "company";
+type TabKey =
+  | "all"
+  | "requirements"
+  | "responsibilities"
+  | "salary"
+  | "company";
 
 const TABS: { key: TabKey; labelEn: string; labelBn: string }[] = [
   { key: "all", labelEn: "All", labelBn: "সব" },
   { key: "requirements", labelEn: "Requirements", labelBn: "যোগ্যতা" },
   { key: "responsibilities", labelEn: "Responsibilities", labelBn: "দায়িত্ব" },
   { key: "salary", labelEn: "Salary & Benefits", labelBn: "বেতন ও সুবিধা" },
-  { key: "company", labelEn: "Company Information", labelBn: "প্রতিষ্ঠানের তথ্য" },
+  {
+    key: "company",
+    labelEn: "Company Information",
+    labelBn: "প্রতিষ্ঠানের তথ্য",
+  },
 ];
 
 const JobDetail = () => {
@@ -60,75 +115,40 @@ const JobDetail = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("all");
   const tabsScrollRef = useRef<HTMLDivElement>(null);
   const scrollTabs = (dir: "left" | "right") => {
-    tabsScrollRef.current?.scrollBy({ left: dir === "left" ? -160 : 160, behavior: "smooth" });
+    tabsScrollRef.current?.scrollBy({
+      left: dir === "left" ? -160 : 160,
+      behavior: "smooth",
+    });
   };
 
   const [showApplyModal, setShowApplyModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // The action bar starts inline (inside the header card, normal position
-  // at the top). Once it scrolls out of the viewport, we switch to showing
-  // a second copy fixed to the bottom of the screen instead.
-  //
-  // NOTE: there is exactly ONE bottom bar. It is rendered through a
-  // React Portal straight into document.body (see the
-  // `createPortal(...)` call near the bottom of this component) instead
-  // of inline in the normal JSX tree. This is deliberate:
-  //
-  // `position: fixed` is only fixed relative to the *viewport* as long
-  // as none of its ancestors have a CSS `transform` (or `filter` /
-  // `will-change: transform`) applied. `JobsPageTransition` wraps this
-  // whole page and animates it in/out (a typical framer-motion
-  // page-transition pattern), which applies a `transform` to its
-  // wrapper. Once that happens, any `position: fixed` descendant
-  // — including our bottom action bar — silently becomes fixed relative
-  // to *that transformed wrapper* instead of the real viewport. If
-  // `JobsPageTransition` also does anything scroll-linked (e.g. a
-  // `useScroll`/`useTransform` x-offset for a parallax/slide effect),
-  // the bar visibly drifts sideways as you scroll, since it's now
-  // tracking the wrapper's transform instead of staying put.
-  //
-  // Portaling the bar to `document.body` removes it from
-  // `JobsPageTransition`'s DOM subtree entirely, so it can never be
-  // affected by that wrapper's transforms again, regardless of what
-  // animation logic lives inside `JobsPageTransition`, `Navbar`, or
-  // `JobsMenuBar`. Don't move this bar back inline without removing
-  // this comment.
   const inlineActionBarRef = useRef<HTMLDivElement>(null);
   const [showStickyBottomBar, setShowStickyBottomBar] = useState(false);
 
-  // This effect depends on `job` (not `[]`) because the inline action
-  // bar div only exists in the DOM once `job` has loaded — while
-  // `isLoading` is true, the component returns an early skeleton that
-  // doesn't render `inlineActionBarRef` at all. With an empty dependency
-  // array this effect would run once on mount, find `inlineActionBarRef
-  // .current` still null, and never attach an observer at all, leaving
-  // `showStickyBottomBar` stuck at false forever.
   useEffect(() => {
     const el = inlineActionBarRef.current;
     if (!el) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => setShowStickyBottomBar(!entry.isIntersecting),
-      { threshold: 0 }
+      { threshold: 0 },
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [job]);
 
-  // The only two fields the modal actually collects. Everything else
-  // (name, phone, email, cv, video cv) comes straight from the
-  // jobseeker's profile at submit time.
   const [applicantAge, setApplicantAge] = useState("");
   const [expectedSalary, setExpectedSalary] = useState("");
 
-  // Pre-fill Age / Expected Salary from the profile once it loads, so the
-  // user only has to touch these if the profile value is missing or stale.
   useEffect(() => {
     if (seekerProfile) {
       if (seekerProfile.date_of_birth) {
         const dob = new Date(seekerProfile.date_of_birth);
-        const ageYears = Math.floor((Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        const ageYears = Math.floor(
+          (Date.now() - dob.getTime()) / (365.25 * 24 * 60 * 60 * 1000),
+        );
         setApplicantAge(String(ageYears));
       }
       if (seekerProfile.expected_salary) {
@@ -137,12 +157,16 @@ const JobDetail = () => {
     }
   }, [seekerProfile]);
 
-  // Allowlist-based sanitizer for rich-text job fields. Strips every
-  // attribute (data-*, class, style, etc.) and any tag not produced by
-  // RichTextArea's toolbar, so old/junk HTML (e.g. leftover
-  // data-section-id / PDq2pG_selectionAnchor spans from before AI Write
-  // was removed) renders as clean text instead of literal tags.
-  const ALLOWED_TAGS = new Set(["B", "STRONG", "I", "EM", "UL", "LI", "BR", "P"]);
+  const ALLOWED_TAGS = new Set([
+    "B",
+    "STRONG",
+    "I",
+    "EM",
+    "UL",
+    "LI",
+    "BR",
+    "P",
+  ]);
 
   function sanitizeDescriptionHtml(html: string): string {
     if (!html) return "";
@@ -158,7 +182,9 @@ const JobDetail = () => {
             while (el.firstChild) node.insertBefore(el.firstChild, el);
             node.removeChild(el);
           } else {
-            Array.from(el.attributes).forEach((attr) => el.removeAttribute(attr.name));
+            Array.from(el.attributes).forEach((attr) =>
+              el.removeAttribute(attr.name),
+            );
           }
         } else if (child.nodeType !== Node.TEXT_NODE) {
           node.removeChild(child);
@@ -175,18 +201,19 @@ const JobDetail = () => {
     if (id) incrementView.mutate(id);
   }, [id]);
 
-  const getLabel = (list: { value: string; labelBn: string; labelEn: string }[], val: string) =>
-    list.find((j) => j.value === val)?.[bn ? "labelBn" : "labelEn"] || val;
+  const getLabel = (
+    list: { value: string; labelBn: string; labelEn: string }[],
+    val: string,
+  ) => list.find((j) => j.value === val)?.[bn ? "labelBn" : "labelEn"] || val;
 
   const handleApply = async () => {
-    if (!user) { navigate("/auth"); return; }
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
 
     setSubmitting(true);
 
-    // The backend only accepts job_id, expected_salary, and cover_letter.
-    // Name/phone/email come from jobseeker_profiles server-side, and age
-    // is computed server-side from date_of_birth (age_at_application) —
-    // sending applicantAge here would just be ignored, so it's left out.
     try {
       await applyMutation.mutateAsync({
         job_id: id!,
@@ -196,7 +223,6 @@ const JobDetail = () => {
 
       setShowApplyModal(false);
     } finally {
-      // A failed request must not leave the Apply button permanently busy.
       setSubmitting(false);
     }
   };
@@ -205,7 +231,9 @@ const JobDetail = () => {
 
   const handleNativeShare = async () => {
     if (navigator.share) {
-      try { await navigator.share({ title: job?.title, url: shareUrl }); } catch {}
+      try {
+        await navigator.share({ title: job?.title, url: shareUrl });
+      } catch {}
     } else {
       await navigator.clipboard.writeText(shareUrl);
       toast.success(bn ? "লিঙ্ক কপি হয়েছে" : "Link copied!");
@@ -237,11 +265,18 @@ const JobDetail = () => {
       linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`,
       whatsapp: `https://wa.me/?text=${encodedTitle}%20${encodedUrl}`,
     };
-    window.open(urls[platform], "_blank", "noopener,noreferrer,width=600,height=500");
+    window.open(
+      urls[platform],
+      "_blank",
+      "noopener,noreferrer,width=600,height=500",
+    );
   };
 
   const handleSave = () => {
-    if (!user) { navigate("/auth"); return; }
+    if (!user) {
+      navigate("/auth");
+      return;
+    }
     saveJob.mutate({ jobId: id!, action: isSaved ? "unsave" : "save" });
   };
 
@@ -262,11 +297,17 @@ const JobDetail = () => {
     return (
       <JobsPageTransition>
         <Navbar />
-        <JobsMenuBar />
+        <JobsMenuBar  />
         <div className="text-center py-20">
           <Briefcase className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-          <p className="text-muted-foreground">{bn ? "চাকরি খুঁজে পাওয়া যায়নি" : "Job not found"}</p>
-          <Button variant="outline" onClick={() => navigate("/jobs")} className="mt-4">
+          <p className="text-muted-foreground">
+            {bn ? "চাকরি খুঁজে পাওয়া যায়নি" : "Job not found"}
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/jobs")}
+            className="mt-4"
+          >
             <ArrowLeft className="h-4 w-4 mr-1" /> {bn ? "ফিরে যান" : "Go back"}
           </Button>
         </div>
@@ -274,7 +315,9 @@ const JobDetail = () => {
     );
   }
 
-  const deadlineDays = job.deadline ? differenceInDays(new Date(job.deadline), new Date()) : null;
+  const deadlineDays = job.deadline
+    ? differenceInDays(new Date(job.deadline), new Date())
+    : null;
   const isExpired = job.deadline ? isPast(new Date(job.deadline)) : false;
 
   // ── Section building blocks (reused across tabs) ────────────────────
@@ -285,62 +328,89 @@ const JobDetail = () => {
   );
 
   const SubHeading = ({ children }: { children: React.ReactNode }) => (
-    <h3 className="text-xs font-semibold text-foreground mt-3 mb-1">{children}</h3>
+    <h3 className="text-xs font-semibold text-foreground mt-3 mb-1">
+      {children}
+    </h3>
   );
   const DescriptionBlock = () => (
     <div
       className="job-description-content text-sm text-muted-foreground leading-relaxed"
-      dangerouslySetInnerHTML={{ __html: sanitizeDescriptionHtml(job.description) }}
+      dangerouslySetInnerHTML={{
+        __html: sanitizeDescriptionHtml(job.description),
+      }}
     />
   );
 
-  const RequirementsBlock = () => (
+  const RequirementsBlock = () =>
     job.requirements ? (
       <div>
-        <SectionHeading>{bn ? "যোগ্যতা ও শর্তাবলী" : "Requirements"}</SectionHeading>
+        <SectionHeading>
+          {bn ? "যোগ্যতা ও শর্তাবলী" : "Requirements"}
+        </SectionHeading>
         {job.education_required && job.education_required !== "any" && (
           <>
             <SubHeading>{bn ? "শিক্ষাগত যোগ্যতা" : "Education"}</SubHeading>
-            <p className="text-sm text-muted-foreground">• {getLabel(EDUCATION_LEVELS, job.education_required)}</p>
+            <p className="text-sm text-muted-foreground">
+              • {getLabel(EDUCATION_LEVELS, job.education_required)}
+            </p>
           </>
         )}
-        <SubHeading>{bn ? "অতিরিক্ত শর্তাবলী" : "Additional Requirements"}</SubHeading>
-        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{job.requirements}</div>
+        <SubHeading>
+          {bn ? "অতিরিক্ত শর্তাবলী" : "Additional Requirements"}
+        </SubHeading>
+        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">
+          {job.requirements}
+        </div>
       </div>
-    ) : null
-  );
+    ) : null;
 
   const ResponsibilitiesBlock = () => (
     <div>
-      <SectionHeading>{bn ? "দায়িত্ব ও কাজের পরিধি" : "Responsibilities & Context"}</SectionHeading>
+      <SectionHeading>
+        {bn ? "দায়িত্ব ও কাজের পরিধি" : "Responsibilities & Context"}
+      </SectionHeading>
       <DescriptionBlock />
     </div>
   );
 
   const SalaryBlock = () => (
     <div>
-      <SectionHeading>{bn ? "বেতন ও সুযোগ-সুবিধা" : "Salary & Benefits"}</SectionHeading>
+      <SectionHeading>
+        {bn ? "বেতন ও সুযোগ-সুবিধা" : "Salary & Benefits"}
+      </SectionHeading>
       <p className="text-sm mb-2">
         <span className="font-medium">{bn ? "বেতন: " : "Salary: "}</span>
         <span className="text-emerald-600 font-semibold">
           {job.salary_negotiable
-            ? (bn ? "আলোচনা সাপেক্ষে" : "Negotiable")
-            : (job.salary_min || job.salary_max)
+            ? bn
+              ? "আলোচনা সাপেক্ষে"
+              : "Negotiable"
+            : job.salary_min || job.salary_max
               ? `৳${(job.salary_min || 0).toLocaleString("bn-BD")}${job.salary_max ? ` - ৳${job.salary_max.toLocaleString("bn-BD")}` : ""}`
-              : (bn ? "উল্লেখ নেই" : "Not specified")}
+              : bn
+                ? "উল্লেখ নেই"
+                : "Not specified"}
         </span>
       </p>
       {job.benefits ? (
-        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{job.benefits}</div>
+        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">
+          {job.benefits}
+        </div>
       ) : (
-        <p className="text-sm text-muted-foreground">{bn ? "সুযোগ-সুবিধার বিস্তারিত উল্লেখ নেই" : "No additional benefits listed"}</p>
+        <p className="text-sm text-muted-foreground">
+          {bn
+            ? "সুযোগ-সুবিধার বিস্তারিত উল্লেখ নেই"
+            : "No additional benefits listed"}
+        </p>
       )}
     </div>
   );
 
   const CompanyBlock = () => (
     <div>
-      <SectionHeading>{bn ? "প্রতিষ্ঠানের তথ্য" : "Company Information"}</SectionHeading>
+      <SectionHeading>
+        {bn ? "প্রতিষ্ঠানের তথ্য" : "Company Information"}
+      </SectionHeading>
       <div className="flex items-center gap-3 mb-3">
         <CompanyLogo
           src={job.company_logo_url}
@@ -352,7 +422,9 @@ const JobDetail = () => {
         <div>
           <p className="font-semibold text-sm">{job.company_name}</p>
           {job.company_type && (
-            <p className="text-xs text-muted-foreground">{getLabel(COMPANY_TYPES, job.company_type)}</p>
+            <p className="text-xs text-muted-foreground">
+              {getLabel(COMPANY_TYPES, job.company_type)}
+            </p>
           )}
         </div>
       </div>
@@ -360,7 +432,11 @@ const JobDetail = () => {
         <p className="flex items-center gap-2 text-sm mb-2">
           <Globe className="h-4 w-4 text-blue-600 shrink-0" />
           <a
-            href={job.website_url.startsWith("http") ? job.website_url : `https://${job.website_url}`}
+            href={
+              job.website_url.startsWith("http")
+                ? job.website_url
+                : `https://${job.website_url}`
+            }
             target="_blank"
             rel="noopener noreferrer"
             className="hover:underline text-blue-600 truncate"
@@ -371,47 +447,84 @@ const JobDetail = () => {
       )}
       {user && (job.contact_phone || job.contact_email) ? (
         <div className="space-y-2 text-sm mt-3">
-          {job.contact_phone && <p className="flex items-center gap-2"><Phone className="h-4 w-4 text-blue-600" /> <a href={`tel:${job.contact_phone}`} className="hover:underline">{job.contact_phone}</a></p>}
-          {job.contact_email && <p className="flex items-center gap-2"><Mail className="h-4 w-4 text-blue-600" /> <a href={`mailto:${job.contact_email}`} className="hover:underline">{job.contact_email}</a></p>}
+          {job.contact_phone && (
+            <p className="flex items-center gap-2">
+              <Phone className="h-4 w-4 text-blue-600" />{" "}
+              <a href={`tel:${job.contact_phone}`} className="hover:underline">
+                {job.contact_phone}
+              </a>
+            </p>
+          )}
+          {job.contact_email && (
+            <p className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-blue-600" />{" "}
+              <a
+                href={`mailto:${job.contact_email}`}
+                className="hover:underline"
+              >
+                {job.contact_email}
+              </a>
+            </p>
+          )}
         </div>
       ) : !user && (job.contact_phone || job.contact_email) ? (
         <div className="rounded-lg bg-blue-50 dark:bg-blue-950/20 p-3 text-center mt-3">
-          <p className="text-xs text-muted-foreground mb-2">{bn ? "যোগাযোগের তথ্য দেখতে লগইন করুন" : "Login to see contact details"}</p>
-          <Button size="sm" onClick={() => navigate("/auth")} className="bg-primary hover:bg-emerald-700 text-white">{bn ? "লগইন" : "Login"}</Button>
+          <p className="text-xs text-muted-foreground mb-2">
+            {bn
+              ? "যোগাযোগের তথ্য দেখতে লগইন করুন"
+              : "Login to see contact details"}
+          </p>
+          <Button
+            size="sm"
+            onClick={() => navigate("/auth")}
+            className="bg-primary hover:bg-emerald-700 text-white"
+          >
+            {bn ? "লগইন" : "Login"}
+          </Button>
         </div>
       ) : null}
     </div>
   );
 
-  const ApplicationInstructionBlock = () => (
+  const ApplicationInstructionBlock = () =>
     job.application_instruction ? (
       <div>
-        <SectionHeading>{bn ? "আবেদনের নির্দেশনা" : "Application Instructions"}</SectionHeading>
-        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">{job.application_instruction}</div>
+        <SectionHeading>
+          {bn ? "আবেদনের নির্দেশনা" : "Application Instructions"}
+        </SectionHeading>
+        <div className="text-sm whitespace-pre-wrap text-muted-foreground leading-relaxed">
+          {job.application_instruction}
+        </div>
       </div>
-    ) : null
-  );
+    ) : null;
 
-  // Extracted so it can be rendered twice: once (implicitly) as the
-  // inline bar's button row, and once portaled to document.body as the
-  // fixed bottom bar. Keeping the JSX for the bottom bar in its own
-  // variable makes the createPortal call below easy to read.
   const stickyBottomBar = !isExpired ? (
     <div
       className={`fixed bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
-        showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+        showStickyBottomBar
+          ? "translate-y-0"
+          : "translate-y-full pointer-events-none"
       }`}
     >
       <div className="mx-auto max-w-7xl px-11 py-3">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
-            onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+            onClick={() => (user ? setShowApplyModal(true) : navigate("/auth"))}
             className="bg-primary hover:bg-emerald-700 text-white gap-1.5 h-11 sm:h-9"
           >
             <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
           </Button>
-          <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-            {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleSave}
+            className="gap-1.5"
+          >
+            {isSaved ? (
+              <BookmarkCheck className="h-4 w-4 text-blue-600" />
+            ) : (
+              <Bookmark className="h-4 w-4" />
+            )}
             {bn ? "সংরক্ষণ" : "Save"}
           </Button>
           <DropdownMenu>
@@ -421,13 +534,22 @@ const JobDetail = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+              <DropdownMenuItem
+                onClick={() => shareTo("facebook")}
+                className="gap-2"
+              >
                 <Facebook className="h-4 w-4 text-blue-600" /> Facebook
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+              <DropdownMenuItem
+                onClick={() => shareTo("linkedin")}
+                className="gap-2"
+              >
                 <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+              <DropdownMenuItem
+                onClick={() => shareTo("whatsapp")}
+                className="gap-2"
+              >
                 <Send className="h-4 w-4 text-green-600" /> WhatsApp
               </DropdownMenuItem>
               <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
@@ -435,7 +557,12 @@ const JobDetail = () => {
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => window.print()}
+            className="h-9 w-9 hidden md:flex"
+          >
             <Printer className="h-4 w-4" />
           </Button>
         </div>
@@ -445,14 +572,19 @@ const JobDetail = () => {
 
   return (
     <JobsPageTransition>
-      <Navbar  />
+      <Navbar />
       <JobsMenuBar />
 
       <div className="mx-auto max-w-7xl px-2 md:px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Main Content */}
           <div className="flex-1 min-w-0">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="-ml-2 mb-2 text-muted-foreground">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigate("/jobs")}
+              className="-ml-2 mb-2 text-muted-foreground"
+            >
               <ArrowLeft className="h-4 w-4 mr-1" /> Yess Jobs
             </Button>
 
@@ -460,13 +592,17 @@ const JobDetail = () => {
             {deadlineDays !== null && deadlineDays <= 3 && !isExpired && (
               <div className="mb-3 bg-red-50 dark:bg-red-950/20 border border-red-200 rounded-lg p-3 flex items-center gap-2 text-sm text-red-700">
                 <AlertCircle className="h-4 w-4 shrink-0" />
-                {bn ? `আবেদনের শেষ তারিখ মাত্র ${deadlineDays} দিন বাকি!` : `Only ${deadlineDays} days left to apply!`}
+                {bn
+                  ? `আবেদনের শেষ তারিখ মাত্র ${deadlineDays} দিন বাকি!`
+                  : `Only ${deadlineDays} days left to apply!`}
               </div>
             )}
             {isExpired && (
               <div className="mb-3 bg-gray-100 dark:bg-gray-800 rounded-lg p-3 flex items-center gap-2 text-sm text-muted-foreground">
                 <AlertCircle className="h-4 w-4 shrink-0" />
-                {bn ? "আবেদনের সময়সীমা শেষ হয়ে গেছে" : "Application deadline has passed"}
+                {bn
+                  ? "আবেদনের সময়সীমা শেষ হয়ে গেছে"
+                  : "Application deadline has passed"}
               </div>
             )}
 
@@ -481,20 +617,45 @@ const JobDetail = () => {
                   fallbackBgClass="rounded"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-foreground">{job.company_name}</p>
-                  <h1 className="text-lg md:text-xl font-bold text-teal-700 dark:text-teal-400 mt-0.5">{job.title}</h1>
+                  <p className="text-sm font-semibold text-foreground">
+                    {job.company_name}
+                  </p>
+                  <h1 className="text-lg md:text-xl font-bold text-teal-700 dark:text-teal-400 mt-0.5">
+                    {job.title}
+                  </h1>
                   {job.deadline && (
                     <p className="text-xs mt-2">
-                      <span className="text-muted-foreground">{bn ? "আবেদনের শেষ তারিখ: " : "Application Deadline: "}</span>
-                      <span className={`font-bold ${isExpired ? "text-red-500 line-through" : "text-red-600"}`}>
-                        {format(new Date(job.deadline), "dd MMM yyyy", { locale: bn ? bnLocale : undefined })}
+                      <span className="text-muted-foreground">
+                        {bn ? "আবেদনের শেষ তারিখ: " : "Application Deadline: "}
+                      </span>
+                      <span
+                        className={`font-bold ${isExpired ? "text-red-500 line-through" : "text-red-600"}`}
+                      >
+                        {format(new Date(job.deadline), "dd MMM yyyy", {
+                          locale: bn ? bnLocale : undefined,
+                        })}
                       </span>
                     </p>
                   )}
                   <div className="flex flex-wrap gap-2 mt-2">
-                    <Badge variant="outline" className="bg-blue-50/50 border-blue-200"><Clock className="h-3 w-3 mr-1" />{getLabel(JOB_TYPES, job.job_type)}</Badge>
-                    <Badge variant="outline" className="bg-blue-50/50 border-blue-200">{getLabel(JOB_CATEGORIES, job.category)}</Badge>
-                    {job.is_featured && <Badge className="bg-amber-100 text-amber-700">⭐ Featured</Badge>}
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50/50 border-blue-200"
+                    >
+                      <Clock className="h-3 w-3 mr-1" />
+                      {getLabel(JOB_TYPES, job.job_type)}
+                    </Badge>
+                    <Badge
+                      variant="outline"
+                      className="bg-blue-50/50 border-blue-200"
+                    >
+                      {getLabel(JOB_CATEGORIES, job.category)}
+                    </Badge>
+                    {job.is_featured && (
+                      <Badge className="bg-amber-100 text-amber-700">
+                        ⭐ Featured
+                      </Badge>
+                    )}
                   </div>
                 </div>
               </div>
@@ -504,15 +665,30 @@ const JobDetail = () => {
                   below takes over. `justify-start` is explicit and the
                   Apply Now button does NOT use flex-1/flex-grow. */}
               {!isExpired && (
-                <div ref={inlineActionBarRef} className="flex flex-wrap items-center justify-start gap-2 mt-4 pt-4 border-t">
+                <div
+                  ref={inlineActionBarRef}
+                  className="flex flex-wrap items-center justify-start gap-2 mt-4 pt-4 border-t"
+                >
                   <Button
-                    onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+                    onClick={() =>
+                      user ? setShowApplyModal(true) : navigate("/auth")
+                    }
                     className="bg-primary hover:bg-emerald-700 text-white gap-1.5"
                   >
-                    <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
+                    <Send className="h-4 w-4" />{" "}
+                    {bn ? "আবেদন করুন" : "Apply Now"}
                   </Button>
-                  <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                    {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleSave}
+                    className="gap-1.5"
+                  >
+                    {isSaved ? (
+                      <BookmarkCheck className="h-4 w-4 text-blue-600" />
+                    ) : (
+                      <Bookmark className="h-4 w-4" />
+                    )}
                     {bn ? "সংরক্ষণ" : "Save"}
                   </Button>
                   <DropdownMenu>
@@ -522,70 +698,102 @@ const JobDetail = () => {
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="start">
-                      <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                      <DropdownMenuItem
+                        onClick={() => shareTo("facebook")}
+                        className="gap-2"
+                      >
                         <Facebook className="h-4 w-4 text-blue-600" /> Facebook
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                      <DropdownMenuItem
+                        onClick={() => shareTo("linkedin")}
+                        className="gap-2"
+                      >
                         <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                      <DropdownMenuItem
+                        onClick={() => shareTo("whatsapp")}
+                        className="gap-2"
+                      >
                         <Send className="h-4 w-4 text-green-600" /> WhatsApp
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                        <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                      <DropdownMenuItem
+                        onClick={handleNativeShare}
+                        className="gap-2"
+                      >
+                        <Share2 className="h-4 w-4" />{" "}
+                        {bn ? "লিঙ্ক কপি" : "Copy Link"}
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
-                  <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => window.print()}
+                    className="h-9 w-9 hidden md:flex"
+                  >
                     <Printer className="h-4 w-4" />
                   </Button>
                 </div>
               )}
             </div>
 
-            {/* ── Tabs (bdjobs style) ─────────────────────────────── */}
-            <div className="sticky  top-0 z-10 -mx-4 md:mx-0 px-4 md:px-0 py-2 bg-background/95 backdrop-blur-sm mb-4">
-              <div className="flex border-gray-300 items-stretch rounded-full border bg-card overflow-hidden shadow-sm">
-                <button
-                  onClick={() => scrollTabs("left")}
-                  className="shrink-0 w-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 border-r"
-                  aria-label={bn ? "বামে স্ক্রল" : "Scroll left"}
-                >
-                  <ChevronRight className="h-4 w-4 rotate-180" />
-                </button>
-                <div ref={tabsScrollRef} className="flex-1 flex  scrollbar-none scroll-smooth">
-                  {TABS.map((tab, i) => (
-                    <button
-                      key={tab.key}
-                      onClick={() => scrollToSection(tab.key)}
-                      className={`shrink-0 px-4 md:px-5 py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
-                        i !== 0 ? "border-l" : ""
-                      } ${
-                        activeTab === tab.key
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full my-1 mx-0.5 border-l-0"
-                          : "text-teal-700 dark:text-teal-400 hover:bg-muted/50"
-                      }`}
-                    >
-                      {bn ? tab.labelBn : tab.labelEn}
-                    </button>
-                  ))}
-                </div>
-                <button
-                  onClick={() => scrollTabs("right")}
-                  className="shrink-0 w-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 border-l"
-                  aria-label={bn ? "ডানে স্ক্রল" : "Scroll right"}
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
+           {/* ── Tabs (bdjobs style) ─────────────────────────────── */}
+<div className="sticky top-0 z-10 -mx-4 md:mx-0 px-4 md:px-0 py-2 bg-background/95 backdrop-blur-sm mb-4">
+  <div className="flex w-full items-stretch rounded-full border border-gray-300 bg-card overflow-hidden shadow-sm">
+
+    {/* Left button */}
+    <button
+      onClick={() => scrollTabs("left")}
+      className="shrink-0 w-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 border-r"
+      aria-label={bn ? "বামে স্ক্রল" : "Scroll left"}
+    >
+      <ChevronRight className="h-4 w-4 rotate-180" />
+    </button>
+
+    {/* Scrollable tabs */}
+    <div
+      ref={tabsScrollRef}
+      className="flex-1 min-w-0 overflow-x-auto scrollbar-none scroll-smooth"
+    >
+      <div className="flex min-w-max items-center">
+        {TABS.map((tab, i) => (
+          <button
+            key={tab.key}
+            onClick={() => scrollToSection(tab.key)}
+            className={`shrink-0 px-3 sm:px-4 md:px-5 py-2.5 text-xs md:text-sm font-medium whitespace-nowrap transition-colors ${
+              i !== 0 ? "border-l" : ""
+            } ${
+              activeTab === tab.key
+                ? "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300 rounded-full my-1 mx-0.5 border-l-0"
+                : "text-teal-700 dark:text-teal-400 hover:bg-muted/50"
+            }`}
+          >
+            {bn ? tab.labelBn : tab.labelEn}
+          </button>
+        ))}
+      </div>
+    </div>
+
+    {/* Right button */}
+    <button
+      onClick={() => scrollTabs("right")}
+      className="shrink-0 w-9 flex items-center justify-center text-muted-foreground hover:bg-muted/50 border-l"
+      aria-label={bn ? "ডানে স্ক্রল" : "Scroll right"}
+    >
+      <ChevronRight className="h-4 w-4" />
+    </button>
+
+  </div>
+</div>
 
             {/* ── Summary Grid ──────────────────────────────────────── */}
             <div className="grid border-gray-300 grid-cols-2 md:grid-cols-3 gap-3 p-4 bg-gradient-to-br from-blue-50/50 to-indigo-50/30 dark:from-blue-950/20 dark:to-indigo-950/10 rounded-xl border  dark:border-blue-900/30 mb-4">
               <div className="flex  items-start gap-2 text-xs">
                 <Users className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-muted-foreground font-medium">{bn ? "পদ সংখ্যা" : "Vacancy"}</p>
+                  <p className="text-muted-foreground font-medium">
+                    {bn ? "পদ সংখ্যা" : "Vacancy"}
+                  </p>
                   <p className="font-semibold">{job.vacancy_count || "--"}</p>
                 </div>
               </div>
@@ -593,9 +801,16 @@ const JobDetail = () => {
                 <div className="flex items-start gap-2 text-xs">
                   <User2 className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-muted-foreground font-medium">{bn ? "বয়স" : "Age"}</p>
+                    <p className="text-muted-foreground font-medium">
+                      {bn ? "বয়স" : "Age"}
+                    </p>
                     <p className="font-semibold">
-                      {job.age_min && job.age_max ? `${job.age_min} to ${job.age_max}` : job.age_min ? `${job.age_min}+` : `${bn ? "সর্বোচ্চ" : "Max"} ${job.age_max}`} {bn ? "বছর" : "years"}
+                      {job.age_min && job.age_max
+                        ? `${job.age_min} to ${job.age_max}`
+                        : job.age_min
+                          ? `${job.age_min}+`
+                          : `${bn ? "সর্বোচ্চ" : "Max"} ${job.age_max}`}{" "}
+                      {bn ? "বছর" : "years"}
                     </p>
                   </div>
                 </div>
@@ -603,36 +818,62 @@ const JobDetail = () => {
               <div className="flex items-start gap-2 text-xs">
                 <MapPin className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-muted-foreground font-medium">{bn ? "কর্মস্থল" : "Location"}</p>
-                  <p className="font-semibold">{job.district ? `${job.district}${job.thana ? `, ${job.thana}` : ""}` : (bn ? "যেকোনো স্থান" : "Anywhere in Bangladesh")}</p>
+                  <p className="text-muted-foreground font-medium">
+                    {bn ? "কর্মস্থল" : "Location"}
+                  </p>
+                  <p className="font-semibold">
+                    {job.district
+                      ? `${job.district}${job.thana ? `, ${job.thana}` : ""}`
+                      : bn
+                        ? "যেকোনো স্থান"
+                        : "Anywhere in Bangladesh"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-start gap-2 text-xs">
                 <Banknote className="h-4 w-4 text-emerald-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-muted-foreground font-medium">{bn ? "বেতন" : "Salary"}</p>
+                  <p className="text-muted-foreground font-medium">
+                    {bn ? "বেতন" : "Salary"}
+                  </p>
                   <p className="font-semibold text-emerald-600">
                     {job.salary_negotiable
-                      ? (bn ? "আলোচনা সাপেক্ষে" : "Negotiable")
-                      : (job.salary_min || job.salary_max)
+                      ? bn
+                        ? "আলোচনা সাপেক্ষে"
+                        : "Negotiable"
+                      : job.salary_min || job.salary_max
                         ? `৳${(job.salary_min || 0).toLocaleString("bn-BD")}${job.salary_max ? ` - ৳${job.salary_max.toLocaleString("bn-BD")}` : ""}`
-                        : (bn ? "আলোচনা সাপেক্ষে" : "Negotiable")}
+                        : bn
+                          ? "আলোচনা সাপেক্ষে"
+                          : "Negotiable"}
                   </p>
                 </div>
               </div>
               <div className="flex items-start gap-2 text-xs">
                 <Calendar className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-muted-foreground font-medium">{bn ? "প্রকাশিত" : "Published"}</p>
-                  <p className="font-semibold">{format(new Date(job.created_at), "dd MMM yyyy", { locale: bn ? bnLocale : undefined })}</p>
+                  <p className="text-muted-foreground font-medium">
+                    {bn ? "প্রকাশিত" : "Published"}
+                  </p>
+                  <p className="font-semibold">
+                    {format(new Date(job.created_at), "dd MMM yyyy", {
+                      locale: bn ? bnLocale : undefined,
+                    })}
+                  </p>
                 </div>
               </div>
               {(job.experience_min > 0 || job.experience_max) && (
                 <div className="flex items-start gap-2 text-xs">
                   <Briefcase className="h-4 w-4 text-blue-600 shrink-0 mt-0.5" />
                   <div>
-                    <p className="text-muted-foreground font-medium">{bn ? "অভিজ্ঞতা" : "Experience"}</p>
-                    <p className="font-semibold">{job.experience_min}{job.experience_max ? `-${job.experience_max}` : "+"} {bn ? "বছর" : "years"}</p>
+                    <p className="text-muted-foreground font-medium">
+                      {bn ? "অভিজ্ঞতা" : "Experience"}
+                    </p>
+                    <p className="font-semibold">
+                      {job.experience_min}
+                      {job.experience_max ? `-${job.experience_max}` : "+"}{" "}
+                      {bn ? "বছর" : "years"}
+                    </p>
                   </div>
                 </div>
               )}
@@ -642,7 +883,17 @@ const JobDetail = () => {
             {seekerProfile !== undefined && (
               <div className="mb-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 rounded-lg p-3 flex items-center gap-2 text-sm text-blue-700 dark:text-blue-400">
                 <Video className="h-4 w-4 shrink-0" />
-                {bn ? <>প্রার্থীদের <strong>ভিডিও সিভি</strong> জমা দিতে উৎসাহিত করা হচ্ছে।</> : <>Applicants are encouraged to submit a <strong>Video CV</strong>.</>}
+                {bn ? (
+                  <>
+                    প্রার্থীদের <strong>ভিডিও সিভি</strong> জমা দিতে উৎসাহিত করা
+                    হচ্ছে।
+                  </>
+                ) : (
+                  <>
+                    Applicants are encouraged to submit a{" "}
+                    <strong>Video CV</strong>.
+                  </>
+                )}
               </div>
             )}
 
@@ -675,17 +926,30 @@ const JobDetail = () => {
                 <ApplicationInstructionBlock />
               </div>
 
-              {activeTab === "requirements" && (job.requirements ? <RequirementsBlock /> : (
-                <p className="text-sm text-muted-foreground">{bn ? "কোনো নির্দিষ্ট যোগ্যতা উল্লেখ নেই" : "No specific requirements listed"}</p>
-              ))}
+              {activeTab === "requirements" &&
+                (job.requirements ? (
+                  <RequirementsBlock />
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    {bn
+                      ? "কোনো নির্দিষ্ট যোগ্যতা উল্লেখ নেই"
+                      : "No specific requirements listed"}
+                  </p>
+                ))}
               {activeTab === "responsibilities" && <ResponsibilitiesBlock />}
               {activeTab === "salary" && <SalaryBlock />}
             </div>
 
             {/* Stats */}
             <div className="flex gap-4 text-xs text-muted-foreground mb-6">
-              <span className="flex items-center gap-1"><Eye className="h-3 w-3" /> {job.views_count} {bn ? "বার দেখা হয়েছে" : "views"}</span>
-              <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {job.applications_count} {bn ? "জন আবেদন করেছেন" : "applications"}</span>
+              <span className="flex items-center gap-1">
+                <Eye className="h-3 w-3" /> {job.views_count}{" "}
+                {bn ? "বার দেখা হয়েছে" : "views"}
+              </span>
+              <span className="flex items-center gap-1">
+                <Users className="h-3 w-3" /> {job.applications_count}{" "}
+                {bn ? "জন আবেদন করেছেন" : "applications"}
+              </span>
             </div>
             {!isExpired && (
               <div
@@ -698,8 +962,7 @@ const JobDetail = () => {
                   py-3 md:py-4
                   z-20
                 "
-              >
-              </div>
+              ></div>
             )}
           </div>
 
@@ -712,8 +975,12 @@ const JobDetail = () => {
                   {bn ? "সম্পর্কিত চাকরি" : "Related Jobs"}
                 </h3>
                 <div className="space-y-2">
-                  {relatedJobs.slice(0, 6).map(rj => (
-                    <Link key={rj.id} to={`/jobs/${rj.id}`} className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-muted/50 transition-colors group">
+                  {relatedJobs.slice(0, 6).map((rj) => (
+                    <Link
+                      key={rj.id}
+                      to={`/jobs/${rj.id}`}
+                      className="flex items-start gap-2.5 p-2.5 rounded-lg hover:bg-muted/50 transition-colors group"
+                    >
                       <CompanyLogo
                         src={rj.company_logo_url}
                         alt={rj.company_name}
@@ -724,15 +991,31 @@ const JobDetail = () => {
                         fallbackBgClass="bg-blue-50 dark:bg-blue-900/30"
                       />
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium line-clamp-2 group-hover:text-blue-600 transition-colors">{rj.title}</p>
-                        <p className="text-[10px] text-muted-foreground mt-0.5">{rj.company_name}</p>
-                        {rj.salary_min && <p className="text-[10px] text-emerald-600 font-medium mt-0.5">৳{rj.salary_min.toLocaleString("bn-BD")}{rj.salary_max ? ` - ৳${rj.salary_max.toLocaleString("bn-BD")}` : "+"}</p>}
+                        <p className="text-xs font-medium line-clamp-2 group-hover:text-blue-600 transition-colors">
+                          {rj.title}
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {rj.company_name}
+                        </p>
+                        {rj.salary_min && (
+                          <p className="text-[10px] text-emerald-600 font-medium mt-0.5">
+                            ৳{rj.salary_min.toLocaleString("bn-BD")}
+                            {rj.salary_max
+                              ? ` - ৳${rj.salary_max.toLocaleString("bn-BD")}`
+                              : "+"}
+                          </p>
+                        )}
                       </div>
                       <ChevronRight className="h-3 w-3 text-muted-foreground shrink-0 mt-1" />
                     </Link>
                   ))}
                 </div>
-                <Button variant="outline" size="sm" className="w-full mt-3 text-xs" onClick={() => navigate("/jobs")}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full mt-3 text-xs"
+                  onClick={() => navigate("/jobs")}
+                >
                   {bn ? "আরো চাকরি দেখুন" : "View More Jobs"}
                 </Button>
               </div>
@@ -741,27 +1024,35 @@ const JobDetail = () => {
         </div>
       </div>
 
-      {/* ── Fixed bottom action bar, rendered via Portal ─────────────
-          Hidden by default. Slides up into view only once the inline
-          action bar above has scrolled out of the viewport, then stays
-          pinned to the bottom of the screen for the rest of the scroll.
-          Scrolling back up hides it again automatically. */}
       {!isExpired && (
         <div
           className={`fixed bottom-20 md:bottom-0 left-0 right-0 z-30 bg-background/95 backdrop-blur-sm border-t border-gray-300 shadow-[0_-2px_10px_rgba(0,0,0,0.06)] transition-transform duration-300 ease-out ${
-            showStickyBottomBar ? "translate-y-0" : "translate-y-full pointer-events-none"
+            showStickyBottomBar
+              ? "translate-y-0"
+              : "translate-y-full pointer-events-none"
           }`}
         >
           <div className="mx-auto max-w-7xl px-4 py-3 ">
             <div className="flex flex-wrap items-center gap-2">
               <Button
-                onClick={() => user ? setShowApplyModal(true) : navigate("/auth")}
+                onClick={() =>
+                  user ? setShowApplyModal(true) : navigate("/auth")
+                }
                 className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
               >
                 <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
               </Button>
-              <Button variant="outline" size="sm" onClick={handleSave} className="gap-1.5">
-                {isSaved ? <BookmarkCheck className="h-4 w-4 text-blue-600" /> : <Bookmark className="h-4 w-4" />}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleSave}
+                className="gap-1.5"
+              >
+                {isSaved ? (
+                  <BookmarkCheck className="h-4 w-4 text-blue-600" />
+                ) : (
+                  <Bookmark className="h-4 w-4" />
+                )}
                 {bn ? "সংরক্ষণ" : "Save"}
               </Button>
               <DropdownMenu>
@@ -771,21 +1062,39 @@ const JobDetail = () => {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start">
-                  <DropdownMenuItem onClick={() => shareTo("facebook")} className="gap-2">
+                  <DropdownMenuItem
+                    onClick={() => shareTo("facebook")}
+                    className="gap-2"
+                  >
                     <Facebook className="h-4 w-4 text-blue-600" /> Facebook
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => shareTo("linkedin")} className="gap-2">
+                  <DropdownMenuItem
+                    onClick={() => shareTo("linkedin")}
+                    className="gap-2"
+                  >
                     <Linkedin className="h-4 w-4 text-blue-700" /> LinkedIn
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => shareTo("whatsapp")} className="gap-2">
+                  <DropdownMenuItem
+                    onClick={() => shareTo("whatsapp")}
+                    className="gap-2"
+                  >
                     <Send className="h-4 w-4 text-green-600" /> WhatsApp
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={handleNativeShare} className="gap-2">
-                    <Share2 className="h-4 w-4" /> {bn ? "লিঙ্ক কপি" : "Copy Link"}
+                  <DropdownMenuItem
+                    onClick={handleNativeShare}
+                    className="gap-2"
+                  >
+                    <Share2 className="h-4 w-4" />{" "}
+                    {bn ? "লিঙ্ক কপি" : "Copy Link"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-              <Button variant="outline" size="icon" onClick={() => window.print()} className="h-9 w-9 hidden md:flex">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => window.print()}
+                className="h-9 w-9 hidden md:flex"
+              >
                 <Printer className="h-4 w-4" />
               </Button>
             </div>
@@ -793,20 +1102,21 @@ const JobDetail = () => {
         </div>
       )}
 
-      {/* Apply Modal — only Age & Expected Salary are collected here.
-          Name, phone, email, CV, and video CV all come from the
-          jobseeker's profile automatically at submit time. */}
       <Dialog open={showApplyModal} onOpenChange={setShowApplyModal}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>{bn ? "চাকরিতে আবেদন করুন" : "Apply for this Job"}</DialogTitle>
+            <DialogTitle>
+              {bn ? "চাকরিতে আবেদন করুন" : "Apply for this Job"}
+            </DialogTitle>
             <DialogDescription>
               {bn
                 ? "আপনার প্রোফাইলের তথ্য ব্যবহার করে আবেদন জমা দেওয়া হবে। শুধু বয়স ও প্রত্যাশিত বেতন লিখুন।"
                 : "Your application will be submitted using your profile details. Just fill in your age and expected salary."}
             </DialogDescription>
           </DialogHeader>
-          <p className="text-xs text-muted-foreground -mt-2 mb-1">{job?.title} — {job?.company_name}</p>
+          <p className="text-xs text-muted-foreground -mt-2 mb-1">
+            {job?.title} — {job?.company_name}
+          </p>
 
           <div className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
@@ -824,7 +1134,9 @@ const JobDetail = () => {
                 />
               </div>
               <div>
-                <label className="text-xs font-medium mb-1 block">{bn ? "প্রত্যাশিত বেতন" : "Expected Salary"}</label>
+                <label className="text-xs font-medium mb-1 block">
+                  {bn ? "প্রত্যাশিত বেতন" : "Expected Salary"}
+                </label>
                 <Input
                   type="number"
                   placeholder={bn ? "প্রত্যাশিত বেতন" : "Expected Salary"}
@@ -839,7 +1151,13 @@ const JobDetail = () => {
               disabled={submitting || applyMutation.isPending}
               className="w-full bg-blue-600 hover:bg-blue-700"
             >
-              {submitting ? (bn ? "জমা হচ্ছে..." : "Submitting...") : bn ? "আবেদন জমা দিন" : "Submit Application"}
+              {submitting
+                ? bn
+                  ? "জমা হচ্ছে..."
+                  : "Submitting..."
+                : bn
+                  ? "আবেদন জমা দিন"
+                  : "Submit Application"}
             </Button>
           </div>
         </DialogContent>
