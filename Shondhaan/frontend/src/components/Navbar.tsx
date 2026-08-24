@@ -368,56 +368,57 @@ const handleSignOut = async () => {
     to: string;
     icon: LucideIcon;
     label: string;
-  }[] = [
-    {
-      show: isSuperAdmin,
-      to: "/super-admin",
-      icon: Crown,
-      label: bn ? "সুপার অ্যাডমিন" : "Super Admin",
-    },
-    {
-      show: isProvider,
-      to: "/provider",
-      icon: Wrench,
-      label: bn ? "প্রোভাইডার" : "Provider",
-    },
-    {
-      show: isCallCenter,
-      to: "/call-center",
-      icon: Headphones,
-      label: bn ? "কল সেন্টার" : "Call Center",
-    },
-    {
-      show: isRepresentative,
-      to: "/representative",
-      icon: MapPinCheck,
-      label: bn ? "প্রতিনিধি" : "Representative",
-    },
-    {
-      show: isRepresentative,
-      to: "/mart/my-shop",
-      icon: Store,
-      label: bn ? "আমার শপ" : "My Shop",
-    },
-    {
-      show: isModerator,
-      to: "/moderator",
-      icon: ShieldCheck,
-      label: bn ? "মডারেটর" : "Moderator",
-    },
-    {
-      show: isSupervisor && !userRoles.includes("admin"),
-      to: "/supervisor",
-      icon: ShieldCheck,
-      label: bn ? "সুপারভাইজার" : "Supervisor",
-    },
-    {
-      show: isFinance && !userRoles.includes("admin"),
-      to: "/finance",
-      icon: ShieldCheck,
-      label: bn ? "ফিনান্স" : "Finance",
-    },
-  ];
+    }[] = 
+    [
+      {
+        show: isSuperAdmin,
+        to: "/super-admin",
+        icon: Crown,
+        label: bn ? "সুপার অ্যাডমিন" : "Super Admin",
+      },
+      {
+        show: isProvider,
+        to: "/provider",
+        icon: Wrench,
+        label: bn ? "প্রোভাইডার" : "Provider",
+      },
+      {
+        show: isCallCenter,
+        to: "/call-center",
+        icon: Headphones,
+        label: bn ? "কল সেন্টার" : "Call Center",
+      },
+      {
+        show: isRepresentative,
+        to: "/representative",
+        icon: MapPinCheck,
+        label: bn ? "প্রতিনিধি" : "Representative",
+      },
+      {
+        show: isRepresentative,
+        to: "/mart/my-shop",
+        icon: Store,
+        label: bn ? "আমার শপ" : "My Shop",
+      },
+      {
+        show: isModerator,
+        to: "/moderator",
+        icon: ShieldCheck,
+        label: bn ? "মডারেটর" : "Moderator",
+      },
+      {
+        show: isSupervisor && !userRoles.includes("admin"),
+        to: "/supervisor",
+        icon: ShieldCheck,
+        label: bn ? "সুপারভাইজার" : "Supervisor",
+      },
+      {
+        show: isFinance && !userRoles.includes("admin"),
+        to: "/finance",
+        icon: ShieldCheck,
+        label: bn ? "ফিনান্স" : "Finance",
+      },
+    ];
 
   const visiblePanels = panelLinks.filter((p) => p.show);
 
@@ -428,21 +429,21 @@ const handleSignOut = async () => {
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
-        className="fixed top-0 left-0 right-0 z-[9999] glass-nav bg-background/95 md:!border-b-0 md:!shadow-none"
+        className="fixed top-0 left-0 right-0 z-[9999] glass-nav bg-background md:!border-b-0 md:!shadow-none"
         style={isJobsHeader ? { borderBottom: 0, boxShadow: "none" } : undefined}
       >
         {/* Mobile header */}
         <div
-          className="md:hidden px-3 pb-2"
+          className="md:hidden"
           style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
-        >
-          <div className="flex items-center gap-2">
+          >
+          <div className="flex px-3 items-center gap-2">
             <button
               onClick={() => navigate("/")}
               aria-label={`${settings.logo_text} — ${L.logo.long}`}
               title={L.logo.long}
               className="press flex shrink-0 items-center justify-center"
-            >
+              >
               {settings.logo_url ? (
                 <img
                   src={settings.logo_url}
@@ -462,31 +463,31 @@ const handleSignOut = async () => {
             </div>
           </div>
 
-          <div className="mt-2 flex items-stretch justify-between gap-[3px] xs:gap-1 sm:gap-1.5">
-            <LongPressTooltip label={L.request.long}>
-              <button
-                onClick={() => setRequestOpen(true)}
-                aria-label={L.request.long}
-                title={L.request.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-primary/15 bg-gradient-to-b from-primary/5 to-primary/10 px-0.5 py-1.5 sm:px-1 text-primary shadow-[0_1px_0_rgba(255,255,255,0.6)_inset,0_1px_2px_rgba(0,0,0,0.04)] transition-all duration-200  hover:bg-blue-700 active:scale-[0.97]"
-              >
-                <HelpCircle className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
-                  {L.request.short}
-                </span>
-              </button>
-            </LongPressTooltip>
-
+          <div className="mt-2 flex items-stretch justify-between bg-primary px-2 py-2 gap-[3px] xs:gap-1 sm:gap-1">
             <LongPressTooltip label={L.emergency.long}>
               <button
                 onClick={() => setEmergencyOpen(true)}
                 aria-label={L.emergency.long}
                 title={L.emergency.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-destructive/20 bg-gradient-to-b from-destructive/5 to-destructive/10 px-0.5 py-1.5 sm:px-1 text-destructive transition-all duration-200 active:scale-[0.97]"
-              >
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-orange-600 bg-gradient-to-b from-orange-600 to-destructive/40 px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
                 <Zap className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
                   {L.emergency.short}
+                </span>
+              </button>
+            </LongPressTooltip>
+
+            <LongPressTooltip label={L.request.long}>
+              <button
+                onClick={() => setRequestOpen(true)}
+                aria-label={L.request.long}
+                title={L.request.long}
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl hover:border-primary/15 bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200  hover:bg-primary hover:text-white active:scale-[0.97]"
+                >
+                <HelpCircle className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
+                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                  {L.request.short}
                 </span>
               </button>
             </LongPressTooltip>
@@ -496,8 +497,8 @@ const handleSignOut = async () => {
                 onClick={() => navigate("/track")}
                 aria-label={L.track.long}
                 title={L.track.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-border/60 bg-gradient-to-b from-background to-secondary/40 px-0.5 py-1.5 sm:px-1 text-foreground/90 transition-all duration-200 active:scale-[0.97]"
-              >
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
                 <Route className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
                   {L.track.short}
@@ -505,18 +506,18 @@ const handleSignOut = async () => {
               </button>
             </LongPressTooltip>
 
-            <span
+            {/* <span
               aria-hidden
-              className="mx-px xs:mx-0.5 sm:mx-1 my-1.5 w-px shrink-0 self-stretch bg-gradient-to-b from-transparent via-border/70 to-transparent"
-            />
+              className="mx-px xs:mx-0.5 sm:mx-1 my-1.5 w-px shrink-0 self-stretch bg-transparent"
+            /> */}
 
             <LongPressTooltip label={L.lang.long}>
               <button
                 onClick={toggleLang}
                 aria-label={L.lang.long}
                 title={L.lang.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-border/60 bg-gradient-to-b from-background to-secondary/40 px-0.5 py-1.5 sm:px-1 text-foreground/90 transition-all duration-200 active:scale-[0.97]"
-              >
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
                 <Globe className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
                   {L.lang.short}
@@ -529,8 +530,8 @@ const handleSignOut = async () => {
                 onClick={() => setIsOpen(true)}
                 aria-label={L.cart.long}
                 title={L.cart.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-border/60 bg-gradient-to-b from-background to-secondary/40 px-0.5 py-1.5 sm:px-1 text-foreground/90 transition-all duration-200 active:scale-[0.97]"
-              >
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
                 <span className="relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
                   <ShoppingBag className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                   {totalItems > 0 && (
@@ -550,8 +551,8 @@ const handleSignOut = async () => {
                 onClick={() => navigate("/notifications")}
                 aria-label={L.alerts.long}
                 title={L.alerts.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-border/60 bg-gradient-to-b from-background to-secondary/40 px-0.5 py-1.5 sm:px-1 text-foreground/90 transition-all duration-200 active:scale-[0.97]"
-              >
+                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
                 <span className="relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
                   <Bell className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
                   <span className="absolute -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-destructive motion-safe:animate-pulse" />
@@ -568,7 +569,7 @@ const handleSignOut = async () => {
         {mobileMenuOpen && (
           <div className="md:hidden">
             <div
-              className="fixed inset-0 top-0 z-40 bg-foreground/40 backdrop-blur-sm"
+              className="fixed inset-0 top-0 z-40 bg-foreground/4 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}
             />
 

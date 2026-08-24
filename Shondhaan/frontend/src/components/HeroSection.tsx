@@ -146,37 +146,41 @@ const normalizeHeroBanner = (banner: any): HeroBanner => ({
 
 const PLATFORM_CARDS = [
   {
+    to: "/services",
+    labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
+    descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
+    Icon: LucideWorkflow,
+    imgIcon: "images/modules_logo/service.png",
+    accentColor: "#a89a9c",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
+  },
+  {
     to: "/mart/home",
-    labelBn: "মার্রকেটপ্লেস", labelEn: "Marketplace",
+    labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
     descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
     Icon: ShoppingBag,
+    imgIcon: "images/modules_logo/mart.png",
     accentColor: "#d4a574",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 100% 0%, rgba(212, 165, 116, 0.08), transparent 50%)",
   },
   {
     to: "/deal",
-    labelBn: "লোকাল ডিলস", labelEn: "Local Deals",
+    labelBn: "সন্ধান ডিল", labelEn: "Shondhaan Deal",
     descBn: "নির্ভরযোগ্য লেনদেন", descEn: "Verified exchanges",
     Icon: Tag,
+    imgIcon: "images/modules_logo/deal.png",
     accentColor: "#9ca89a",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 0% 100%, rgba(156, 168, 154, 0.08), transparent 50%)",
   },
   {
     to: "/jobs",
-    labelBn: "সুযোগ", labelEn: "Opportunities",
+    labelBn: "চাকরির সূযোগ", labelEn: "Job Opportunities",
     descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
     Icon: Briefcase,
-    accentColor: "#a89a9c",
-    bgDark: "#1a1a2e",
-    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
-  },
-    {
-    to: "/services",
-    labelBn: "সার্ভিস", labelEn: "Services",
-    descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
-    Icon: LucideWorkflow,
+    imgIcon: "images/modules_logo/job.png",
     accentColor: "#a89a9c",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
@@ -222,7 +226,7 @@ function SearchDropdown({
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: -12 }}
         transition={{ duration: 0.25, ease: "easeOut" }}
-        className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-amber-900/25 bg-slate-950/98 shadow-xl shadow-black/40 backdrop-blur-md"
+        className="absolute left-0 right-0 top-full z-50 mt-2 overflow-hidden rounded-lg border border-amber-900/25 bg-slate-950/98 shadow-xl shadow-black/40 bg-white"
       >
         {show === "results" ? (
           filtered.length > 0 ? (
@@ -264,15 +268,15 @@ function SearchDropdown({
           )
         ) : (
           <div className="p-3 space-y-2">
-            <p className="text-[9px] font-semibold uppercase tracking-widest text-amber-700/50">
-              {bn ? "জনপ্রিয়" : "Suggestions"}
+            <p className="text-[9px] font-semibold uppercase tracking-widest text-forground">
+              {bn ? "সাজেশন" : "Suggestions"}
             </p>
             <div className="flex flex-wrap gap-1.5">
               {quickSuggestions.map((s) => (
                 <button
                   key={s.slug}
                   onClick={() => onSelect(s.slug)}
-                  className="rounded-sm border border-amber-700/25 bg-amber-900/10 px-2.5 py-1 text-[10px] font-medium text-amber-100 transition-colors hover:bg-amber-900/20 hover:border-amber-700/40"
+                  className="rounded-sm border border-amber-700/25 bg-amber-900/10 px-2.5 py-1 text-[10px] font-bold text-foreground transition-colors hover:bg-amber-900/20 hover:border-amber-700/40"
                 >
                   {s.title}
                 </button>
@@ -333,7 +337,7 @@ const HeroSection = () => {
     !isDemo && !isDemoName
       ? rawName || (authUser?.email ? authUser.email.split("@")[0] : null)
       : null;
-  const greetName = userName || (bn ? "আপনার" : "Visitor");
+  const greetName = userName || (bn ? "ভিসিটর" : "Visitor");
 
   const activeHeroBanner = heroBanners[0];
 
@@ -462,9 +466,9 @@ const HeroSection = () => {
       
       {/* ══════════════════════ MOBILE HERO ══════════════════════ */}
       <div 
-        className="md:hidden relative min-h-fit flex flex-col bg-slate-950 bg-cover bg-center" 
+        className="md:hidden relative min-h-fit pb-6 flex flex-col bg-slate-950 bg-cover bg-center" 
         style={{ 
-          paddingTop: "max(72px, calc(var(--app-header-h, 96px) + 4px))",
+          paddingTop: "100px",
           backgroundImage: heroImage 
             ? `linear-gradient(135deg, rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.65)), url('${heroImage}')`
             : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
@@ -496,11 +500,11 @@ const HeroSection = () => {
             transition={{ duration: 0.4 }}
             className="w-full text-center"
           >
-            <p className="text-[10px] font-medium tracking-widest uppercase text-white mb-1">
+            <p className="hidden text-[10px] font-medium tracking-widest uppercase text-white mb-1">
               {bn ? "স্বাগতম" : "Welcome back"}
             </p>
             <h1 className="font-serif text-lg font-light text-white leading-tight">
-              {bn ? "হ্যালো, " : "Hello, "}<span className="font-medium text-primary">{greetName}</span> 👋
+              {bn ? "হ্যালো, " : "Hello, "}<span className="font-medium">{greetName}</span> 👋
             </h1>
           </motion.div>
 
@@ -510,12 +514,11 @@ const HeroSection = () => {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.08 }}
-            className="relative z-30 w-full max-w-md mt-3 mb-4"
-          >
+            className="relative z-30 w-full max-w-md mt-3 mb-4">
             <form onSubmit={handleSubmit} className="relative group">
               <div className="absolute inset-0 bg-gradient-to-r from-amber-900/20 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
-              <div className="relative flex items-center gap-2 rounded-lg border border-amber-900/30 bg-slate-300/60 px-3 py-2 backdrop-blur-sm">
-                <Search className="h-4 w-4 text-white shrink-0" />
+              <div className="relative flex items-center gap-2 rounded-lg border border-background bg-background px-3 py-2 backdrop-blur-sm">
+                <Search className="h-4 w-4 text-foreground shrink-0" />
                 <input
                   type="text"
                   value={query}
@@ -523,11 +526,11 @@ const HeroSection = () => {
                   onFocus={() => setFocused(true)}
                   onKeyDown={handleKeyDown}
                   placeholder={bn ? "সার্ভিস খুঁজুন" : "Search services"}
-                  className="flex-1 min-w-0 bg-transparent text-xs outline-none placeholder:text-amber-700/40 text-center"
+                  className="flex-1 min-w-0 bg-transparent text-xs !outline-none placeholder:text-foreground text-center"
                 />
                 <button
                   type="submit"
-                  className="flex items-center justify-center h-8 w-8 rounded-md bg-primary text-amber-50 hover:bg-amber-700 transition-colors flex-shrink-0"
+                  className="flex items-center justify-center h-8 w-8 rounded-md bg-primary text-amber-50 hover:bg-green-600 transition-colors flex-shrink-0"
                 >
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
@@ -557,7 +560,7 @@ const HeroSection = () => {
               >
                 {/* Platform Cards - 2x2 Grid */}
                 <div className="grid grid-cols-2 gap-2">
-                  {PLATFORM_CARDS.map(({ to, labelBn, labelEn, Icon, accentColor, bgPattern }, idx) => {
+                  {PLATFORM_CARDS.map(({ to, labelBn, labelEn, Icon, imgIcon, accentColor, bgPattern }, idx) => {
                     const isPressed = pressedCard === to;
                     return (
                       <motion.button
@@ -566,18 +569,15 @@ const HeroSection = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.05 }}
                         onClick={() => handleCardClick(to)}
-                        className="group relative overflow-hidden rounded-lg border border-amber-900/20 p-2.5 text-center hover:border-amber-900/40 transition-all duration-300"
-                        style={{ background: `linear-gradient(135deg, rgb(30, 41, 59) 0%, rgb(15, 23, 42) 100%), ${bgPattern}` }}
-                      >
+                        className="group relative bg-background overflow-hidden rounded-lg border border-white-900/20 p-2.5 text-center transition-all duration-300">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="relative flex flex-col items-center gap-2">
                           <div 
-                            className="flex items-center justify-center h-7 w-7 rounded-lg flex-shrink-0"
-                            style={{ backgroundColor: `${accentColor}15` }}
-                          >
-                            <Icon className="h-5 w-5" style={{ color: accentColor }} />
+                            className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-transparent">
+                            {/* <Icon className="h-5 w-5 text-foreground" /> */}
+                            <img src={imgIcon} alt="" />
                           </div>
-                          <h3 className="font-serif text-sm font-light text-amber-50 leading-tight">
+                          <h3 className="text-sm font-semibold text-foreground">
                             {bn ? labelBn : labelEn}
                           </h3>
                         </div>
@@ -595,9 +595,9 @@ const HeroSection = () => {
 
                 {/* Popular Searches - Grid */}
                 {featuredServices.length > 0 && (
-                  <div>
-                    <p className="text-[8px] uppercase tracking-widest text-amber-700/40 font-medium mb-1.5 text-center">
-                      {bn ? "জনপ্রিয় খোঁজা" : "Popular searches"}
+                  <div className="hidden">
+                    <p className="text-[12px] uppercase tracking-widest text-background font-medium mb-1.5 text-center">
+                      {bn ? "জনপ্রিয় সার্চ" : "Popular Searches"}
                     </p>
                     <div className="grid grid-cols-2 gap-1.5">
                       {featuredServices.slice(0, 4).map((service, idx) => (
@@ -607,7 +607,7 @@ const HeroSection = () => {
                           animate={{ opacity: 1, scale: 1 }}
                           transition={{ duration: 0.3, delay: 0.24 + idx * 0.04 }}
                           onClick={() => handleSelect(service.slug)}
-                          className="px-2 py-1.5 rounded-lg border border-amber-900/20 bg-amber-900/8 text-[11px] text-amber-100 hover:bg-amber-900/15 hover:border-amber-900/40 transition-all duration-200 font-light line-clamp-2 text-center"
+                          className="px-2 py-1.5 rounded-lg border border-orange-500 backdrop-blur-lg bg-orange-500/20 text-[13px] text-background hover:bg-orange-500 hover:text-black transition-all duration-200 font-light line-clamp-2 text-center"
                         >
                           {service.title}
                         </motion.button>
@@ -629,7 +629,7 @@ const HeroSection = () => {
             ? `linear-gradient(135deg, rgba(15, 23, 42, 0.28), rgba(15, 23, 42, 0.92)), url('${heroImage}')`
             : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
         }}
-      >
+        >
         {/* Background treatment */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute -top-40 right-20 w-[600px] h-[600px] bg-amber-900/8 rounded-full blur-3xl" />
@@ -647,7 +647,7 @@ const HeroSection = () => {
           </svg>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto px-4" style={{ paddingTop: "max(32px, calc(var(--app-header-h, 96px) + 16px))", paddingBottom: "32px" }}>
+        <div className="w-full max-w-2xl mx-auto px-4" style={{ paddingTop: "22px", paddingBottom: "32px" }}>
           
           {/* Greeting & Headline - Centered */}
           <motion.div

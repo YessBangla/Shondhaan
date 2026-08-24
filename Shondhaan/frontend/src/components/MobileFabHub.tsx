@@ -128,8 +128,7 @@ const MobileFabHub = () => {
       {/* Action column */}
       <div
         className="fixed right-3 z-[56] flex flex-col-reverse items-end gap-3 md:hidden pointer-events-none"
-        style={{ bottom: getMobileFloatingBottom(72) }}
-      >
+        style={{ bottom: getMobileFloatingBottom(72) }}>
         <AnimatePresence>
           {open &&
             actions.map((a, i) => (

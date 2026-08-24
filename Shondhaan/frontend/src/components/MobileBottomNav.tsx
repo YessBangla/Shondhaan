@@ -438,9 +438,9 @@ const MobileBottomNav = () => {
       <nav
         aria-label={bn ? "প্রধান নেভিগেশন" : "Primary navigation"}
         role="navigation"
-        className="fixed left-2.5 right-2.5 z-[70] overflow-hidden rounded-[22px] border border-white/40 dark:border-white/10 bg-card/70 backdrop-blur-2xl shadow-[0_8px_24px_-6px_rgba(15,23,42,0.18),0_2px_6px_-2px_rgba(15,23,42,0.08)] md:hidden supports-[backdrop-filter]:bg-card/55"
+        className="fixed left-0 !bottom-[-10px] py-2 z-[70] w-full overflow-hidden border bg-primary md:hidden "
         style={{ bottom: mobileNavBottom }}
-      >
+        >
         {/* Subtle top hairline highlight for the iOS frosted feel */}
         <span aria-hidden className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-foreground/15 to-transparent" />
         <ul
@@ -497,10 +497,10 @@ const MobileBottomNav = () => {
                   aria-selected={isActive}
                   aria-current={isActive ? "page" : undefined}
                   tabIndex={isActive ? 0 : -1}
-                  className={`press group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-2xl px-1 pt-2 pb-1.5 min-h-[58px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mobile-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
+                  className={`press group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 pt-2 pb-1.5 min-h-[58px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mobile-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                     isActive
-                      ? "text-mobile-accent"
-                      : "text-muted-foreground hover:text-foreground/80 active:text-foreground"
+                      ? "text-green-600"
+                      : "text-white hover:text-green-600 active:text-white"
                   }`}
                   style={{ touchAction: "manipulation" }}
                 >

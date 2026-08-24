@@ -133,18 +133,18 @@ const WhyChooseUs = () => {
               className="group relative"
             >
               {/* Background gradient */}
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-900 via-primary to-slate-900 rounded-2xl" />
+              {/* <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary to-green-600 rounded-2xl" /> */}
               
               {/* Border glow */}
-              <motion.div
+              {/* <motion.div
                 className="absolute inset-0 rounded-2xl border border-emerald-500/20 group-hover:border-emerald-400/50 transition-colors duration-300"
-              />
+              /> */}
 
               {/* Hover glow effect */}
-              <motion.div
+              {/* <motion.div
                 className="absolute -inset-px bg-gradient-to-r from-emerald-500/0 via-emerald-400/20 to-emerald-500/0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"
-              />
-              <div className="relative z-10 flex flex-col items-center rounded-2xl p-5 md:p-6 text-center backdrop-blur-sm">
+              /> */}
+              <div className="relative z-10 flex flex-col items-center rounded-2xl p-5 md:p-6 text-center  bg-gradient-to-br from-primary via-primary to-green-600">
                 {/* Icon container with gradient */}
                 <motion.div
                   initial={{ scale: 0.8, opacity: 0 }}

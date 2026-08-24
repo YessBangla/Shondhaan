@@ -325,13 +325,13 @@ const SpecialOffers = () => {
             >
               <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60 ">
                 {/* Image / Gradient Header */}
-                <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden group-hover:h-40 md:group-hover:h-52 transition-all duration-500`}>
+                <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden`}>
                   {offer.image ? (
                     <img
                       src={offer.image}
                       alt={offer.title_en || offer.title_bn}
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover transition-transform duration-500"
+                      className="absolute inset-0 w-full h-full object-cover "
                     />
                   ) : (
                     <>

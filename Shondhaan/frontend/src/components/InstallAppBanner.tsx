@@ -51,7 +51,7 @@ const InstallAppBanner = () => {
 
   return (
     <div
-      className="fixed left-3 right-3 z-[55] rounded-2xl border border-border bg-card/95 p-3 shadow-2xl backdrop-blur-xl md:hidden animate-in slide-in-from-bottom-5"
+      className="fixed hidden left-3 right-3 z-[55] rounded-2xl border border-border bg-card/95 p-3 shadow-2xl backdrop-blur-xl md:hidden animate-in slide-in-from-bottom-5"
       style={{ bottom: `calc(140px + env(safe-area-inset-bottom))` }}
       role="dialog"
       aria-label="Install app"
