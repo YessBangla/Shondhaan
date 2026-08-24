@@ -36,16 +36,23 @@ export const requireAdminPanelAccess = (req, res, next) => {
 };
 
 export function requireCmsAdmin(req, res, next) {
-  const authHeader = req.headers.authorization;
-  const bearerToken = authHeader?.startsWith("Bearer ")
+  let authHeader = req.headers.authorization;
+  
+  // Guard: frontend sometimes sends literal "undefined" string
+  if (!authHeader || authHeader === "undefined" || authHeader === "null") {
+    return res.status(401).json({ message: "No token provided" });
+  }
+
+  const bearerToken = authHeader.startsWith("Bearer ")
     ? authHeader.slice("Bearer ".length).trim()
     : null;
   const token = bearerToken || req.cookies?.token;
-  if (!token) {
+
+  if (!token || token === "undefined" || token === "null") {
     return res.status(401).json({ message: "No token provided" });
   }
-  const auth = verifyToken(token);
 
+  const auth = verifyToken(token);
   if (!auth || !ADMIN_PANEL_ROLES.has(getAuthRole(auth))) {
     return res.status(403).json({ message: "Admin access is required" });
   }

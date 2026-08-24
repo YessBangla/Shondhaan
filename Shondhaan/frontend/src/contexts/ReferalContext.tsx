@@ -1,5 +1,3 @@
-// src/contexts/ReferralContext.tsx
-
 import { 
   createContext, useContext, useEffect, useState, useCallback, useRef, 
   type ReactNode 
@@ -16,6 +14,10 @@ interface ReferralCode {
   used_count: number;
   max_uses: number;
   remaining: number;
+  reward_currency?: string;
+  reward_amount?: number | string;
+  referred_reward_type?: string;
+  referred_reward_amount?: number | string;
   created_at: string;
   expires_at: string | null;
 }
@@ -37,7 +39,7 @@ interface RewardEntry {
   id: number;
   role: "referrer" | "referred";
   reward_currency: CurrencyType;
-  reward_amount: number;
+  reward_amount: number | string;
   status: RewardStatus;
   order_id: string | null;
   created_at: string;
@@ -90,6 +92,20 @@ interface ClaimResponse {
   reward?: { type: CurrencyType; value: number };
 }
 
+export interface ProgramConfig {
+  is_enabled: boolean | null;
+  max_uses: number | null;
+  code_valid_days: number | null;
+  qualification_window_days: number | null;
+  reward_valid_days: number | null;
+  referrer_reward_currency: string | null;
+  referrer_reward_amount: number | null;
+  referred_reward_currency: string | null;
+  referred_reward_amount: number | null;
+  min_order_amount: number | null;
+  loaded: boolean;
+}
+
 interface ReferralContextValue {
   stats: ReferralStats | null;
   loading: boolean;
@@ -97,6 +113,7 @@ interface ReferralContextValue {
   pendingCode: string | null;
   validatedCode: ValidatedCode | null;
   applied: boolean;
+  programConfig: ProgramConfig;
   generateCode: (opts?: { max_uses?: number }) => Promise<string | null>;
   applyCode: (code: string) => Promise<boolean>;
   claimReward: (rewardId: number) => Promise<boolean>;
@@ -123,6 +140,20 @@ const REWARD_CURRENCY_SYMBOLS: Record<string, string> = {
   COIN: "🪙",
 };
 
+const EMPTY_CONFIG: ProgramConfig = {
+  is_enabled: null,
+  max_uses: null,
+  code_valid_days: null,
+  qualification_window_days: null,
+  reward_valid_days: null,
+  referrer_reward_currency: null,
+  referrer_reward_amount: null,
+  referred_reward_currency: null,
+  referred_reward_amount: null,
+  min_order_amount: null,
+  loaded: false,
+};
+
 /* ───────── Helpers ───────── */
 
 function formatReward(reward: YourReward): string {
@@ -130,27 +161,27 @@ function formatReward(reward: YourReward): string {
   return `${symbol}${reward.value}`;
 }
 
-// ✅ Simple headers - NO Authorization header, rely on cookie
 function getHeaders(): HeadersInit {
-  return {
-    "Content-Type": "application/json",
-  };
+  return { "Content-Type": "application/json" };
+}
+
+function normalizeCurrency(type: string | null | undefined): string {
+  if (type === "WALLET_COIN") return "COIN";
+  if (type === "WALLET_CASH") return "CASH";
+  return type || "CASH";
 }
 
 function getInitialCode(): string | null {
   if (typeof window === "undefined") return null;
-
   try {
     const pathMatch = window.location.pathname.match(/^\/ref\/([A-Z2-9]{6,12})$/i);
     const code = pathMatch?.[1]?.toUpperCase()
       || new URLSearchParams(window.location.search).get("ref")?.toUpperCase()
       || null;
-
     if (code) {
       sessionStorage.setItem("pending_referral_code", code);
       return code;
     }
-
     return sessionStorage.getItem("pending_referral_code");
   } catch {
     return null;
@@ -158,15 +189,20 @@ function getInitialCode(): string | null {
 }
 
 function safeSessionStorage() {
-  try {
-    return sessionStorage;
-  } catch {
-    return {
-      getItem: () => null,
-      setItem: () => {},
-      removeItem: () => {},
-    };
-  }
+  try { return sessionStorage; }
+  catch { return { getItem: () => null, setItem: () => {}, removeItem: () => {} }; }
+}
+
+// Derive programConfig from stats.code when available
+function configFromCode(code: ReferralCode | null): Partial<ProgramConfig> {
+  if (!code) return {};
+  return {
+    referrer_reward_currency: normalizeCurrency(code.reward_currency),
+    referrer_reward_amount: Number(code.reward_amount || 0),
+    referred_reward_currency: normalizeCurrency(code.referred_reward_type),
+    referred_reward_amount: Number(code.referred_reward_amount || 0),
+    min_order_amount: code.min_order_amount === null ? null : Number(code.min_order_amount),
+  };
 }
 
 /* ───────── Context ───────── */
@@ -183,14 +219,14 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
   const [pendingCode, setPendingCode] = useState<string | null>(getInitialCode);
   const [validatedCode, setValidatedCode] = useState<ValidatedCode | null>(null);
   const [applied, setApplied] = useState(false);
+  const [programConfig, setProgramConfig] = useState<ProgramConfig>(EMPTY_CONFIG);
 
-  // Refs for stable access in effects
   const applyingRef = useRef(false);
   const retryCountRef = useRef(0);
   const pendingStatsRequestRef = useRef<AbortController | null>(null);
   const refreshStatsRef = useRef<() => Promise<void>>(() => Promise.resolve());
 
-  // Reset state on logout
+  // Reset on logout
   useEffect(() => {
     if (!isAuth) {
       setApplied(false);
@@ -198,94 +234,106 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
       setLoading(false);
       setClaimingId(null);
       retryCountRef.current = 0;
+      setProgramConfig(EMPTY_CONFIG);
     }
   }, [isAuth]);
 
-  // ─── Validate pending code ───
+  // ─── Fetch public settings ───
   useEffect(() => {
-    if (!pendingCode) {
-      setValidatedCode(null);
-      return;
-    }
-
+    if (!isAuth) return;
     const controller = new AbortController();
 
     (async () => {
       try {
-        const res = await fetch(`${API}/validate/${pendingCode}`, {
+        const res = await fetch(`${API}/settings`, {
+          headers: getHeaders(),
+          credentials: "include",
           signal: controller.signal,
         });
-        const data = await res.json();
-        
-        if (!controller.signal.aborted) {
-          setValidatedCode(data.valid ? data : null);
+        if (controller.signal.aborted) return;
+        if (res.ok) {
+          const data = await res.json();
+          setProgramConfig({
+            is_enabled: Boolean(data.is_enabled),
+            max_uses: Number(data.max_uses || 0),
+            code_valid_days: Number(data.code_valid_days || 0),
+            qualification_window_days: Number(data.qualification_window_days || 0),
+            reward_valid_days: Number(data.reward_valid_days || 0),
+            referrer_reward_currency: data.referrer_reward_currency || null,
+            referrer_reward_amount: Number(data.referrer_reward_amount || 0),
+            referred_reward_currency: data.referred_reward_currency || null,
+            referred_reward_amount: Number(data.referred_reward_amount || 0),
+            min_order_amount: data.min_order_amount ?? null,
+            loaded: true,
+          });
         }
       } catch (err) {
         if (err instanceof DOMException && err.name === "AbortError") return;
-        if (!controller.signal.aborted) {
-          setValidatedCode(null);
-        }
       }
     })();
 
+    return () => controller.abort();
+  }, [isAuth]);
+
+  // ─── Merge code-specific values into config when stats load ───
+  useEffect(() => {
+    if (!stats?.code || !programConfig.loaded) return;
+    const fromCode = configFromCode(stats.code);
+    // Code values override global settings (per-code customization)
+    setProgramConfig((prev) => ({
+      ...prev,
+      ...fromCode,
+      loaded: true,
+    }));
+  }, [stats?.code, programConfig.loaded]);
+
+  // ─── Validate pending code ───
+  useEffect(() => {
+    if (!pendingCode) { setValidatedCode(null); return; }
+    const controller = new AbortController();
+    (async () => {
+      try {
+        const res = await fetch(`${API}/validate/${pendingCode}`, { signal: controller.signal });
+        const data = await res.json();
+        if (!controller.signal.aborted) setValidatedCode(data.valid ? data : null);
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "AbortError") return;
+        if (!controller.signal.aborted) setValidatedCode(null);
+      }
+    })();
     return () => controller.abort();
   }, [pendingCode]);
 
   // ─── Refresh stats ───
   const refreshStats = useCallback(async () => {
-    if (!isAuth) {
-      setStats(null);
-      return;
-    }
-
+    if (!isAuth) { setStats(null); return; }
     pendingStatsRequestRef.current?.abort();
     const controller = new AbortController();
     pendingStatsRequestRef.current = controller;
-
     setLoading(true);
-
     try {
       const res = await fetch(`${API}/stats`, {
         headers: getHeaders(),
         credentials: "include",
         signal: controller.signal,
       });
-
       if (controller.signal.aborted) return;
-
-      if (res.ok) {
-        setStats(await res.json());
-      }
+      if (res.ok) setStats(await res.json());
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") return;
-      if (import.meta.env.DEV) {
-        console.warn("Failed to fetch referral stats:", err);
-      }
+      if (import.meta.env.DEV) console.warn("Failed to fetch referral stats:", err);
     } finally {
-      if (!controller.signal.aborted) {
-        setLoading(false);
-      }
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [isAuth]);
 
-  // Keep ref updated
-  useEffect(() => {
-    refreshStatsRef.current = refreshStats;
-  }, [refreshStats]);
-
-  // Fetch stats on auth change
-  useEffect(() => {
-    if (isAuth) {
-      refreshStats();
-    }
-  }, [isAuth, refreshStats]);
+  useEffect(() => { refreshStatsRef.current = refreshStats; }, [refreshStats]);
+  useEffect(() => { if (isAuth) refreshStats(); }, [isAuth, refreshStats]);
 
   // ─── Auto-apply when authenticated ───
   useEffect(() => {
     if (!isAuth || !pendingCode || applied || applyingRef.current) return;
-
     applyingRef.current = true;
-
     (async () => {
       try {
         const res = await fetch(`${API}/apply`, {
@@ -294,9 +342,7 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           body: JSON.stringify({ code: pendingCode }),
         });
-        
         const data: ApplyResponse = await res.json();
-
         if (data.success) {
           setApplied(true);
           haptic("success");
@@ -304,24 +350,19 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
           setPendingCode(null);
           setValidatedCode(null);
           retryCountRef.current = 0;
-
           toast.success(
             data.your_reward
               ? `🎉 Referral applied! You got ${formatReward(data.your_reward)} reward!`
               : "🎉 Referral applied successfully!"
           );
-
           refreshStatsRef.current();
         } else {
           safeSessionStorage().removeItem("pending_referral_code");
           setPendingCode(null);
           setValidatedCode(null);
           retryCountRef.current = 0;
-
-          if (data.reason !== "ALREADY_REFERRED") {
-            if (import.meta.env.DEV) {
-              console.warn("Referral apply failed:", data.reason || data.message);
-            }
+          if (data.reason !== "ALREADY_REFERRED" && import.meta.env.DEV) {
+            console.warn("Referral apply failed:", data.reason || data.message);
           }
         }
       } catch {
@@ -354,13 +395,11 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify(opts),
       });
       const data = await res.json();
-
       if (data.success) {
         haptic("medium");
         await refreshStatsRef.current();
         return data.link as string;
       }
-
       toast.error(data.error || "Failed to generate code");
       return null;
     } catch {
@@ -370,11 +409,7 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const applyCode = useCallback(async (code: string) => {
-    if (!code?.trim()) {
-      toast.error("Please enter a referral code");
-      return false;
-    }
-
+    if (!code?.trim()) { toast.error("Please enter a referral code"); return false; }
     try {
       const res = await fetch(`${API}/apply`, {
         method: "POST",
@@ -383,7 +418,6 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ code: code.trim().toUpperCase() }),
       });
       const data: ApplyResponse = await res.json();
-
       if (data.success) {
         haptic("success");
         clearPending();
@@ -391,7 +425,6 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         await refreshStatsRef.current();
         return true;
       }
-
       const errorMessages: Record<string, string> = {
         INVALID_CODE: "Invalid referral code format",
         CODE_NOT_FOUND: "Referral code not found or expired",
@@ -401,7 +434,6 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         REFERRALS_DISABLED: "Referrals are currently disabled",
         MIN_ORDER_NOT_MET: "Minimum order amount not met",
       };
-
       toast.error(errorMessages[data.reason || ""] || data.message || "Failed to apply referral");
       return false;
     } catch {
@@ -412,9 +444,7 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
 
   const claimReward = useCallback(async (rewardId: number) => {
     if (claimingId === rewardId) return false;
-
     setClaimingId(rewardId);
-
     try {
       const res = await fetch(`${API}/claim/${rewardId}`, {
         method: "POST",
@@ -422,7 +452,6 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         credentials: "include",
       });
       const data: ClaimResponse = await res.json();
-
       if (data.success) {
         haptic("success");
         toast.success(
@@ -433,7 +462,6 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         await refreshStatsRef.current();
         return true;
       }
-
       toast.error(data.reason || "Failed to claim reward");
       return false;
     } catch {
@@ -453,28 +481,21 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ order_id: orderId }),
       });
       const data = await res.json();
-
       if (data.success) {
         haptic("success");
         await refreshStatsRef.current();
         return true;
       }
-
-      if (import.meta.env.DEV) {
-        console.warn("Qualify referral failed:", data.reason || data.message);
-      }
+      if (import.meta.env.DEV) console.warn("Qualify referral failed:", data.reason || data.message);
       return false;
     } catch {
-      if (import.meta.env.DEV) {
-        console.warn("Qualify referral network error");
-      }
+      if (import.meta.env.DEV) console.warn("Qualify referral network error");
       return false;
     }
   }, []);
 
   const validateCode = useCallback(async (code: string) => {
     if (!code?.trim()) return null;
-
     try {
       const res = await fetch(`${API}/validate/${code.trim().toUpperCase()}`);
       const data = await res.json();
@@ -493,6 +514,7 @@ export function ReferralProvider({ children }: { children: ReactNode }) {
         pendingCode,
         validatedCode,
         applied,
+        programConfig,
         generateCode,
         applyCode,
         claimReward,
