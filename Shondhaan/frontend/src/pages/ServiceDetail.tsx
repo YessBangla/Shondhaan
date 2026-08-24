@@ -926,8 +926,8 @@ const CmsServiceDetail = ({
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <Navbar />
-      <div className="pt-[16px] md:pt-[16px]" />
-      <div className="app-container py-4">
+      <div className="pt-[80px] md:pt-[30px]" />
+      <div className="app-container py-2">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -1209,7 +1209,7 @@ const CmsServiceDetail = ({
           </div>
 
           {/* Compact Sidebar */}
-          <div className="hidden md:block md:col-span-1">
+          <div className="block md:col-span-1">
             <div className="sticky top-24 rounded-xl border border-border bg-card p-5 shadow-md space-y-4">
               <h2 className="font-heading text-lg font-bold text-foreground">
                 {t("sd.bookNow")}
@@ -1424,8 +1424,8 @@ const CmsServiceDetail = ({
                       return toast.error(t("sd.selectDateFirst"));
                     setShowBookingForm(true);
                   }}
-                  className="w-full border border-primary bg-primary rounded-lg py-2.5 text-xs font-semibold text-white hover:bg-primary/90 flex items-center justify-center gap-2"
-                >
+                    className="w-full bg-primary rounded-lg py-2.5 text-xs font-semibold text-white hover:bg-emerald-600 flex items-center justify-center gap-2"
+                  >
                   <CalendarCheck className="h-3.5 w-3.5" />{" "}
                   {t("sd.bookingConfirmBtn")}
                 </button>
@@ -1525,7 +1525,7 @@ const CmsServiceDetail = ({
                   <button
                     onClick={handleDirectBooking}
                     disabled={submitting}
-                    className="w-full rounded-lg bg-primary py-2.5 text-xs font-semibold text-white hover:bg-primary/90 disabled:opacity-50"
+                    className="w-full rounded-lg bg-primary py-2.5 text-xs font-semibold text-white hover:bg-emeraled-600 disabled:opacity-50"
                   >
                     {submitting
                       ? "Processing..."
