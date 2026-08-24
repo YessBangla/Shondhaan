@@ -523,7 +523,6 @@ const AdminLayout = () => {
   const dateStr = now.toLocaleDateString("bn-BD", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
-
   if (authLoading || isAdmin === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -531,7 +530,6 @@ const AdminLayout = () => {
       </div>
     );
   }
-
   if (!isAdmin) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
@@ -544,7 +542,6 @@ const AdminLayout = () => {
       </div>
     );
   }
-
   const SidebarBody = (
     <nav
       ref={sidebarNavRef}
@@ -667,7 +664,6 @@ const AdminLayout = () => {
       ))}
     </nav>
   );
-
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/30">
       <aside

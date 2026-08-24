@@ -11,23 +11,18 @@ function generateCode(length = 8) {
   const bytes = crypto.randomBytes(length);
   return Array.from(bytes, (byte) => chars[byte % chars.length]).join("");
 }
-
 function isValidCode(code) {
   return /^[A-Z2-9]{6,12}$/.test(String(code || "").trim().toUpperCase());
 }
-
 function normalizeCode(code) {
   return String(code || "").trim().toUpperCase();
 }
-
 function referredRewardType(currency) {
   return currency === "COIN" ? "WALLET_COIN" : "WALLET_CASH";
 }
-
 function codeLink(code) {
   return `${FRONTEND_URL}/ref/${code}`;
 }
-
 async function getSettings(conn = pool) {
   const [rows] = await conn.query("SELECT * FROM referral_settings WHERE id = 1 LIMIT 1");
   return rows[0] || {
@@ -585,6 +580,29 @@ const updateSettings = async (req, res, next) => {
 const adminList = async (req, res, next) => {
   try {
     const limit = Math.min(Number(req.query.limit || 100), 500);
+    const offset = Math.max(Number(req.query.offset || 0), 0);
+    const search = (req.query.search || "").trim();
+
+    let whereClause = "1=1";
+    const params = [];
+
+    if (search) {
+      whereClause += " AND (rc.code LIKE ? OR u.name LIKE ? OR u.email LIKE ?)";
+      const like = `%${search}%`;
+      params.push(like, like, like);
+    }
+
+    // ── total count ──
+    const [countRows] = await pool.query(
+      `SELECT COUNT(DISTINCT rc.id) AS total
+       FROM referral_codes rc
+       JOIN users u ON u.id = rc.user_id
+       WHERE ${whereClause}`,
+      params
+    );
+    const total = Number(countRows[0]?.total || 0);
+
+    // ── paginated data ──
     const [rows] = await pool.query(
       `SELECT rc.code, rc.used_count, rc.max_uses, rc.reward_currency, rc.reward_amount,
               rc.referred_reward_type, rc.referred_reward_amount, rc.min_order_amount,
@@ -595,10 +613,11 @@ const adminList = async (req, res, next) => {
        FROM referral_codes rc
        JOIN users u ON u.id = rc.user_id
        LEFT JOIN referrals r ON r.referral_code_id = rc.id
+       WHERE ${whereClause}
        GROUP BY rc.id
        ORDER BY rc.created_at DESC
-       LIMIT ?`,
-      [limit]
+       LIMIT ? OFFSET ?`,
+      [...params, limit, offset]
     );
 
     return res.json({
@@ -609,6 +628,251 @@ const adminList = async (req, res, next) => {
         min_order_amount: row.min_order_amount === null ? null : Number(row.min_order_amount),
         referral_count: Number(row.referral_count || 0),
         rewarded_count: Number(row.rewarded_count || 0),
+      })),
+      total,
+      limit,
+      offset,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── Admin: Reward Transactions ────────────────────────────────────
+const adminTransactions = async (req, res, next) => {
+  try {
+    const { search, status, role, currency, page = "1", limit = "50" } = req.query;
+    const offset = (Number(page) - 1) * Number(limit);
+    let where = "WHERE 1=1";
+    const params = [];
+
+    if (search) {
+      where += " AND (u.name LIKE ? OR u.email LIKE ? OR rr.reference_note LIKE ?)";
+      const like = `%${search}%`;
+      params.push(like, like, like);
+    }
+    if (status && ["pending", "available", "claimed", "expired"].includes(status)) {
+      where += " AND rr.status = ?";
+      params.push(status);
+    }
+    if (role && ["referrer", "referred"].includes(role)) {
+      where += " AND rr.role = ?";
+      params.push(role);
+    }
+    if (currency && ["CASH", "COIN"].includes(currency)) {
+      where += " AND rr.reward_currency = ?";
+      params.push(currency);
+    }
+
+    const [countRows] = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM referral_rewards rr
+       LEFT JOIN users u ON u.id = rr.user_id
+       ${where}`,
+      params
+    );
+    const total = Number(countRows[0]?.total || 0);
+
+    const [rows] = await pool.query(
+      `SELECT rr.*,
+              u.name AS user_name, u.email AS user_email,
+              r.referrer_user_id, r.referred_user_id,
+              ur.name AS referrer_name,
+              ue.name AS referred_name,
+              rc.code AS referral_code
+       FROM referral_rewards rr
+       LEFT JOIN users u ON u.id = rr.user_id
+       LEFT JOIN referrals r ON r.id = rr.referral_id
+       LEFT JOIN users ur ON ur.id = r.referrer_user_id
+       LEFT JOIN users ue ON ue.id = r.referred_user_id
+       LEFT JOIN referral_codes rc ON rc.id = r.referral_code_id
+       ${where}
+       ORDER BY rr.created_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, Number(limit), offset]
+    );
+
+    // Summary totals
+    const [summaryRows] = await pool.query(
+      `SELECT
+         COUNT(*) AS total_rewards,
+         SUM(CASE WHEN rr.status = 'claimed' THEN 1 ELSE 0 END) AS claimed_count,
+         SUM(CASE WHEN rr.status = 'available' THEN 1 ELSE 0 END) AS available_count,
+         SUM(CASE WHEN rr.status = 'pending' THEN 1 ELSE 0 END) AS pending_count,
+         SUM(CASE WHEN rr.status = 'expired' THEN 1 ELSE 0 END) AS expired_count,
+         COALESCE(SUM(CASE WHEN rr.status = 'claimed' AND rr.reward_currency = 'CASH' THEN rr.reward_amount ELSE 0 END), 0) AS total_cash_claimed,
+         COALESCE(SUM(CASE WHEN rr.status = 'claimed' AND rr.reward_currency = 'COIN' THEN rr.reward_amount ELSE 0 END), 0) AS total_coin_claimed
+       FROM referral_rewards rr
+       LEFT JOIN users u ON u.id = rr.user_id
+       ${where}`,
+      params
+    );
+    const summary = summaryRows[0] || {};
+
+    return res.json({
+      data: rows.map((row) => ({
+        ...row,
+        reward_amount: Number(row.reward_amount),
+        summary,
+      })),
+      total,
+      page: Number(page),
+      totalPages: Math.ceil(total / Number(limit)),
+      summary: {
+        total_rewards: Number(summary.total_rewards || 0),
+        claimed_count: Number(summary.claimed_count || 0),
+        available_count: Number(summary.available_count || 0),
+        pending_count: Number(summary.pending_count || 0),
+        expired_count: Number(summary.expired_count || 0),
+        total_cash_claimed: Number(summary.total_cash_claimed || 0),
+        total_coin_claimed: Number(summary.total_coin_claimed || 0),
+      },
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// ─── Admin: Referral Report ────────────────────────────────────────
+const adminReport = async (_req, res, next) => {
+  try {
+    // Overall stats
+    const [overall] = await pool.query(`
+      SELECT
+        (SELECT COUNT(*) FROM referral_codes) AS total_codes,
+        (SELECT COUNT(*) FROM referral_codes WHERE is_active = 1) AS active_codes,
+        (SELECT COUNT(*) FROM referrals) AS total_referrals,
+        (SELECT COUNT(*) FROM referrals WHERE status = 'pending') AS pending_referrals,
+        (SELECT COUNT(*) FROM referrals WHERE status = 'qualified') AS qualified_referrals,
+        (SELECT COUNT(*) FROM referrals WHERE status = 'rewarded') AS rewarded_referrals,
+        (SELECT COUNT(*) FROM referral_rewards WHERE status = 'claimed') AS claimed_rewards,
+        (SELECT COUNT(*) FROM referral_rewards WHERE status = 'available') AS available_rewards,
+        (SELECT COUNT(*) FROM referral_rewards WHERE status = 'expired') AS expired_rewards,
+        COALESCE((SELECT SUM(reward_amount) FROM referral_rewards WHERE status = 'claimed' AND reward_currency = 'CASH'), 0) AS total_cash_disbursed,
+        COALESCE((SELECT SUM(reward_amount) FROM referral_rewards WHERE status = 'claimed' AND reward_currency = 'COIN'), 0) AS total_coin_disbursed,
+        COALESCE((SELECT SUM(reward_amount) FROM referral_rewards WHERE status IN ('available', 'pending') AND reward_currency = 'CASH'), 0) AS pending_cash,
+        COALESCE((SELECT SUM(reward_amount) FROM referral_rewards WHERE status IN ('available', 'pending') AND reward_currency = 'COIN'), 0) AS pending_coin
+    `);
+    const stats = overall[0] || {};
+
+    // Top referrers
+    const [topReferrers] = await pool.query(`
+      SELECT
+        u.id, u.name, u.email,
+        rc.code,
+        COUNT(r.id) AS referral_count,
+        SUM(CASE WHEN r.status = 'rewarded' THEN 1 ELSE 0 END) AS rewarded_count,
+        COALESCE(SUM(CASE WHEN rr.status = 'claimed' AND rr.role = 'referrer' THEN rr.reward_amount ELSE 0 END), 0) AS total_earned
+      FROM referral_codes rc
+      JOIN users u ON u.id = rc.user_id
+      LEFT JOIN referrals r ON r.referral_code_id = rc.id
+      LEFT JOIN referral_rewards rr ON rr.referral_id = r.id AND rr.role = 'referrer'
+      GROUP BY rc.id
+      ORDER BY rewarded_count DESC, total_earned DESC
+      LIMIT 20
+    `);
+
+    // Monthly trend (last 12 months)
+    const [monthlyTrend] = await pool.query(`
+      SELECT
+        DATE_FORMAT(r.created_at, '%Y-%m') AS month,
+        COUNT(*) AS referrals,
+        SUM(CASE WHEN r.status = 'rewarded' THEN 1 ELSE 0 END) AS rewarded,
+        COALESCE(SUM(CASE WHEN rr.status = 'claimed' THEN rr.reward_amount ELSE 0 END), 0) AS amount_disbursed
+      FROM referrals r
+      LEFT JOIN referral_rewards rr ON rr.referral_id = r.id AND rr.status = 'claimed'
+      WHERE r.created_at >= DATE_SUB(NOW(), INTERVAL 12 MONTH)
+      GROUP BY DATE_FORMAT(r.created_at, '%Y-%m')
+      ORDER BY month DESC
+    `);
+
+    // Conversion funnel
+    const [funnel] = await pool.query(`
+      SELECT
+        COUNT(DISTINCT rc.id) AS codes_created,
+        COUNT(DISTINCT r.id) AS referrals_made,
+        COUNT(DISTINCT CASE WHEN r.status IN ('qualified', 'rewarded') THEN r.id END) AS qualified,
+        COUNT(DISTINCT CASE WHEN r.status = 'rewarded' THEN r.id END) AS rewarded,
+        COUNT(DISTINCT CASE WHEN rr.status = 'claimed' THEN rr.id END) AS rewards_claimed
+      FROM referral_codes rc
+      LEFT JOIN referrals r ON r.referral_code_id = rc.id
+      LEFT JOIN referral_rewards rr ON rr.referral_id = r.id
+    `);
+
+    // Recent activity (last 50)
+    const [recentActivity] = await pool.query(`
+      SELECT
+        'referral' AS type,
+        r.id,
+        r.created_at,
+        r.status,
+        ur.name AS referrer_name,
+        ue.name AS referred_name,
+        rc.code AS referral_code,
+        NULL AS reward_amount,
+        NULL AS reward_currency
+      FROM referrals r
+      JOIN referral_codes rc ON rc.id = r.referral_code_id
+      LEFT JOIN users ur ON ur.id = r.referrer_user_id
+      LEFT JOIN users ue ON ue.id = r.referred_user_id
+
+      UNION ALL
+
+      SELECT
+        'reward' AS type,
+        rr.id,
+        rr.created_at,
+        rr.status,
+        u.name AS referrer_name,
+        NULL AS referred_name,
+        NULL AS referral_code,
+        rr.reward_amount,
+        rr.reward_currency
+      FROM referral_rewards rr
+      LEFT JOIN users u ON u.id = rr.user_id
+
+      ORDER BY created_at DESC
+      LIMIT 50
+    `);
+
+    return res.json({
+      stats: {
+        total_codes: Number(stats.total_codes || 0),
+        active_codes: Number(stats.active_codes || 0),
+        total_referrals: Number(stats.total_referrals || 0),
+        pending_referrals: Number(stats.pending_referrals || 0),
+        qualified_referrals: Number(stats.qualified_referrals || 0),
+        rewarded_referrals: Number(stats.rewarded_referrals || 0),
+        claimed_rewards: Number(stats.claimed_rewards || 0),
+        available_rewards: Number(stats.available_rewards || 0),
+        expired_rewards: Number(stats.expired_rewards || 0),
+        total_cash_disbursed: Number(stats.total_cash_disbursed || 0),
+        total_coin_disbursed: Number(stats.total_coin_disbursed || 0),
+        pending_cash: Number(stats.pending_cash || 0),
+        pending_coin: Number(stats.pending_coin || 0),
+      },
+      top_referrers: topReferrers.map((r) => ({
+        ...r,
+        referral_count: Number(r.referral_count || 0),
+        rewarded_count: Number(r.rewarded_count || 0),
+        total_earned: Number(r.total_earned || 0),
+      })),
+      monthly_trend: monthlyTrend.map((m) => ({
+        ...m,
+        referrals: Number(m.referrals || 0),
+        rewarded: Number(m.rewarded || 0),
+        amount_disbursed: Number(m.amount_disbursed || 0),
+      })),
+      funnel: {
+        codes_created: Number(funnel[0]?.codes_created || 0),
+        referrals_made: Number(funnel[0]?.referrals_made || 0),
+        qualified: Number(funnel[0]?.qualified || 0),
+        rewarded: Number(funnel[0]?.rewarded || 0),
+        rewards_claimed: Number(funnel[0]?.rewards_claimed || 0),
+      },
+      recent_activity: recentActivity.map((a) => ({
+        ...a,
+        reward_amount: a.reward_amount === null ? null : Number(a.reward_amount),
       })),
     });
   } catch (err) {
@@ -629,4 +893,6 @@ export const referralController = {
   adminList,
   reserveReferralForUser,
   settleReferral,
+  adminReport,
+  adminTransactions,
 };

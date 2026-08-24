@@ -12,16 +12,27 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 
 const API = "http://localhost:5000/api/referral/admin";
 
+const authHeaders = () => {
+  const auth = getMySqlAuth();
+  return {
+    "Content-Type": "application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+  };
+};
+
 const defaultSettings = {
   is_enabled: 0,
+  max_uses: 50,
+  code_valid_days: 90,
   qualification_window_days: 30,
   reward_valid_days: 60,
-  referrer_reward_type: "none",
+  referrer_reward_currency: "CASH",
   referrer_reward_amount: 0,
-  referred_reward_type: "none",
+  referred_reward_currency: "CASH",
   referred_reward_amount: 0,
   min_order_amount: null,
 };
@@ -34,7 +45,7 @@ export default function ReferralSettings() {
   const fetchSettings = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API}/settings`);
+      const res = await fetch(`${API}/settings`, { headers: authHeaders() });
       const json = await res.json();
       if (json.data) setSettings(json.data);
     } catch {
@@ -53,7 +64,7 @@ export default function ReferralSettings() {
     try {
       const res = await fetch(`${API}/settings`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: authHeaders(),
         body: JSON.stringify(settings),
       });
       const json = await res.json();
@@ -106,6 +117,33 @@ export default function ReferralSettings() {
           />
         </div>
 
+        {/* Code limits */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">সর্বোচ্চ ব্যবহার (প্রতি কোডে)</Label>
+            <Input
+              type="number"
+              value={settings.max_uses}
+              onChange={(e) => update("max_uses", Number(e.target.value))}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              একটি কোড কতবার ব্যবহার হতে পারবে
+            </p>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">কোড মেয়াদ (দিন)</Label>
+            <Input
+              type="number"
+              value={settings.code_valid_days}
+              onChange={(e) => update("code_valid_days", Number(e.target.value))}
+            />
+            <p className="text-[10px] text-muted-foreground">
+              কোড তৈরির পর কত দিন পর্যন্ত বৈধ
+            </p>
+          </div>
+        </div>
+
+        {/* Time windows */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">যোগ্যতা উইন্ডো (দিন)</Label>
@@ -131,6 +169,7 @@ export default function ReferralSettings() {
           </div>
         </div>
 
+        {/* Referrer reward */}
         <div className="border-t pt-4">
           <p className="text-xs font-semibold text-foreground mb-3">
             রেফারারের পুরস্কার (কোড শেয়ারকারী)
@@ -139,12 +178,11 @@ export default function ReferralSettings() {
             <div className="space-y-1.5">
               <Label className="text-xs">ধরন</Label>
               <Select
-                value={settings.referrer_reward_type}
-                onValueChange={(v) => update("referrer_reward_type", v)}
+                value={settings.referrer_reward_currency}
+                onValueChange={(v) => update("referrer_reward_currency", v)}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">নেই</SelectItem>
                   <SelectItem value="CASH">ক্যাশ (৳)</SelectItem>
                   <SelectItem value="COIN">কয়েন</SelectItem>
                 </SelectContent>
@@ -161,6 +199,7 @@ export default function ReferralSettings() {
           </div>
         </div>
 
+        {/* Referred reward */}
         <div className="border-t pt-4">
           <p className="text-xs font-semibold text-foreground mb-3">
             রেফার্ডের পুরস্কার (কোড ব্যবহারকারী)
@@ -169,12 +208,11 @@ export default function ReferralSettings() {
             <div className="space-y-1.5">
               <Label className="text-xs">ধরন</Label>
               <Select
-                value={settings.referred_reward_type}
-                onValueChange={(v) => update("referred_reward_type", v)}
+                value={settings.referred_reward_currency}
+                onValueChange={(v) => update("referred_reward_currency", v)}
               >
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="none">নেই</SelectItem>
                   <SelectItem value="CASH">ক্যাশ (৳)</SelectItem>
                   <SelectItem value="COIN">কয়েন</SelectItem>
                 </SelectContent>
@@ -191,6 +229,7 @@ export default function ReferralSettings() {
           </div>
         </div>
 
+        {/* Min order */}
         <div className="border-t pt-4">
           <div className="space-y-1.5">
             <Label className="text-xs">ন্যূনতম অর্ডার পরিমাণ (৳)</Label>

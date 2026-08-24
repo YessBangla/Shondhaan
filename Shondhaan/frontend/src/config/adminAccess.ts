@@ -1,5 +1,7 @@
 import type { RoleKey } from "@/config/roles";
 
+// role dite hoy ekhan theke
+
 export const GLOBAL_ADMIN_ROLES: RoleKey[] = ["super_admin", "admin"];
 
 export const DEPARTMENT_ADMIN_ROLES: RoleKey[] = [
@@ -38,11 +40,15 @@ export const ADMIN_ACCESS_BY_ROLE: Partial<Record<RoleKey, string[] | "*">> = {
     "/admin/settings",
     // [WALLET UPDATE] Service Admin Accounts
     "/admin/service-admin/accounts",
+  "/admin/service-admin/accounts",
+  "/admin/referral-codes",
+  "/admin/referral-settings", 
+  "/admin/referral-transactions",
+  "/admin/referral-report",
   ],
   mart_admin: [
     "/admin/mart-management",
     "/admin/mart-overview",
-    // [WALLET UPDATE] Mart Admin Accounts
     "/admin/mart-admin/accounts",
   ],
   deal_admin: [
