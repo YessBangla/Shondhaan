@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, ReactNode, useRef } from "re
 import { cn } from "@/lib/utils";
 import {
   ChevronLeft, ChevronRight, Menu, Search, Sun, Moon, Monitor,
-  Languages, Pin, PinOff, Command as CommandIcon, Sparkles, ChevronDown,
+  Languages, Pin, Globe, PinOff, Command as CommandIcon, Sparkles, ChevronDown,
   Home, RotateCcw, LogOut, Wallet, Plus, Coins,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -14,6 +14,8 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 import NotificationBell from "@/components/NotificationBell";
 import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faReply, faHouse } from "@fortawesome/free-solid-svg-icons";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -291,6 +293,7 @@ const PanelSidebarTabs = ({
   }, [user]);
 
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
+  const toggleLang = () => setLanguage(language === "bn" ? "en" : "bn");
 
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
     <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
@@ -461,6 +464,7 @@ const PanelSidebarTabs = ({
       </div>
     </div>
   );
+  const bn = language === "bn";
 
   return (
     <div className={cn("flex w-full", !embedded && "min-h-screen", offsetForDesktopMegaMenu && "md:pt-0")}>
@@ -512,10 +516,42 @@ const PanelSidebarTabs = ({
               >
                 <Menu className="h-6 w-6" />
               </button>
+              <div className="border flex w-full">
+                <div className="w-full flex">
+                  <h1 className="text-xl font-semibold text-gray-800 my-auto">
+                    {bn ? "ড্যাশবোর্ড" : "Dashboard"}
+                  </h1>
+                </div>
 
-              <h1 className="text-xl font-semibold text-gray-800">
-                Dashboard
-              </h1>
+                <div className="flex gap-2">
+                  <button
+                    onClick={toggleLang}
+                    aria-label={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
+                    title={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
+                    className="group flex h-9 items-center gap-1.5 rounded-full border shadow bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
+                    >
+                    <Globe className="h-4 w-4 text-primary/80" />
+                    <span className="flex items-center gap-1 text-[11px] font-bold leading-none tracking-wide">
+                      <span className={language === "bn" ? "text-foreground" : "text-muted-foreground/60"}>
+                        BN
+                      </span>
+                      <span aria-hidden="true" className="h-2.5 w-px bg-border/80" />
+                      <span className={language === "en" ? "text-foreground" : "text-muted-foreground/60"}>
+                        EN
+                      </span>
+                    </span>
+                  </button>
+
+                  <button onClick={() => navigate("/")} 
+                    className="border hidden md:block shadow text-nowrap rounded-full px-2 py-1 border-userprimary bg-userprimaryshade text-black font-semibold
+                    hover:bg-userprimary hover:text-white transition-all">
+                    {bn ? "হোম পেইজ" : "Home Page"} <FontAwesomeIcon icon={faReply} />
+                  </button>
+                  <button onClick={() => navigate("/")} className="text-[20px] text-userprimary">
+                      <FontAwesomeIcon icon={faHouse} />
+                  </button>
+                </div>
+              </div>
             </div>
           </header>
         )}
@@ -608,7 +644,7 @@ const PanelSidebarTabs = ({
       <AlertDialog
         open={signOutConfirmOpen}
         onOpenChange={(o) => !signingOut && setSignOutConfirmOpen(o)}
-      >
+        >
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
