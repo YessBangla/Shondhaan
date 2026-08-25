@@ -2015,7 +2015,7 @@ const EmployerPanel = () => {
           title: "নিয়োগ ও ক্যান্ডিডেট ম্যানেজমেন্ট",
           subtitle: "চাকরি পোস্ট, পাইপলাইন ও হায়ারিং অ্যানালিটিক্স — Linear-class রিক্রুটার ওয়ার্কফ্লো।",
           badge: { label: "এমপ্লয়ার প্যানেল" },
-          gradient: "from-indigo-500 via-blue-600 to-indigo-700",
+          gradient: "from-userprimary via-userprimarydark to-green-700",
         }}
         items={sidebarItems}
         defaultValue="dashboard"

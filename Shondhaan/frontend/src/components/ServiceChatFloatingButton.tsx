@@ -231,7 +231,7 @@ const ServiceChatFloatingButton = () => {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-green-600 text-white shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
+          className="flex h-11 w-11 md:h-14 md:w-14 items-center justify-center rounded-full bg-gradient-to-r from-primary to-green-600 text-white shadow-xl ring-4 ring-primary/15 transition hover:scale-105"
           title="Message support">
           <MessageCircle className="h-6 w-6" />
         </button>
