@@ -40,10 +40,8 @@ const SharePopupPortal = ({ url, title, anchorRect, onClose }: SharePopupPortalP
     { name: "WhatsApp", color: "bg-[#25D366]", icon: "w", href: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}` },
     { name: "X", color: "bg-foreground", icon: "𝕏", href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}` },
   ];
-
   const top = anchorRect.bottom + window.scrollY + 8;
   const left = Math.max(8, Math.min(anchorRect.left + window.scrollX - 100, window.innerWidth - 240));
-
   return createPortal(
     <motion.div
       ref={popupRef}
