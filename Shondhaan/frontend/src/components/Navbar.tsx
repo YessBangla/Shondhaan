@@ -740,7 +740,7 @@ const handleSignOut = async () => {
               aria-label={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
               title={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
               className="group flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
-            >
+              >
               <Globe className="h-4 w-4 text-primary/80" />
               <span className="flex items-center gap-1 text-[11px] font-bold leading-none tracking-wide">
                 <span className={language === "bn" ? "text-foreground" : "text-muted-foreground/60"}>
