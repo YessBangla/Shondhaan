@@ -2,7 +2,7 @@ import { Search, X, LayoutGrid, UserPlus, Info, FileText, Shield, HelpCircle, Ph
 import { getServiceImage } from "@/data/serviceImages";
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, useLocation as useRouterLocation } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, px } from "framer-motion";
 import { useLocation } from "@/contexts/LocationContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -198,6 +198,56 @@ const MobileBottomNav = () => {
     );
   }
 
+  // ─── Platform shortcuts with refined metadata & background imagery ───────────
+
+const PLATFORM_CARDS = [
+  {
+    to: "/",
+    labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
+    descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
+    imgIcon: "images/modules_logo/service.png",
+    accentColor: "#a89a9c",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
+  },
+  {
+    to: "/mart/home",
+    labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
+    descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
+    imgIcon: "images/modules_logo/mart.png",
+    accentColor: "#d4a574",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 0%, rgba(212, 165, 116, 0.08), transparent 50%)",
+  },
+  {
+    to: "/deal",
+    labelBn: "সন্ধান ডিল", labelEn: "Shondhaan Deal",
+    descBn: "নির্ভরযোগ্য লেনদেন", descEn: "Verified exchanges",
+    imgIcon: "images/modules_logo/deal.png",
+    accentColor: "#9ca89a",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 0% 100%, rgba(156, 168, 154, 0.08), transparent 50%)",
+  },
+  {
+    to: "/jobs",
+    labelBn: "চাকরির সূযোগ", labelEn: "Job Opportunities",
+    descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
+    imgIcon: "images/modules_logo/job.png",
+    accentColor: "#a89a9c",
+    bgDark: "#1a1a2e",
+    bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
+  },
+] as const;
+const [pressedCard, setPressedCard] = useState<string | null>(null);
+
+  const handleCardClick = (to: string) => {
+    if (pressedCard) return;
+    haptic("medium");
+    setPressedCard(to);
+    try { sessionStorage.setItem("yess:nav-transition", to); } catch {}
+    window.setTimeout(() => { navigate(to); setPressedCard(null); }, 200);
+  };
+
   // Hide on role-based dashboard / panel routes (Laravel-style separate shells)
   const dashboardPrefixes = [
     "/admin", "/dashboard", "/call-center", "/provider", "/representative",
@@ -361,7 +411,7 @@ const MobileBottomNav = () => {
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               className="fixed left-0 right-0 z-[56] max-h-[calc(100dvh-var(--app-header-h,0px)-108px)] overflow-hidden rounded-t-2xl glass-strong md:hidden"
               style={{
-                bottom: 0,
+                bottom: 70,
                 maxHeight: `calc(100dvh - var(--app-header-h, 0px) - env(safe-area-inset-bottom, 0px) - ${MOBILE_BOTTOM_NAV_HEIGHT + MOBILE_BOTTOM_NAV_GAP + 20}px)`,
               }}
               >
@@ -382,6 +432,41 @@ const MobileBottomNav = () => {
                 <h3 className="text-sm font-semibold text-foreground mb-3">
                   {bn ? "আরও অপশন" : "More Options"}
                 </h3>
+
+                 <div className="grid grid-cols-2 gap-2 mb-2">
+                     {PLATFORM_CARDS.map(({ to, labelBn, labelEn, imgIcon, accentColor, bgPattern }, idx) => {
+                    const isPressed = pressedCard === to;
+                    return (
+                      <motion.button
+                        key={to}
+                        initial={{ opacity: 0, scale: 0.92, y: 8 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: idx * 0.05 }}
+                        onClick={() => handleCardClick(to)}
+                        className="group relative bg-background overflow-hidden rounded-lg border border-white-900/20 p-2.5 text-center transition-all duration-300">
+                        <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative flex flex-row items-center gap-2">
+                          <div 
+                            className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-transparent">
+                            {/* <Icon className="h-5 w-5 text-foreground" /> */}
+                            <img src={imgIcon} alt="" />
+                          </div>
+                          <h3 className="text-sm font-semibold text-foreground">
+                            {bn ? labelBn : labelEn}
+                          </h3>
+                        </div>
+                        {isPressed && (
+                          <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            className="absolute inset-0 rounded-lg bg-gradient-to-br from-white/10 to-transparent pointer-events-none"
+                          />
+                        )}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+
                 <button
                   onClick={() => { haptic("selection"); cycle(); }}
                   className="mb-3 flex w-full items-center justify-between rounded-xl border shadow bg-secondary/40 px-4 py-3 transition-colors hover:bg-secondary"
@@ -429,10 +514,10 @@ const MobileBottomNav = () => {
                       className={`flex flex-col items-center gap-1.5 rounded-xl p-3 transition-colors ${
                         routerLocation.pathname === item.path
                           ? "bg-primary/10 text-primary"
-                          : "bg-secondary/50 border shadow text-muted-foreground hover:bg-secondary hover:text-foreground active:bg-secondary"
+                          : "bg-secondary/50 border shadow text-foreground hover:bg-secondary hover:text-foreground active:bg-secondary"
                       }`}
                     >
-                      <item.icon className="h-5 w-5" strokeWidth={1.5} />
+                      <item.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
                       <span className="text-[11px] font-medium leading-tight text-center">{item.label}</span>
                     </button>
                   ))}
@@ -452,7 +537,7 @@ const MobileBottomNav = () => {
       <nav
         aria-label={bn ? "প্রধান নেভিগেশন" : "Primary navigation"}
         role="navigation"
-        className="fixed left-0 !bottom-[-10px] py-2 z-[70] w-full overflow-hidden border bg-primary md:hidden "
+        className="fixed left-0 !bottom-[-10px] py-1 z-[70] w-full overflow-hidden bg-primary md:hidden "
         style={{ bottom: mobileNavBottom }}
         >
         {/* Subtle top hairline highlight for the iOS frosted feel */}
