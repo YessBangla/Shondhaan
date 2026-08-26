@@ -9,9 +9,7 @@ import { getMobileFloatingBottom } from "@/lib/mobileBottomOffsets";
 const SHOWN_KEY = "yess_matchmaker_dismissed";
 const TTL = 24 * 60 * 60_000; // 1 day
 
-/**
- * Floating Matchmaker FAB on the home page. Auto-hides after dismissal for 24h.
- */
+
 export default function ServiceMatchmakerLauncher() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
@@ -54,7 +52,7 @@ export default function ServiceMatchmakerLauncher() {
           setOpen(true);
           try { localStorage.setItem(SHOWN_KEY, String(Date.now())); } catch {}
         }}
-        className="fixed right-3 z-[10] hidden md:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-green-500 px-3 py-2 text-[11px] font-semibold text-white shadow-xl md:!bottom-[95px] md:right-4 md:text-xs"
+        className="fixed right-3 z-[10]  hidden md:inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-primary to-green-500 px-3 py-2 text-[11px] font-semibold text-white shadow-xl md:!bottom-[40px] md:right-4 md:text-xs"
         style={{ bottom: getMobileFloatingBottom(20) }}
         aria-label="open matchmaker"
       >

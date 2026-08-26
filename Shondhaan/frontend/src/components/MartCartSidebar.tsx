@@ -83,15 +83,15 @@ const MartCartSidebar = () => {
               ))}
             </div>
 
-            <div className="border-t border-border px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))] space-y-3">
-              <div className="flex justify-between font-bold">
-                <span>{bn ? "সাবটোটাল" : "Subtotal"}</span>
-                <span className="text-primary">৳{subtotal.toLocaleString("bn-BD")}</span>
-              </div>
-              <Button className="w-full font-bold active:scale-[0.98] text-white hover:bg-emerald-800" onClick={() => { haptic("medium"); setIsOpen(false); navigate("/mart/checkout"); }}>
-                {bn ? "চেকআউটে যান" : "Checkout"}
-              </Button>
-            </div>
+      <div className="border-t border-border px-4 pt-4 pb-[max(5rem,calc(env(safe-area-inset-bottom)+4rem))] space-y-3">
+  <div className="flex justify-between font-bold">
+    <span>{bn ? "সাবটোটাল" : "Subtotal"}</span>
+    <span className="text-primary">৳{subtotal.toLocaleString("bn-BD")}</span>
+  </div>
+  <Button className="w-full font-bold active:scale-[0.98] text-white hover:bg-emerald-800" onClick={() => { haptic("medium"); setIsOpen(false); navigate("/mart/checkout"); }}>
+    {bn ? "চেকআউটে যান" : "Checkout"}
+  </Button>
+</div>
           </>
         )}
     </>
