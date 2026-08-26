@@ -10,15 +10,6 @@ interface Props {
   open: boolean;
   onClose: () => void;
 }
-
-/**
- * Native-style QR scanner sheet. Uses the platform BarcodeDetector API
- * where available (Android Chrome, modern WebView). On unsupported
- * browsers (iOS Safari) it gracefully degrades to a manual token entry.
- * Recognised payloads:
- *   - URLs starting with our origin → in-app navigate
- *   - Plain tokens / any other text → routes to /track/<token>
- */
 const QRScannerSheet = ({ open, onClose }: Props) => {
   const navigate = useNavigate();
   const { language } = useLanguage();

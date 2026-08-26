@@ -90,7 +90,7 @@ const termsSections = [
       <Navbar />
       <div className="mt-8 pt-[44px] md:mt-[0px]" />
       <div className="app-container px-6">
-        <div className="rounded-lg text-center mx-auto py-6 bg-gradient-to-br from-blue-900 via-green-700 to-green-800">
+        <div className="rounded-lg text-center mx-auto py-6 bg-gradient-to-br from-primary to-emerald-500">
           <h1 className="font-heading text-2xl md:text-4xl font-bold text-white">
             {bn ? "শর্তাবলী" : "Terms & Conditions"}
           </h1>

@@ -1,44 +1,30 @@
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
-  ChevronLeft,
   ShieldCheck,
+  
   CheckCircle2,
   Phone,
   MapPin,
-  ShoppingBag,
   Clock,
   Award,
-  Sparkles,
-  Users,
   BadgeCheck,
-  Wrench,
   CalendarCheck,
+  ShoppingBag,
   CalendarIcon,
-  MessageSquare,
   Trash2,
-  Share2,
-  Facebook,
-  Copy,
-  Send,
   Home,
   ChevronRight,
-  Briefcase,
   Wallet,
-  CreditCard,
+  User,
+  Building2,
 } from "lucide-react";
-import PrescriptionUpload from "@/components/PrescriptionUpload";
-import LabTestTracker from "@/components/LabTestTracker";
-import VideoProviderPreview from "@/components/VideoProviderPreview";
-import AIReviewSummary from "@/components/AIReviewSummary";
-
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { format } from "date-fns";
 import { useQuery } from "@tanstack/react-query";
-import { getServiceBySlug, allServices } from "@/data/services";
+import { getServiceBySlug } from "@/data/services";
 import { getServiceImage } from "@/data/serviceImages";
-import { serviceCategories } from "@/data/categories";
 import { useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import {
   Breadcrumb,
@@ -72,6 +58,50 @@ import {
   listServiceReviews,
 } from "@/lib/reviewApi";
 
+/* ─── Compact Design Tokens ─── */
+const T = {
+  ink: "#182620",
+  inkSoft: "#3c4a43",
+  paper: "#EEF0E9",
+  card: "#FFFFFF",
+  line: "#DBD9CC",
+  primary: "hsl(var(--primary))",
+  primaryDark: "hsl(var(--primary))",
+  primaryTint: "hsl(var(--primary) / 0.08)",
+  brass: "#C4842E",
+  brassDark: "#8F5E1E",
+  brassTint: "#F6E9D6",
+  muted: "#7A7F76",
+  radiusLg: "16px",
+  radiusMd: "10px",
+  radiusSm: "7px",
+} as const;
+
+/* ─── Font injection ─── */
+let fontsInjected = false;
+const injectFonts = () => {
+  if (fontsInjected || typeof document === "undefined") return;
+  fontsInjected = true;
+  const ids = ["sd-f1", "sd-f2", "sd-f3"];
+  const links = [
+    { id: ids[0], rel: "preconnect", href: "https://fonts.googleapis.com" },
+    { id: ids[1], rel: "preconnect", href: "https://fonts.gstatic.com", cross: "" },
+    {
+      id: ids[2],
+      rel: "stylesheet",
+      href: "https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=JetBrains+Mono:wght@400;500&display=swap",
+    },
+  ];
+  links.forEach(({ id, ...rest }) => {
+    if (document.getElementById(id)) return;
+    const el = document.createElement("link");
+    el.id = id;
+    Object.assign(el, rest);
+    document.head.appendChild(el);
+  });
+};
+
+/* ─── Types ─── */
 type CmsService = {
   id: string;
   slug: string;
@@ -103,10 +133,8 @@ type ServiceReview = {
   created_at?: string;
 };
 
-const VITE_SERVICE_API_BASE_URL = (
-  INDIVIDUAL_API_BASE_URL || "http://localhost:3000"
-).replace(/\/+$/, "");
-
+/* ─── API helpers ─── */
+const VITE_SERVICE_API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
 const VITE_API_BASE_URL = "http://localhost:5000";
 
 const getServiceApiHeaders = () => {
@@ -120,114 +148,64 @@ const getServiceApiHeaders = () => {
 const getBackendImageUrl = (value?: string | null) => {
   const imageUrl = String(value || "").trim();
   if (!imageUrl) return "";
-  if (
-    /^https?:\/\//i.test(imageUrl) ||
-    imageUrl.startsWith("data:") ||
-    imageUrl.startsWith("blob:")
-  ) {
-    return imageUrl;
-  }
-  if (
-    imageUrl.startsWith("/assets/") ||
-    imageUrl.startsWith("/src/") ||
-    imageUrl.startsWith("/images/")
-  ) {
-    return imageUrl;
-  }
-  const path = imageUrl.startsWith("/") ? imageUrl : `/${imageUrl}`;
-  return `${VITE_SERVICE_API_BASE_URL}${path}`;
+  if (/^https?:\/\//i.test(imageUrl) || imageUrl.startsWith("data:") || imageUrl.startsWith("blob:")) return imageUrl;
+  if (imageUrl.startsWith("/assets/") || imageUrl.startsWith("/src/") || imageUrl.startsWith("/images/")) return imageUrl;
+  return `${VITE_SERVICE_API_BASE_URL}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
 };
 
 const getServiceDisplayImage = (slug: string, imageUrl?: string | null) => {
-  const backendImage = getBackendImageUrl(imageUrl);
-  if (backendImage) return backendImage;
-  return getServiceImage(slug, undefined);
+  const backend = getBackendImageUrl(imageUrl);
+  return backend || getServiceImage(slug, undefined);
 };
 
 const parseList = (value: unknown): string[] => {
   if (Array.isArray(value)) return value.map(String).filter(Boolean);
   if (typeof value !== "string") return [];
   try {
-    const parsed = JSON.parse(value);
-    if (Array.isArray(parsed)) return parsed.map(String).filter(Boolean);
-  } catch {
-    // fallback
-  }
-  return value
-    .split(",")
-    .map((item) => item.trim())
-    .filter(Boolean);
+    const p = JSON.parse(value);
+    if (Array.isArray(p)) return p.map(String).filter(Boolean);
+  } catch { /* */ }
+  return value.split(",").map((s) => s.trim()).filter(Boolean);
 };
 
-const getPayload = (raw: any) =>
-  raw?.data ?? raw?.service ?? raw?.item ?? raw?.result ?? raw;
+const getPayload = (raw: any) => raw?.data ?? raw?.service ?? raw?.item ?? raw?.result ?? raw;
 
 const normalizeCmsService = (raw: any): CmsService | null => {
-  const service = Array.isArray(raw) ? raw[0] : getPayload(raw);
-  if (!service || typeof service !== "object") return null;
+  const s = Array.isArray(raw) ? raw[0] : getPayload(raw);
+  if (!s || typeof s !== "object") return null;
   return {
-    ...service,
-    id: String(service.id ?? ""),
-    slug: String(service.slug ?? ""),
-    title: String(service.title ?? service.name ?? ""),
-    title_en: service.title_en ?? service.name_en ?? null,
-    image_url: service.image_url ?? service.image ?? null,
-    description: service.description ?? null,
-    rating: Number(service.rating ?? 4.5),
-    total_reviews: Number(
-      service.total_reviews ?? service.reviews_count ?? 0
-    ),
-    total_orders: Number(
-      service.total_orders ?? service.orders_count ?? 0
-    ),
-    commission_percent: Number(service.commission_percent ?? 0),
-    platform_fee: Number(
-      service.platform_fee ?? service.platform_fee_amount ?? 0
-    ),
-    features: parseList(service.features),
-    available_cities: parseList(service.available_cities),
-    category_id:
-      service.category_id === undefined || service.category_id === null
-        ? null
-        : String(service.category_id),
-    is_active:
-      service.is_active === false || service.is_active === 0
-        ? false
-        : true,
-    sort_order: Number(service.sort_order ?? 0),
-    price: Number(service.price ?? 0),
+    ...s,
+    id: String(s.id ?? ""),
+    slug: String(s.slug ?? ""),
+    title: String(s.title ?? s.name ?? ""),
+    title_en: s.title_en ?? s.name_en ?? null,
+    image_url: s.image_url ?? s.image ?? null,
+    description: s.description ?? null,
+    rating: Number(s.rating ?? 4.5),
+    total_reviews: Number(s.total_reviews ?? s.reviews_count ?? 0),
+    total_orders: Number(s.total_orders ?? s.orders_count ?? 0),
+    commission_percent: Number(s.commission_percent ?? 0),
+    platform_fee: Number(s.platform_fee ?? s.platform_fee_amount ?? 0),
+    features: parseList(s.features),
+    available_cities: parseList(s.available_cities),
+    category_id: s.category_id == null ? null : String(s.category_id),
+    is_active: s.is_active === false || s.is_active === 0 ? false : true,
+    sort_order: Number(s.sort_order ?? 0),
+    price: Number(s.price ?? 0),
   };
 };
 
 const normalizePackages = (raw: any): any[] => {
   const payload = getPayload(raw);
-  const packages =
-    raw?.packages ??
-    raw?.service_packages ??
-    raw?.data?.packages ??
-    raw?.data?.service_packages ??
-    payload?.packages ??
-    payload?.service_packages ??
-    (Array.isArray(payload) ? payload : []);
-
-  if (!Array.isArray(packages)) return [];
-
-  return packages.map((pkg) => ({
+  const pkgs = raw?.packages ?? raw?.service_packages ?? raw?.data?.packages ?? raw?.data?.service_packages ?? payload?.packages ?? payload?.service_packages ?? (Array.isArray(payload) ? payload : []);
+  if (!Array.isArray(pkgs)) return [];
+  return pkgs.map((pkg) => ({
     ...pkg,
-    id:
-      pkg.id === undefined || pkg.id === null ? undefined : String(pkg.id),
-    service_id:
-      pkg.service_id === undefined || pkg.service_id === null
-        ? undefined
-        : String(pkg.service_id),
+    id: pkg.id == null ? undefined : String(pkg.id),
+    service_id: pkg.service_id == null ? undefined : String(pkg.service_id),
     name: pkg.name ?? pkg.package_name ?? "Basic Service",
     price: Number(pkg.price ?? 0),
-    original_price:
-      pkg.original_price === undefined ||
-      pkg.original_price === null ||
-      pkg.original_price === ""
-        ? null
-        : Number(pkg.original_price),
+    original_price: pkg.original_price == null || pkg.original_price === "" ? null : Number(pkg.original_price),
     features: parseList(pkg.features),
     sort_order: Number(pkg.sort_order ?? 0),
   }));
@@ -236,381 +214,162 @@ const normalizePackages = (raw: any): any[] => {
 const makePricePackage = (service: CmsService | null): any[] => {
   const price = Number(service?.price ?? 0);
   if (!service || !Number.isFinite(price) || price <= 0) return [];
-  return [
-    {
-      id: `${service.id || service.slug}-default-package`,
-      service_id: service.id,
-      name: "Basic Service",
-      price,
-      original_price: null,
-      features: Array.isArray(service.features) ? service.features : [],
-      sort_order: 0,
-    },
-  ];
+  return [{ id: `${service.id || service.slug}-default`, service_id: service.id, name: "Basic Service", price, original_price: null, features: Array.isArray(service.features) ? service.features : [], sort_order: 0 }];
 };
 
-const isRealUuid = (value?: string | null) =>
-  !!value &&
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
-    value
-  );
+const isRealUuid = (v?: string | null) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
+const getSafePackageId = (v: unknown): string | null => { const id = String(v ?? "").trim(); if (!id || id.includes("default")) return null; return isRealUuid(id) ? id : null; };
 
-const getSafePackageId = (value: unknown): string | null => {
-  if (value === undefined || value === null) return null;
-  const id = String(value).trim();
-  if (!id || id.includes("default-package")) return null;
-  return isRealUuid(id) ? id : null;
-};
-
+/* ─── Query hooks ─── */
 const useServiceBySlug = (slug?: string) =>
   useQuery({
-    queryKey: ["service-detail-by-slug", slug],
+    queryKey: ["service-detail", slug],
     queryFn: async () => {
-      const response = await fetch(
-        `${VITE_SERVICE_API_BASE_URL}/api/services/${encodeURIComponent(
-          slug || ""
-        )}`,
-        { headers: getServiceApiHeaders() }
-      );
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(json?.message || "Service load failed");
-      return {
-        service: normalizeCmsService(json),
-        packages: normalizePackages(json),
-      };
+      const res = await fetch(`${VITE_SERVICE_API_BASE_URL}/api/services/${encodeURIComponent(slug || "")}`, { headers: getServiceApiHeaders() });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || "Service load failed");
+      return { service: normalizeCmsService(json), packages: normalizePackages(json) };
     },
-    enabled: !!slug,
-    retry: 1,
+    enabled: !!slug, retry: 1,
   });
 
 const useServicePackages = (serviceId?: string, enabled = true) =>
   useQuery({
-    queryKey: ["service-detail-packages", serviceId],
+    queryKey: ["service-packages", serviceId],
     queryFn: async () => {
-      const response = await fetch(
-        `${VITE_SERVICE_API_BASE_URL}/api/packages?service_id=${encodeURIComponent(
-          serviceId || ""
-        )}`,
-        { headers: getServiceApiHeaders() }
-      );
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(json?.message || "Package load failed");
+      const res = await fetch(`${VITE_SERVICE_API_BASE_URL}/api/packages?service_id=${encodeURIComponent(serviceId || "")}`, { headers: getServiceApiHeaders() });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.message || "Package load failed");
       return normalizePackages(json);
     },
-    enabled: !!serviceId && enabled,
-    retry: 1,
+    enabled: !!serviceId && enabled, retry: 1,
   });
 
 const useUserWallet = (userId?: string | number) =>
   useQuery({
-    queryKey: ["user-wallet-balance", userId],
+    queryKey: ["user-wallet", userId],
     queryFn: async () => {
       if (!userId) return null;
-      const response = await fetch(
-        `${VITE_API_BASE_URL}/api/wallet/balance/${userId}`,
-        { headers: getServiceApiHeaders() }
-      );
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok)
-        throw new Error(json?.error || "Failed to load wallet");
+      const res = await fetch(`${VITE_API_BASE_URL}/api/wallet/balance/${userId}`, { headers: getServiceApiHeaders() });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Wallet load failed");
       return json.wallet || json;
     },
-    enabled: !!userId,
-    retry: 1,
+    enabled: !!userId, retry: 1,
   });
 
+/* ─── Barcode generator ─── */
+const useBarcode = () => useMemo(() => Array.from({ length: 20 }, () => 4 + Math.random() * 7), []);
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ServiceDetail — entry point
+   ═══════════════════════════════════════════════════════════════════════ */
 const ServiceDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const { addItem } = useCart();
   const { t, language } = useLanguage();
-  const { selectedCity } = useLocation();
   const bn = language === "bn";
-  const [selectedPackage, setSelectedPackage] = useState<number>(0);
+  const [selectedPackage, setSelectedPackage] = useState(0);
 
-  const serviceDetailQuery = useServiceBySlug(slug);
-  const cmsService = serviceDetailQuery.data?.service || null;
-  const servicePackagesQuery = useServicePackages(cmsService?.id);
+  injectFonts();
 
+  const detailQuery = useServiceBySlug(slug);
+  const cmsService = detailQuery.data?.service || null;
+  const pkgQuery = useServicePackages(cmsService?.id);
   const legacyService = getServiceBySlug(slug || "");
-  const fallbackPackages = makePricePackage(cmsService);
+  const fallbackPkgs = makePricePackage(cmsService);
 
-  const servicePackages =
-    (servicePackagesQuery.data && servicePackagesQuery.data.length > 0
-      ? servicePackagesQuery.data
-      : serviceDetailQuery.data?.packages) || [];
+  const servicePackages = (pkgQuery.data && pkgQuery.data.length > 0 ? pkgQuery.data : detailQuery.data?.packages) || [];
+  const canFallback = !!cmsService && !pkgQuery.isLoading && servicePackages.length === 0;
+  const cmsPackages = servicePackages.length > 0 ? servicePackages : canFallback ? fallbackPkgs : [];
 
-  const canUseFallbackPackage =
-    !!cmsService &&
-    !servicePackagesQuery.isLoading &&
-    servicePackages.length === 0;
-
-  const cmsPackages =
-    servicePackages.length > 0
-      ? servicePackages
-      : canUseFallbackPackage
-      ? fallbackPackages
-      : [];
-
-  if (serviceDetailQuery.isLoading && !legacyService) {
+  if (detailQuery.isLoading && !legacyService) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-sm text-muted-foreground animate-pulse">
-          Loading service...
-        </p>
+      <div className="min-h-screen flex items-center justify-center" style={{ background: T.paper }}>
+        <div className="flex flex-col items-center gap-2">
+          <div className="h-6 w-6 rounded-full border-2 animate-spin" style={{ borderColor: `${T.primary}33`, borderTopColor: T.primary }} />
+          <p className="text-xs" style={{ color: T.muted }}>{bn ? "লোড হচ্ছে…" : "Loading…"}</p>
+        </div>
       </div>
     );
   }
 
   if (!cmsService && !legacyService) {
     return (
-      <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 text-center">
-        <h1 className="font-heading text-2xl font-bold text-foreground mb-2">
-          Service Not Found
-        </h1>
-        <p className="text-muted-foreground mb-6">
-          The service you are looking for is not available.
-        </p>
-        <button
-          onClick={() => navigate("/")}
-          className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-blue-900 hover:bg-primary/90 transition-colors"
-        >
-          Go Home
-        </button>
+      <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center" style={{ background: T.paper }}>
+        <h1 className="font-['Fraunces',serif] text-xl font-medium mb-2" style={{ color: T.ink }}>Service Not Found</h1>
+        <p className="text-sm mb-4" style={{ color: T.muted }}>The service you are looking for is not available.</p>
+        <button onClick={() => navigate("/")} className="rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5" style={{ background: T.primary }}>Go Home</button>
       </div>
     );
   }
 
   if (cmsService) {
-    return (
-      <CmsServiceDetail
-        service={cmsService}
-        packages={cmsPackages}
-        categories={[]}
-        allServices={[]}
-        selectedPackage={selectedPackage}
-        setSelectedPackage={setSelectedPackage}
-        addItem={addItem}
-        navigate={navigate}
-        t={t}
-        bn={bn}
-        selectedCity={selectedCity}
-      />
-    );
+    return <CmsServiceDetail service={cmsService} packages={cmsPackages} selectedPackage={selectedPackage} setSelectedPackage={setSelectedPackage} addItem={addItem} navigate={navigate} t={t} bn={bn} />;
   }
 
-  // Legacy Service Fallback
   const service = legacyService!;
   const pkg = service.packages[selectedPackage];
-
   const handleAddToCart = () => {
     const p = service.packages[selectedPackage];
-    addItem({
-      serviceSlug: service.slug,
-      serviceTitle: service.title,
-      serviceImage: service.image,
-      packageName: p.name,
-      packagePrice: p.price,
-      originalPrice: p.originalPrice,
-    });
+    addItem({ serviceSlug: service.slug, serviceTitle: service.title, serviceImage: service.image, packageName: p.name, packagePrice: p.price, originalPrice: p.originalPrice });
     toast.success(t("cart.added"));
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen pb-20 md:pb-0" style={{ background: T.paper }}>
       <Navbar />
-      <div className="pt-[22px] md:pt-[42px]" />
-
-      <div className="app-container py-4">
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/">
-                  <Home className="h-3.5 w-3.5" />
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-3 w-3" />
-            </BreadcrumbSeparator>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/all-services">All Services</Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-3 w-3" />
-            </BreadcrumbSeparator>
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-xs">
-                {service.title}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </div>
-
-      <div className="app-container py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <div className="md:col-span-2 space-y-8">
-            <img
-              src={service.image}
-              alt={service.title}
-              className="w-full h-[300px] object-cover rounded-2xl shadow-sm"
-            />
-            <h1 className="font-heading text-3xl font-bold text-foreground">
-              {service.title}
-            </h1>
-            <p className="text-muted-foreground leading-relaxed">
-              {service.description}
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {service.packages.map((p, i) => (
-                <button
-                  key={i}
-                  onClick={() => setSelectedPackage(i)}
-                  className={cn(
-                    "p-4 rounded-xl border text-left transition-all",
-                    selectedPackage === i
-                      ? "border-primary ring-2 ring-primary bg-primary/5"
-                      : "border-border hover:border-primary/40"
-                  )}
-                >
-                  <h3 className="font-bold text-lg">{p.name}</h3>
-                  <p className="text-primary font-bold mt-1">৳{p.price}</p>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="md:col-span-1">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h2 className="font-heading text-xl font-bold text-foreground">
-                Book Now
-              </h2>
-              <button
-                onClick={handleAddToCart}
-                className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-blue-900 hover:bg-primary/90 transition-colors"
-              >
-                Add to Cart (৳{pkg.price})
-              </button>
-            </div>
-          </div>
+      <div className="pt-[16px] md:pt-[32px]" />
+      <div className="app-container py-3">
+        <div className="font-['JetBrains_Mono',monospace] text-[9px] tracking-[.12em] uppercase flex items-center gap-1.5 mb-2" style={{ color: T.brassDark }}>
+          <span className="w-1 h-1 rounded-full" style={{ background: T.brass }} />
+          {bn ? "হোম সার্ভিস" : "Home services"}
+        </div>
+        <h1 className="font-['Fraunces',serif] font-medium text-xl" style={{ color: T.ink }}>{service.title}</h1>
+        <img src={service.image} alt={service.title} className="w-full h-[180px] object-cover mt-3 rounded-[16px] shadow-sm" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
+          {service.packages.map((p, i) => (
+            <button key={i} onClick={() => setSelectedPackage(i)} className="p-3 rounded-[10px] border text-left transition-all" style={{ borderColor: selectedPackage === i ? T.primary : T.line, background: selectedPackage === i ? `linear-gradient(180deg,#fff,${T.primaryTint} 220%)` : T.card }}>
+              {selectedPackage === i && <span className="inline-block -mt-0.5 mb-1 rounded-full px-1.5 py-0.5 text-[8px] font-semibold text-white" style={{ background: T.primary }}>{bn ? "নির্বাচিত" : "Selected"}</span>}
+              <h3 className="font-semibold text-[13px]" style={{ color: T.ink }}>{p.name}</h3>
+              <span className="font-['JetBrains_Mono',monospace] text-sm font-medium" style={{ color: T.primaryDark }}>৳{p.price}</span>
+            </button>
+          ))}
         </div>
       </div>
       <Footer />
-      <StickyBottomCTA
-        price={pkg.price}
-        originalPrice={pkg.originalPrice}
-        packageName={pkg.name}
-        onAddToCart={handleAddToCart}
-      />
+      <StickyBottomCTA price={pkg.price} originalPrice={pkg.originalPrice} packageName={pkg.name} onAddToCart={handleAddToCart} />
     </div>
   );
 };
 
-const CmsServiceDetail = ({
-  service,
-  packages,
-  categories,
-  allServices,
-  selectedPackage,
-  setSelectedPackage,
-  addItem,
-  navigate,
-  t,
-  bn,
-  selectedCity,
-}: {
-  service: CmsService;
-  packages: any[];
-  categories: any[];
-  allServices: CmsService[];
-  selectedPackage: number;
-  setSelectedPackage: (i: number) => void;
-  addItem: any;
-  navigate: any;
-  t: any;
-  bn: boolean;
-  selectedCity: string;
+/* ═══════════════════════════════════════════════════════════════════════
+   CmsServiceDetail — compact version
+   ═══════════════════════════════════════════════════════════════════════ */
+const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPackage, addItem, navigate, t, bn }: {
+  service: CmsService; packages: any[]; selectedPackage: number;
+  setSelectedPackage: (i: number) => void; addItem: any; navigate: any; t: any; bn: boolean;
 }) => {
+  injectFonts();
   const mysqlAuth = getMySqlAuth();
-  const mysqlUser = mysqlAuth?.user;
-  const activeUserId = mysqlUser?.id;
-
+  const activeUserId = mysqlAuth?.user?.id;
+  const { selectedCity } = useLocation();
   const serviceTitle = bn ? service.title : service.title_en || service.title;
-  const category = categories.find((c: any) => c.id === service.category_id);
   const features = Array.isArray(service.features) ? service.features : [];
-  const cities = Array.isArray(service.available_cities)
-    ? service.available_cities
-    : [];
-
+  const cities = Array.isArray(service.available_cities) ? service.available_cities : [];
   const pkg = packages[selectedPackage] || packages[0];
   const commissionPercent = Number(service.commission_percent || 0);
-  const platformFee = Math.round(
-    Number(pkg?.price || 0) * (commissionPercent / 100)
-  );
-  const { addItem: addRecentlyViewed, getItems: getRecentItems } =
-    useRecentlyViewed();
+  const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
+  const { addItem: addRecentlyViewed, getItems: getRecentItems } = useRecentlyViewed();
   const heroImage = getServiceDisplayImage(service.slug, service.image_url);
-  const minPrice = packages.length
-    ? Math.min(...packages.map((p: any) => Number(p.price) || 0))
-    : null;
-  const seoDescription = bn
-    ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সার্ভিস।`
-    : `${serviceTitle} — professional, reliable & affordable service.`;
-  useSEO({
-    title: serviceTitle,
-    description: seoDescription,
-    canonical: `/service/${service.slug}`,
-    image: heroImage,
-    type: "product",
-    jsonLd: {
-      "@context": "https://schema.org",
-      "@type": "Service",
-      name: serviceTitle,
-      description: seoDescription,
-      image: heroImage,
-      provider: { "@type": "Organization", name: "Shondhaan" },
-      areaServed: "Bangladesh",
-      aggregateRating: service.rating
-        ? {
-            "@type": "AggregateRating",
-            ratingValue: service.rating,
-            reviewCount: service.total_reviews || 0,
-          }
-        : undefined,
-      offers: minPrice
-        ? {
-            "@type": "Offer",
-            price: minPrice,
-            priceCurrency: "BDT",
-            availability: "https://schema.org/InStock",
-          }
-        : undefined,
-    },
-  });
+  const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
+  const barcode = useBarcode();
 
-  useEffect(() => {
-    addRecentlyViewed({
-      slug: service.slug,
-      title: service.title,
-      titleEn: service.title_en || undefined,
-      image: heroImage,
-      rating: service.rating ?? 4.5,
-    });
-  }, [
-    service.slug,
-    service.title,
-    service.title_en,
-    service.rating,
-    heroImage,
-    addRecentlyViewed,
-  ]);
+  const seoDesc = bn ? `${serviceTitle} — পেশাদার, নির্ভরযোগ্য ও সাশ্রয়ী সার্ভিস।` : `${serviceTitle} — professional, reliable & affordable service.`;
+  useSEO({ title: serviceTitle, description: seoDesc, canonical: `/service/${service.slug}`, image: heroImage, type: "product", jsonLd: { "@context": "https://schema.org", "@type": "Service", name: serviceTitle, description: seoDesc, image: heroImage, provider: { "@type": "Organization", name: "Shondhaan" }, areaServed: "Bangladesh", aggregateRating: service.rating ? { "@type": "AggregateRating", ratingValue: service.rating, reviewCount: service.total_reviews || 0 } : undefined, offers: minPrice ? { "@type": "Offer", price: minPrice, priceCurrency: "BDT", availability: "https://schema.org/InStock" } : undefined } });
+
+  useEffect(() => { addRecentlyViewed({ slug: service.slug, title: service.title, titleEn: service.title_en || undefined, image: heroImage, rating: service.rating ?? 4.5 }); }, [service.slug, service.title, service.title_en, service.rating, heroImage, addRecentlyViewed]);
 
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
   const [bookingTime, setBookingTime] = useState("");
@@ -619,518 +378,193 @@ const CmsServiceDetail = ({
   const [bookingAddress, setBookingAddress] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "reviews">(
-    "overview"
-  );
-
+  const [activeTab, setActiveTab] = useState<"overview" | "reviews">("overview");
   const [useWalletPayment, setUseWalletPayment] = useState(false);
   const { data: walletData } = useUserWallet(activeUserId);
   const walletBalance = Number(walletData?.cash_balance || 0);
-  const canPayWithWallet = walletBalance >= platformFee;
 
-  // Referral code states
   const [searchParams] = useSearchParams();
   const [referralCode, setReferralCode] = useState("");
-  const [referralValidation, setReferralValidation] = useState<{
-    valid: boolean;
-    code?: string;
-    referrer_name?: string;
-    referred_reward_type?: string;
-    referred_reward_amount?: number;
-    remaining_uses?: number;
-    reason?: string;
-  } | null>(null);
+  const [referralValidation, setReferralValidation] = useState<{ valid: boolean; code?: string; referrer_name?: string; referred_reward_type?: string; referred_reward_amount?: number; remaining_uses?: number; reason?: string } | null>(null);
   const [validatingReferral, setValidatingReferral] = useState(false);
-  const [referralSource, setReferralSource] = useState<
-    "url" | "manual" | null
-  >(null);
+  const [referralSource, setReferralSource] = useState<"url" | "manual" | null>(null);
 
-  // Read referral code from URL ?ref=CODE or ?referral=CODE
-  useEffect(() => {
-    const codeFromUrl =
-      searchParams.get("ref") || searchParams.get("referral");
-    if (codeFromUrl) {
-      const trimmed = codeFromUrl.trim().toUpperCase();
-      if (trimmed) {
-        setReferralCode(trimmed);
-        setReferralSource("url");
-      }
-    }
-  }, [searchParams]);
+  useEffect(() => { const c = searchParams.get("ref") || searchParams.get("referral"); if (c?.trim()) { setReferralCode(c.trim().toUpperCase()); setReferralSource("url"); } }, [searchParams]);
 
   const timeSlots = [
-    { label: "8:00", value: "08:00" },
-    { label: "9:00", value: "09:00" },
-    { label: "10:00", value: "10:00" },
-    { label: "11:00", value: "11:00" },
-    { label: "12:00", value: "12:00" },
-    { label: "1:00", value: "13:00" },
-    { label: "2:00", value: "14:00" },
-    { label: "3:00", value: "15:00" },
-    { label: "4:00", value: "16:00" },
-    { label: "5:00", value: "17:00" },
-    { label: "6:00", value: "18:00" },
-    { label: "7:00", value: "19:00" },
-  ];
-
-  const relatedServices = allServices
-    .filter(
-      (s) =>
-        s.id !== service.id &&
-        s.is_active &&
-        s.category_id === service.category_id
-    )
-    .slice(0, 4);
-
-  const handleAddToCart = () => {
-    if (!pkg) return;
-    addItem({
-      serviceSlug: service.slug,
-      serviceTitle,
-      serviceImage: heroImage,
-      packageName: pkg.name,
-      packagePrice: pkg.price,
-      originalPrice: pkg.original_price,
-    });
-    toast.success(t("cart.added"));
-  };
-
-  const handleValidateReferral = async () => {
-    const code = referralCode.trim().toUpperCase();
-    if (!code) return;
-
-    setValidatingReferral(true);
-    setReferralValidation(null);
-    try {
-      const res = await fetch(
-        `${VITE_API_BASE_URL}/api/referral/validate/${encodeURIComponent(
-          code
-        )}`,
-        { headers: getServiceApiHeaders() }
-      );
-      const data = await res.json();
-      setReferralValidation(data);
-      if (!data.valid) {
-        toast.error(
-          data.reason === "INVALID_FORMAT"
-            ? bn
-              ? "অবৈধ রেফারেল কোড ফরম্যাট"
-              : "Invalid referral code format"
-            : data.reason === "NOT_FOUND_OR_EXPIRED"
-            ? bn
-              ? "কোডটি পাওয়া যায়নি বা মেয়াদ উত্তীর্ণ"
-              : "Code not found or expired"
-            : data.reason === "MAX_USES_REACHED"
-            ? bn
-              ? "সর্বোচ্চ ব্যবহার সীমা পৌঁছেছে"
-              : "Max uses reached"
-            : bn
-            ? "রেফারেল কোড বৈধ নয়"
-            : "Invalid referral code"
-        );
-      } else {
-        toast.success(
-          bn
-            ? `✅ ${data.referrer_name} এর রেফারেল কোড প্রয়োগ হয়েছে!`
-            : `✅ Referral code from ${data.referrer_name} applied!`
-        );
-      }
-    } catch {
-      toast.error(
-        bn ? "রেফারেল যাচাই ব্যর্থ" : "Referral validation failed"
-      );
-    } finally {
-      setValidatingReferral(false);
-    }
-  };
-
-  const clearReferral = () => {
-    setReferralCode("");
-    setReferralValidation(null);
-    setReferralSource(null);
-  };
-
-  // Auto-validate when code comes from URL (must be after handleValidateReferral)
-  useEffect(() => {
-    if (referralSource === "url" && referralCode) {
-      handleValidateReferral();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [referralSource, referralCode]);
-
-  const handleDirectBooking = async () => {
-    if (!activeUserId) {
-      toast.error(t("sd.loginFirst"));
-      navigate("/auth");
-      return;
-    }
-    if (
-      !bookingDate ||
-      !bookingTime ||
-      !bookingName.trim() ||
-      !bookingPhone.trim() ||
-      !bookingAddress.trim()
-    ) {
-      toast.error(t("sd.fillAll"));
-      return;
-    }
-    if (!/^01[3-9]\d{8}$/.test(bookingPhone.trim())) {
-      toast.error(t("sd.validPhone"));
-      return;
-    }
-    if (!pkg) return;
-
-    if (useWalletPayment && !canPayWithWallet) {
-      toast.error(
-        bn
-          ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই"
-          : "Insufficient wallet balance"
-      );
-      return;
-    }
-
-    setSubmitting(true);
-    try {
-      const paymentAmount = Math.round(Number(platformFee || 0));
-
-      let walletTransactionId: string | null = null;
-      if (useWalletPayment) {
-        const walletRes = await fetch(
-          `${VITE_API_BASE_URL}/api/wallet/debit`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              ...(mysqlAuth?.token
-                ? { Authorization: `Bearer ${mysqlAuth.token}` }
-                : {}),
-            },
-            body: JSON.stringify({
-              user_id: String(activeUserId),
-              amount_cash: paymentAmount,
-              amount_coins: 0,
-              module: "SERVICE",
-              reference_id: `booking-${Date.now()}`,
-              description: `Payment for ${serviceTitle} - ${pkg.name}`,
-            }),
-          }
-        );
-
-        const walletJson = await walletRes.json();
-        if (!walletRes.ok || !walletJson.success) {
-          throw new Error(walletJson.error || "Wallet payment failed");
-        }
-        walletTransactionId = walletJson.transaction_id;
-      }
-
-      const createdBooking: any = await createBooking({
-        user_id: String(activeUserId),
-        service_id: service.id || null,
-        package_id: getSafePackageId(pkg?.id),
-        service_slug: service.slug,
-        service_title: serviceTitle,
-        package_name: pkg.name,
-        package_price: Number(pkg.price || 0),
-        platform_fee_amount: paymentAmount,
-        customer_name: bookingName.trim(),
-        customer_phone: bookingPhone.trim(),
-        customer_address: bookingAddress.trim(),
-        booking_date: format(bookingDate, "yyyy-MM-dd"),
-        booking_time: bookingTime,
-        status: "pending",
-        payment_status: useWalletPayment ? "paid" : "unpaid",
-        payment_method: useWalletPayment ? "wallet" : "gateway",
-        wallet_cash_used: useWalletPayment ? paymentAmount : 0,
-        wallet_coins_used: 0,
-        referral_code: referralValidation?.valid
-          ? referralValidation.code
-          : null,
-        referred_reward_type: referralValidation?.valid
-          ? referralValidation.referred_reward_type
-          : null,
-        referred_reward_amount: referralValidation?.valid
-          ? referralValidation.referred_reward_amount
-          : null,
-      });
-
-      if (useWalletPayment) {
-        await fetch(
-          `${VITE_SERVICE_API_BASE_URL}/api/bookings/${createdBooking.id}/payment-status`,
-          {
-            method: "PUT",
-            headers: getServiceApiHeaders(),
-            body: JSON.stringify({
-              payment_status: "paid",
-              payment_method: "wallet",
-              payment_transaction_id: walletTransactionId,
-              wallet_cash_used: paymentAmount,
-              wallet_coins_used: 0,
-            }),
-          }
-        );
-
-        toast.success(
-          bn
-            ? "ওয়ালেট থেকে সফলভাবে পেমেন্ট সম্পন্ন হয়েছে!"
-            : "Payment successful via wallet!"
-        );
-        navigate("/my-bookings");
-      } else {
-        const payment = await startBookingPayment(
-          createdBooking.id,
-          paymentAmount
-        );
-        if (!payment.checkout_url)
-          throw new Error("Payment link was not returned");
-        window.location.href = payment.checkout_url;
-      }
-    } catch (error: any) {
-      console.error("Booking create error:", error);
-      toast.error(error.message || t("sd.bookingError"));
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const benefits = [
-    {
-      icon: BadgeCheck,
-      title: bn ? "প্রশিক্ষিত পেশাদার" : "Trained Professionals",
-      desc: bn
-        ? "আমাদের সকল টেকনিশিয়ান প্রশিক্ষিত ও অভিজ্ঞ"
-        : "All our technicians are trained & experienced",
-    },
-    {
-      icon: ShieldCheck,
-      title: bn ? "সার্ভিস গ্যারান্টি" : "Service Guarantee",
-      desc: bn
-        ? "সার্ভিসে সন্তুষ্ট না হলে পুনরায় বিনামূল্যে সার্ভিস"
-        : "Free re-service if not satisfied",
-    },
-    {
-      icon: Clock,
-      title: bn ? "সময়মতো সার্ভিস" : "On-time Service",
-      desc: bn
-        ? "নির্ধারিত সময়ে টেকনিশিয়ান আসবে"
-        : "Technician arrives at scheduled time",
-    },
-    {
-      icon: Award,
-      title: bn ? "স্বচ্ছ মূল্য" : "Transparent Pricing",
-      desc: bn ? "কোনো লুকানো চার্জ নেই" : "No hidden charges",
-    },
+    { label: "8:00", value: "08:00" }, { label: "9:00", value: "09:00" }, { label: "10:00", value: "10:00" }, { label: "11:00", value: "11:00" },
+    { label: "12:00", value: "12:00" }, { label: "1:00", value: "13:00" }, { label: "2:00", value: "14:00" }, { label: "3:00", value: "15:00" },
   ];
 
   const recentlyViewed = getRecentItems(service.slug).slice(0, 6);
 
+  const handleAddToCart = () => {
+    if (!pkg) return;
+    addItem({ serviceSlug: service.slug, serviceTitle, serviceImage: heroImage, packageName: pkg.name, packagePrice: pkg.price, originalPrice: pkg.original_price });
+    toast.success(t("cart.added"));
+  };
+
+  const handleValidateReferral = useCallback(async () => {
+    const code = referralCode.trim().toUpperCase();
+    if (!code) return;
+    setValidatingReferral(true); setReferralValidation(null);
+    try {
+      const res = await fetch(`${VITE_API_BASE_URL}/api/referral/validate/${encodeURIComponent(code)}`, { headers: getServiceApiHeaders() });
+      const data = await res.json();
+      setReferralValidation(data);
+      if (!data.valid) toast.error(data.reason === "INVALID_FORMAT" ? (bn ? "অবৈধ কোড ফরম্যাট" : "Invalid code format") : data.reason === "NOT_FOUND_OR_EXPIRED" ? (bn ? "কোডটি পাওয়া যায়নি বা মেয়াদ উত্তীর্ণ" : "Code not found or expired") : data.reason === "MAX_USES_REACHED" ? (bn ? "সর্বোচ্চ ব্যবহার সীমা" : "Max uses reached") : (bn ? "রেফারেল কোড বৈধ নয়" : "Invalid referral code"));
+      else toast.success(bn ? `✅ ${data.referrer_name} এর রেফারেল প্রয়োগ হয়েছে!` : `✅ Referral from ${data.referrer_name} applied!`);
+    } catch { toast.error(bn ? "রেফারেল যাচাই ব্যর্থ" : "Validation failed"); } finally { setValidatingReferral(false); }
+  }, [referralCode, bn]);
+
+  const clearReferral = () => { setReferralCode(""); setReferralValidation(null); setReferralSource(null); };
+
+  useEffect(() => { if (referralSource === "url" && referralCode) handleValidateReferral(); }, [referralSource, referralCode, handleValidateReferral]);
+
+  const handleDirectBooking = async () => {
+    if (!activeUserId) { toast.error(t("sd.loginFirst")); navigate("/auth"); return; }
+    if (!bookingDate || !bookingTime || !bookingName.trim() || !bookingPhone.trim() || !bookingAddress.trim()) {
+      if (!showBookingForm) { setShowBookingForm(true); return; }
+      toast.error(t("sd.fillAll")); return;
+    }
+    if (!/^01[3-9]\d{8}$/.test(bookingPhone.trim())) { toast.error(t("sd.validPhone")); return; }
+    if (!pkg) return;
+    if (useWalletPayment && walletBalance < platformFee) { toast.error(bn ? "ওয়ালেটে পর্যাপ্ত ব্যালেন্স নেই" : "Insufficient wallet balance"); return; }
+
+    setSubmitting(true);
+    try {
+      const paymentAmount = Math.round(platformFee || 0);
+      let walletTxId: string | null = null;
+      if (useWalletPayment) {
+        const wr = await fetch(`${VITE_API_BASE_URL}/api/wallet/debit`, { method: "POST", headers: { "Content-Type": "application/json", ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}) }, body: JSON.stringify({ user_id: String(activeUserId), amount_cash: paymentAmount, amount_coins: 0, module: "SERVICE", reference_id: `booking-${Date.now()}`, description: `${serviceTitle} - ${pkg.name}` }) });
+        const wj = await wr.json();
+        if (!wr.ok || !wj.success) throw new Error(wj.error || "Wallet payment failed");
+        walletTxId = wj.transaction_id;
+      }
+      const booking: any = await createBooking({ user_id: String(activeUserId), service_id: service.id || null, package_id: getSafePackageId(pkg?.id), service_slug: service.slug, service_title: serviceTitle, package_name: pkg.name, package_price: Number(pkg.price || 0), platform_fee_amount: paymentAmount, customer_name: bookingName.trim(), customer_phone: bookingPhone.trim(), customer_address: bookingAddress.trim(), booking_date: format(bookingDate, "yyyy-MM-dd"), booking_time: bookingTime, status: "pending", payment_status: useWalletPayment ? "paid" : "unpaid", payment_method: useWalletPayment ? "wallet" : "gateway", wallet_cash_used: useWalletPayment ? paymentAmount : 0, wallet_coins_used: 0, referral_code: referralValidation?.valid ? referralValidation.code : null, referred_reward_type: referralValidation?.valid ? referralValidation.referred_reward_type : null, referred_reward_amount: referralValidation?.valid ? referralValidation.referred_reward_amount : null });
+      if (useWalletPayment) {
+        await fetch(`${VITE_SERVICE_API_BASE_URL}/api/bookings/${booking.id}/payment-status`, { method: "PUT", headers: getServiceApiHeaders(), body: JSON.stringify({ payment_status: "paid", payment_method: "wallet", payment_transaction_id: walletTxId, wallet_cash_used: paymentAmount, wallet_coins_used: 0 }) });
+        toast.success(bn ? "ওয়ালেট থেকে পেমেন্ট সফল!" : "Payment successful via wallet!");
+        navigate("/my-bookings");
+      } else {
+        const payment = await startBookingPayment(booking.id, paymentAmount);
+        if (!payment.checkout_url) throw new Error("No payment link");
+        window.location.href = payment.checkout_url;
+      }
+    } catch (err: any) { toast.error(err.message || t("sd.bookingError")); } finally { setSubmitting(false); }
+  };
+
+  const benefits = [
+    { icon: BadgeCheck, title: bn ? "প্রশিক্ষিত পেশাদার" : "Verified technicians", desc: bn ? "ব্যাকগ্রাউন্ড চেকড" : "Background-checked" },
+    { icon: ShieldCheck, title: bn ? "সার্ভিস গ্যারান্টি" : "Service guarantee", desc: bn ? "বিনামূল্যে পুনঃসার্ভিস" : "Free re-visit" },
+    { icon: Clock, title: bn ? "সময়মতো আগমন" : "On-time arrival", desc: bn ? "ETA ট্র্যাক করা হয়" : "Tracked ETA" },
+    { icon: Award, title: bn ? "স্বচ্ছ মূল্য" : "Transparent pricing", desc: bn ? "লুকানো চার্জ নেই" : "No hidden charges" },
+  ];
+
+  const jobCode = useMemo(() => { const h = service.slug.slice(0, 6).toUpperCase().replace(/[^A-Z0-9]/g, "X").padEnd(6, "X"); return `SVC-${h}-BD`; }, [service.slug]);
+
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
+    <div className="min-h-screen pb-20 md:pb-0" style={{ background: T.paper }}>
       <Navbar />
-      <div className="pt-[80px] md:pt-[30px]" />
-      <div className="app-container py-2">
+      <div className="pt-[14px] md:pt-[22px]" />
+
+      <div className="app-container pt-3">
+        {/* Eyebrow */}
+
+
+        {/* Breadcrumb */}
         <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/">
-                  <Home className="h-3.5 w-3.5" />
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-3 w-3" />
-            </BreadcrumbSeparator>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/all-services">
-                  {bn ? "সকল সার্ভিস" : "All Services"}
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator>
-              <ChevronRight className="h-3 w-3" />
-            </BreadcrumbSeparator>
-            <BreadcrumbItem>
-              <BreadcrumbPage className="text-xs">
-                {serviceTitle}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
+          <BreadcrumbList className="text-[10px]">
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/" className="flex items-center gap-0.5" style={{ color: T.muted }}><Home className="h-2.5 w-2.5" /></Link></BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator><ChevronRight className="h-2 w-2" style={{ color: T.muted, opacity: 0.5 }} /></BreadcrumbSeparator>
+            <BreadcrumbItem><BreadcrumbLink asChild><Link to="/all-services" style={{ color: T.muted }}>{bn ? "সকল সার্ভিস" : "All services"}</Link></BreadcrumbLink></BreadcrumbItem>
+            <BreadcrumbSeparator><ChevronRight className="h-2 w-2" style={{ color: T.muted, opacity: 0.5 }} /></BreadcrumbSeparator>
+            <BreadcrumbItem><BreadcrumbPage className="font-medium" style={{ color: T.ink }}>{serviceTitle}</BreadcrumbPage></BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </div>
 
-      {/* Compact Hero Section */}
-      <div className="app-container py-4">
-        <div className="relative h-[180px] md:h-[200px] w-full overflow-hidden rounded-2xl shadow-sm">
-          <img
-            src={heroImage}
-            alt={serviceTitle}
-            className="absolute inset-0 h-full w-full object-cover"
-          />
-          <div
-            className={`absolute inset-0 bg-gradient-to-t ${
-              category?.color_overlay ||
-              "from-foreground/80 to-foreground/20"
-            }`}
-          />
-          <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-            {category && (
-              <span className="inline-flex items-center rounded-full bg-background/20 backdrop-blur-sm px-2.5 py-0.5 text-[11px] font-medium text-background mb-2">
-                {bn ? category.name : category.name_en || category.name}
+      {/* ── Hero ── */}
+      <div className="app-container py-2">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="relative h-[160px] md:h-[200px] w-full overflow-hidden" style={{ borderRadius: T.radiusLg }}>
+          <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover mix-blend-luminosity" style={{ opacity: 0.55 }} />
+          <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(15,42,34,0.25) 0%, rgba(11,23,19,0.92) 100%)" }} />
+          <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 z-10 text-white">
+            <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] tracking-wide mb-2" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)" }}>
+              {bn ? "সার্ভিস বিবরণ" : "Service details"}
+            </span>
+            <h1 className="font-['Fraunces',serif] font-medium text-[20px] md:text-[28px] leading-tight tracking-tight">{serviceTitle}</h1>
+            <div className="mt-1.5 flex items-center gap-3 text-[11px]" style={{ color: "rgba(255,255,255,0.82)" }}>
+              <span className="flex items-center gap-0.5 font-semibold" style={{ color: T.brass }}>
+                <Star className="h-3 w-3 fill-current" /> {service.rating ?? 4.5}
               </span>
-            )}
-            <h1 className="font-heading text-2xl md:text-4xl font-bold text-background drop-shadow-sm leading-tight">
-              {serviceTitle}
-            </h1>
-            <div className="mt-2 flex items-center gap-3 text-background/90 text-xs md:text-sm">
-              <span className="flex items-center gap-1">
-                <Star className="h-3.5 w-3.5 fill-yellow-400 text-yellow-400" />
-                {service.rating ?? 4.5}
-              </span>
-              <span className="hidden sm:inline">
-                ({service.total_reviews ?? 0} {t("sd.reviews")})
-              </span>
-              <span>
-                • {(service.total_orders ?? 0).toLocaleString("bn-BD")}+{" "}
-                {t("sd.orders")}
-              </span>
+              <span>{(service.total_reviews ?? 0).toLocaleString()} {t("sd.reviews")}</span>
+              <span>· {(service.total_orders ?? 0).toLocaleString("bn-BD")}+ {t("sd.orders")}</span>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
 
-      <div className="app-container py-4 md:py-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
-          {/* Main Content with Tabs */}
-          <div className="md:col-span-2">
-            {/* Tab Navigation */}
-            <div className="flex gap-1 border-b border-border mb-5">
-              <button
-                onClick={() => setActiveTab("overview")}
-                className={cn(
-                  "px-4 py-2.5 text-sm font-medium transition-all border-b-2",
-                  activeTab === "overview"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {bn ? "সার্ভিস বিবরণ" : "Overview"}
-              </button>
-              <button
-                onClick={() => setActiveTab("reviews")}
-                className={cn(
-                  "px-4 py-2.5 text-sm font-medium transition-all border-b-2",
-                  activeTab === "reviews"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-              >
-                {bn ? "রিভিউ" : "Reviews"} ({service.total_reviews ?? 0})
-              </button>
+      {/* ── Grid: Content + Ticket ── */}
+      <div className="app-container py-2 md:py-4">
+        <div className="grid grid-cols-1 md:grid-cols-[1.65fr_1fr] gap-4 md:gap-6">
+
+          {/* ─── Main Column ─── */}
+          <div>
+            {/* Tabs */}
+            <div className="flex gap-4 mb-3" style={{ borderBottom: `1px solid ${T.line}` }}>
+              {(["overview", "reviews"] as const).map((tab) => (
+                <button key={tab} onClick={() => setActiveTab(tab)} className="relative pb-2.5 text-[12px] font-semibold bg-transparent border-none cursor-pointer transition-colors" style={{ color: activeTab === tab ? T.ink : T.muted }}>
+                  {tab === "overview" ? (bn ? "বিবরণ" : "Overview") : `${bn ? "রিভিউ" : "Reviews"} (${service.total_reviews ?? 0})`}
+                  <span className="absolute left-0 right-0 -bottom-px h-[1.5px] rounded-full transition-transform duration-300" style={{ background: T.brass, transform: activeTab === tab ? "scaleX(1)" : "scaleX(0)", transformOrigin: "left" }} />
+                </button>
+              ))}
             </div>
 
-            {/* Overview Tab */}
+            {/* Overview */}
             {activeTab === "overview" && (
-              <div className="space-y-5 animate-in fade-in">
-                {/* Description */}
-                {service.description && (
-                  <div>
-                    <p className="text-muted-foreground leading-relaxed text-sm">
-                      {service.description}
-                    </p>
-                  </div>
-                )}
+              <motion.div key="ov" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-5">
+                {service.description && <p className="leading-[1.65] text-[12.5px]" style={{ color: T.inkSoft }}>{service.description}</p>}
 
-                {/* Features */}
                 {features.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2.5">
-                      {bn ? "বৈশিষ্ট্য" : "Features"}
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
+                    <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
+                    <div className="flex flex-wrap gap-1.5">
                       {features.map((f) => (
-                        <span
-                          key={f}
-                          className="inline-flex items-center gap-1 rounded-full bg-secondary px-2.5 py-1 text-xs font-medium text-secondary-foreground"
-                        >
-                          <CheckCircle2 className="h-3 w-3 text-primary" />{" "}
-                          {f}
+                        <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10.5px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
+                          <CheckCircle2 className="h-2.5 w-2.5" style={{ color: T.primary }} /> {f}
                         </span>
                       ))}
                     </div>
                   </div>
                 )}
 
-                {/* Compact Packages */}
                 {packages.length > 0 && (
                   <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2.5">
-                      {bn ? "প্যাকেজ" : "Packages"}
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "প্যাকেজ" : "Packages"}</h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {packages.map((p: any, i: number) => {
-                        const isSelected = selectedPackage === i;
-                        const discount = p.original_price
-                          ? Math.round(
-                              ((p.original_price - p.price) /
-                                p.original_price) *
-                                100
-                            )
-                          : 0;
-
+                        const sel = selectedPackage === i;
+                        const disc = p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0;
                         return (
-                          <button
-                            key={p.id || p.name}
-                            onClick={() => setSelectedPackage(i)}
-                            className={cn(
-                              "relative rounded-lg border-2 p-3.5 text-left transition-all text-sm",
-                              isSelected
-                                ? "border-primary bg-primary/5"
-                                : "border-border hover:border-primary/40"
-                            )}
-                          >
-                            {isSelected && (
-                              <span className="absolute -top-2 left-3 rounded-full bg-primary px-2 py-0.5 text-[9px] font-bold text-white">
-                                {bn ? "নির্বাচিত" : "Selected"}
-                              </span>
-                            )}
-                            {discount > 0 && (
-                              <span className="absolute -top-2 right-3 rounded-full bg-destructive px-1.5 py-0.5 text-[9px] font-bold text-destructive-foreground">
-                                -{discount}%
-                              </span>
-                            )}
-                            <h4 className="font-semibold text-foreground">
-                              {p.name}
-                            </h4>
-                            <div className="mt-1 flex items-baseline gap-1.5">
-                              <span className="text-lg font-bold text-primary">
-                                ৳{p.price}
-                              </span>
-                              {p.original_price && (
-                                <span className="text-xs text-muted-foreground line-through">
-                                  ৳{p.original_price}
-                                </span>
-                              )}
+                          <button key={p.id || p.name} onClick={() => setSelectedPackage(i)} className="relative text-left border rounded-[10px] p-3 cursor-pointer transition-all duration-200" style={{ borderColor: sel ? T.primary : T.line, background: sel ? `linear-gradient(180deg,#fff,${T.primaryTint} 220%)` : T.card, boxShadow: sel ? `0 4px 12px hsl(var(--primary) / 0.1)` : "none", transform: sel ? "translateY(-1px)" : "none" }}>
+                            {sel && <span className="absolute -top-[7px] left-2.5 rounded-full px-2 py-[2px] text-[8px] font-semibold text-white" style={{ background: T.primary }}>{bn ? "নির্বাচিত" : "Selected"}</span>}
+                            {disc > 0 && <span className="absolute -top-[7px] right-2.5 rounded-full px-1.5 py-[2px] text-[8px] font-semibold text-white" style={{ background: T.brass }}>-{disc}%</span>}
+                            <h4 className="text-[13px] font-semibold" style={{ color: T.ink }}>{p.name}</h4>
+                            <div className="mt-0.5 flex items-baseline gap-1">
+                              <span className="font-['JetBrains_Mono',monospace] text-[15px] font-medium" style={{ color: T.primaryDark }}>৳{p.price}</span>
+                              {p.original_price && <span className="text-[10px] line-through" style={{ color: T.muted }}>৳{p.original_price}</span>}
                             </div>
-                            {Array.isArray(p.features) &&
-                              p.features.length > 0 && (
-                                <ul className="mt-2 space-y-1 border-t border-border pt-2">
-                                  {p.features.slice(0, 2).map((f: string) => (
-                                    <li
-                                      key={f}
-                                      className="flex items-start gap-1.5 text-[11px] text-muted-foreground"
-                                    >
-                                      <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0 text-primary" />{" "}
-                                      {f}
-                                    </li>
-                                  ))}
-                                  {p.features.length > 2 && (
-                                    <li className="text-[10px] text-primary font-medium">
-                                      +{p.features.length - 2} more
-                                    </li>
-                                  )}
-                                </ul>
-                              )}
+                            {Array.isArray(p.features) && p.features.length > 0 && (
+                              <ul className="mt-2 space-y-0.5 pt-2" style={{ borderTop: `1px dashed ${T.line}` }}>
+                                {p.features.slice(0, 3).map((f: string) => (
+                                  <li key={f} className="flex items-start gap-1 text-[10px]" style={{ color: T.inkSoft }}>
+                                    <span style={{ color: T.primary, fontWeight: 700, fontSize: "9px" }}>✓</span> {f}
+                                  </li>
+                                ))}
+                                {p.features.length > 3 && <li className="text-[9px] font-medium" style={{ color: T.primary }}>+{p.features.length - 3} {bn ? "আরও" : "more"}</li>}
+                              </ul>
+                            )}
                           </button>
                         );
                       })}
@@ -1138,824 +572,334 @@ const CmsServiceDetail = ({
                   </div>
                 )}
 
-                {/* Compact Benefits */}
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground mb-2.5">
-                    {bn ? "সুবিধা" : "Benefits"}
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3">
+                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সুবিধা" : "Benefits"}</h3>
+                  <div className="grid grid-cols-2 gap-2">
                     {benefits.map((b, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-2 rounded-lg border border-border bg-card p-3"
-                      >
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                          <b.icon className="h-4 w-4 text-primary" />
+                      <div key={i} className="flex items-start gap-2 border rounded-[10px] p-2.5" style={{ borderColor: T.line, background: T.card }}>
+                        <div className="w-6 h-6 rounded-[7px] shrink-0 flex items-center justify-center" style={{ background: T.brassTint }}>
+                          <b.icon className="w-3 h-3" style={{ color: T.brassDark }} />
                         </div>
                         <div className="min-w-0">
-                          <h4 className="text-xs font-semibold text-foreground leading-tight">
-                            {b.title}
-                          </h4>
-                          <p className="text-[10px] text-muted-foreground mt-0.5">
-                            {b.desc}
-                          </p>
+                          <h5 className="text-[10.5px] font-semibold leading-tight" style={{ color: T.ink }}>{b.title}</h5>
+                          <p className="text-[9px] mt-0.5 leading-[1.4]" style={{ color: T.muted }}>{b.desc}</p>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
 
-                {/* Cities */}
-                {(cities.length > 0 || true) && (
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground mb-2.5">
-                      {bn ? "পরিষেবা এলাকা" : "Service Area"}
-                    </h3>
-                    {cities.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5">
-                        {cities.map((city) => (
-                          <span
-                            key={city}
-                            className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
-                          >
-                            <MapPin className="h-3 w-3" /> {city}
-                          </span>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="rounded-lg bg-card p-3 border border-border">
-                        <p className="text-xs text-muted-foreground flex items-center gap-2">
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                          {bn
-                            ? "সারাদেশে পরিষেবা উপলব্ধ"
-                            : "Available nationwide"}
-                        </p>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
+                <div>
+                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "পরিষেবা এলাকা" : "Service Area"}</h3>
+                  {cities.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {cities.map((c) => (
+                        <span key={c} className="inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-[10px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
+                          <MapPin className="h-2.5 w-2.5" /> {c}
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1.5 rounded-[10px] border p-2.5" style={{ borderColor: T.line, background: T.card }}>
+                      <CheckCircle2 className="h-3 w-3 shrink-0" style={{ color: T.primary }} />
+                      <span className="text-[10px]" style={{ color: T.inkSoft }}>{bn ? "সারাদেশে পরিষেবা উপলব্ধ" : "Available nationwide"}</span>
+                    </div>
+                  )}
+                </div>
+              </motion.div>
             )}
 
-            {/* Reviews Tab */}
+            {/* Reviews */}
             {activeTab === "reviews" && (
-              <ReviewSection
-                serviceSlug={service.slug}
-                t={t}
-                bn={bn}
-                navigate={navigate}
-              />
+              <motion.div key="rv" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
+                <ReviewSection serviceSlug={service.slug} t={t} bn={bn} navigate={navigate} />
+              </motion.div>
             )}
           </div>
 
-          {/* Compact Sidebar */}
-          <div className="block md:col-span-1">
-            <div className="sticky top-24 rounded-xl border border-border bg-card p-5 shadow-md space-y-4">
-              <h2 className="font-heading text-lg font-bold text-foreground">
-                {t("sd.bookNow")}
-              </h2>
-
-              {pkg && (
-                <div className="rounded-lg bg-primary/5 border border-primary/20 p-3.5 space-y-2.5">
-                  <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">
-                      {bn ? "নির্বাচিত" : "Selected"}
-                    </p>
-                    <p className="font-semibold text-foreground text-sm">
-                      {pkg.name}
-                    </p>
-                  </div>
-                  <div className="flex items-baseline gap-2">
-                    <span className="font-heading text-xl font-bold text-primary">
-                      ৳{pkg.price}
-                    </span>
-                    {pkg.original_price && (
-                      <span className="text-xs text-muted-foreground line-through">
-                        ৳{pkg.original_price}
-                      </span>
-                    )}
-                  </div>
-                  <div className="rounded border border-dashed border-border/50 bg-background px-2.5 py-1.5">
-                    <div className="flex items-center justify-between text-[10px]">
-                      <span className="text-muted-foreground">
-                        Fee ({commissionPercent}%)
-                      </span>
-                      <span className="font-semibold text-foreground">
-                        ৳{platformFee}
-                      </span>
+          {/* ─── Ticket Sidebar ─── */}
+          <div className="md:block">
+            <div className="sticky top-4">
+              <div className="border rounded-[16px] bg-white shadow-[0_8px_24px_rgba(24,38,32,0.08)]">
+                {/* Top: Price Block */}
+                <div className="p-3.5 pb-3">
+                  <h2 className="font-['Fraunces',serif] font-medium text-[15px] mb-2.5" style={{ color: T.ink }}>{bn ? "বুকিং করুন" : "Book this visit"}</h2>
+                  {pkg && (
+                    <div className="rounded-[10px] p-3 flex justify-between items-end text-white" style={{ background: T.primaryDark }}>
+                      <div>
+                        <div className="text-[9px] tracking-[.08em] uppercase" style={{ color: "rgba(255,255,255,0.6)" }}>{bn ? "প্যাকেজ" : "Package"}</div>
+                        <div className="text-[11px] font-semibold mt-0.5">{pkg.name}</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{pkg.price}</div>
+                        {platformFee > 0 && <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.65)" }}>{bn ? "প্লাটফর্ম ফি" : "Platform fee"} ৳{platformFee}</div>}
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Date Selection */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-foreground">
-                  {t("sd.selectDate")}
-                </label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <button
-                      className={cn(
-                        "w-full flex items-center gap-2 rounded-lg border border-input bg-white px-3 py-2 text-xs text-left hover:bg-secondary",
-                        !bookingDate && "text-muted-foreground"
-                      )}
-                    >
-                      <CalendarIcon className="h-3.5 w-3.5 text-primary" />
-                      {bookingDate
-                        ? format(bookingDate, "dd MMM")
-                        : bn
-                        ? "তারিখ বেছে নিন"
-                        : "Pick date"}
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={bookingDate}
-                      onSelect={setBookingDate}
-                      disabled={(date) =>
-                        date < new Date(new Date().setHours(0, 0, 0, 0))
-                      }
-                      initialFocus
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-
-              {/* Time Selection */}
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-foreground">
-                  {t("sd.selectTime")}
-                </label>
-                <div className="grid grid-cols-4 gap-1.5">
-                  {timeSlots.slice(0, 8).map((slot) => (
-                    <button
-                      key={slot.value}
-                      onClick={() => setBookingTime(slot.value)}
-                      className={cn(
-                        "rounded border px-1.5 py-1 text-[10px] font-medium transition-all",
-                        bookingTime === slot.value
-                          ? "border-primary bg-primary/10 text-primary"
-                          : "border-border text-muted-foreground hover:border-primary/40"
-                      )}
-                    >
-                      {slot.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Referral Code */}
-              {referralValidation?.valid ? (
-                <div className="rounded-lg border border-green-300 bg-green-50 p-2.5 flex items-center justify-between">
-                  <div className="flex items-center gap-2 min-w-0">
-                    <BadgeCheck className="h-4 w-4 text-green-600 shrink-0" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-green-800 truncate">
-                        {referralValidation.code}
-                      </p>
-                      <p className="text-[10px] text-green-600 truncate">
-                        {bn
-                          ? `${referralValidation.referrer_name} এর রেফারেল`
-                          : `Referral from ${referralValidation.referrer_name}`}
-                        {referralValidation.referred_reward_amount != null &&
-                          referralValidation.referred_reward_amount > 0 && (
-                            <span className="ml-1 font-bold">
-                              (+৳
-                              {referralValidation.referred_reward_amount})
-                            </span>
-                          )}
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={clearReferral}
-                    className="shrink-0 rounded p-1 text-green-600 hover:bg-green-100 transition-colors"
-                    title={bn ? "সরিয়ে দিন" : "Remove"}
-                  >
-                    <Trash2 className="h-3 w-3" />
-                  </button>
-                </div>
-              ) : referralSource === "url" && validatingReferral ? (
-                <div className="rounded-lg border border-border bg-card p-2.5 flex items-center gap-2">
-                  <div className="h-3 w-3 rounded-full border-2 border-primary border-t-transparent animate-spin" />
-                  <p className="text-[11px] text-muted-foreground">
-                    {bn
-                      ? "রেফারেল কোড যাচাই হচ্ছে..."
-                      : "Validating referral code..."}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <label className="text-xs font-semibold text-foreground">
-                    {bn
-                      ? "রেফারেল কোড (ঐচ্ছিক)"
-                      : "Referral Code (optional)"}
-                  </label>
-                  <div className="flex gap-1.5">
-                    <input
-                      type="text"
-                      value={referralCode}
-                      onChange={(e) => {
-                        setReferralCode(
-                          e.target.value.toUpperCase().slice(0, 20)
-                        );
-                        if (
-                          referralValidation &&
-                          !referralValidation.valid
-                        ) {
-                          setReferralValidation(null);
-                        }
-                      }}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && handleValidateReferral()
-                      }
-                      placeholder={bn ? "কোড লিখুন" : "Enter code"}
-                      className="flex-1 rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring uppercase tracking-wider"
-                    />
-                    <button
-                      onClick={handleValidateReferral}
-                      disabled={
-                        validatingReferral || !referralCode.trim()
-                      }
-                      className="rounded-lg border border-primary bg-primary/10 px-3 py-2 text-xs font-semibold text-primary hover:bg-primary/20 disabled:opacity-40 transition-colors"
-                    >
-                      {validatingReferral
-                        ? "..."
-                        : bn
-                        ? "যাচাই"
-                        : "Apply"}
-                    </button>
-                  </div>
-                  {referralValidation && !referralValidation.valid && (
-                    <p className="text-[10px] text-destructive">
-                      {referralValidation.reason === "INVALID_FORMAT"
-                        ? bn
-                          ? "কোড ফরম্যাট সঠিক নয়"
-                          : "Invalid code format"
-                        : referralValidation.reason ===
-                          "NOT_FOUND_OR_EXPIRED"
-                        ? bn
-                          ? "কোডটি পাওয়া যায়নি বা মেয়াদোত্তীর্ণ"
-                          : "Not found or expired"
-                        : referralValidation.reason ===
-                          "MAX_USES_REACHED"
-                        ? bn
-                          ? "ব্যবহার সীমা পূরণ হয়েছে"
-                          : "Usage limit reached"
-                        : bn
-                        ? "বৈধ কোড নয়"
-                        : "Invalid code"}
-                    </p>
                   )}
                 </div>
-              )}
 
-              {!showBookingForm ? (
-                <button
-                  onClick={() => {
-                    if (!activeUserId)
-                      return (
-                        toast.error(t("sd.loginFirst")),
-                        navigate("/auth")
-                      );
-                    if (!bookingDate || !bookingTime)
-                      return toast.error(t("sd.selectDateFirst"));
-                    setShowBookingForm(true);
-                  }}
-                    className="w-full bg-primary rounded-lg py-2.5 text-xs font-semibold text-white hover:bg-emerald-600 flex items-center justify-center gap-2"
-                  >
-                  <CalendarCheck className="h-3.5 w-3.5" />{" "}
-                  {t("sd.bookingConfirmBtn")}
-                </button>
-              ) : (
-                <motion.div
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  className="space-y-2"
-                >
-                  <input
-                    type="text"
-                    placeholder={t("sd.namePlaceholder")}
-                    value={bookingName}
-                    onChange={(e) => setBookingName(e.target.value)}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                  />
-                  <input
-                    type="tel"
-                    placeholder={t("sd.phonePlaceholder")}
-                    value={bookingPhone}
-                    onChange={(e) =>
-                      setBookingPhone(
-                        e.target.value.replace(/\D/g, "").slice(0, 11)
-                      )
-                    }
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-                  />
-                  <textarea
-                    placeholder={t("sd.addressPlaceholder")}
-                    value={bookingAddress}
-                    onChange={(e) => setBookingAddress(e.target.value)}
-                    rows={2}
-                    className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring resize-none"
-                  />
+                {/* Perforation */}
+                <div className="relative mx-4" style={{ borderTop: `1px dashed ${T.line}` }}>
+                  <div className="absolute -left-[26px] -top-[7px] w-[14px] h-[14px] rounded-full" style={{ background: T.paper }} />
+                  <div className="absolute -right-[26px] -top-[7px] w-[14px] h-[14px] rounded-full" style={{ background: T.paper }} />
+                </div>
 
-                  {/* Payment Method */}
-                  <div className="space-y-2 pt-1.5">
-                    <label className="text-xs font-semibold text-foreground">
-                      {bn ? "পেমেন্ট" : "Payment"}
-                    </label>
-                    <div className="space-y-1.5">
-                      <button
-                        type="button"
-                        onClick={() => setUseWalletPayment(true)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-2.5 rounded-lg border text-xs transition-all",
-                          useWalletPayment
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/40"
-                        )}
-                        disabled={!canPayWithWallet}
-                      >
-                        <div className="flex items-center gap-2">
-                          <Wallet className="h-3.5 w-3.5 text-primary" />
-                          <div className="text-left">
-                            <p className="font-medium">
-                              {bn ? "ওয়ালেট" : "Wallet"}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">
-                              ৳{walletBalance.toFixed(0)}
-                            </p>
-                          </div>
-                        </div>
-                        {useWalletPayment && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </button>
+                {/* Body */}
+                <div className="p-3.5 pt-3 space-y-3">
+                  {/* Date */}
+                  <div>
+                    <label className="text-[10px] font-semibold block mb-1" style={{ color: T.inkSoft }}>{bn ? "ভিজিটের তারিখ" : "Visit date"}</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <button className="w-full flex items-center gap-1.5 rounded-[7px] border bg-white px-2.5 py-2 text-[11px] text-left cursor-pointer transition-colors" style={{ borderColor: T.line, color: T.ink }}>
+                          <CalendarIcon className="h-3 w-3" style={{ color: T.brass }} />
+                          {bookingDate ? format(bookingDate, "EEE, dd MMM") : (bn ? "তারিখ বেছে নিন" : "Pick date")}
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar mode="single" selected={bookingDate} onSelect={setBookingDate} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} initialFocus />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setUseWalletPayment(false)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-2.5 rounded-lg border text-xs transition-all",
-                          !useWalletPayment
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/40"
-                        )}
-                      >
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="h-3.5 w-3.5 text-primary" />
-                          <div className="text-left">
-                            <p className="font-medium">
-                              {bn ? "অনলাইন" : "Online"}
-                            </p>
-                            <p className="text-[10px] text-muted-foreground">
-                              bKash/Card
-                            </p>
-                          </div>
-                        </div>
-                        {!useWalletPayment && (
-                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-                        )}
-                      </button>
+                  {/* Time Slots */}
+                  <div>
+                    <label className="text-[10px] font-semibold block mb-1" style={{ color: T.inkSoft }}>{bn ? "সময়" : "Time slot"}</label>
+                    <div className="grid grid-cols-4 gap-1">
+                      {timeSlots.map((slot) => (
+                        <button key={slot.value} onClick={() => setBookingTime(slot.value)} className="rounded-md border bg-white px-0 py-[5px] text-[10px] font-medium font-['JetBrains_Mono',monospace] cursor-pointer transition-all duration-150" style={{ borderColor: bookingTime === slot.value ? T.primary : T.line, background: bookingTime === slot.value ? T.primary : "white", color: bookingTime === slot.value ? "white" : T.inkSoft }}>
+                          {slot.label}
+                        </button>
+                      ))}
                     </div>
                   </div>
 
-                  <button
-                    onClick={handleDirectBooking}
-                    disabled={submitting}
-                    className="w-full rounded-lg bg-primary py-2.5 text-xs font-semibold text-white hover:bg-emeraled-600 disabled:opacity-50"
-                  >
-                    {submitting
-                      ? "Processing..."
-                      : bn
-                      ? "বুক করুন"
-                      : "Book Now"}
-                  </button>
-                </motion.div>
-              )}
+                  {/* Referral Code */}
+                  {referralValidation?.valid ? (
+                    <div className="rounded-[10px] border p-2 flex items-center justify-between" style={{ borderColor: "#86efac", background: "#f0fdf4" }}>
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <BadgeCheck className="h-3 w-3 shrink-0" style={{ color: "#16a34a" }} />
+                        <div className="min-w-0">
+                          <p className="text-[10px] font-semibold truncate" style={{ color: "#166534" }}>{referralValidation.code}</p>
+                          <p className="text-[8px] truncate" style={{ color: "#16a34a" }}>{bn ? `${referralValidation.referrer_name} এর রেফারেল` : `From ${referralValidation.referrer_name}`}{referralValidation.referred_reward_amount != null && referralValidation.referred_reward_amount > 0 && <span className="ml-0.5 font-bold">(+৳{referralValidation.referred_reward_amount})</span>}</p>
+                        </div>
+                      </div>
+                      <button onClick={clearReferral} className="shrink-0 rounded p-1 cursor-pointer" style={{ color: "#16a34a" }} title={bn ? "সরান" : "Remove"}><Trash2 className="h-2.5 w-2.5" /></button>
+                    </div>
+                  ) : (
+                    <div className="flex gap-1">
+                      <input value={referralCode} onChange={(e) => { setReferralCode(e.target.value.toUpperCase()); setReferralSource("manual"); }} placeholder={bn ? "রেফারেল (ঐচ্ছিক)" : "Referral (optional)"} className="flex-1 rounded-[7px] border bg-white px-2 py-1.5 text-[10px] outline-none focus:ring-1" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+                      <button onClick={handleValidateReferral} disabled={validatingReferral || !referralCode.trim()} className="rounded-[7px] px-2 text-[9px] font-semibold text-white cursor-pointer disabled:opacity-40" style={{ background: T.primary }}>{validatingReferral ? "…" : bn ? "যাচাই" : "Go"}</button>
+                    </div>
+                  )}
 
-              <button
-                onClick={handleAddToCart}
-                className="w-full rounded-lg border border-border py-2 text-xs font-medium text-foreground hover:bg-secondary flex items-center justify-center gap-2"
-              >
-                <ShoppingBag className="h-3.5 w-3.5" />{" "}
-                {t("cart.addToCart")}
-              </button>
+                  {/* Expandable booking form */}
+                  <AnimatePresence>
+                    {showBookingForm && (
+                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} className="overflow-hidden">
+                        <div className="space-y-2 pt-1">
+                          <div className="relative">
+                            <User className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3" style={{ color: T.muted }} />
+                            <input value={bookingName} onChange={(e) => setBookingName(e.target.value)} placeholder={bn ? "নাম" : "Name"} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+                          </div>
+                         <div className="relative">
+  <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+  <input
+    type="text"
+    inputMode="numeric"
+    value={bookingPhone}
+    onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
+    onKeyDown={(e) => {
+      const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
+      if (allowed.includes(e.key)) return;
+      if (e.metaKey || e.ctrlKey) return;
+      if (!/^\d$/.test(e.key)) e.preventDefault();
+    }}
+    onPaste={(e) => {
+      const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
+      e.preventDefault();
+      setBookingPhone(paste);
+    }}
+    placeholder="01XXXXXXXXX"
+    maxLength={100}
+    className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+  />
+</div>
+                          <div className="relative">
+                            <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
+                            <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+                          </div>
+                          {activeUserId && walletBalance > 0 && (
+                            <button type="button" onClick={() => setUseWalletPayment(!useWalletPayment)} className="flex items-center gap-2 w-full rounded-[7px] border p-2 text-left cursor-pointer" style={{ borderColor: useWalletPayment ? T.primary : T.line, background: useWalletPayment ? T.primaryTint : "white" }}>
+                              <Wallet className="h-3 w-3" style={{ color: useWalletPayment ? T.primary : T.muted }} />
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[10px] font-semibold" style={{ color: T.ink }}>{bn ? "ওয়ালেট পেমেন্ট" : "Pay with wallet"}</p>
+                                <p className="text-[8px]" style={{ color: T.muted }}>৳{walletBalance.toLocaleString()}</p>
+                              </div>
+                              <span className="text-[10px] font-semibold" style={{ color: useWalletPayment ? T.primary : T.muted }}>{useWalletPayment ? "✓" : "→"}</span>
+                            </button>
+                          )}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* CTA Buttons */}
+                  <button onClick={handleDirectBooking} disabled={submitting} className="w-full flex items-center justify-center gap-1.5 rounded-[7px] py-2.5 text-[11px] font-semibold text-white cursor-pointer transition-all duration-150 disabled:opacity-60" style={{ background: T.primary, boxShadow: "0 4px 12px hsl(var(--primary) / 0.2)" }}>
+                    {submitting ? (
+                      <div className="h-3 w-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                    ) : (
+                      <CalendarCheck className="h-3 w-3" />
+                    )}
+                    {submitting ? (bn ? "প্রসেসিং…" : "Processing…") : (bn ? "বুকিং নিশ্চিত করুন" : "Confirm booking")}
+                  </button>
+
+                  <button onClick={handleAddToCart} className="w-full flex items-center justify-center gap-1.5 rounded-[7px] border py-2 text-[10.5px] font-semibold cursor-pointer transition-colors" style={{ borderColor: T.line, color: T.ink, background: "transparent" }}>
+                    <ShoppingBag className="h-3 w-3" />
+                    {bn ? "কার্টে যোগ করুন" : "Add to cart"}
+                  </button>
+
+                  {/* Job code + barcode */}
+                  <div className="flex items-center justify-between pt-3 mt-1" style={{ borderTop: `1px solid ${T.line}` }}>
+                    <span className="font-['JetBrains_Mono',monospace] text-[8px] tracking-[.04em]" style={{ color: T.muted }}>{jobCode}</span>
+                    <div className="flex gap-[1.5px] h-3 items-end">
+                      {barcode.map((h, i) => (
+                        <span key={i} className="w-[1.5px]" style={{ height: `${h}px`, background: T.ink, opacity: 0.6 }} />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Related Services - Compact */}
-      {relatedServices.length > 0 && (
-        <div className="app-container pb-8">
-          <h2 className="text-sm font-bold text-foreground mb-3.5">
-            {t("sd.relatedServices")}
-          </h2>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {relatedServices.map((rs) => (
-              <RelatedThumb
-                key={rs.id}
-                service={rs}
-                bn={bn}
-                navigate={navigate}
-              />
+      {/* ── Recently Viewed ── */}
+      {recentlyViewed.length > 0 && (
+        <div className="app-container py-5">
+          <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-3" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সাম্প্রতিক দেখা" : "Recently viewed"}</h3>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {recentlyViewed.map((item) => (
+              <Link key={item.slug} to={`/service/${item.slug}`} className="group rounded-[10px] border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm" style={{ borderColor: T.line, background: T.card }}>
+                <div className="aspect-square overflow-hidden">
+                  <img src={item.image} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
+                </div>
+                <div className="p-1.5">
+                  <p className="text-[8px] font-semibold line-clamp-1" style={{ color: T.ink }}>{bn ? item.title : item.titleEn || item.title}</p>
+                  <div className="flex items-center gap-0.5 mt-0.5">
+                    <Star className="h-2 w-2 fill-current" style={{ color: T.brass }} />
+                    <span className="text-[7px]" style={{ color: T.muted }}>{item.rating}</span>
+                  </div>
+                </div>
+              </Link>
             ))}
           </div>
         </div>
       )}
 
       <Footer />
-
-      {/* Mobile CTA */}
-      {pkg && (
-        <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 border-t border-border bg-background/95 backdrop-blur-md px-4 py-2.5 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-          <div className="flex items-center justify-between gap-2">
-            <div>
-              <p className="text-[9px] text-muted-foreground uppercase tracking-wide font-medium">
-                {pkg.name}
-              </p>
-              <p className="text-base font-bold text-primary leading-tight">
-                ৳{pkg.price}
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                if (!activeUserId) {
-                  toast.error(t("sd.loginFirst"));
-                  navigate("/auth");
-                  return;
-                }
-                setShowBookingForm(true);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-              className="flex-1 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-primary/90 flex items-center justify-center gap-2"
-            >
-              <CalendarCheck className="h-3.5 w-3.5" />{" "}
-              {t("sd.bookNow")}
-            </button>
-          </div>
-        </div>
-      )}
+      {pkg && <StickyBottomCTA price={pkg.price} originalPrice={pkg.original_price} packageName={pkg.name} onAddToCart={handleAddToCart} />}
     </div>
   );
 };
 
-const RelatedThumb = ({
-  service,
-  bn,
-  navigate,
-}: {
-  service: CmsService;
-  bn: boolean;
-  navigate: any;
-}) => {
-  const { data: pkgs } = useServicePackages(service.id);
-  const title = bn ? service.title : service.title_en || service.title;
-  const cheapest =
-    pkgs && pkgs.length > 0
-      ? pkgs.reduce((min, p) => (p.price < min.price ? p : min), pkgs[0])
-      : null;
-
-  return (
-    <button
-      onClick={() => navigate(`/service/${service.slug}`)}
-      className="group text-left"
-    >
-      <div className="relative rounded-lg overflow-hidden border border-border bg-card aspect-[4/3]">
-        <img
-          src={getServiceDisplayImage(service.slug, service.image_url)}
-          alt={title}
-          className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-          loading="lazy"
-        />
-        <div className="absolute top-1.5 right-1.5 flex items-center gap-0.5 rounded-full bg-background/90 backdrop-blur-sm px-1.5 py-0.5 shadow-sm">
-          <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-          <span className="text-[9px] font-bold text-foreground">
-            {service.rating ?? 4.5}
-          </span>
-        </div>
-      </div>
-      <h3 className="mt-1.5 text-xs font-medium text-foreground line-clamp-2 group-hover:text-primary transition-colors">
-        {title}
-      </h3>
-      {cheapest && (
-        <p className="mt-0.5 text-[11px] text-primary font-bold">
-          ৳{cheapest.price}
-        </p>
-      )}
-    </button>
-  );
-};
-
-const ReviewSection = ({
-  serviceSlug,
-  t,
-  bn,
-  navigate,
-}: {
-  serviceSlug: string;
-  t: any;
-  bn: boolean;
-  navigate: any;
-}) => {
+/* ═══════════════════════════════════════════════════════════════════════
+   ReviewSection — compact
+   ═══════════════════════════════════════════════════════════════════════ */
+const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; t: any; bn: boolean; navigate: any }) => {
   const mysqlAuth = getMySqlAuth();
-  const activeUserId = mysqlAuth?.user?.id;
-  const reviewerName = mysqlAuth?.user?.name || "User";
-
+  const userId = mysqlAuth?.user?.id;
   const [reviews, setReviews] = useState<ServiceReview[]>([]);
   const [loading, setLoading] = useState(true);
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+  const [newRating, setNewRating] = useState(5);
+  const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [showForm, setShowForm] = useState(false);
-
-  const fetchReviews = async () => {
-    try {
-      setLoading(true);
-      const data = await listServiceReviews(serviceSlug);
-      setReviews(data || []);
-    } catch {
-      setReviews([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    fetchReviews();
+    (async () => {
+      try {
+        const res = await listServiceReviews(serviceSlug);
+        setReviews(Array.isArray(res) ? res : res?.data ?? res?.reviews ?? []);
+      } catch { /* */ } finally { setLoading(false); }
+    })();
   }, [serviceSlug]);
 
-  const avgRating =
-    reviews.length > 0
-      ? (
-          reviews.reduce((sum, r) => sum + Number(r.rating || 0), 0) /
-          reviews.length
-        ).toFixed(1)
-      : "0";
-
-  const handleSubmit = async () => {
-    if (!activeUserId) {
-      toast.error(
-        bn ? "রিভিউ দিতে লগইন করুন" : "Please login to leave a review"
-      );
-      navigate("/auth");
-      return;
-    }
-    if (rating === 0)
-      return toast.error(
-        bn ? "রেটিং নির্বাচন করুন" : "Please select a rating"
-      );
+  const handleSubmitReview = async () => {
+    if (!userId) { toast.error(t("sd.loginFirst")); navigate("/auth"); return; }
+    if (!newComment.trim()) { toast.error(bn ? "মন্তব্য লিখুন" : "Write a comment"); return; }
     setSubmitting(true);
     try {
-      await createReview({
-        service_slug: serviceSlug,
-        user_id: activeUserId,
-        rating,
-        reviewer_name: reviewerName,
-        comment: comment.trim() || null,
-      });
-      toast.success(bn ? "রিভিউ জমা হয়েছে!" : "Review submitted!");
-      setRating(0);
-      setComment("");
-      setShowForm(false);
-      fetchReviews();
-    } catch {
-      toast.error(
-        bn
-          ? "রিভিউ জমা দিতে সমস্যা হয়েছে"
-          : "Failed to submit review"
-      );
-    } finally {
-      setSubmitting(false);
-    }
+      const created = await createReview({ service_slug: serviceSlug, user_id: String(userId), rating: newRating, comment: newComment.trim() });
+      setReviews((prev) => [{ ...created, reviewer_name: mysqlAuth?.user?.name || "You", created_at: new Date().toISOString() }, ...prev]);
+      setNewComment("");
+      toast.success(bn ? "রিভিউ যোগ হয়েছে!" : "Review added!");
+    } catch { toast.error(bn ? "রিভিউ জমা ব্যর্থ" : "Review submit failed"); } finally { setSubmitting(false); }
   };
 
+  const handleDeleteReview = async (id: string) => {
+    try {
+      await deleteReview(id);
+      setReviews((prev) => prev.filter((r) => r.id !== id));
+      toast.success(bn ? "রিভিউ মুছে ফেলা হয়েছে" : "Review deleted");
+    } catch { toast.error(bn ? "মুছে ফেলা ব্যর্থ" : "Delete failed"); }
+  };
+
+  const avgRating = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
+
   return (
-    <div className="space-y-4 animate-in fade-in">
-      <div className="flex items-center justify-between">
-        <button
-          onClick={() => setShowForm(!showForm)}
-          className="rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20"
-        >
-          {showForm
-            ? bn
-              ? "বাতিল"
-              : "Cancel"
-            : bn
-            ? "রিভিউ লিখুন"
-            : "Write a Review"}
-        </button>
-      </div>
-
-      {showForm && (
-        <div className="rounded-lg border border-primary/20 bg-primary/5 p-3.5 space-y-2.5">
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <button key={i} onClick={() => setRating(i + 1)}>
-                <Star
-                  className={`h-5 w-5 ${
-                    i < rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-border"
-                  }`}
-                />
-              </button>
-            ))}
-          </div>
-          <textarea
-            placeholder={
-              bn
-                ? "আপনার মতামত শেয়ার করুন..."
-                : "Share your experience..."
-            }
-            value={comment}
-            onChange={(e) => setComment(e.target.value)}
-            rows={2}
-            className="w-full rounded-lg border border-input bg-background px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-ring resize-none"
-          />
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="rounded-lg bg-primary px-4 py-1.5 text-xs font-semibold text-white disabled:opacity-50"
-          >
-            {submitting
-              ? bn
-                ? "জমা হচ্ছে..."
-                : "Submitting..."
-              : bn
-              ? "জমা দিন"
-              : "Submit"}
-          </button>
-        </div>
-      )}
-
+    <div className="space-y-4">
       {loading ? (
-        <div className="text-xs text-muted-foreground py-3 text-center animate-pulse">
-          {bn ? "রিভিউ লোড হচ্ছে..." : "Loading reviews..."}
-        </div>
+        <div className="py-8 text-center text-[11px]" style={{ color: T.muted }}>{bn ? "লোড হচ্ছে…" : "Loading…"}</div>
       ) : reviews.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card p-4 text-center">
-          <MessageSquare className="h-6 w-6 mx-auto text-muted-foreground/50 mb-2" />
-          <p className="text-xs text-muted-foreground">
-            {bn
-              ? "এখনো কোনো রিভিউ নেই। প্রথম রিভিউটি আপনিই লিখুন!"
-              : "No reviews yet. Be the first to share your experience!"}
-          </p>
+        <div className="py-8 text-center">
+          <p className="text-[11px]" style={{ color: T.muted }}>{bn ? "এখনো কোনো রিভিউ নেই" : "No reviews yet"}</p>
         </div>
       ) : (
-        <div className="space-y-3">
-          {/* Rating Summary */}
-          <div className="flex items-center gap-3 rounded-lg border border-border bg-card p-3">
+        <>
+          <div className="flex items-center gap-3 p-2.5 rounded-[10px] border" style={{ borderColor: T.line, background: T.card }}>
             <div className="text-center">
-              <p className="text-2xl font-bold text-foreground">
-                {avgRating}
-              </p>
-              <div className="flex items-center gap-0.5 mt-0.5">
-                {Array.from({ length: 5 }).map((_, i) => (
-                  <Star
-                    key={i}
-                    className={`h-3 w-3 ${
-                      i < Math.round(Number(avgRating))
-                        ? "fill-yellow-400 text-yellow-400"
-                        : "text-border"
-                    }`}
-                  />
-                ))}
-              </div>
-              <p className="text-[10px] text-muted-foreground mt-0.5">
-                {reviews.length} {bn ? "রিভিউ" : "reviews"}
-              </p>
+              <div className="font-['JetBrains_Mono',monospace] text-xl font-medium" style={{ color: T.ink }}>{avgRating.toFixed(1)}</div>
+              <div className="flex gap-px mt-0.5">{[1,2,3,4,5].map((s) => <Star key={s} className="h-2.5 w-2.5" style={{ color: s <= Math.round(avgRating) ? T.brass : T.line, fill: s <= Math.round(avgRating) ? T.brass : "none" }} />)}</div>
+              <div className="text-[8px] mt-0.5" style={{ color: T.muted }}>{reviews.length}</div>
             </div>
-            <div className="flex-1 space-y-1">
-              {[5, 4, 3, 2, 1].map((star) => {
-                const count = reviews.filter(
-                  (r) => Number(r.rating) === star
-                ).length;
-                const pct =
-                  reviews.length > 0
-                    ? (count / reviews.length) * 100
-                    : 0;
-                return (
-                  <div
-                    key={star}
-                    className="flex items-center gap-1.5 text-[10px]"
-                  >
-                    <span className="w-3 text-right text-muted-foreground">
-                      {star}
-                    </span>
-                    <Star className="h-2.5 w-2.5 fill-yellow-400 text-yellow-400" />
-                    <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-yellow-400 transition-all"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
-                    <span className="w-5 text-right text-muted-foreground">
-                      {count}
-                    </span>
+          </div>
+
+          <div className="space-y-2">
+            {reviews.map((r) => (
+              <div key={r.id} className="rounded-[10px] border p-2.5" style={{ borderColor: T.line, background: T.card }}>
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white" style={{ background: T.primary }}>{(r.reviewer_name || "U").charAt(0).toUpperCase()}</div>
+                    <span className="text-[10px] font-semibold" style={{ color: T.ink }}>{r.reviewer_name || "User"}</span>
                   </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Review List */}
-          {reviews.map((review) => (
-            <ReviewCard
-              key={review.id}
-              review={review}
-              currentUserId={activeUserId}
-              onDelete={async (id: string) => {
-                try {
-                  await deleteReview(id);
-                  toast.success(
-                    bn
-                      ? "রিভিউ মুছে ফেলা হয়েছে"
-                      : "Review deleted"
-                  );
-                  fetchReviews();
-                } catch {
-                  toast.error(
-                    bn
-                      ? "রিভিউ মুছতে সমস্যা হয়েছে"
-                      : "Failed to delete review"
-                  );
-                }
-              }}
-              bn={bn}
-            />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ReviewCard = ({
-  review,
-  currentUserId,
-  onDelete,
-  bn,
-}: {
-  review: ServiceReview;
-  currentUserId?: string | number;
-  onDelete: (id: string) => void;
-  bn: boolean;
-}) => {
-  const isOwner = String(review.user_id) === String(currentUserId);
-  const dateStr = review.created_at
-    ? format(new Date(review.created_at), "dd MMM yyyy")
-    : "";
-
-  return (
-    <div className="rounded-lg border border-border bg-card p-3 space-y-1.5">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-            {(review.reviewer_name || "U").charAt(0).toUpperCase()}
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-foreground">
-              {review.reviewer_name ||
-                (bn ? "বেনামী ব্যবহারকারী" : "Anonymous")}
-            </p>
-            {dateStr && (
-              <p className="text-[10px] text-muted-foreground">{dateStr}</p>
-            )}
-          </div>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="flex items-center gap-0.5">
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                className={`h-3 w-3 ${
-                  i < Number(review.rating)
-                    ? "fill-yellow-400 text-yellow-400"
-                    : "text-border"
-                }`}
-              />
+                  <div className="flex items-center gap-1.5">
+                    <div className="flex gap-px">{[1,2,3,4,5].map((s) => <Star key={s} className="h-2 w-2" style={{ color: s <= r.rating ? T.brass : T.line, fill: s <= r.rating ? T.brass : "none" }} />)}</div>
+                    {String(r.user_id) === String(userId) && (
+                      <button onClick={() => handleDeleteReview(r.id)} className="p-0.5 rounded cursor-pointer" style={{ color: T.muted }} title="Delete"><Trash2 className="h-2.5 w-2.5" /></button>
+                    )}
+                  </div>
+                </div>
+                {r.comment && <p className="text-[10.5px] leading-relaxed" style={{ color: T.inkSoft }}>{r.comment}</p>}
+                {r.created_at && <p className="text-[8px] mt-1" style={{ color: T.muted }}>{format(new Date(r.created_at), "dd MMM yyyy")}</p>}
+              </div>
             ))}
           </div>
-          {isOwner && (
-            <button
-              onClick={() => onDelete(review.id)}
-              className="ml-1 rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
-              title={bn ? "মুছুন" : "Delete"}
-            >
-              <Trash2 className="h-3 w-3" />
-            </button>
-          )}
-        </div>
-      </div>
-      {review.comment && (
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          {review.comment}
-        </p>
+        </>
       )}
+
+      <div className="rounded-[10px] border p-2.5 space-y-2" style={{ borderColor: T.line, background: T.card }}>
+        <h4 className="text-[11px] font-semibold" style={{ color: T.ink }}>{bn ? "রিভিউ লিখুন" : "Write a review"}</h4>
+        <div className="flex gap-0.5">
+          {[1,2,3,4,5].map((s) => (
+            <button key={s} onClick={() => setNewRating(s)} className="cursor-pointer transition-transform hover:scale-110">
+              <Star className="h-4 w-4" style={{ color: s <= newRating ? T.brass : T.line, fill: s <= newRating ? T.brass : "none" }} />
+            </button>
+          ))}
+        </div>
+        <textarea value={newComment} onChange={(e) => setNewComment(e.target.value)} placeholder={bn ? "আপনার অভিজ্ঞতা…" : "Share your experience…"} rows={2} className="w-full rounded-[7px] border bg-white px-2.5 py-2 text-[10.5px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+        <button onClick={handleSubmitReview} disabled={submitting} className="rounded-[7px] px-3 py-1.5 text-[10px] font-semibold text-white cursor-pointer disabled:opacity-60" style={{ background: T.primary }}>{submitting ? "…" : (bn ? "জমা দিন" : "Submit")}</button>
+      </div>
     </div>
   );
 };

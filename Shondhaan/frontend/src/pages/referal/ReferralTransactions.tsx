@@ -10,8 +10,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { getMySqlAuth } from "@/lib/mysqlAuth";
 
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 const API = "http://localhost:5000/api/referral/admin";
 
 const authHeaders = () => {
