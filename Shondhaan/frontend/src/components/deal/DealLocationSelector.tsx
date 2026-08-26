@@ -327,7 +327,7 @@ const DealLocationSelector = ({
       <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
 
       <div className="absolute z-10 top-5 md:top-10 w-full flex justify-center">
-        <h1 className="text-center text-3xl md:text-5xl leading-[1.9] bg-gradient-to-r from-blue-400 via-green-600 to-blue-900 bg-clip-text text-white font-bold">
+        <h1 className="text-center text-2xl md:text-3xl md:text-5xl leading-[1.9] bg-gradient-to-r from-blue-400 via-green-600 to-blue-900 bg-clip-text text-white font-bold">
           <Typewriter
             key={language} // Restart animation when language changes
             words={bn ? typingWords.bn : typingWords.en}
@@ -343,7 +343,7 @@ const DealLocationSelector = ({
       </div>
       
 
-      <div className="absolute z-10 top-10 md:top-[150px] text-center flex gap-3 justify-center w-full flex-wrap">
+      <div className="absolute z-10 top-[100px] md:top-[150px] text-center flex gap-3 justify-center w-full flex-wrap">
         <Button
           size="lg"
           onClick={() => navigate("/deal/post")}
@@ -387,7 +387,7 @@ const DealLocationSelector = ({
       <div className="absolute h-full inset-0 bg-center md:bg-top"
           style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}/>
         <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" />
-        <div className="absolute z-10 p-6 sm:p-8 mt-4 bottom-1/4 w-full">
+        <div className="absolute z-10 p-6 sm:p-8 md:mt-4 bottom-0 md:bottom-6 w-full">
           {/* <h2 className="mb-4 text-xl sm:text-2xl font-bold text-primary text-center drop-shadow">
             {bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
           </h2> */}

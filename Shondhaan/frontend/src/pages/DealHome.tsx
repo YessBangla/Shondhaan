@@ -383,9 +383,9 @@ const DealHome = () => {
     <div className="bg-[aliceblue]">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <PlatformSwitcher className="md:hidden" exclude={["deal"]} />
+      <PlatformSwitcher className="hidden" exclude={["deal"]} />
 
-      <div className="bg-gradient-to-b from-blue-100/50 mb-4 via-emerald-50/30 to-background pt-[12px] md:pt-[18px] border-b border-blue-100/50">
+      <div className="bg-gradient-to-b from-blue-100/50 mb-4 via-emerald-50/30 to-background pt-[50px] md:pt-[18px] border-b border-blue-100/50">
         {/* <div className="app-container text-center"> */}
           {/* <p className="text-blue-900/70 text-xl font-bold tracking-wide">
             {bn
