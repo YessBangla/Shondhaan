@@ -471,7 +471,6 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       <div className="app-container pt-3">
         {/* Eyebrow */}
 
-
         {/* Breadcrumb */}
         <Breadcrumb>
           <BreadcrumbList className="text-[10px]">
@@ -703,28 +702,28 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                             <input value={bookingName} onChange={(e) => setBookingName(e.target.value)} placeholder={bn ? "নাম" : "Name"} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
                           </div>
                          <div className="relative">
-  <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-  <input
-    type="text"
-    inputMode="numeric"
-    value={bookingPhone}
-    onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
-    onKeyDown={(e) => {
-      const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
-      if (allowed.includes(e.key)) return;
-      if (e.metaKey || e.ctrlKey) return;
-      if (!/^\d$/.test(e.key)) e.preventDefault();
-    }}
-    onPaste={(e) => {
-      const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
-      e.preventDefault();
-      setBookingPhone(paste);
-    }}
-    placeholder="01XXXXXXXXX"
-    maxLength={100}
-    className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-  />
-</div>
+                          <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                          <input
+                            type="text"
+                            inputMode="numeric"
+                            value={bookingPhone}
+                            onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
+                            onKeyDown={(e) => {
+                              const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
+                              if (allowed.includes(e.key)) return;
+                              if (e.metaKey || e.ctrlKey) return;
+                              if (!/^\d$/.test(e.key)) e.preventDefault();
+                            }}
+                            onPaste={(e) => {
+                              const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
+                              e.preventDefault();
+                              setBookingPhone(paste);
+                            }}
+                            placeholder="01XXXXXXXXX"
+                            maxLength={100}
+                            className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                          />
+                        </div>
                           <div className="relative">
                             <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
                             <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
@@ -786,7 +785,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   <img src={item.image} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                 </div>
                 <div className="p-1.5">
-                  <p className="text-[8px] font-semibold line-clamp-1" style={{ color: T.ink }}>{bn ? item.title : item.titleEn || item.title}</p>
+                  <p className="text-[12px] font-semibold line-clamp-1" style={{ color: T.ink }}>{bn ? item.title : item.titleEn || item.title}</p>
                   <div className="flex items-center gap-0.5 mt-0.5">
                     <Star className="h-2 w-2 fill-current" style={{ color: T.brass }} />
                     <span className="text-[7px]" style={{ color: T.muted }}>{item.rating}</span>
