@@ -5,7 +5,7 @@ import {
   createHomepageSection,
   updateHomepageSection,
   deleteHomepageSection,
-} from "../controller/homePageSection.controller.js";
+} from "../controller/homepageSection.controller.js";
 
 const router = express.Router();
 
