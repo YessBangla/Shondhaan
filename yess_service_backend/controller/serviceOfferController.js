@@ -1,7 +1,45 @@
 import { pool as db } from "../config/db.js";
+import path from "path";
+import fs from "fs";
 
-// @desc    Get all service offers
-// @route   GET /api/service-offers
+// ─── Upload Directory ───
+const uploadDir = path.join(process.cwd(), "uploads", "service-offers");
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir, { recursive: true });
+}
+
+// ─── Save Base64 Image to Disk ───
+const saveBase64Image = (base64String) => {
+  if (!base64String || !base64String.startsWith("data:image/")) return null;
+
+  const matches = base64String.match(/^data:image\/([a-z]+);base64,/);
+  if (!matches) return null;
+
+  const ext = matches[1] === "jpeg" ? "jpg" : matches[1];
+  const filename = `offer-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+  const filepath = path.join(uploadDir, filename);
+
+  const base64Data = base64String.replace(/^data:image\/[a-z]+;base64,/, "");
+  fs.writeFileSync(filepath, base64Data, "base64");
+
+  return `/uploads/service-offers/${filename}`;
+};
+
+// ─── Delete Image from Disk ───
+const deleteImageFromDisk = (imageUrl) => {
+  if (!imageUrl) return;
+  try {
+    const filename = imageUrl.split("/").pop();
+    const filepath = path.join(uploadDir, filename);
+    if (fs.existsSync(filepath)) {
+      fs.unlinkSync(filepath);
+    }
+  } catch (err) {
+    console.error("Failed to delete image from disk:", err);
+  }
+};
+
+// ─── Get all service offers ───
 export const getAllOffers = async (req, res) => {
   try {
     const { is_active, is_featured } = req.query;
@@ -17,7 +55,7 @@ export const getAllOffers = async (req, res) => {
       params.push(is_featured === "true" ? 1 : 0);
     }
 
-    query += " ORDER BY created_at DESC";
+    query += " ORDER BY is_featured DESC, created_at DESC";
 
     const [offers] = await db.query(query, params);
     return res.status(200).json({ success: true, count: offers.length, data: offers });
@@ -27,8 +65,7 @@ export const getAllOffers = async (req, res) => {
   }
 };
 
-// @desc    Get single service offer by ID
-// @route   GET /api/service-offers/:id
+// ─── Get single service offer by ID ───
 export const getOfferById = async (req, res) => {
   try {
     const offerId = req.params.id;
@@ -45,30 +82,17 @@ export const getOfferById = async (req, res) => {
   }
 };
 
-// @desc    Create a new service offer
-// @route   POST /api/service-offers
+// ─── Create a new service offer ───
 export const createOffer = async (req, res) => {
   try {
-    const {
-      title,
-      title_bn,
-      description,
-      description_bn,
-      image_url,
-      discount_type,
-      discount_value,
-      service_id,
-      category_id,
-      offer_code,
-      start_date,
-      end_date,
-      is_featured,
-      is_active,
-    } = req.body;
+    const { image_base64, image_url, ...rest } = req.body;
 
-    if (!title) {
+    if (!rest.title) {
       return res.status(400).json({ success: false, message: "Title is required" });
     }
+
+    // Save image if base64 provided, otherwise use image_url
+    const finalImageUrl = saveBase64Image(image_base64) || image_url || null;
 
     const [result] = await db.query(
       `INSERT INTO service_offers 
@@ -76,27 +100,27 @@ export const createOffer = async (req, res) => {
          service_id, category_id, offer_code, start_date, end_date, is_featured, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        title,
-        title_bn ?? null,
-        description ?? null,
-        description_bn ?? null,
-        image_url ?? null,
-        discount_type || "percentage",
-        discount_value || 0,
-        service_id ?? null,
-        category_id ?? null,
-        offer_code ?? null,
-        start_date ?? null,
-        end_date ?? null,
-        is_featured !== undefined ? (is_featured ? 1 : 0) : 0,
-        is_active !== undefined ? (is_active ? 1 : 0) : 1,
+        rest.title,
+        rest.title_bn ?? null,
+        rest.description ?? null,
+        rest.description_bn ?? null,
+        finalImageUrl,
+        rest.discount_type || "percentage",
+        rest.discount_value || 0,
+        rest.service_id ?? null,
+        rest.category_id ?? null,
+        rest.offer_code ?? null,
+        rest.start_date ?? null,
+        rest.end_date ?? null,
+        rest.is_featured !== undefined ? (rest.is_featured ? 1 : 0) : 0,
+        rest.is_active !== undefined ? (rest.is_active ? 1 : 0) : 1,
       ]
     );
 
     return res.status(201).json({
       success: true,
       message: "Offer created successfully",
-      data: { id: result.insertId, ...req.body },
+      data: { id: result.insertId, ...rest, image_url: finalImageUrl },
     });
   } catch (error) {
     console.error("Error creating service offer:", error);
@@ -104,31 +128,31 @@ export const createOffer = async (req, res) => {
   }
 };
 
-// @desc    Update a service offer
-// @route   PUT /api/service-offers/:id
+// ─── Update a service offer ───
 export const updateOffer = async (req, res) => {
   try {
     const offerId = req.params.id;
-    const {
-      title,
-      title_bn,
-      description,
-      description_bn,
-      image_url,
-      discount_type,
-      discount_value,
-      service_id,
-      category_id,
-      offer_code,
-      start_date,
-      end_date,
-      is_featured,
-      is_active,
-    } = req.body;
+    const { image_base64, image_url, ...rest } = req.body;
 
-    const [existing] = await db.query("SELECT id, title FROM service_offers WHERE id = ?", [offerId]);
+    const [existing] = await db.query("SELECT id, title, image_url FROM service_offers WHERE id = ?", [offerId]);
     if (existing.length === 0) {
       return res.status(404).json({ success: false, message: "Offer not found" });
+    }
+
+    // Handle image: new base64 upload takes priority, then explicit URL, then keep existing
+    let finalImageUrl = existing[0].image_url;
+
+    if (image_base64) {
+      const saved = saveBase64Image(image_base64);
+      if (saved) {
+        deleteImageFromDisk(existing[0].image_url);
+        finalImageUrl = saved;
+      }
+    } else if (image_url !== undefined) {
+      if (image_url && existing[0].image_url && image_url !== existing[0].image_url) {
+        deleteImageFromDisk(existing[0].image_url);
+      }
+      finalImageUrl = image_url === "" ? null : image_url;
     }
 
     await db.query(
@@ -138,20 +162,20 @@ export const updateOffer = async (req, res) => {
         offer_code = ?, start_date = ?, end_date = ?, is_featured = ?, is_active = ?
        WHERE id = ?`,
       [
-        title || existing[0].title,
-        title_bn ?? null,
-        description ?? null,
-        description_bn ?? null,
-        image_url ?? null,
-        discount_type || "percentage",
-        discount_value || 0,
-        service_id ?? null,
-        category_id ?? null,
-        offer_code ?? null,
-        start_date ?? null,
-        end_date ?? null,
-        is_featured !== undefined ? (is_featured ? 1 : 0) : 0,
-        is_active !== undefined ? (is_active ? 1 : 0) : 1,
+        rest.title || existing[0].title,
+        rest.title_bn ?? null,
+        rest.description ?? null,
+        rest.description_bn ?? null,
+        finalImageUrl,
+        rest.discount_type || "percentage",
+        rest.discount_value || 0,
+        rest.service_id ?? null,
+        rest.category_id ?? null,
+        rest.offer_code ?? null,
+        rest.start_date ?? null,
+        rest.end_date ?? null,
+        rest.is_featured !== undefined ? (rest.is_featured ? 1 : 0) : 0,
+        rest.is_active !== undefined ? (rest.is_active ? 1 : 0) : 1,
         offerId,
       ]
     );
@@ -159,7 +183,7 @@ export const updateOffer = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Offer updated successfully",
-      data: { id: parseInt(offerId, 10), ...req.body },
+      data: { id: parseInt(offerId, 10), ...rest, image_url: finalImageUrl },
     });
   } catch (error) {
     console.error("Error updating service offer:", error);
@@ -167,17 +191,19 @@ export const updateOffer = async (req, res) => {
   }
 };
 
-// @desc    Delete a service offer
-// @route   DELETE /api/service-offers/:id
+// ─── Delete a service offer ───
 export const deleteOffer = async (req, res) => {
   try {
     const offerId = req.params.id;
 
-    const [result] = await db.query("DELETE FROM service_offers WHERE id = ?", [offerId]);
-
-    if (result.affectedRows === 0) {
+    const [existing] = await db.query("SELECT image_url FROM service_offers WHERE id = ?", [offerId]);
+    if (existing.length === 0) {
       return res.status(404).json({ success: false, message: "Offer not found" });
     }
+
+    deleteImageFromDisk(existing[0].image_url);
+
+    await db.query("DELETE FROM service_offers WHERE id = ?", [offerId]);
 
     return res.status(200).json({ success: true, message: "Offer deleted successfully" });
   } catch (error) {

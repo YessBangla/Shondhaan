@@ -4,6 +4,7 @@ export function safeUser(row) {
   const type = ALLOWED_ROLES.has(row.type) ? row.type : "user";
   return {
     id: row.id,
+    shondhaan_id: row.shondhaan_id,
     name: row.name,
     mobile: row.mobile,
     address: row.address,
@@ -19,6 +20,7 @@ export function safeAdminUser(row) {
   const type = ALLOWED_ROLES.has(row.type) ? row.type : "user";
   return {
     id: row.id,
+    shondhaan_id: row.shondhaan_id,
     name: row.name,
     mobile: row.mobile,
     address: row.address,

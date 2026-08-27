@@ -7,6 +7,7 @@ export const getMyProfile = async (req, res) => {
     const [rows] = await pool.execute(
       `SELECT
         u.id,
+        u.shondhaan_id,
         u.name,
         u.mobile,
         u.address,
@@ -36,6 +37,7 @@ export const getMyProfile = async (req, res) => {
     const user = safeUser(rows[0]);
     res.json({
       ...user,
+      shondhaan_id: rows[0].shondhaan_id,  // ✅ Explicitly include
       created_at: rows[0].created_at,
       updated_at: rows[0].updated_at,
       profile_image: rows[0].profile_image || null,
@@ -170,16 +172,47 @@ export const updateMyProfile = async (req, res) => {
       }
     }
 
-    // RETURN UPDATED USER
+    // RETURN UPDATED USER (shondhaan_id included via u.*)
     const [rows] = await pool.execute(
-      `SELECT u.*, up.*
+      `SELECT
+        u.id,
+        u.shondhaan_id,
+        u.name,
+        u.mobile,
+        u.address,
+        u.email,
+        u.type,
+        u.shop_name,
+        u.shop_type,
+        u.created_at,
+        u.updated_at,
+        up.profile_image,
+        up.bio,
+        up.gender,
+        up.date_of_birth,
+        up.nid_front,
+        up.nid_back
        FROM users u
        LEFT JOIN user_profiles up ON up.user_id = u.id
        WHERE u.id = ? LIMIT 1`,
       [userId]
     );
 
-    res.json(rows[0]);
+    const user = safeUser(rows[0]);
+    res.json({
+      ...user,
+      shondhaan_id: rows[0].shondhaan_id,  // ✅ Explicitly include
+      created_at: rows[0].created_at,
+      updated_at: rows[0].updated_at,
+      profile_image: rows[0].profile_image || null,
+      avatar_url: rows[0].profile_image || null,
+      bio: rows[0].bio || null,
+      gender: rows[0].gender || null,
+      date_of_birth: rows[0].date_of_birth || null,
+      nid_front: rows[0].nid_front || null,
+      nid_back: rows[0].nid_back || null,
+      phone: user.mobile || "",
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Profile update failed" });

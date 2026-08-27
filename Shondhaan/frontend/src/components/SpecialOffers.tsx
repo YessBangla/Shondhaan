@@ -14,6 +14,13 @@ const tabs: { key: TabKey; labelBn: string; labelEn: string; icon: typeof Flame;
   { key: "top", labelBn: "⭐ টপ রেটেড", labelEn: "⭐ Top Rated", icon: Star, color: "text-amber-500", activeGradient: "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-400 shadow-2xl shadow-amber-500/50", bgColor: "bg-amber-500" },
 ];
 
+// ✅ Add this helper
+const SERVICE_API = (import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
+const getImageUrl = (url: string) => {
+  if (!url) return "";
+  return url.startsWith("http") ? url : `${SERVICE_API}${url}`;
+};
+
 const useCountdown = (expiresAt: string | null) => {
   const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
   useEffect(() => {
@@ -267,38 +274,6 @@ const SpecialOffers = () => {
         </motion.div>
       </motion.div>
 
-      {/* Tabs */}
-      {/* <motion.div 
-        className="flex items-center gap-2 mb-7 overflow-x-auto pb-2 scroll-smooth"
-        style={{ scrollbarWidth: "none" }}
-        initial={{ opacity: 0, y: 10 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, delay: 0.1 }}
-      >
-        <div className="flex items-center gap-2 p-1.5 bg-muted/50 border border-border/40 rounded-2xl backdrop-blur-sm">
-          {tabs.map((tab, idx) => {
-            const Icon = tab.icon;
-            const isActive = activeTab === tab.key;
-            return (
-              <motion.button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`relative flex items-center gap-2 px-4 md:px-5 py-2 rounded-xl text-sm md:text-base font-bold whitespace-nowrap transition-all duration-300 ${
-                  isActive
-                    ? `${tab.activeGradient} text-white shadow-xl`
-                    : "text-muted-foreground hover:text-foreground bg-background/50 hover:bg-background"
-                }`}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                <Icon className={`h-4 w-4 md:h-5 md:w-5 ${isActive ? "animate-bounce" : ""}`} />
-                {bn ? tab.labelBn : tab.labelEn}
-              </motion.button>
-            );
-          })}
-        </div>
-      </motion.div> */}
-
       {/* Cards Grid */}
       <AnimatePresence mode="wait">
         <motion.div
@@ -316,22 +291,18 @@ const SpecialOffers = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
               whileHover={{ y: -8 }}
-              onClick={() => {
-                 {
-                  navigate("/all-services");
-                }
-              }}
-              className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden "
+              onClick={() => navigate("/all-services")}
+              className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden"
             >
-              <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60 ">
+              <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60">
                 {/* Image / Gradient Header */}
                 <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden`}>
                   {offer.image ? (
                     <img
-                      src={offer.image}
+                      src={getImageUrl(offer.image)}
                       alt={offer.title_en || offer.title_bn}
                       loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover "
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                   ) : (
                     <>
@@ -347,9 +318,8 @@ const SpecialOffers = () => {
                       />
                     </>
                   )}
-                
-                  {offer.image && <div className="absolute inset-0" />}
-                  {/* Premium Badge with Animation */}
+                  
+                  {/* Premium Badge */}
                   <motion.div
                     className={`absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30`}
                     animate={{ scale: [1, 1.05, 1], y: [0, -2, 0] }}
@@ -360,18 +330,6 @@ const SpecialOffers = () => {
                       {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
                     </div>
                   </motion.div>
-
-                  {/* Trending Badge for Hot/New */}
-                  {/* {(activeTab === "hot" || activeTab === "new") && (
-                    <motion.div
-                      className="absolute top-3 left-3 z-10 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-full px-2.5 py-1 text-[10px] font-bold flex items-center gap-1 shadow-lg"
-                      animate={{ rotate: [0, 5, 0] }}
-                      transition={{ duration: 3, repeat: Infinity }}
-                    >
-                      <TrendingUp className="h-3 w-3" />
-                      {activeTab === "hot" ? (bn ? "ট্রেন্ডিং" : "Trending") : (bn ? "নতুন" : "New")}
-                    </motion.div>
-                  )} */}
                 </div>
 
                 {/* Content */}
