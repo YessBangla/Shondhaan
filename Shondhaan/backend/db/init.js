@@ -9,7 +9,7 @@ const USER_TYPE_ENUM =
   "ENUM('super_admin', 'admin','mart_admin', 'job_admin', 'deal_admin', 'service_admin', 'moderator', 'supervisor', 'finance', 'call_center', 'provider', 'representative', 'mart_vendor', 'mart_delivery', 'mart_cs', 'yessdeal_seller', 'employer', 'user') NOT NULL DEFAULT 'user'";
 
 export async function ensureTableColumn(table, column, alterSql) {
-  const [existing] = await pool.execute(
+  const [existing] = await pool.query(
     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = ? AND COLUMN_NAME = ?",
     [DB_NAME, table, column],
   );
@@ -25,13 +25,13 @@ export async function seedDefaultSuperAdmin() {
     return;
   }
 
-  const [existingSuperAdmins] = await pool.execute(
+  const [existingSuperAdmins] = await pool.query(
     "SELECT id FROM users WHERE type = 'super_admin' LIMIT 1",
   );
   if (existingSuperAdmins.length) {
     // Update password if env is set
     const passwordHash = await hashPassword(password);
-    await pool.execute(
+    await pool.query(
       "UPDATE users SET password = ? WHERE id = ?",
       [passwordHash, existingSuperAdmins[0].id],
     );
@@ -42,7 +42,7 @@ export async function seedDefaultSuperAdmin() {
   const name = String(process.env.SUPER_ADMIN_NAME || "Super Admin").trim() || "Super Admin";
   const mobile = normalizeMobile(process.env.SUPER_ADMIN_MOBILE || "").trim();
   const fallbackMobile = `sadmin${Date.now().toString().slice(-10)}`;
-  const [existingUsers] = await pool.execute(
+  const [existingUsers] = await pool.query(
     "SELECT * FROM users WHERE email = ? OR mobile = ? LIMIT 1",
     [email, mobile || email],
   );
@@ -50,13 +50,13 @@ export async function seedDefaultSuperAdmin() {
   const passwordHash = await hashPassword(password);
   if (existingUsers.length) {
     const user = existingUsers[0];
-    await pool.execute(
+    await pool.query(
       "UPDATE users SET name = ?, mobile = ?, type = 'super_admin', email_verified = 1, password = ? WHERE id = ?",
       [name, mobile || user.mobile || fallbackMobile, passwordHash, user.id],
     );
     console.log("Updated existing user to super_admin:", email);
   } else {
-    await pool.execute(
+    await pool.query(
       "INSERT INTO users (name, mobile, address, email, password, type, email_verified) VALUES (?, ?, NULL, ?, ?, 'super_admin', 1)",
       [name, mobile || fallbackMobile, email, passwordHash],
     );
@@ -65,6 +65,7 @@ export async function seedDefaultSuperAdmin() {
 }
 
 export async function initDatabase() {
+  // ─── Create database if not exists ────────────────────────────────
   const bootstrap = await mysql.createConnection({
     host: process.env.DB_HOST || "localhost",
     port: Number(process.env.DB_PORT || 3306),
@@ -75,6 +76,7 @@ export async function initDatabase() {
   await bootstrap.query(`CREATE DATABASE IF NOT EXISTS \`${DB_NAME}\``);
   await bootstrap.end();
 
+  // ─── Create pool ──────────────────────────────────────────────────
   const newPool = mysql.createPool({
     host: process.env.DB_HOST || "localhost",
     port: Number(process.env.DB_PORT || 3306),
@@ -86,14 +88,18 @@ export async function initDatabase() {
   });
   setPool(newPool);
 
+  // ─── Users table ──────────────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS users (
       id INT AUTO_INCREMENT PRIMARY KEY,
+      shondhaan_id VARCHAR(11) NULL,
       name VARCHAR(100) NOT NULL,
       mobile VARCHAR(20) NOT NULL UNIQUE,
       address VARCHAR(300) NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
+      shop_name VARCHAR(255) NULL,
+      shop_type VARCHAR(50) NULL,
       type ${USER_TYPE_ENUM},
       email_verified TINYINT(1) NOT NULL DEFAULT 0,
       otp_hash VARCHAR(64) NULL,
@@ -105,6 +111,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Categories table ─────────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS categories (
       id VARCHAR(100) PRIMARY KEY,
@@ -118,6 +125,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Category Services table ──────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS category_services (
       category_id VARCHAR(100),
@@ -126,6 +134,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Categories table ─────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_categories (
       id VARCHAR(100) PRIMARY KEY,
@@ -144,6 +153,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Services table ───────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_services (
       id VARCHAR(100) PRIMARY KEY,
@@ -167,6 +177,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Service Packages table ───────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_service_packages (
       id VARCHAR(100) PRIMARY KEY,
@@ -181,6 +192,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Special Offers table ─────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_special_offers (
       id VARCHAR(100) PRIMARY KEY,
@@ -203,6 +215,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Hero Banners table ───────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_hero_banners (
       id VARCHAR(100) PRIMARY KEY,
@@ -217,6 +230,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── CMS Homepage Sections table ──────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS cms_homepage_sections (
       id VARCHAR(100) PRIMARY KEY,
@@ -230,6 +244,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── User Wallets table ───────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS user_wallets (
       id VARCHAR(36) PRIMARY KEY,
@@ -242,6 +257,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Wallet Transactions table ────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS wallet_transactions (
       id VARCHAR(64) PRIMARY KEY,
@@ -260,6 +276,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Referral Settings table ──────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_settings (
       id TINYINT PRIMARY KEY DEFAULT 1,
@@ -284,6 +301,7 @@ export async function initDatabase() {
     ON DUPLICATE KEY UPDATE id = id
   `);
 
+  // ─── Referral Codes table ─────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_codes (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -305,6 +323,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Referrals table ──────────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS referrals (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -323,6 +342,7 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Referral Rewards table ───────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_rewards (
       id INT AUTO_INCREMENT PRIMARY KEY,
@@ -342,10 +362,12 @@ export async function initDatabase() {
     )
   `);
 
+  // ─── Ensure additional columns exist ──────────────────────────────
   await ensureTableColumn("referral_codes", "min_order_amount", "ALTER TABLE referral_codes ADD COLUMN min_order_amount DECIMAL(10,2) NULL AFTER referred_reward_amount");
   await ensureTableColumn("referral_settings", "updated_by", "ALTER TABLE referral_settings ADD COLUMN updated_by INT NULL AFTER min_order_amount");
 
   const columns = [
+    ["shondhaan_id", "ALTER TABLE users ADD COLUMN shondhaan_id VARCHAR(11) NULL AFTER id"],
     ["shop_name", "ALTER TABLE users ADD COLUMN shop_name VARCHAR(255) NULL"],
     ["shop_type", "ALTER TABLE users ADD COLUMN shop_type VARCHAR(50) NULL AFTER shop_name"],
     ["type", `ALTER TABLE users ADD COLUMN type ${USER_TYPE_ENUM}`],
@@ -359,9 +381,12 @@ export async function initDatabase() {
   for (const [column, alterSql] of columns) {
     await ensureTableColumn("users", column, alterSql);
   }
-  // This line applies the new ENUM values to your existing table
+
+  // ─── Update ENUM type ─────────────────────────────────────────────
   await pool.query(`ALTER TABLE users MODIFY COLUMN type ${USER_TYPE_ENUM}`);
-  const [emailIndexExists] = await pool.execute(
+
+  // ─── Ensure indexes exist ─────────────────────────────────────────
+  const [emailIndexExists] = await pool.query(
     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_email'",
     [DB_NAME],
   );
@@ -369,7 +394,7 @@ export async function initDatabase() {
     await pool.query("CREATE INDEX idx_users_email ON users (email)");
   }
 
-  const [mobileIndexExists] = await pool.execute(
+  const [mobileIndexExists] = await pool.query(
     "SELECT INDEX_NAME FROM INFORMATION_SCHEMA.STATISTICS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND INDEX_NAME = 'idx_users_mobile'",
     [DB_NAME],
   );
@@ -377,8 +402,8 @@ export async function initDatabase() {
     await pool.query("CREATE INDEX idx_users_mobile ON users (mobile)");
   }
 
-  // Drop legacy role column if exists
-  const [roleColumn] = await pool.execute(
+  // ─── Drop legacy role column if exists ────────────────────────────
+  const [roleColumn] = await pool.query(
     "SELECT COLUMN_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = ? AND TABLE_NAME = 'users' AND COLUMN_NAME = 'role'",
     [DB_NAME],
   );
@@ -386,5 +411,39 @@ export async function initDatabase() {
     await pool.query("ALTER TABLE users DROP COLUMN role");
   }
 
+  // ─── Ensure shondhaan_id column exists ────────────────────────────
+  await ensureTableColumn(
+    "users",
+    "shondhaan_id",
+    "ALTER TABLE users ADD COLUMN shondhaan_id VARCHAR(11) NULL AFTER id"
+  );
+
+  // ─── Drop trigger if exists (to avoid conflicts) ──────────────────
+  try {
+    await pool.query("DROP TRIGGER IF EXISTS before_users_insert");
+    console.log("Dropped existing trigger (if any)");
+  } catch (e) {
+    // Ignore errors
+  }
+
+  // ─── Create trigger for auto-generating shondhaan_id ──────────────
+  await pool.query(`
+    CREATE TRIGGER before_users_insert
+    BEFORE INSERT ON users
+    FOR EACH ROW
+    BEGIN
+      DECLARE next_id INT;
+      SELECT IFNULL(MAX(CAST(SUBSTRING(shondhaan_id, 3) AS UNSIGNED)), 0) + 1
+      INTO next_id
+      FROM users;
+      SET NEW.shondhaan_id = CONCAT('SD', LPAD(next_id, 9, '0'));
+    END
+  `);
+
+  console.log("Created users shondhaan_id trigger");
+
+  // ─── Seed default super admin ─────────────────────────────────────
   await seedDefaultSuperAdmin();
+  
+  console.log("Database initialization complete!");
 }

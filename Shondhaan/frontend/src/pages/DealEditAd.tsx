@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ChevronLeft, Save, X, Loader2, Trash2 } from "lucide-react";
+import { ChevronLeft, Save, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -12,9 +12,6 @@ import { Switch } from "@/components/ui/switch";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useDealCategories, useDealListing } from "@/hooks/useDealData";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
-import { divisions as locationData } from "@/data/locations";
 import Navbar from "@/components/Navbar";
 import DealImageUploader from "@/components/deal/DealImageUploader";
 import {
@@ -28,6 +25,10 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { toast } from "sonner";
+import { divisions as locationData } from "@/data/locations";
+
+const DEAL_API = (import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "");
 
 const DealEditAd = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,24 +58,52 @@ const DealEditAd = () => {
   });
   const [loaded, setLoaded] = useState(false);
 
+  // ─── Get Auth Token from any available source ───
+  const getAuthToken = (): string | null => {
+    const tryParse = (raw: string | null): string | null => {
+      if (!raw) return null;
+      try {
+        const parsed = JSON.parse(raw);
+        return parsed?.token || parsed?.access_token || parsed?.accessToken || null;
+      } catch {
+        return null;
+      }
+    };
+
+    // Check specific auth keys
+    const keysToCheck = ["deal_auth", "mysql_auth", "auth", "auth_token", "user_auth"];
+    for (const key of keysToCheck) {
+      const token = tryParse(localStorage.getItem(key));
+      if (token) return token;
+    }
+
+    // Check Supabase keys
+    for (const key of Object.keys(localStorage)) {
+      if (key.startsWith("sb-") && key.endsWith("-auth-token")) {
+        const token = tryParse(localStorage.getItem(key));
+        if (token) return token;
+      }
+    }
+
+    return null;
+  };
+
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
     if (listing && !loaded) {
-      // LOG 1: Check what IDs are being compared in the Edit component
       console.log("[DealEditAd] Listing user_id:", listing.user_id, "Type:", typeof listing.user_id);
       console.log("[DealEditAd] Logged-in user.id:", user?.id, "Type:", typeof user?.id);
 
-      // FIX: Convert both to strings before comparing to prevent "4" !== 4 mismatch
       if (user && String(listing.user_id) !== String(user.id)) {
         console.log("[DealEditAd] Ownership check FAILED. Redirecting...");
         toast.error(bn ? "এটি আপনার বিজ্ঞাপন নয়" : "This is not your ad");
         navigate("/deal");
         return;
       }
-      
+
       console.log("[DealEditAd] Ownership check PASSED. Loading form data.");
 
       setForm({
@@ -98,57 +127,95 @@ const DealEditAd = () => {
 
   const updateField = (field: string, value: any) => setForm(prev => ({ ...prev, [field]: value }));
 
-  const handleSubmit = async () => {
-    if (!user || !id) return;
-    if (!form.title.trim()) { toast.error(bn ? "শিরোনাম দিন" : "Title required"); return; }
-    if (!form.category_id) { toast.error(bn ? "ক্যাটাগরি নির্বাচন করুন" : "Select category"); return; }
+const handleSubmit = async () => {
+  if (!user || !id) return;
+  if (!form.title.trim()) { toast.error(bn ? "শিরোনাম দিন" : "Title required"); return; }
+  if (!form.category_id) { toast.error(bn ? "ক্যাটাগরি নির্বাচন করুন" : "Select category"); return; }
 
-    setSubmitting(true);
-    const { error } = await supabase.from("deal_listings").update({
-      title: form.title,
-      description: form.description,
-      price: parseFloat(form.price) || 0,
-      category_id: form.category_id,
-      condition: form.condition,
-      is_negotiable: form.is_negotiable,
-      location_division: form.location_division,
-      location_district: form.location_district,
-      location_area: form.location_area,
-      phone: form.phone,
-      hide_phone: form.hide_phone,
-      images: form.imageUrls,
-      status: form.status,
-      updated_at: new Date().toISOString(),
-    }).eq("id", id);
+  setSubmitting(true);
+  try {
+    const token = getAuthToken();
 
-    setSubmitting(false);
-    if (error) {
-      toast.error(bn ? "আপডেট করতে সমস্যা হয়েছে" : "Failed to update");
-      console.error(error);
-      return;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
     }
-    toast.success(bn ? "বিজ্ঞাপন সফলভাবে আপডেট হয়েছে!" : "Ad updated successfully!");
-    navigate(`/deal/ad/${id}`);
-  };
 
+    const res = await fetch(`${DEAL_API}/api/deal/listings/${id}`, {
+      method: "PUT",
+      headers,
+      body: JSON.stringify({
+        user_id: user.id,
+        title: form.title,
+        description: form.description,
+        price: parseFloat(form.price) || 0,
+        category_id: form.category_id,
+        condition: form.condition,
+        is_negotiable: form.is_negotiable,
+        location_division: form.location_division,
+        location_district: form.location_district,
+        location_area: form.location_area,
+        phone: form.phone,
+        hide_phone: form.hide_phone,
+        images: form.imageUrls,
+        status: form.status,
+      }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      throw new Error(data.message || (bn ? "আপডেট ব্যর্থ" : "Update failed"));
+    }
+
+    toast.success(data.message || (bn ? "বিজ্ঞাপন সফলভাবে আপডেট হয়েছে!" : "Ad updated successfully!"));
+    navigate(`/deal/ad/${id}`);
+  } catch (err) {
+    console.error("Update error:", err);
+    toast.error(err instanceof Error ? err.message : (bn ? "আপডেট করতে সমস্যা হয়েছে" : "Failed to update"));
+  } finally {
+    setSubmitting(false);
+  }
+};
   const handleDelete = async () => {
     if (!id) return;
     setDeleting(true);
-    const { error } = await supabase.from("deal_listings").delete().eq("id", id);
-    setDeleting(false);
-    if (error) {
-      toast.error(bn ? "মুছতে সমস্যা হয়েছে" : "Failed to delete");
-      return;
+    try {
+      const token = getAuthToken();
+
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${DEAL_API}/api/deal/listings/${id}`, {
+        method: "DELETE",
+        headers,
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || (bn ? "মুছতে সমস্যা হয়েছে" : "Delete failed"));
+      }
+
+      toast.success(data.message || (bn ? "বিজ্ঞাপন মুছে ফেলা হয়েছে" : "Ad deleted"));
+      navigate("/deal");
+    } catch (err) {
+      console.error("Delete error:", err);
+      toast.error(err instanceof Error ? err.message : (bn ? "মুছতে সমস্যা হয়েছে" : "Failed to delete"));
+    } finally {
+      setDeleting(false);
     }
-    toast.success(bn ? "বিজ্ঞাপন মুছে ফেলা হয়েছে" : "Ad deleted");
-    navigate("/deal");
   };
 
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Navbar />
-      <div className="pt-[44px] md:pt-[68px]" />
+        <div className="pt-[44px] md:pt-[68px]" />
         <div className="max-w-2xl mx-auto px-4 py-10 text-center">
           <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
         </div>
