@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect, useMemo, forwardRef, useCallback } from "react";
 import type { MutableRefObject, MouseEvent } from "react";
+import { createPortal } from "react-dom";
 import { getServiceImage } from "@/data/serviceImages";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
   Search,
@@ -10,13 +11,15 @@ import {
   GitCompareArrows,
   Check,
   X,
+  Copy,
+  Share2,
   SlidersHorizontal,
   MapPin,
 } from "lucide-react";
-import { ShareButton } from "@/components/SharePopup";
 import { useLocation } from "@/contexts/LocationContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useCompare } from "@/contexts/CompareContext";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useSEO } from "@/hooks/useSEO";
@@ -96,6 +99,138 @@ const isActive = (value: unknown) => {
     value === null
   );
 };
+
+/* ──────────────────────── SharePopup (portal) ──────────────────────── */
+
+interface SharePopupProps {
+  slug: string;
+  title: string;
+  anchorRect: DOMRect;
+  onClose: () => void;
+}
+
+const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(
+  ({ slug, title, anchorRect, onClose }, _ref) => {
+    const [copied, setCopied] = useState(false);
+    const { language } = useLanguage();
+    const bn = language === "bn";
+    const url = `${window.location.origin}/service/${slug}`;
+    const text = bn ? `${title} - সার্ভিস দেখুন` : `Check out ${title}`;
+    const popupRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+      const handler = (e: MouseEvent) => {
+        const target = e.target;
+        if (
+          popupRef.current &&
+          target instanceof Node &&
+          !popupRef.current.contains(target)
+        ) {
+          onClose();
+        }
+      };
+      document.addEventListener("mousedown", handler);
+      return () => document.removeEventListener("mousedown", handler);
+    }, [onClose]);
+
+    const copyLink = async () => {
+      await navigator.clipboard.writeText(url);
+      setCopied(true);
+      toast.success(bn ? "লিংক কপি হয়েছে!" : "Link copied!");
+      setTimeout(() => setCopied(false), 2000);
+    };
+
+    const socials = [
+      {
+        name: "Facebook",
+        color: "bg-[#1877F2]",
+        icon: "f",
+        href: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
+      },
+      {
+        name: "WhatsApp",
+        color: "bg-[#25D366]",
+        icon: "w",
+        href: `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`,
+      },
+      {
+        name: "X",
+        color: "bg-foreground",
+        icon: "𝕏",
+        href: `https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+      },
+    ];
+
+    const top = anchorRect.bottom + window.scrollY + 8;
+    const left = Math.max(
+      8,
+      Math.min(anchorRect.left + window.scrollX - 100, window.innerWidth - 240)
+    );
+
+    return createPortal(
+      <motion.div
+        ref={popupRef}
+        initial={{ opacity: 0, scale: 0.9, y: -5 }}
+        animate={{ opacity: 1, scale: 1, y: 0 }}
+        exit={{ opacity: 0, scale: 0.9, y: -5 }}
+        transition={{ duration: 0.2 }}
+        className="fixed z-[9999] w-[230px] rounded-xl bg-blue-100 p-3 shadow-xl"
+        style={{ top, left, position: "absolute" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-xs font-semibold text-foreground">
+            {bn ? "শেয়ার করুন" : "Share"}
+          </span>
+          <button
+            onClick={onClose}
+            className="rounded-full p-0.5 hover:bg-secondary cursor-pointer"
+          >
+            <X className="h-3.5 w-3.5 text-muted-foreground" />
+          </button>
+        </div>
+        <div className="flex gap-2 mb-3">
+          {socials.map((s) => (
+            <a
+              key={s.name}
+              href={s.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`flex h-9 w-9 items-center justify-center rounded-full ${s.color} text-white text-sm font-bold transition-transform hover:scale-110 cursor-pointer`}
+            >
+              {s.icon}
+            </a>
+          ))}
+        </div>
+        <div className="flex items-center gap-1.5 rounded-lg border border-border bg-muted/50 px-2 py-1.5">
+          <span className="flex-1 truncate text-[11px] text-muted-foreground">
+            {url}
+          </span>
+          <button
+            onClick={copyLink}
+            className="flex shrink-0 items-center gap-1 rounded-md bg-primary px-2 py-1 text-[10px] font-medium text-white transition-colors hover:bg-primary/90 cursor-pointer"
+          >
+            {copied ? (
+              <Check className="h-3 w-3" />
+            ) : (
+              <Copy className="h-3 w-3" />
+            )}
+            {copied
+              ? bn
+                ? "কপি হয়েছে"
+                : "Copied"
+              : bn
+                ? "কপি"
+                : "Copy"}
+          </button>
+        </div>
+      </motion.div>,
+      document.body
+    );
+  }
+);
+
+/* ──────────────────────── Main Page ──────────────────────── */
 
 const AllServices = () => {
   const navigate = useNavigate();
@@ -752,7 +887,7 @@ const CategorySections = ({
   if (visibleCategoryCount === 0 && uncategorizedServices.length === 0) {
     return (
       <div className="py-16 text-center text-muted-foreground">
-        {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}
+        {bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}
       </div>
     );
   }
@@ -846,6 +981,14 @@ const CmsServiceCard = ({
   const { addToCompare, removeFromCompare, isInCompare, compareList } = useCompare();
   const inCompare = isInCompare(service.slug);
 
+  const [shareState, setShareState] = useState<{
+    slug: string;
+    title: string;
+    rect: DOMRect;
+  } | null>(null);
+
+  const closeShare = useCallback(() => setShareState(null), []);
+
   const toggleCompare = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
 
@@ -859,13 +1002,21 @@ const CmsServiceCard = ({
     addToCompare(service as any);
   };
 
+  const handleShareClick = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    if (shareState?.slug === service.slug) {
+      setShareState(null);
+    } else {
+      const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+      setShareState({ slug: service.slug, title, rect });
+    }
+  };
+
   const parsePrice = (value: unknown) => {
     if (value === null || value === undefined) return 0;
     const s = String(value).trim();
     if (!s) return 0;
 
-    // Remove common formatting: currency sign, commas, spaces.
-    // Keep dot as decimal separator.
     const cleaned = s.replace(/৳/g, "").replace(/,/g, "").replace(/\s/g, "");
 
     const n = Number(cleaned);
@@ -884,7 +1035,7 @@ const CmsServiceCard = ({
       }}
       whileHover={{ y: -2 }}
       className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
-      >
+    >
       <div className="relative aspect-[4/3] overflow-hidden yess-wm">
       <img
           src={getServiceImage(
@@ -908,12 +1059,13 @@ const CmsServiceCard = ({
         </div>
 
         <div className="absolute right-2 top-2 flex flex-col gap-1.5">
-          <ShareButton
-            url={`${window.location.origin}/service/${service.slug}`}
-            title={title}
-            className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/80 text-muted-foreground backdrop-blur-sm"
-            iconClassName="h-3.5 w-3.5"
-          />
+          <button
+            type="button"
+            onClick={handleShareClick}
+            className="flex h-7 w-7 items-center justify-center rounded-full border border-border bg-background/80 text-muted-foreground backdrop-blur-sm hover:text-primary transition-colors cursor-pointer"
+          >
+            <Share2 className="h-3.5 w-3.5" />
+          </button>
 
           <button
             type="button"
@@ -959,6 +1111,17 @@ const CmsServiceCard = ({
           </p>
         )}
       </div>
+
+      <AnimatePresence>
+        {shareState && (
+          <SharePopup
+            slug={shareState.slug}
+            title={shareState.title}
+            anchorRect={shareState.rect}
+            onClose={closeShare}
+          />
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 };

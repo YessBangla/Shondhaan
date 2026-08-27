@@ -5,7 +5,7 @@ import { useEffect } from "react";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
 const SERVICE_API_BASE =
-  (import.meta.env.VITE_SERVICE_API_BASE as string) || "http://localhost:3000";
+  (import.meta.env.VITE_SERVICE_API_BASE as string) || import.meta.env.VITE_SERVICE_API_BASE_URL || "";
 
 /* ──────────────────────────────────────────────────────────────────
    Types

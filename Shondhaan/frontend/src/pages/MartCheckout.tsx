@@ -62,7 +62,7 @@ const MartCheckout = () => {
   const bn = language === "bn";
   const { user } = useAuth();
   const { items, removeItem, updateQuantity, clearCart, subtotal, totalItems } = useMartCart();
-  const apiBase = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "http://localhost:8081";
+  const apiBase = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "";
 
   const [step, setStep] = useState<"cart" | "shipping" | "success">("cart");
   const [name, setName] = useState("");

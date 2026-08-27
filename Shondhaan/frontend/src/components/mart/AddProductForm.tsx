@@ -27,7 +27,7 @@ import { useAITools } from "@/hooks/useAITools";
 import { useQuery } from "@tanstack/react-query";
 import { getFullImageUrl } from "@/lib/imageUrl";
 const API_BASE =
-  import.meta.env.VITE_MART_API_BASE_URL || "http://localhost:8081";
+  import.meta.env.VITE_MART_API_BASE_URL || "";
 const MAX_GALLERY_IMAGES = 4;
 
 interface AddProductFormProps {
@@ -165,7 +165,7 @@ const AddProductForm = ({
       });
 
       const apiUrl =
-        import.meta.env.VITE_MART_API_BASE_URL || "http://localhost:8081";
+        import.meta.env.VITE_MART_API_BASE_URL || "";
       const res = await fetch(`${apiUrl}/api/upload`, {
         method: "POST",
         body: formData,

@@ -98,7 +98,7 @@ interface JobStatsResponse {
   employerProfiles: JobProfileRecord[];
 }
 
-const JOBS_API_URL = (import.meta.env.VITE_JOBS_API_URL || "http://localhost:5050").replace(/\/+$/, "");
+const JOBS_API_URL = (import.meta.env.VITE_JOBS_API_URL || import.meta.env.VITE_YESSJOB_API_URL || "").replace(/\/+$/, "");
 
 const COLORS = [
   "hsl(var(--primary))", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",
@@ -172,7 +172,7 @@ const AdminAnalytics = () => {
     setLoading(true);
     try {
       // 1. Fetch Service Admin Dashboard Data from REST API
-      const base = "http://localhost:3000/api/service-admin/dashboard";
+      const base = `${import.meta.env.VITE_SERVICE_API_BASE_URL || ""}/api/service-admin/dashboard`;
       const [statsRes, recentRes, bChartRes, rChartRes] = await Promise.all([
         fetch(`${base}/stats?period=${currentPeriod}`).then(r => r.json()).catch(() => null),
         fetch(`${base}/recent-bookings?period=${currentPeriod}`).then(r => r.json()).catch(() => []),

@@ -33,7 +33,7 @@ interface ProviderApplication {
   updated_at?: string | null;
 }
 
-const SERVICE_API_BASE_URL = import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000";
+const SERVICE_API_BASE_URL = import.meta.env.VITE_SERVICE_API_BASE_URL || "";
 
 function getDisplayName(application: ProviderApplication) {
   return application.full_name || application.name || application.business_name || "Unnamed provider";

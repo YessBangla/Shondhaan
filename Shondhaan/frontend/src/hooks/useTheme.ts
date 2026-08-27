@@ -22,8 +22,8 @@ function applyTheme(mode: ThemeMode) {
  */
 export function useTheme() {
   const [mode, setMode] = useState<ThemeMode>(() => {
-    if (typeof window === "undefined") return "system";
-    return (localStorage.getItem(KEY) as ThemeMode) || "system";
+    if (typeof window === "undefined") return "light";
+    return (localStorage.getItem(KEY) as ThemeMode) || "light";
   });
 
   useEffect(() => {
@@ -49,6 +49,6 @@ export function useTheme() {
 /** Boot-time apply — call once before React mounts to avoid flash. */
 export function bootTheme() {
   if (typeof window === "undefined") return;
-  const saved = (localStorage.getItem(KEY) as ThemeMode) || "system";
+  const saved = (localStorage.getItem(KEY) as ThemeMode) || "light";
   applyTheme(saved);
 }

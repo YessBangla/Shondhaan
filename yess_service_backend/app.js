@@ -12,8 +12,7 @@ const corsOrigin = [
         .map((origin) => origin.trim())
         .filter(Boolean),
       process.env.FRONTEND_BASE_URL,
-      "http://localhost:8080",
-      "https://shondhaan.com",
+      process.env.FRONTEND_URL,
     ].filter(Boolean),
   ),
 ];

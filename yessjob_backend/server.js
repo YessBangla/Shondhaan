@@ -23,20 +23,7 @@ const  createPackagesTable  = require('./database/packagestable');
 const seedPackages = require('./database/seedPackages');
 const paymentTransactionsTable = require('./database/paymenttransactionTable');
 const createEnrolledPackagesTable = require('./database/enrolledpackageTable');
-const allowedOrigins = [
-  'https://shondhaan.com',
-  'https://www.shondhaan.com',
-  'http://localhost:5173',
-  'http://localhost:3000',
-  'http://127.0.0.1:5173',
-  'http://127.0.0.1:3000',
-  'http://localhost:8080',
-  'http://127.0.0.1:8080',
-];
-
-// Production frontend may be served with or without the www subdomain.
-// Keep both origins allowed because the browser sends the exact page origin.
-allowedOrigins.push('https://shondhaan.com', 'https://www.shondhaan.com');
+const allowedOrigins = [];
 
 if (process.env.CORS_ORIGIN) {
   process.env.CORS_ORIGIN.split(',').forEach(origin => {
@@ -53,6 +40,13 @@ if (process.env.FRONTEND_URL) {
     if (trimmed && !allowedOrigins.includes(trimmed)) {
       allowedOrigins.push(trimmed);
     }
+  });
+}
+
+if (process.env.FRONTEND_BASE_URL) {
+  process.env.FRONTEND_BASE_URL.split(',').forEach(origin => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) allowedOrigins.push(trimmed);
   });
 }
 

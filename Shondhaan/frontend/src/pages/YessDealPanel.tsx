@@ -22,7 +22,7 @@ import {
 } from "recharts";
 
 // Same base URL / helper convention as the other Deal admin components
-const API_BASE = "VITE_DEAL_API_BASE_URL/api";
+const API_BASE = `${import.meta.env.VITE_DEAL_API_BASE_URL || ""}/api`;
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

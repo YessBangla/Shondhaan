@@ -462,17 +462,17 @@ const handleSignOut = async () => {
               <LocationSelector compact />
             </div>
           </div>
-
-          <div className="mt-2 flex items-stretch justify-between bg-primary px-2 py-2 gap-[3px] xs:gap-1 sm:gap-1">
+          {/* mobile navbar start */}
+          <div className="mt-2 flex items-stretch justify-between bg-background px-2 py-1 border-b shadow-xl">
             <LongPressTooltip label={L.emergency.long}>
               <button
                 onClick={() => setEmergencyOpen(true)}
                 aria-label={L.emergency.long}
                 title={L.emergency.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl border border-orange-600 bg-gradient-to-b from-orange-600 to-destructive/40 px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                className="press h-8 group relative  rounded-xl px-2 border border-orange-600 bg-gradient-to-b from-orange-600 to-destructive/40 px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
                 >
-                <Zap className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
                   {L.emergency.short}
                 </span>
               </button>
@@ -483,10 +483,10 @@ const handleSignOut = async () => {
                 onClick={() => setRequestOpen(true)}
                 aria-label={L.request.long}
                 title={L.request.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl hover:border-primary/15 bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200  hover:bg-primary hover:text-white active:scale-[0.97]"
+                className="press h-8 group relative hover:border-primary/15 bg-transparent sm:px-1 text-foreground transition-all duration-200  active:scale-[0.97]"
                 >
-                <HelpCircle className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                {/* <HelpCircle className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
                   {L.request.short}
                 </span>
               </button>
@@ -497,29 +497,24 @@ const handleSignOut = async () => {
                 onClick={() => navigate("/track")}
                 aria-label={L.track.long}
                 title={L.track.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
                 >
-                <Route className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
+                {/* <Route className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
                 <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
                   {L.track.short}
                 </span>
               </button>
             </LongPressTooltip>
 
-            {/* <span
-              aria-hidden
-              className="mx-px xs:mx-0.5 sm:mx-1 my-1.5 w-px shrink-0 self-stretch bg-transparent"
-            /> */}
-
             <LongPressTooltip label={L.lang.long}>
-              <button
+              <button 
                 onClick={toggleLang}
                 aria-label={L.lang.long}
                 title={L.lang.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                className="press group relative h-8 bg-transparent sm:px-1 text-foreground transition-all duration-200 active:scale-[0.97]"
                 >
-                <Globe className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                {/* <Globe className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
                   {L.lang.short}
                 </span>
               </button>
@@ -530,17 +525,17 @@ const handleSignOut = async () => {
                 onClick={() => setIsOpen(true)}
                 aria-label={L.cart.long}
                 title={L.cart.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
                 >
-                <span className="relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
-                  <ShoppingBag className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
+                <span className="relative hidden flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
+                  {/* <ShoppingBag className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
                   {totalItems > 0 && (
                     <span className="absolute -top-1.5 -right-2 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-mobile-accent px-1 text-[9px] font-bold leading-none text-mobile-accent-foreground ring-[1.5px] ring-background">
                       {totalItems}
                     </span>
                   )}
                 </span>
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
                   {L.cart.short}
                 </span>
               </button>
@@ -551,18 +546,19 @@ const handleSignOut = async () => {
                 onClick={() => navigate("/notifications")}
                 aria-label={L.alerts.long}
                 title={L.alerts.long}
-                className="press group relative flex min-w-0 flex-1 basis-0 flex-col items-center gap-1 rounded-2xl bg-transparent px-0.5 py-1.5 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
                 >
-                <span className="relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
+                {/* <span className="hidden relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
                   <Bell className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                  <span className="absolute -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-destructive motion-safe:animate-pulse" />
-                </span>
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                  <span className="absolute hidden -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-destructive motion-safe:animate-pulse" />
+                </span> */}
+                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
                   {L.alerts.short}
                 </span>
               </button>
             </LongPressTooltip>
           </div>
+          {/* mobile navbar end */}
         </div>
 
         {/* Mobile slide-down menu */}
@@ -740,7 +736,7 @@ const handleSignOut = async () => {
               aria-label={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
               title={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
               className="group flex h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
-            >
+              >
               <Globe className="h-4 w-4 text-primary/80" />
               <span className="flex items-center gap-1 text-[11px] font-bold leading-none tracking-wide">
                 <span className={language === "bn" ? "text-foreground" : "text-muted-foreground/60"}>

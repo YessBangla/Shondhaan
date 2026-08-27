@@ -374,7 +374,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
             onClick={() => scroll("left")}
             // whileHover={{ scale: 1.1, x: -2 }}
             // whileTap={{ scale: 0.95 }}
-            className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-emerald-500 text-white shadow-lg hover:shadow-xl md:flex"
+            className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-blue-500 to-emerald-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll left">
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
@@ -382,7 +382,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
             onClick={() => scroll("right")}
             // whileHover={{ scale: 1.1, x: 2 }}
             // whileTap={{ scale: 0.95 }}
-            className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full bg-gradient-to-br from-emerald-500 to-blue-500 text-white shadow-lg hover:shadow-xl md:flex"
+            className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-emerald-500 to-blue-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll right">
             <ChevronRight className="h-5 w-5" />
           </motion.button>

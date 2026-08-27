@@ -1,4 +1,4 @@
-const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL || "http://localhost:8081";
+const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL || "";
 
 export const getFullImageUrl = (path?: string | null): string => {
   if (!path) return "";

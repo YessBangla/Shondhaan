@@ -1,17 +1,12 @@
 import cors from "cors";
 
-const defaultCorsOrigins = [
-  "http://localhost:8080",
-  "http://127.0.0.1:8080",
-  "http://localhost:5173",
-  "http://127.0.0.1:5173",
-  "https://shondhaan.com",
-];
-
 const corsOrigins = [
   ...new Set([
-    ...defaultCorsOrigins,
     ...(process.env.CORS_ORIGIN || "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+    ...(process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "")
       .split(",")
       .map((origin) => origin.trim())
       .filter(Boolean),

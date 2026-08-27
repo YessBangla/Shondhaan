@@ -32,49 +32,50 @@ const EmployerList = () => {
 
   return (
     <JobsPageTransition>
-      <Navbar />
-      <div className="pt-[44px] md:pt-[68px] bg-blue-700 md:bg-card" />
       <JobsMenuBar />
+      <div className="pt-[44px] md:pt-[20px] bg-blue-700 md:bg-card" />
 
       {/* Header */}
-      <div className="bg-gradient-to-br from-blue-700 via-blue-800 to-indigo-900 text-white">
-        <div className="app-container py-8">
-          {/* <BackToHomeButton /> */}
-          <div className="flex items-center gap-3 mt-2 mb-4">
-            <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5">
-              <Building2 className="h-7 w-7" />
+      <div className="max-w-7xl mx-auto px-0 md:px-8">
+        <div className="bg-gradient-to-br from-primary px-4 via-primary to-green-600 text-white">
+          <div className="py-8">
+            {/* <BackToHomeButton /> */}
+            <div className="flex items-center gap-3 mt-2 mb-4">
+              <div className="bg-white/15 backdrop-blur-sm rounded-xl p-2.5">
+                <Building2 className="h-7 w-7" />
+              </div>
+              <div>
+                <h1 className="text-2xl md:text-3xl font-extrabold">{bn ? "নিয়োগদাতা তালিকা" : "Employer Directory"}</h1>
+                <p className="text-blue-200 text-xs">{bn ? `মোট ${filtered.length} টি কোম্পানি` : `${filtered.length} companies listed`}</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-2xl md:text-3xl font-extrabold">{bn ? "নিয়োগদাতা তালিকা" : "Employer Directory"}</h1>
-              <p className="text-blue-200 text-xs">{bn ? `মোট ${filtered.length} টি কোম্পানি` : `${filtered.length} companies listed`}</p>
-            </div>
-          </div>
 
-          <div className="flex flex-col sm:flex-row gap-2 max-w-2xl">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-              <Input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder={bn ? "কোম্পানি খুঁজুন..." : "Search company..."}
-                className="pl-9 bg-white text-foreground border-0 h-11 rounded-lg"
-              />
-              {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X className="h-4 w-4" /></button>}
+            <div className="flex flex-col sm:flex-row gap-2 max-w-2xl">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                <Input
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  placeholder={bn ? "কোম্পানি খুঁজুন..." : "Search company..."}
+                  className="pl-9 bg-white text-foreground border-0 h-11 rounded-lg"
+                />
+                {search && <button onClick={() => setSearch("")} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400"><X className="h-4 w-4" /></button>}
+              </div>
+              <select
+                value={selectedType}
+                onChange={e => setSelectedType(e.target.value)}
+                className="h-11 rounded-lg bg-white text-foreground px-3 text-sm border-0"
+              >
+                <option value="all">{bn ? "সকল ধরন" : "All Types"}</option>
+                {COMPANY_TYPES.map(c => <option key={c.value} value={c.value}>{bn ? c.labelBn : c.labelEn}</option>)}
+              </select>
             </div>
-            <select
-              value={selectedType}
-              onChange={e => setSelectedType(e.target.value)}
-              className="h-11 rounded-lg bg-white text-foreground px-3 text-sm border-0"
-            >
-              <option value="all">{bn ? "সকল ধরন" : "All Types"}</option>
-              {COMPANY_TYPES.map(c => <option key={c.value} value={c.value}>{bn ? c.labelBn : c.labelEn}</option>)}
-            </select>
           </div>
         </div>
       </div>
 
       {/* Stats Bar */}
-      <div className="border-b bg-card">
+      <div className="border-b">
         <div className="app-container py-3 flex items-center gap-4 overflow-x-auto scrollbar-none">
           <span className="text-xs font-medium text-muted-foreground shrink-0">{bn ? "ফলাফল:" : "Results:"} {filtered.length}</span>
           {COMPANY_TYPES.map(t => {

@@ -43,7 +43,7 @@ export default function JobHero({
 
   return (
     <div
-        className="text-white relative overflow-hidden bg-cover bg-center bg-no-repeat mt-[77px] md:mt-[75px]"
+        className="text-white relative overflow-hidden bg-cover bg-center bg-no-repeat mt-[50px] pt-[80px] pb-[30px] md:mt-[75px]"
         style={{
           backgroundImage: `linear-gradient(to bottom right, rgba(4, 14, 39, 0.62), rgba(0, 30, 114, 0.66)), url('${heroBackgroundImage}')`,
         }}
@@ -69,117 +69,117 @@ export default function JobHero({
 
             {/* Search Bar */}
            {/* Row 1: Search */}
-<div className="relative">
-  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
 
-  <Input
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-    onFocus={() => setSearchFocused(true)}
-    onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-    placeholder={
-      bn
-        ? "পদবি, কোম্পানি বা কীওয়ার্ড..."
-        : "Title, company or keyword..."
-    }
-    className="
-      pl-9 pr-[82px]
-      bg-white text-foreground
-      border-0
-      h-10
-      rounded-lg
-      text-xs
-      w-full
-    "
-  />
+              <Input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                onFocus={() => setSearchFocused(true)}
+                onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                placeholder={
+                  bn
+                    ? "পদবি, কোম্পানি বা কীওয়ার্ড..."
+                    : "Title, company or keyword..."
+                }
+                className="
+                  pl-9 pr-[82px]
+                  bg-white text-foreground
+                  border-0
+                  h-10
+                  rounded-lg
+                  text-xs
+                  w-full
+                "
+              />
 
-  {/* Clear search */}
-  {search && (
-    <button
-      onClick={() => setSearch("")}
-      className="absolute right-[68px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
-    >
-      <X className="h-4 w-4" />
-    </button>
-  )}
-
-  {/* Search button inside input */}
-  <Button
-  type="button"
-  className="
-    absolute
-    right-1
-    top-1/2
-    -translate-y-1/2
-    h-8
-    px-3
-    rounded-md
-    text-xs
-    font-semibold
-    z-20
-    bg-gradient-to-r
-    from-primary
-    to-emerald-500
-    hover:bg-primary
-    hover:from-primary
-    hover:to-primary
-    transition-all
-    duration-200
-  "
->
-    <Search className="h-3.5 w-3.5 mr-1" />
-    {bn ? "খুঁজুন" : "Search"}
-  </Button>
-
-  {/* Search suggestions */}
-  {searchFocused && search.length >= 1 && (
-    <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border max-h-64 overflow-y-auto z-50">
-      {jobs.slice(0, 6).map((job) => (
-        <button
-          key={job.id}
-          className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-start gap-3 border-b last:border-0 transition-colors"
-          onMouseDown={() => navigate(`/jobs/${job.id}`)}
-        >
-          <Briefcase className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
-
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-gray-900 truncate">
-              {job.title}
-            </p>
-
-            <p className="text-xs text-gray-500 flex items-center gap-1">
-              <Building2 className="h-3 w-3" />
-              {job.company_name}
-
-              {job.district && (
-                <>
-                  <span className="mx-1">•</span>
-                  <MapPin className="h-3 w-3" />
-                  {job.district}
-                </>
+              {/* Clear search */}
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-[68px] top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 z-20"
+                >
+                  <X className="h-4 w-4" />
+                </button>
               )}
-            </p>
-          </div>
 
-          {job.salary_min && (
-            <span className="text-xs text-emerald-600 font-medium whitespace-nowrap ml-auto">
-              ৳{(job.salary_min / 1000).toFixed(0)}k
-            </span>
-          )}
-        </button>
-      ))}
+              {/* Search button inside input */}
+              <Button
+              type="button"
+              className="
+                absolute
+                right-1
+                top-1/2
+                -translate-y-1/2
+                h-8
+                px-3
+                rounded-md
+                text-xs
+                font-semibold
+                z-20
+                bg-gradient-to-r
+                from-primary
+                to-emerald-500
+                hover:bg-primary
+                hover:from-primary
+                hover:to-primary
+                transition-all
+                duration-200
+              "
+            >
+                <Search className="h-3.5 w-3.5 mr-1" />
+                {bn ? "খুঁজুন" : "Search"}
+              </Button>
 
-      {jobs.length === 0 && (
-        <div className="px-4 py-6 text-center text-sm text-gray-500">
-          {bn ? "কোনো চাকরি পাওয়া যায়নি" : "No jobs found"}
-        </div>
-      )}
-    </div>
-  )}
-</div>
+              {/* Search suggestions */}
+              {searchFocused && search.length >= 1 && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-lg shadow-xl border max-h-64 overflow-y-auto z-50">
+                  {jobs.slice(0, 6).map((job) => (
+                    <button
+                      key={job.id}
+                      className="w-full text-left px-4 py-2.5 hover:bg-blue-50 flex items-start gap-3 border-b last:border-0 transition-colors"
+                      onMouseDown={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      <Briefcase className="h-4 w-4 text-blue-600 mt-0.5 shrink-0" />
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {job.title}
+                        </p>
+
+                        <p className="text-xs text-gray-500 flex items-center gap-1">
+                          <Building2 className="h-3 w-3" />
+                          {job.company_name}
+
+                          {job.district && (
+                            <>
+                              <span className="mx-1">•</span>
+                              <MapPin className="h-3 w-3" />
+                              {job.district}
+                            </>
+                          )}
+                        </p>
+                      </div>
+
+                      {job.salary_min && (
+                        <span className="text-xs text-emerald-600 font-medium whitespace-nowrap ml-auto">
+                          ৳{(job.salary_min / 1000).toFixed(0)}k
+                        </span>
+                      )}
+                    </button>
+                  ))}
+
+                  {jobs.length === 0 && (
+                    <div className="px-4 py-6 text-center text-sm text-gray-500">
+                      {bn ? "কোনো চাকরি পাওয়া যায়নি" : "No jobs found"}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
 
             {/* Quick links */}
-            <div className="hidden sm:flex flex-wrap gap-2 mt-4">
+            <div className="sm:flex flex-wrap gap-2 mt-4">
               <Button size="sm" onClick={() => navigate("/jobs/post")} className="bg-white/15 hover:bg-white/25 text-white gap-1.5 text-xs border border-white/20">
                 <Plus className="h-3.5 w-3.5" /> {bn ? "চাকরি পোস্ট করুন" : "Post a Job"}
               </Button>

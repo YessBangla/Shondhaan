@@ -18,7 +18,7 @@ interface WalletRow {
 const money = (value: number) => `৳${Number(value || 0).toLocaleString("bn-BD")}`;
 
 const MartWalletManager = ({ bn }: { bn: boolean }) => {
-  const apiBaseUrl = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "http://localhost:8081";
+  const apiBaseUrl = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "";
   const [wallets, setWallets] = useState<WalletRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

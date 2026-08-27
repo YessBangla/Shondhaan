@@ -585,7 +585,7 @@ const JobDetail = () => {
               onClick={() => navigate("/jobs")}
               className="-ml-2 mb-2 text-muted-foreground"
             >
-              <ArrowLeft className="h-4 w-4 mr-1" /> Yess Jobs
+              <ArrowLeft className="h-4 w-4 mr-1" /> Shondhaan Jobs
             </Button>
 
             {/* Deadline Warning */}

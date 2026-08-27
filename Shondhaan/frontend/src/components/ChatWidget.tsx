@@ -13,9 +13,10 @@ import LocationPicker from "@/components/LocationPicker";
 import { serviceCategories } from "@/data/categories";
 import { getMobileFloatingBottom } from "@/lib/mobileBottomOffsets";
 import { socket } from "@/lib/socket";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
 
 // Same REST convention as the Deal admin components
-const API_BASE = "https://backend-central.shondhaan.com/api";
+const API_BASE = `${CENTRAL_API_BASE_URL}/api`;
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

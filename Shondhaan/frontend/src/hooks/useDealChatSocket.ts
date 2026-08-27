@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
 
 // FIXED: Read the environment variable properly and provide a fallback
-const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "")}/api`;
+const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || "").replace(/\/+$/, "")}/api`;
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

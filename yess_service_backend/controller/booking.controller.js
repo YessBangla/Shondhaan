@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from "uuid";
 import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
-const CENTRAL_API_BASE_URL = process.env.CENTRAL_API_BASE_URL || "http://localhost:5000";
+const CENTRAL_API_BASE_URL = process.env.CENTRAL_API_BASE_URL || process.env.WALLET_API_BASE_URL || "";
 
 const allowedStatuses = [
   "pending",

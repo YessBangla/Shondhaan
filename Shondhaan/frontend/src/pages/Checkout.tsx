@@ -13,7 +13,7 @@ import LocationPicker from "@/components/LocationPicker";
 import { useBookingAutoFill } from "@/hooks/useBookingAutoFill";
 import { Sparkles } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:8081";
+const API_BASE = import.meta.env.VITE_API_BASE || import.meta.env.VITE_MART_API_BASE_URL || "";
 
 const Checkout = () => {
   const navigate = useNavigate();

@@ -26,9 +26,9 @@ const pool = mysql.createPool({
 // Guarded — this used to crash the whole module at require-time if
 // FRONTEND_URL wasn't set in .env, because .replace() was called on undefined.
 if (!process.env.FRONTEND_URL) {
-  console.warn("⚠️  FRONTEND_URL is not set in .env — payment redirects will fall back to http://localhost:8080");
+  console.warn("⚠️ FRONTEND_URL is not set in the backend environment");
 }
-const FRONTEND_URL = (process.env.FRONTEND_URL || "http://localhost:8080").replace(/\/+$/, "");
+const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/+$/, "");
 
 // -----------------------------------------------------------------------
 // Initiate: create a ShurjoPay session for a job package and hand the

@@ -25,7 +25,7 @@ const serviceBackendBaseUrl = (req) =>
   (process.env.YESS_SERVICE_BACKEND_BASE_URL || `${req.protocol}://${req.get("host")}`).replace(/\/+$/, "");
 
 const frontendUrl = (key, fallbackPath, params = {}) =>
-  appendQuery(process.env[key] || `${process.env.FRONTEND_BASE_URL}${fallbackPath}`, params);
+  appendQuery(process.env[key] || `${process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || ""}${fallbackPath}`, params);
 
 const requireConfig = () => {
   const missing = REQUIRED_ENV.filter((key) => !process.env[key]);

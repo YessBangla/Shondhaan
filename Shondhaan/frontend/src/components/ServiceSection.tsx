@@ -284,7 +284,7 @@ const SharePopup = forwardRef<HTMLDivElement, SharePopupProps>(({ slug, title, a
       animate={{ opacity: 1, scale: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.9, y: -5 }}
       transition={{ duration: 0.2 }}
-      className="fixed z-[9999] w-[230px] rounded-xl border border-border bg-popover p-3 shadow-xl"
+      className="fixed z-[9999] w-[230px] rounded-xl bg-blue-100 p-3 shadow-xl"
       style={{ top, left, position: "absolute" }}
       onClick={(e) => e.stopPropagation()}
     >
