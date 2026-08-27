@@ -23,7 +23,7 @@ import ServiceCardSkeleton from "@/components/ServiceCardSkeleton";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import { usePullToRefresh } from "@/hooks/usePullToRefresh";
 import { useQueryClient } from "@tanstack/react-query";
-import ForYouSection from "@/components/ForYouSection";
+import ForYouSection from "@/components/ForYouSection"; // THIS FEATURE WILL USE IN FUTERE
 import SpecialOffers from "@/components/SpecialOffers";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
@@ -383,7 +383,7 @@ const Index = () => {
           {/* <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" /> */}
 
           <div className="app-container relative z-10">
-            <ForYouSection />
+            {/* <ForYouSection /> */}
 
             {loading ? (
               <>
