@@ -501,7 +501,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
                       imageContent={
                         <div className="overflow-hidden bg-gradient-to-br from-blue-800/60 via-blue-400/40 to-green-600/40 yess-wm pointer-events-none">
                           <img 
-                            src={getImageSrc(service.image)} 
+                            src={getImageSrc(`${import.meta.env.VITE_SERVICE_API_BASE_URL}${service.image}`)}
                             alt={service.title} 
                             className="aspect-[3/2] w-full object-cover transition-transform duration-300 group-hover:scale-105" 
                             loading="lazy" 

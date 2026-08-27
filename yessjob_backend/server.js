@@ -23,7 +23,12 @@ const  createPackagesTable  = require('./database/packagestable');
 const seedPackages = require('./database/seedPackages');
 const paymentTransactionsTable = require('./database/paymenttransactionTable');
 const createEnrolledPackagesTable = require('./database/enrolledpackageTable');
-const allowedOrigins = [];
+const allowedOrigins = [
+  'https://shondhaan.com',
+  'https://www.shondhaan.com',
+  'http://localhost:8080',
+  'http://127.0.0.1:8080',
+];
 
 if (process.env.CORS_ORIGIN) {
   process.env.CORS_ORIGIN.split(',').forEach(origin => {
