@@ -464,7 +464,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
   const jobCode = useMemo(() => { const h = service.slug.slice(0, 6).toUpperCase().replace(/[^A-Z0-9]/g, "X").padEnd(6, "X"); return `SVC-${h}-BD`; }, [service.slug]);
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0" style={{ background: T.paper }}>
+    <div className="min-h-screen pb-20 pt-10 md:pt-2 md:pb-0" style={{ background: T.paper }}>
       <Navbar />
       <div className="pt-[14px] md:pt-[22px]" />
 
