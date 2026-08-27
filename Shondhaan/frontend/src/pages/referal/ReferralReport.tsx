@@ -6,8 +6,9 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
 
-const API = "http://localhost:5000/api/referral/admin";
+const API = `${CENTRAL_API_BASE_URL}/api/referral/admin`;
 
 export default function ReferralReport() {
   const [data, setData] = useState<any>(null);

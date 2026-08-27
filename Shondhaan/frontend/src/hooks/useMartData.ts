@@ -5,7 +5,7 @@ const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:8081";
+  "";
 
 const isSellerVerified = (value: unknown) =>
   value === true || value === 1 || value === "1";

@@ -134,8 +134,8 @@ type ServiceReview = {
 };
 
 /* ─── API helpers ─── */
-const VITE_SERVICE_API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
-const VITE_API_BASE_URL = "http://localhost:5000";
+const VITE_SERVICE_API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
+const VITE_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CENTRAL_API_BASE_URL || "").replace(/\/+$/, "");
 
 const getServiceApiHeaders = () => {
   const auth = getMySqlAuth();

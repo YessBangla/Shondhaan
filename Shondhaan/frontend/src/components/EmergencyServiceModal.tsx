@@ -11,7 +11,7 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 const EMERGENCY_SURCHARGE = 1.3;
 const PRESCRIPTION_MODAL_KEY = "prescriptionModalOpen";
 const SERVICE_API_BASE_URL = (
-  import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000"
+  import.meta.env.VITE_SERVICE_API_BASE_URL || ""
 ).replace(/\/+$/, "");
 
 interface ScanResult {

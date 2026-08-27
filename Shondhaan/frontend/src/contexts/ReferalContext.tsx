@@ -128,7 +128,7 @@ interface ReferralContextValue {
 const CENTRAL_API_BASE = 
   import.meta.env.VITE_CENTRAL_API_BASE_URL || 
   import.meta.env.VITE_API_BASE_URL || 
-  "http://localhost:5000";
+  import.meta.env.VITE_API_BASE_URL || "";
 
 const API = `${CENTRAL_API_BASE}/api/referral`;
 const ADMIN_API = `${CENTRAL_API_BASE}/api/referral/admin`;

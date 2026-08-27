@@ -161,7 +161,7 @@ async function initiateShurjoPayCheckout({
   const prefix = process.env.SURJOPAY_MERCHANT_PREFIX;
   const customerOrderId = `${prefix}${orderId}`;
 
-  const base = (process.env.BACKEND_URL || "http://localhost:5050").replace(/\/+$/, "");
+  const base = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
   const finalReturnUrl = returnUrl || `${base}/api/payments/shurjopay/verify/${encodeURIComponent(orderId)}`;
   const finalCancelUrl = cancelUrl || `${base}/api/payments/shurjopay/cancel/${encodeURIComponent(orderId)}`;
 

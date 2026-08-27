@@ -17,8 +17,8 @@ import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 
 // Point this at wherever yessjob_backend's server.js is running.
-// e.g. in .env.local: VITE_JOBS_API_URL=https://backend-yjob.shondhaan.com
-const API_BASE = import.meta.env.VITE_JOBS_API_URL || "https://backend-yjob.shondhaan.com";
+// Configure the job backend with VITE_YESSJOB_API_URL in the environment.
+const API_BASE = import.meta.env.VITE_JOBS_API_URL || import.meta.env.VITE_YESSJOB_API_URL || "";
 
 // ⚠️  TEMPORARY, INSECURE AUTH — matches routes/jobSeekerProfile.js.
 // We just pass the logged-in user's id as a query param; the backend

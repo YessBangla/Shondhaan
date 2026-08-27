@@ -35,7 +35,7 @@ export interface ServiceChatPayload {
   message: ServiceChatMessage;
 }
 
-const API_BASE = `${(INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "")}/api/service-chat`;
+const API_BASE = `${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/service-chat`;
 const VISITOR_KEY = "yess_service_chat_visitor_id";
 
 export const getServiceChatVisitorId = () => {

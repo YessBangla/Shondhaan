@@ -12,7 +12,7 @@ import {
 } from "recharts";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
-const WALLET_API_BASE_URL = "http://localhost:5000"; 
+const WALLET_API_BASE_URL = import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || ""; 
 
 const PIE_COLORS = [
   "hsl(var(--primary))", "hsl(142, 71%, 45%)", "hsl(38, 92%, 50%)",

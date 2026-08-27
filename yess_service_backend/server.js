@@ -81,16 +81,7 @@ const app = express();
 // CORS
 // ─────────────────────────────────────────────
 
-const allowedOrigins = [
-  "http://localhost:5173",
-  "http://localhost:8080",
-  "http://127.0.0.1:5173",
-  "http://127.0.0.1:8080",
-
-  // Production
-  "https://shondhaan.com",
-  "https://www.shondhaan.com",
-];
+const allowedOrigins = [];
 
 // Add CORS_ORIGIN values from environment
 if (process.env.CORS_ORIGIN) {
@@ -440,4 +431,11 @@ if (
   setTimeout(() => {
     safeReconcile();
   }, 5 * 1000);
+}
+
+if (process.env.FRONTEND_BASE_URL) {
+  process.env.FRONTEND_BASE_URL.split(",").forEach((origin) => {
+    const trimmed = origin.trim();
+    if (trimmed && !allowedOrigins.includes(trimmed)) allowedOrigins.push(trimmed);
+  });
 }

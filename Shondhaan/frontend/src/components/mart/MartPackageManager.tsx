@@ -33,7 +33,7 @@ interface MartPackageManagerProps {
 
 const MartPackageManager: React.FC<MartPackageManagerProps> = ({
   bn = false,
-  API_BASE_URL = "http://localhost:8081"
+  API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL || ""
 }) => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(false);

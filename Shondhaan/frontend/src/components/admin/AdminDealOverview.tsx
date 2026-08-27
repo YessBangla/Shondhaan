@@ -5,7 +5,7 @@ import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
 // Helper to fix relative image URLs coming from the backend
 const getStaticBaseUrl = () => {
-  const baseUrl = (import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "");
+  const baseUrl = (import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "").replace(/\/+$/, "");
   try {
     return new URL(baseUrl).origin;
   } catch {
@@ -21,7 +21,7 @@ const getImageSrc = (url?: string) => {
   return `${STATIC_BASE_URL}${path}`;
 };
 
-const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "http://localhost:4000").replace(/\/+$/, "")}/api`;
+const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "").replace(/\/+$/, "")}/api`;
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {

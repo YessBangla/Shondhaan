@@ -37,7 +37,7 @@ const emptyOffer: ServiceOffer = {
   is_active: true,
 };
 
-const API_URL = "http://localhost:3000/api/service-offers";
+const API_URL = `${import.meta.env.VITE_SERVICE_API_BASE_URL || ""}/api/service-offers`;
 
 const AdminOffers = () => {
   const [offers, setOffers] = useState<ServiceOffer[]>([]);

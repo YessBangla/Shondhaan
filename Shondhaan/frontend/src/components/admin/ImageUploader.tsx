@@ -11,8 +11,7 @@ type ImageUploaderProps = {
   label?: string;
 };
 
-// Helper to extract just the root domain (e.g. http://localhost:5000)
-// This prevents images from trying to load from http://localhost:5000/api/uploads/...
+// Helper to extract just the root domain so API paths are not duplicated.
 const getStaticBaseUrl = () => {
   const apiBaseUrl = INDIVIDUAL_API_BASE_URL || "";
   try {

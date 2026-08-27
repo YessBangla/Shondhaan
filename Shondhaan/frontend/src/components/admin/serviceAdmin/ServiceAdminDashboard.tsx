@@ -35,7 +35,7 @@ const ServiceAdminDashboard = () => {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const apiUrl = "http://localhost:3000/api/bookings";
+      const apiUrl = `${import.meta.env.VITE_SERVICE_API_BASE_URL || ""}/api/bookings`;
       console.log(`🌐 Fetching data from: ${apiUrl}`);
       
       const res = await fetch(apiUrl); 

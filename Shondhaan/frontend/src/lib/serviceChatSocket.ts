@@ -6,7 +6,7 @@ const SERVICE_SOCKET_URL =
   import.meta.env.VITE_SERVICE_SOCKET_URL ||
   import.meta.env.VITE_SERVICE_API_BASE_URL ||
   INDIVIDUAL_API_BASE_URL ||
-  "http://localhost:3000";
+  "";
 
 let serviceChatSocket: Socket | null = null;
 

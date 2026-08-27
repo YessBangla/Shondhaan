@@ -6,7 +6,7 @@ import { toast } from "sonner";
 const MART_API_BASE_URL = (
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081"
+  ""
 ).replace(/\/+$/, "");
 
 const emptyForm = { id: null, label: "", min_purchase_amount: "", reward_type: "FIXED", reward_value: "", is_active: true };
