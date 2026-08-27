@@ -557,7 +557,7 @@ const PanelSidebarTabs = ({
         )}
 
         <main className="flex-1 min-w-0">
-          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-2 py-2")}>
+          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-5 py-2")}>
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}
