@@ -125,12 +125,12 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
 
   return (
     <div
-  className={`hidden md:block bg-card border-b border-border z-40 ${
-    flushWithHeader
-      ? "fixed left-0 right-0 top-[110px] lg:top-[110px] shadow-none"
-      : "sticky top-[110px] lg:top-[110px] shadow-sm"
-  }`}
->
+        className={`md:block bg-card border-b border-border z-40 ${
+          flushWithHeader
+            ? "fixed left-0 right-0 top-[100px] lg:top-[110px] shadow-none"
+            : "sticky top-[100px] lg:top-[110px] shadow-sm"
+        }`}
+      >
       <div className="max-w-7xl mx-auto px-2 md:px-4 lg:px-4">
         <div className="flex items-center gap-0 md:gap-0.5 lg:gap-1">
           {menus.map((menu) => (
@@ -159,11 +159,11 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
                         setOpenMenu(null);
                         if (child.href) navigate(child.href);
                       }}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
-                        location.pathname === child.href ? "bg-accent/50 text-primary font-semibold" : "text-foreground"
+                      className={`flex w-full group items-center gap-3 px-4 py-2.5 text-sm transition-colors hover:bg-accent hover:text-accent-foreground ${
+                        location.pathname === child.href ? "bg-accent/50 text-foreground" : "text-foreground"
                       }`}
                     >
-                      {child.icon && <child.icon className="h-4 w-4 text-muted-foreground" />}
+                      {child.icon && <child.icon className="h-4 w-4 text-muted-foreground group-hover:text-accent-foreground" />}
                       <span>{bn ? child.labelBn : child.labelEn}</span>
                     </button>
                   ))}

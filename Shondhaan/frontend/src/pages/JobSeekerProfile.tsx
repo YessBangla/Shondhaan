@@ -318,7 +318,7 @@ const JobSeekerProfile = () => {
       <div className="mx-auto max-w-3xl px-4 md:px-6 py-6">
         <div className="flex items-center justify-between mb-4">
           <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="-ml-2 text-muted-foreground">
-            <ArrowLeft className="h-4 w-4 mr-1" /> Yess Jobs
+            <ArrowLeft className="h-4 w-4 mr-1" /> Shondhaan Jobs
           </Button>
           <Button onClick={handleSave} disabled={isSaving} className="bg-blue-600 hover:bg-blue-700 gap-1">
             <Save className="h-3.5 w-3.5" /> {isSaving ? "..." : bn ? "সংরক্ষণ" : "Save"}

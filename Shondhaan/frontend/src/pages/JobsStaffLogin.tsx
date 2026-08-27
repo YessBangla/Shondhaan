@@ -5,7 +5,7 @@ const JobsStaffLogin = () => (
   <StaffLoginPage
     platformKey="jobs"
     platformName="সন্ধান জবস"
-    platformNameEn="Yess Jobs"
+    platformNameEn="Shondhaan Jobs"
     logoSrc={logo}
     homeHref="/jobs"
     roleKeys={[

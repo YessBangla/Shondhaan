@@ -35,7 +35,7 @@ const JobHome = () => {
   const queryClient = useQueryClient();
 
   useSEO({
-    title: bn ? "সন্ধান জবস — চাকরি খুঁজুন" : "Yess Jobs — Find Your Next Job",
+    title: bn ? "সন্ধান জবস — চাকরি খুঁজুন" : "Shondhaan Jobs — Find Your Next Job",
     description: bn
       ? "বাংলাদেশের সকল ক্যাটাগরির চাকরি এক জায়গায় — ফুল-টাইম, পার্ট-টাইম, রিমোট ও আরও।"
       : "All job categories across Bangladesh in one place — full-time, part-time, remote and more.",

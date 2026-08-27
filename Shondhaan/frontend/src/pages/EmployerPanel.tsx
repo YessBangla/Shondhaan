@@ -23,6 +23,7 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 import Navbar from "@/components/Navbar";
 import DesktopMegaMenu from "@/components/DesktopMegaMenu";
 
+
 const YESSJOB_API_BASE = import.meta.env.VITE_YESSJOB_API_URL;
 const GEO_API_BASE = "https://bdapi.vercel.app/api/v.1";
 
@@ -863,8 +864,9 @@ const EmployerPanel = () => {
   if (!isEmployer) {
     return (
       <JobsPageTransition>
-        <div className="pt-[44px] md:pt-[68px] bg-card" />
+        <Navbar />
         <JobsMenuBar />
+        <div className="pt-[44px] md:pt-[68px] bg-card" />
         <div className="flex flex-col items-center justify-center min-h-[60vh] px-4">
           <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
           <h1 className="font-heading text-xl font-bold mb-2">এমপ্লয়ার অ্যাক্সেস নেই</h1>

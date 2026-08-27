@@ -544,10 +544,10 @@ const PanelSidebarTabs = ({
 
                   <button onClick={() => navigate("/")} 
                     className="border hidden md:block shadow text-nowrap rounded-full px-2 py-1 border-userprimary bg-userprimaryshade text-black font-semibold
-                    hover:bg-userprimary hover:text-white transition-all">
+                    hover:bg-userprimary text-[12px] hover:text-white transition-all">
                     {bn ? "হোম পেইজ" : "Home Page"} <FontAwesomeIcon icon={faReply} />
                   </button>
-                  <button onClick={() => navigate("/")} className="text-[20px] text-userprimary">
+                  <button onClick={() => navigate("/")} className="md:hidden text-[20px] text-userprimary">
                       <FontAwesomeIcon icon={faHouse} />
                   </button>
                 </div>

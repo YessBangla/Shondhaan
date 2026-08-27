@@ -158,7 +158,7 @@ const DealPostAd = () => {
   };
 
   return (
-    <div className="min-h-screen bg-primary-foreground">
+    <div className="min-h-screen bg-primary-foreground px-4 md:px-0 mt-6 md:mt-0">
       <Navbar />
 
       <div className="pt-[44px] md:pt-[68px]" />
@@ -166,8 +166,8 @@ const DealPostAd = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-2xl mx-auto px-4 py-4 pb-28 md:pb-10"
-      >
+        className="max-w-4xl mx-auto px-4 py-4 pb-28 md:pb-10 border shadow bg-card rounded-xl"
+        >
         <div className="flex items-center gap-2 mb-6">
           <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
             <ChevronLeft className="h-5 w-5" />
@@ -179,12 +179,12 @@ const DealPostAd = () => {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">
+          <div className="border-border/50">
+            <div className="">
+              <CardHeader className="text-base">
                 {bn ? "ক্যাটাগরি নির্বাচন" : "Select Category"}
-              </CardTitle>
-            </CardHeader>
+              </CardHeader>
+            </div>
 
             <CardContent>
               <Select
@@ -206,9 +206,9 @@ const DealPostAd = () => {
                 </SelectContent>
               </Select>
             </CardContent>
-          </Card>
+          </div>
 
-          <Card className="border-border/50">
+          <div className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 {bn ? "বিজ্ঞাপনের তথ্য" : "Ad Details"}
@@ -266,9 +266,9 @@ const DealPostAd = () => {
                 />
               </div>
             </CardContent>
-          </Card>
+          </div>
 
-          <Card className="border-border/50">
+          <div className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 {bn ? "মূল্য ও অবস্থা" : "Price & Condition"}
@@ -368,9 +368,9 @@ const DealPostAd = () => {
                 </Select>
               </div>
             </CardContent>
-          </Card>
+          </div>
 
-          <Card className="border-border/50">
+          <div className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 {bn ? "ছবি যোগ করুন" : "Add Photos"}
@@ -390,9 +390,9 @@ const DealPostAd = () => {
                 }
               />
             </CardContent>
-          </Card>
+          </div>
 
-          <Card className="border-border/50">
+          <div className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 {bn ? "লোকেশন" : "Location"}
@@ -511,9 +511,9 @@ const DealPostAd = () => {
                   );
                 })()}
             </CardContent>
-          </Card>
+          </div>
 
-          <Card className="border-border/50">
+          <div className="border-border/50">
             <CardHeader className="pb-3">
               <CardTitle className="text-base">
                 {bn ? "যোগাযোগ" : "Contact"}
@@ -543,21 +543,24 @@ const DealPostAd = () => {
                 />
               </div>
             </CardContent>
-          </Card>
+          </div>
 
-          <Button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="w-full h-12 text-base font-bold rounded-xl gap-2"
-          >
-            {submitting ? (
-              <Loader2 className="h-5 w-5 animate-spin" />
-            ) : (
-              <Plus className="h-5 w-5" />
-            )}
+          <div className="px-4 md:px-6">
+            <Button
+              onClick={handleSubmit}
+              disabled={submitting}
+              className="w-full h-12 text-base font-bold rounded-xl gap-2 hover:bg-emerald-600"
+              >
+              {submitting ? (
+                <Loader2 className="h-5 w-5 animate-spin" />
+              ) : (
+                <Plus className="h-5 w-5" />
+              )}
 
-            {bn ? "বিজ্ঞাপন পোস্ট করুন" : "Post Ad"}
-          </Button>
+              {bn ? "বিজ্ঞাপন পোস্ট করুন" : "Post Ad"}
+            </Button>
+          </div>
+        
         </div>
       </motion.div>
     </div>

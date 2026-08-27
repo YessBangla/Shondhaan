@@ -205,7 +205,7 @@ const PLATFORM_CARDS = [
     to: "/",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
-    imgIcon: "images/modules_logo/service.png",
+    imgIcon: "/images/modules_logo/service.png",
     accentColor: "#a89a9c",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
@@ -214,7 +214,7 @@ const PLATFORM_CARDS = [
     to: "/mart/home",
     labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
     descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
-    imgIcon: "images/modules_logo/mart.png",
+    imgIcon: "/images/modules_logo/mart.png",
     accentColor: "#d4a574",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 100% 0%, rgba(212, 165, 116, 0.08), transparent 50%)",
@@ -223,7 +223,7 @@ const PLATFORM_CARDS = [
     to: "/deal",
     labelBn: "সন্ধান ডিল", labelEn: "Shondhaan Deal",
     descBn: "নির্ভরযোগ্য লেনদেন", descEn: "Verified exchanges",
-    imgIcon: "images/modules_logo/deal.png",
+    imgIcon: "/images/modules_logo/deal.png",
     accentColor: "#9ca89a",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 0% 100%, rgba(156, 168, 154, 0.08), transparent 50%)",
@@ -232,7 +232,7 @@ const PLATFORM_CARDS = [
     to: "/jobs",
     labelBn: "চাকরির সূযোগ", labelEn: "Job Opportunities",
     descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
-    imgIcon: "images/modules_logo/job.png",
+    imgIcon: "/images/modules_logo/job.png",
     accentColor: "#a89a9c",
     bgDark: "#1a1a2e",
     bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
@@ -241,11 +241,11 @@ const PLATFORM_CARDS = [
 const [pressedCard, setPressedCard] = useState<string | null>(null);
 
   const handleCardClick = (to: string) => {
-    if (pressedCard) return;
     haptic("medium");
     setPressedCard(to);
     try { sessionStorage.setItem("yess:nav-transition", to); } catch {}
-    window.setTimeout(() => { navigate(to); setPressedCard(null); }, 200);
+    navigate(to);
+    setPressedCard(null);
   };
 
   // Hide on role-based dashboard / panel routes (Laravel-style separate shells)
@@ -433,7 +433,7 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
                   {bn ? "আরও অপশন" : "More Options"}
                 </h3>
 
-                 <div className="grid grid-cols-2 gap-2 mb-2">
+                <div className="grid grid-cols-2 gap-2 mb-2">
                      {PLATFORM_CARDS.map(({ to, labelBn, labelEn, imgIcon, accentColor, bgPattern }, idx) => {
                     const isPressed = pressedCard === to;
                     return (
@@ -442,7 +442,10 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
                         initial={{ opacity: 0, scale: 0.92, y: 8 }}
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.05 }}
-                        onClick={() => handleCardClick(to)}
+                        onClick={() => {
+                          setMoreOpen(false);
+                          handleCardClick(to)
+                        }}
                         className="group relative bg-background overflow-hidden rounded-lg border border-white-900/20 p-2.5 text-center transition-all duration-300">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="relative flex flex-row items-center gap-2">

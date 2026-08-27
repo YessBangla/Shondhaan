@@ -52,7 +52,7 @@ export default function JobFilterBar({
           <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${showFilters ? "bg-blue-600 text-white border-blue-600" : "bg-background border-border hover:bg-muted"}`}
+              className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors shrink-0 ${showFilters ? "bg-primary text-white" : "bg-background border-border hover:bg-muted"}`}
             >
               <Filter className="h-3 w-3" />
               {bn ? "ফিল্টার" : "Filters"}
@@ -61,7 +61,7 @@ export default function JobFilterBar({
 
             {JOB_TYPES.map(t => (
               <button key={t.value} onClick={() => setSelectedType(selectedType === t.value ? "all" : t.value)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${selectedType === t.value ? "bg-blue-600 text-white" : "bg-background border border-border hover:bg-muted"}`}>
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors whitespace-nowrap shrink-0 ${selectedType === t.value ? "bg-primary text-white" : "bg-background border border-border hover:bg-muted"}`}>
                 {bn ? t.labelBn : t.labelEn}
               </button>
             ))}
