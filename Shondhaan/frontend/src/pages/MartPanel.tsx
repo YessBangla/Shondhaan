@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { getMartSocket } from "@/lib/martSocket";
 import { createMartSellerNotification } from "@/lib/martSellerNotifications";
 import { getFullImageUrl } from "@/lib/imageUrl";
+
 const orderStatusMap: Record<string, { label: string; color: string; dot: string }> = {
   pending:    { label: "অপেক্ষমাণ",       color: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-400"  },
   confirmed:  { label: "নিশ্চিত",          color: "bg-blue-50 text-blue-700 border border-blue-200",          dot: "bg-blue-400"   },
@@ -40,6 +41,13 @@ const orderStatusMap: Record<string, { label: string; color: string; dot: string
   shipped:    { label: "শিপড",             color: "bg-cyan-50 text-cyan-700 border border-cyan-200",           dot: "bg-cyan-400"   },
   delivered:  { label: "ডেলিভারি সম্পন্ন", color: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-400"},
   cancelled:  { label: "বাতিল",            color: "bg-red-50 text-red-700 border border-red-200",             dot: "bg-red-400"    },
+};
+
+const withdrawalStatusMap: Record<string, { label: string; color: string; dot: string }> = {
+  pending:  { label: "অপেক্ষমাণ",  color: "bg-amber-50 text-amber-700 border border-amber-200",   dot: "bg-amber-400"  },
+  approved: { label: "অনুমোদিত",   color: "bg-blue-50 text-blue-700 border border-blue-200",       dot: "bg-blue-400"   },
+  paid:     { label: "পরিশোধিত",   color: "bg-emerald-50 text-emerald-700 border border-emerald-200", dot: "bg-emerald-400" },
+  rejected: { label: "বাতিল",      color: "bg-red-50 text-red-700 border border-red-200",          dot: "bg-red-400"    },
 };
 
 const COLORS = ["#10b981", "#06b6d4", "#8b5cf6", "#f59e0b", "#3b82f6"];
@@ -93,11 +101,24 @@ interface DeliverymanMatch {
   deliveryman_name?: string | null; deliveryman_phone?: string | null; deliveryman_email?: string | null;
 }
 
-const colorToken: Record<string, { bg: string; text: string }> = {
-  emerald: { bg: "bg-emerald-50", text: "text-emerald-600" },
-  blue:    { bg: "bg-blue-50",    text: "text-blue-600"    },
-  violet:  { bg: "bg-violet-50",  text: "text-violet-600"  },
-  rose:    { bg: "bg-rose-50",    text: "text-rose-600"    },
+interface WithdrawalRequest {
+  id: number;
+  seller_id: number;
+  amount: number;
+  method: string;
+  account_number: string;
+  account_name?: string | null;
+  notes?: string | null;
+  status: "pending" | "approved" | "rejected" | "paid";
+  admin_note?: string | null;
+  created_at: string;
+}
+
+const colorToken: Record<string, { bg: string; text: string; border: string }> = {
+  emerald: { bg: "bg-emerald-50", text: "text-emerald-600", border: "border-emerald-200" },
+  blue:    { bg: "bg-blue-50",    text: "text-blue-600",    border: "border-blue-200"    },
+  violet:  { bg: "bg-violet-50",  text: "text-violet-600",  border: "border-violet-200"  },
+  rose:    { bg: "bg-rose-50",    text: "text-rose-600",    border: "border-rose-200"    },
 };
 
 interface DashboardStat {
@@ -183,6 +204,14 @@ const couponDefault = {
   is_active: true,
 };
 
+const withdrawalDefault = {
+  amount: "",
+  method: "bank" as "bank" | "mobile_banking",
+  account_number: "",
+  account_name: "",
+  notes: "",
+};
+
 function KycSellerBackendSync({
   sellerId,
   onLoaded,
@@ -216,8 +245,9 @@ const MartPanel = () => {
   const navigate  = useNavigate();
   const { language } = useLanguage();
   const bn = language === "bn";
-const [messages, setMessages] = useState<ChatConversation[]>([]);
-const [messagesLoading, setMessagesLoading] = useState(false);
+
+  const [messages, setMessages] = useState<ChatConversation[]>([]);
+  const [messagesLoading, setMessagesLoading] = useState(false);
   const [hasAccess, setHasAccess]     = useState(false);
   const [loading, setLoading]         = useState(true);
   const [products, setProducts]       = useState<Product[]>([]);
@@ -259,6 +289,12 @@ const [messagesLoading, setMessagesLoading] = useState(false);
   const [couponForm, setCouponForm] = useState(couponDefault);
   const [couponSaving, setCouponSaving] = useState(false);
 
+  // Withdrawal state
+  const [withdrawals, setWithdrawals] = useState<WithdrawalRequest[]>([]);
+  const [withdrawalsLoading, setWithdrawalsLoading] = useState(false);
+  const [withdrawalForm, setWithdrawalForm] = useState(withdrawalDefault);
+  const [withdrawalSaving, setWithdrawalSaving] = useState(false);
+
   const pollRef          = useRef<ReturnType<typeof setInterval> | null>(null);
   const requestStatusRef = useRef<Record<string, RequestStatus>>({});
   const requestIdsRef    = useRef<Record<string, number>>({});
@@ -294,70 +330,73 @@ const [messagesLoading, setMessagesLoading] = useState(false);
       return null;
     }
   }, [user]);
-const fetchMessages = useCallback(async () => {
-  if (!sellerUserId) return;
 
-  setMessagesLoading(true);
+  const fetchMessages = useCallback(async () => {
+    if (!sellerUserId) return;
 
-  try {
-    const resp = await fetch(`${API_BASE}/api/messages/inbox/seller/${sellerUserId}`);
-    const result = await resp.json();
+    setMessagesLoading(true);
 
-    if (!resp.ok || result.success === false) {
-      throw new Error(result.message || "Could not load messages");
+    try {
+      const resp = await fetch(`${API_BASE}/api/messages/inbox/seller/${sellerUserId}`);
+      const result = await resp.json();
+
+      if (!resp.ok || result.success === false) {
+        throw new Error(result.message || "Could not load messages");
+      }
+
+      setMessages(result.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Could not load messages");
+    } finally {
+      setMessagesLoading(false);
     }
+  }, [sellerUserId]);
 
-    setMessages(result.data || []);
-  } catch (err: any) {
-    toast.error(err.message || "Could not load messages");
-  } finally {
-    setMessagesLoading(false);
-  }
-}, [sellerUserId]);
-useEffect(() => {
-  if (sellerUserId) {
-    fetchMessages();
-  }
-}, [sellerUserId, fetchMessages]);
+  useEffect(() => {
+    if (sellerUserId) {
+      fetchMessages();
+    }
+  }, [sellerUserId, fetchMessages]);
 
-useEffect(() => {
-  if (!sellerUserId) return;
-  const socket = getMartSocket();
+  useEffect(() => {
+    if (!sellerUserId) return;
+    const socket = getMartSocket();
 
-  socket.emit("mart:join", { seller_user_id: sellerUserId });
+    socket.emit("mart:join", { seller_user_id: sellerUserId });
 
-  const handleConversationUpdate = (payload: MartConversationUpdatePayload) => {
-    if (!payload.sellerInbox) return;
+    const handleConversationUpdate = (payload: MartConversationUpdatePayload) => {
+      if (!payload.sellerInbox) return;
 
-    setMessages((prev) => {
-      const nextRow = payload.sellerInbox!;
-      const existing = prev.find((row) => Number(row.id) === Number(nextRow.id));
-      const rest = prev.filter((row) => Number(row.id) !== Number(nextRow.id));
-      return [{ ...existing, ...nextRow }, ...rest];
-    });
-
-    if (payload.message?.sender_role === "user") {
-      const chat = payload.sellerInbox;
-      void createMartSellerNotification({
-        userId: sellerUserId,
-        title: bn ? "নতুন কাস্টমার মেসেজ" : "New customer message",
-        message:
-          payload.message.message ||
-          chat.last_message ||
-          (bn ? "একজন কাস্টমার মেসেজ পাঠিয়েছেন" : "A customer sent you a message"),
-        type: "mart_customer_message",
-        productId: chat.product_id,
-        actionUrl: `/mart/vendor/messages/${chat.id}`,
+      setMessages((prev) => {
+        const nextRow = payload.sellerInbox!;
+        const existing = prev.find((row) => Number(row.id) === Number(nextRow.id));
+        const rest = prev.filter((row) => Number(row.id) !== Number(nextRow.id));
+        return [{ ...existing, ...nextRow }, ...rest];
       });
-    }
-  };
 
-  socket.on("mart:conversation:updated", handleConversationUpdate);
+      if (payload.message?.sender_role === "user") {
+        const chat = payload.sellerInbox;
+        void createMartSellerNotification({
+          userId: sellerUserId,
+          title: bn ? "নতুন কাস্টমার মেসেজ" : "New customer message",
+          message:
+            payload.message.message ||
+            chat.last_message ||
+            (bn ? "একজন কাস্টমার মেসেজ পাঠিয়েছেন" : "A customer sent you a message"),
+          type: "mart_customer_message",
+          productId: chat.product_id,
+          actionUrl: `/mart/vendor/messages/${chat.id}`,
+        });
+      }
+    };
 
-  return () => {
-    socket.off("mart:conversation:updated", handleConversationUpdate);
-  };
-}, [sellerUserId, bn]);
+    socket.on("mart:conversation:updated", handleConversationUpdate);
+
+    return () => {
+      socket.off("mart:conversation:updated", handleConversationUpdate);
+    };
+  }, [sellerUserId, bn]);
+
   const fetchOrders = useCallback(async (resolvedSeller?: MartSeller | null) => {
     if (!user) return;
     const s = resolvedSeller ?? seller;
@@ -390,9 +429,9 @@ useEffect(() => {
     const paymentResult = params.get("package_payment");
     if (!paymentResult) return;
     if (paymentResult === "success") {
-      toast.success(bn ? "প্যাকেজ পেমেন্ট সফল হয়েছে। আপনার প্যাকেজ এখন সক্রিয়।" : "Package payment successful. Your package is now active.");
+      toast.success(bn ? "প্যাকেজ পেমেন্ট সফল হয়েছে। আপনার প্যাকেজ এখন সক্রিয়।" : "Package payment successful. Your package is now active.");
     } else {
-      toast.error(bn ? "পেমেন্ট সম্পন্ন হয়নি। আবার চেষ্টা করুন।" : "Payment was not completed. Please try again.");
+      toast.error(bn ? "পেমেন্ট সম্পন্ন হয়নি। আবার চেষ্টা করুন।" : "Payment was not completed. Please try again.");
     }
     params.delete("package_payment");
     params.delete("package_purchase_id");
@@ -478,7 +517,7 @@ useEffect(() => {
       }
     }
 
-if (current && !current.canAdd) {
+    if (current && !current.canAdd) {
       toast.error(
         bn
           ? `প্যাকেজ না কিনে আপনি আর পণ্য যোগ করতে পারবেন না। আপনি আপনার ফ্রি ${current.freeLimit}টি পণ্যের লিমিট শেষ করেছেন। নতুন পণ্য যোগ করতে একটি প্যাকেজ কিনুন।`
@@ -488,7 +527,7 @@ if (current && !current.canAdd) {
       if (sellerUserId) {
         void createMartSellerNotification({
           userId: sellerUserId,
-title: bn ? "পণ্য যোগ করার লিমিট শেষ" : "Product limit reached",
+          title: bn ? "পণ্য যোগ করার লিমিট শেষ" : "Product limit reached",
           message: bn
             ? "প্যাকেজ না কিনে আপনি আর পণ্য যোগ করতে পারবেন না। আপনার ফ্রি ৫টি পণ্যের লিমিট শেষ হয়ে গেছে। চালিয়ে যেতে একটি প্যাকেজ কিনুন।"
             : "You cannot add more products without buying a package. You've used your 5 free product slots. Buy a package to keep adding products.",
@@ -500,11 +539,11 @@ title: bn ? "পণ্য যোগ করার লিমিট শেষ" : "P
       return;
     }
 
-setEditingProduct(null);
+    setEditingProduct(null);
     setShowAddProduct(true);
   };
 
-// ── KYC handlers ──
+  // ── KYC handlers ──
   const handleKycImageUpload = async (field: string, file: File) => {
     setKycUploading(prev => ({ ...prev, [field]: true }));
     try {
@@ -603,6 +642,42 @@ setEditingProduct(null);
     }
   };
 
+  // ── Withdrawal ──
+  const fetchWithdrawals = useCallback(async () => {
+    if (!sellerId) return;
+    setWithdrawalsLoading(true);
+    try {
+      const resp = await fetch(`${API_BASE}/api/withdrawal-requests?seller_id=${sellerId}`);
+      const result = await resp.json();
+      if (!resp.ok || result.success === false) throw new Error(result.message || "Could not load withdrawal requests");
+      setWithdrawals(result.data || []);
+    } catch (err: any) {
+      toast.error(err.message || "Could not load withdrawal requests");
+    } finally {
+      setWithdrawalsLoading(false);
+    }
+  }, [sellerId]);
+
+  useEffect(() => {
+    if (sellerId) fetchWithdrawals();
+  }, [sellerId, fetchWithdrawals]);
+
+  // Prefill account details from KYC info once loaded
+  useEffect(() => {
+    if (!seller) return;
+    setWithdrawalForm(prev => {
+      if (prev.account_number) return prev; // don't overwrite what the vendor already typed
+      const bank = (seller as any).bank_account_number;
+      const mobile = (seller as any).mobile_banking_number;
+      return {
+        ...prev,
+        method: bank ? "bank" : mobile ? "mobile_banking" : prev.method,
+        account_number: bank || mobile || "",
+        account_name: (seller as any).bank_account_name || "",
+      };
+    });
+  }, [seller]);
+
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const resp = await fetch(`${API_BASE}/api/orders/${encodeURIComponent(orderId)}`, {
@@ -657,7 +732,7 @@ setEditingProduct(null);
     } catch { toast.error(bn ? "আপডেট ব্যর্থ" : "Update failed"); }
   };
 
-  // ── Loading / access guards ──
+  // ── Coupons ──
   const refreshCoupons = async () => {
     if (!sellerId) return;
     setCoupons(await listSellerMartCoupons(sellerId));
@@ -715,6 +790,7 @@ setEditingProduct(null);
     }
   };
 
+  // ── Loading / access guards ──
   if (authLoading || loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -734,7 +810,7 @@ setEditingProduct(null);
     </div>
   );
 
-  // ── Derived values ──
+  // ── Derived values (order matters: dependencies must be computed first) ──
   const filteredProducts = products.filter(p => {
     const matchSearch = p.name.includes(searchProduct) || (p.name_en || "").toLowerCase().includes(searchProduct.toLowerCase());
     const matchStock  = productStockFilter === "all" || (p.stock || 0) < LOW_STOCK_THRESHOLD;
@@ -754,13 +830,79 @@ setEditingProduct(null);
     return matchSearch && matchStatus && matchPayment;
   });
 
+  // NOTE: paidOrders / totalRevenue must be computed BEFORE the withdrawal
+  // balance figures below, since those depend on totalRevenue.
   const paidOrders   = orders.filter(o => o.payment_status === "paid");
   const totalRevenue = paidOrders.reduce((s, o) => s + Number(o.total), 0);
-  const lowStock     = products.filter(p => (p.stock || 0) < LOW_STOCK_THRESHOLD).length;
-  const statusData   = Object.entries(orderStatusMap)
+  const lowStock      = products.filter(p => (p.stock || 0) < LOW_STOCK_THRESHOLD).length;
+  const statusData    = Object.entries(orderStatusMap)
     .map(([k, v]) => ({ name: v.label, value: orders.filter(o => o.status === k).length }))
     .filter(d => d.value > 0);
   const messageUnreadCount = messages.reduce((sum, chat) => sum + Number(chat.unread_count || 0), 0);
+
+  // Withdrawal balance figures — depend on totalRevenue above.
+  const paidOutTotal = withdrawals
+    .filter(w => w.status === "paid" || w.status === "approved")
+    .reduce((s, w) => s + Number(w.amount), 0);
+  const pendingWithdrawalTotal = withdrawals
+    .filter(w => w.status === "pending")
+    .reduce((s, w) => s + Number(w.amount), 0);
+  const availableBalance = Math.max(0, totalRevenue - paidOutTotal - pendingWithdrawalTotal);
+
+  const submitWithdrawalRequest = async () => {
+    if (!sellerId) return;
+
+    const amountNum = Number(withdrawalForm.amount);
+    if (!amountNum || amountNum <= 0) {
+      toast.error(bn ? "সঠিক পরিমাণ লিখুন" : "Enter a valid amount");
+      return;
+    }
+    if (amountNum > availableBalance) {
+      toast.error(bn ? "উত্তোলনযোগ্য ব্যালেন্সের বেশি পরিমাণ" : "Amount exceeds your available balance");
+      return;
+    }
+    if (!withdrawalForm.account_number.trim()) {
+      toast.error(bn ? "একাউন্ট/নম্বর দিন" : "Enter an account/number");
+      return;
+    }
+
+    setWithdrawalSaving(true);
+    try {
+      const resp = await fetch(`${API_BASE}/api/withdrawal-requests`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          seller_id: sellerId,
+          amount: amountNum,
+          method: withdrawalForm.method,
+          account_number: withdrawalForm.account_number.trim(),
+          account_name: withdrawalForm.account_name.trim() || null,
+          notes: withdrawalForm.notes.trim() || null,
+        }),
+      });
+      const result = await resp.json();
+      if (!resp.ok || result.success === false) throw new Error(result.message || "Could not submit request");
+
+      toast.success(bn ? "উত্তোলন অনুরোধ পাঠানো হয়েছে। অ্যাডমিন রিভিউ করবেন।" : "Withdrawal request sent. Admin will review it.");
+      setWithdrawalForm(prev => ({ ...withdrawalDefault, method: prev.method, account_number: prev.account_number, account_name: prev.account_name }));
+      await fetchWithdrawals();
+
+      if (sellerUserId) {
+        void createMartSellerNotification({
+          userId: sellerUserId,
+          title: bn ? "উত্তোলন অনুরোধ পাঠানো হয়েছে" : "Withdrawal request sent",
+          message: bn
+            ? `৳${amountNum.toLocaleString()} উত্তোলনের অনুরোধ জমা দেওয়া হয়েছে।`
+            : `Your withdrawal request for ৳${amountNum.toLocaleString()} has been submitted.`,
+          type: "mart_withdrawal_requested",
+        });
+      }
+    } catch (err: any) {
+      toast.error(err.message || (bn ? "অনুরোধ পাঠাতে ব্যর্থ" : "Could not submit request"));
+    } finally {
+      setWithdrawalSaving(false);
+    }
+  };
 
   const stats: DashboardStat[] = [
     { icon: DollarSign,   label: bn ? "মোট বিক্রি"   : "Revenue",   value: `৳${totalRevenue.toLocaleString()}`, color: "emerald", targetTab: "orders",   orderPaymentFilter:  "paid" },
@@ -776,14 +918,15 @@ setEditingProduct(null);
     { value: "orders",         label: bn ? "অর্ডার"                 : "Orders",             icon: <ShoppingCart />, group: bn ? "অর্ডার"             : "Orders"          },
     { value: "kyc",            label: bn ? "KYC ভেরিফিকেশন"        : "KYC Verification",   icon: <ShieldCheck />,  group: bn ? "ভেরিফিকেশন"         : "Verification"    },
     { value: "store settings", label: bn ? "মার্ট ভেন্ডর প্রোফাইল" : "Mart Vendor Profile", icon: <Store />,       group: bn ? "সেটিংস"             : "store settings"  },
+    { value: "withdrawal-requests", label: bn ? "উত্তোলন অনুরোধ" : "Withdrawal Requests", icon: <CreditCard />, group: bn ? "আর্থিক" : "Financial" },
     { value: "logout",         label: bn ? "লগআউট"                  : "Logout",             icon: <LogOut />,       group: bn ? "অ্যাকাউন্ট"         : "Account"         },
     {
-  value: "messages",
-  label: bn ? "মেসেজ" : "Messages",
-  icon: <MessageCircle />,
-  group: bn ? "যোগাযোগ" : "Communication",
-  badge: messageUnreadCount,
-},
+      value: "messages",
+      label: bn ? "মেসেজ" : "Messages",
+      icon: <MessageCircle />,
+      group: bn ? "যোগাযোগ" : "Communication",
+      badge: messageUnreadCount,
+    },
   ];
 
   // ── Document upload field config ──
@@ -1565,6 +1708,176 @@ setEditingProduct(null);
               </div>
             )}
 
+            {/* ══════════════════════════════ WITHDRAWAL REQUESTS ══════════════════════════════ */}
+            {activeTab === "withdrawal-requests" && (
+              <div className="space-y-4 mt-9">
+                <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,420px)_1fr] gap-4">
+
+                  {/* ── Request form ── */}
+                  <div className="bg-white rounded-2xl border border-slate-100 p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center">
+                        <CreditCard className="h-4 w-4 text-emerald-600" />
+                      </div>
+                      <div>
+                        <h2 className="text-sm font-bold text-slate-800">{bn ? "উত্তোলন অনুরোধ করুন" : "Request a Withdrawal"}</h2>
+                        <p className="text-xs text-slate-500">{bn ? "আপনার আয় থেকে টাকা তোলার জন্য অনুরোধ পাঠান।" : "Send a request to cash out your earnings."}</p>
+                      </div>
+                    </div>
+
+                    {/* Balance summary */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="rounded-xl bg-emerald-50 border border-emerald-100 p-3">
+                        <p className="text-[10px] font-medium text-emerald-700">{bn ? "উত্তোলনযোগ্য" : "Available"}</p>
+                        <p className="text-sm font-extrabold text-emerald-700 mt-0.5">৳{availableBalance.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-xl bg-amber-50 border border-amber-100 p-3">
+                        <p className="text-[10px] font-medium text-amber-700">{bn ? "অপেক্ষমাণ" : "Pending"}</p>
+                        <p className="text-sm font-extrabold text-amber-700 mt-0.5">৳{pendingWithdrawalTotal.toLocaleString()}</p>
+                      </div>
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3">
+                        <p className="text-[10px] font-medium text-slate-500">{bn ? "মোট বিক্রি" : "Total Revenue"}</p>
+                        <p className="text-sm font-extrabold text-slate-700 mt-0.5">৳{totalRevenue.toLocaleString()}</p>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{bn ? "পরিমাণ (৳)" : "Amount (৳)"}</label>
+                      <Input
+                        type="number"
+                        min="1"
+                        max={availableBalance}
+                        value={withdrawalForm.amount}
+                        onChange={e => setWithdrawalForm(prev => ({ ...prev, amount: e.target.value }))}
+                        placeholder={bn ? "যেমন ৫০০" : "e.g. 500"}
+                        className="h-9 rounded-xl border-slate-200 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{bn ? "পদ্ধতি" : "Method"}</label>
+                      <Select
+                        value={withdrawalForm.method}
+                        onValueChange={(v: "bank" | "mobile_banking") => setWithdrawalForm(prev => ({ ...prev, method: v }))}
+                      >
+                        <SelectTrigger className="h-9 rounded-xl border-slate-200 bg-white text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="bank">{bn ? "ব্যাংক" : "Bank Transfer"}</SelectItem>
+                          <SelectItem value="mobile_banking">{bn ? "মোবাইল ব্যাংকিং" : "Mobile Banking"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">
+                        {withdrawalForm.method === "bank" ? (bn ? "একাউন্ট নম্বর" : "Account Number") : (bn ? "মোবাইল নম্বর" : "Mobile Number")}
+                      </label>
+                      <Input
+                        value={withdrawalForm.account_number}
+                        onChange={e => setWithdrawalForm(prev => ({ ...prev, account_number: e.target.value }))}
+                        placeholder={withdrawalForm.method === "bank" ? "0000000000" : "01XXXXXXXXX"}
+                        className="h-9 rounded-xl border-slate-200 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{bn ? "একাউন্টধারীর নাম" : "Account Holder Name"}</label>
+                      <Input
+                        value={withdrawalForm.account_name}
+                        onChange={e => setWithdrawalForm(prev => ({ ...prev, account_name: e.target.value }))}
+                        placeholder={bn ? "নাম" : "Name"}
+                        className="h-9 rounded-xl border-slate-200 text-sm"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 mb-1">{bn ? "নোট (ঐচ্ছিক)" : "Note (optional)"}</label>
+                      <textarea
+                        value={withdrawalForm.notes}
+                        onChange={e => setWithdrawalForm(prev => ({ ...prev, notes: e.target.value }))}
+                        placeholder={bn ? "অতিরিক্ত তথ্য..." : "Anything admin should know..."}
+                        className="min-h-16 w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus:border-emerald-400"
+                      />
+                    </div>
+
+                    <Button
+                      onClick={submitWithdrawalRequest}
+                      disabled={withdrawalSaving || availableBalance <= 0}
+                      className="w-full h-10 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 text-white disabled:opacity-50"
+                    >
+                      {withdrawalSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                      {bn ? "উত্তোলনের অনুরোধ পাঠান" : "Send Withdrawal Request"}
+                    </Button>
+                    {availableBalance <= 0 && (
+                      <p className="text-xs text-center text-slate-400">{bn ? "উত্তোলনযোগ্য ব্যালেন্স নেই" : "No available balance to withdraw"}</p>
+                    )}
+                  </div>
+
+                  {/* ── History ── */}
+                  <div className="bg-white rounded-2xl border border-slate-100 p-5">
+                    <div className="flex items-center justify-between gap-3 mb-4">
+                      <div>
+                        <h2 className="text-sm font-bold text-slate-800">{bn ? "আমার অনুরোধসমূহ" : "My Requests"}</h2>
+                        <p className="text-xs text-slate-500">{withdrawals.length} {bn ? "টি অনুরোধ" : "submitted"}</p>
+                      </div>
+                      <Button variant="outline" size="sm" className="h-8 rounded-lg" onClick={fetchWithdrawals} disabled={withdrawalsLoading}>
+                        <RefreshCw className={`h-3.5 w-3.5 ${withdrawalsLoading ? "animate-spin" : ""}`} />
+                      </Button>
+                    </div>
+
+                    {withdrawalsLoading ? (
+                      <div className="py-14 text-center">
+                        <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-400 mb-2" />
+                        <p className="text-sm text-slate-400">{bn ? "লোড হচ্ছে..." : "Loading..."}</p>
+                      </div>
+                    ) : withdrawals.length === 0 ? (
+                      <div className="py-14 text-center">
+                        <CreditCard className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                        <p className="text-sm text-slate-400">{bn ? "এখনও কোনো অনুরোধ নেই" : "No withdrawal requests yet"}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-3">
+                        {withdrawals.map((w) => {
+                          const st = withdrawalStatusMap[w.status];
+                          return (
+                            <div key={w.id} className="rounded-xl border border-slate-100 p-3">
+                              <div className="flex items-start justify-between gap-3">
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <p className="text-sm font-extrabold text-emerald-600">৳{Number(w.amount).toLocaleString()}</p>
+                                    {st && (
+                                      <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${st.color}`}>
+                                        <span className={`w-1.5 h-1.5 rounded-full ${st.dot}`} />{st.label}
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="mt-1 text-xs text-slate-500">
+                                    {w.method === "bank" ? (bn ? "ব্যাংক" : "Bank") : (bn ? "মোবাইল ব্যাংকিং" : "Mobile Banking")} · {w.account_number}
+                                    {w.account_name ? ` · ${w.account_name}` : ""}
+                                  </p>
+                                  {w.notes && <p className="mt-1 text-xs text-slate-400 line-clamp-2">{w.notes}</p>}
+                                  {w.admin_note && (
+                                    <p className="mt-1 text-xs text-rose-600">
+                                      {bn ? "অ্যাডমিন নোট: " : "Admin note: "}{w.admin_note}
+                                    </p>
+                                  )}
+                                  <p className="mt-1 text-[11px] text-slate-400">
+                                    {new Date(w.created_at).toLocaleString(bn ? "bn-BD" : "en-BD", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* ══════════════════════════════ DASHBOARD ══════════════════════════════ */}
             {activeTab === "dashboard" && (
               <>
@@ -1580,7 +1893,7 @@ setEditingProduct(null);
                           if (s.targetTab === "orders") { setSearchOrder(""); setFilterOrderStatus("all"); }
                           setActiveTab(s.targetTab);
                         }}
-                        className="bg-white rounded-2xl p-4 shadow-sm border border-slate-100 text-left transition-all hover:border-emerald-200 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-300">
+                        className={`bg-white rounded-2xl p-4 shadow-sm border ${c.border} text-left transition-all hover:shadow-md focus:outline-none focus:ring-2 focus:ring-emerald-300`}>
                         <div className={`w-9 h-9 rounded-xl ${c.bg} flex items-center justify-center mb-2`}>
                           <s.icon className={`h-4 w-4 ${c.text}`} />
                         </div>
@@ -1638,103 +1951,105 @@ setEditingProduct(null);
                 </div>
               </>
             )}
-{activeTab === "messages" && (
-  <div className="space-y-4 mt-9">
-    <div className="flex items-center justify-between gap-3">
-      <div>
-        <h2 className="text-lg font-bold text-slate-800">
-          {bn ? "কাস্টমার মেসেজ" : "Customer Messages"}
-        </h2>
-        <p className="text-xs text-slate-500">
-          {bn ? "কাস্টমারদের পাঠানো মেসেজ এখানে দেখাবে" : "Messages from customers will appear here"}
-        </p>
-      </div>
 
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={fetchMessages}
-        disabled={messagesLoading}
-        className="h-9 rounded-xl"
-      >
-        <RefreshCw className={`h-4 w-4 ${messagesLoading ? "animate-spin" : ""}`} />
-        {bn ? "রিফ্রেশ" : "Refresh"}
-      </Button>
-    </div>
+            {activeTab === "messages" && (
+              <div className="space-y-4 mt-9">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="text-lg font-bold text-slate-800">
+                      {bn ? "কাস্টমার মেসেজ" : "Customer Messages"}
+                    </h2>
+                    <p className="text-xs text-slate-500">
+                      {bn ? "কাস্টমারদের পাঠানো মেসেজ এখানে দেখাবে" : "Messages from customers will appear here"}
+                    </p>
+                  </div>
 
-    {messagesLoading ? (
-      <div className="py-16 text-center">
-        <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-500 mb-2" />
-        <p className="text-sm text-slate-400">
-          {bn ? "মেসেজ লোড হচ্ছে..." : "Loading messages..."}
-        </p>
-      </div>
-    ) : messages.length === 0 ? (
-      <div className="py-16 text-center bg-white rounded-2xl border border-slate-100">
-        <MessageCircle className="h-10 w-10 text-slate-300 mx-auto mb-2" />
-        <p className="text-sm text-slate-400">
-          {bn ? "এখনও কোনো মেসেজ নেই" : "No messages yet"}
-        </p>
-      </div>
-    ) : (
-      <div className="space-y-3">
-        {messages.map((chat) => (
-          <button
-            key={chat.id}
-onClick={() => navigate(`/mart/vendor/messages/${chat.id}`)}
-            className="w-full text-left rounded-2xl bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-sm transition-all p-4"
-          >
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
-               {chat.product_image ? (
-  <img
-    src={getFullImageUrl(chat.product_image)}
-    alt=""
-    className="w-full h-full object-cover"
-  />
-) : (
-  <div className="w-full h-full flex items-center justify-center">
-    📦
-  </div>
-)}
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <p className="text-sm font-bold text-slate-800 truncate">
-                    {chat.user_name || `User ${chat.user_id}`}
-                  </p>
-
-                  {chat.unread_count > 0 && (
-                    <span className="min-w-5 h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">
-                      {chat.unread_count}
-                    </span>
-                  )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchMessages}
+                    disabled={messagesLoading}
+                    className="h-9 rounded-xl"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${messagesLoading ? "animate-spin" : ""}`} />
+                    {bn ? "রিফ্রেশ" : "Refresh"}
+                  </Button>
                 </div>
 
-                <p className="text-xs text-slate-500 truncate mt-0.5">
-                  {chat.product_name || `Product ${chat.product_id}`}
-                </p>
+                {messagesLoading ? (
+                  <div className="py-16 text-center">
+                    <Loader2 className="h-6 w-6 animate-spin mx-auto text-emerald-500 mb-2" />
+                    <p className="text-sm text-slate-400">
+                      {bn ? "মেসেজ লোড হচ্ছে..." : "Loading messages..."}
+                    </p>
+                  </div>
+                ) : messages.length === 0 ? (
+                  <div className="py-16 text-center bg-white rounded-2xl border border-slate-100">
+                    <MessageCircle className="h-10 w-10 text-slate-300 mx-auto mb-2" />
+                    <p className="text-sm text-slate-400">
+                      {bn ? "এখনও কোনো মেসেজ নেই" : "No messages yet"}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {messages.map((chat) => (
+                      <button
+                        key={chat.id}
+                        onClick={() => navigate(`/mart/vendor/messages/${chat.id}`)}
+                        className="w-full text-left rounded-2xl bg-white border border-slate-100 hover:border-emerald-200 hover:shadow-sm transition-all p-4"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-100 shrink-0">
+                           {chat.product_image ? (
+                              <img
+                                src={getFullImageUrl(chat.product_image)}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                📦
+                              </div>
+                            )}
+                          </div>
 
-                <p className="text-sm text-slate-600 truncate mt-1">
-                  {chat.last_message || ""}
-                </p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-sm font-bold text-slate-800 truncate">
+                                {chat.user_name || `User ${chat.user_id}`}
+                              </p>
 
-                {chat.last_message_at && (
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {new Date(chat.last_message_at).toLocaleString(
-                      bn ? "bn-BD" : "en-BD"
-                    )}
-                  </p>
+                              {chat.unread_count > 0 && (
+                                <span className="min-w-5 h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-bold flex items-center justify-center">
+                                  {chat.unread_count}
+                                </span>
+                              )}
+                            </div>
+
+                            <p className="text-xs text-slate-500 truncate mt-0.5">
+                              {chat.product_name || `Product ${chat.product_id}`}
+                            </p>
+
+                            <p className="text-sm text-slate-600 truncate mt-1">
+                              {chat.last_message || ""}
+                            </p>
+
+                            {chat.last_message_at && (
+                              <p className="text-[11px] text-slate-400 mt-1">
+                                {new Date(chat.last_message_at).toLocaleString(
+                                  bn ? "bn-BD" : "en-BD"
+                                )}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 )}
               </div>
-            </div>
-          </button>
-        ))}
-      </div>
-    )}
-  </div>
-)}
+            )}
+
             {/* ══════════════════════════════ LOGOUT ══════════════════════════════ */}
             {activeTab === "logout" && (
               <div className="mt-9 max-w-md rounded-2xl border border-red-100 bg-white p-6 shadow-sm">
@@ -1761,7 +2076,7 @@ onClick={() => navigate(`/mart/vendor/messages/${chat.id}`)}
         )}
       </PanelSidebarTabs>
 
-<AddProductForm
+      <AddProductForm
         open={showAddProduct}
         onClose={() => { setShowAddProduct(false); setEditingProduct(null); }}
         onSuccess={fetchProducts}
