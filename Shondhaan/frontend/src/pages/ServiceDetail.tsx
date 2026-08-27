@@ -725,9 +725,9 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
     className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
   />
 </div>
-                          <div className="relative">
-                            <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
-                            <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+<div className="relative">
+  <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
+  <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
                           </div>
                           {activeUserId && walletBalance > 0 && (
                             <button type="button" onClick={() => setUseWalletPayment(!useWalletPayment)} className="flex items-center gap-2 w-full rounded-[7px] border p-2 text-left cursor-pointer" style={{ borderColor: useWalletPayment ? T.primary : T.line, background: useWalletPayment ? T.primaryTint : "white" }}>

@@ -10,8 +10,8 @@ import {
 const router = express.Router();
 
 router.get("/", getAllOffers);
-router.get("/:id", getOfferById);
 router.post("/", createOffer);
+router.get("/:id", getOfferById);
 router.put("/:id", updateOffer);
 router.delete("/:id", deleteOffer);
 

@@ -37,9 +37,11 @@ const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_URL ||
   import.meta.env.VITE_API_BASE;
-const PROFILE_API_BASE = MART_API_BASE;
+const PROFILE_API_BASE =
+  import.meta.env.VITE_CENTRAL_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE;
 const SERVICE_API_BASE = (INDIVIDUAL_API_BASE_URL).replace(/\/+$/, "");
-
 interface Booking {
   id: string;
   service_title: string;
@@ -105,7 +107,6 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
-// --- Bright White & Blue Charts ---
 const AreaChart = () => (
   <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-20">
     <defs>
@@ -129,7 +130,6 @@ const BarChart = ({ data }: { data: number[] }) => (
   </div>
 );
 
-// --- Main Component ---
 const ClientDashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
@@ -168,7 +168,13 @@ const ClientDashboard = () => {
     }
   }, [user, bn]);
 
-  const [profile, setProfile] = useState({ display_name: "", phone: "", address: "", profile_image_url: "" });
+  const [profile, setProfile] = useState({ 
+    display_name: "", 
+    phone: "", 
+    address: "", 
+    profile_image_url: "",
+    shondhaan_id: "", 
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
@@ -188,11 +194,15 @@ const ClientDashboard = () => {
       id?: string | number; name?: string; mobile?: string; phone?: string; address?: string | null; user_metadata?: Record<string, unknown>;
     };
     setBookings([]); setReviews([]); setNotifications([]); setDealAdsCount(0);
+    
+    const mysqlAuth = getMySqlAuth();
+
     const fallbackProfile = {
       display_name: localUser.name || String(localUser.user_metadata?.display_name || localUser.user_metadata?.name || ""),
       phone: localUser.mobile || localUser.phone || String(localUser.user_metadata?.phone || ""),
       address: localUser.address || String(localUser.user_metadata?.address || ""),
       profile_image_url: String(localUser.user_metadata?.avatar_url || ""),
+      shondhaan_id: String(mysqlAuth?.user?.shondhaan_id || ""),
     };
     setProfile(fallbackProfile);
 
@@ -206,7 +216,6 @@ const ClientDashboard = () => {
     if (!notificationsRes.error && notificationsRes.data) setNotifications(notificationsRes.data as Notification[]);
     if (!dealAdsRes.error) setDealAdsCount(dealAdsRes.count || 0);
 
-    const mysqlAuth = getMySqlAuth();
     const userId = Number(mysqlAuth?.user?.id ?? localUser.id);
 
     if (Number.isInteger(userId) && userId > 0) {
@@ -227,19 +236,30 @@ const ClientDashboard = () => {
       setBookings([]);
     }
 
-    if (mysqlAuth?.token && Number.isInteger(userId) && userId > 0) {
+    // ✅ FIXED: Correct endpoint and field mappings
+    if (mysqlAuth?.token) {
       try {
-        const res = await fetch(`${PROFILE_API_BASE}/api/profile/${userId}`, {
+        const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
           headers: { Authorization: `Bearer ${mysqlAuth.token}` },
         });
         const data = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(data.message || "Failed to load profile");
+        
         setProfile({
-          display_name: data.profile?.display_name || fallbackProfile.display_name,
-          phone: data.profile?.phone || fallbackProfile.phone,
-          address: data.profile?.address || fallbackProfile.address,
-          profile_image_url: data.profile?.profile_image_url || fallbackProfile.profile_image_url,
+          display_name: data.name || fallbackProfile.display_name,
+          phone: data.phone || data.mobile || fallbackProfile.phone,
+          address: data.address || fallbackProfile.address,
+          profile_image_url: data.avatar_url || data.profile_image || fallbackProfile.profile_image_url,
+          shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
         });
+
+        // ✅ Update mysqlAuth with latest shondhaan_id if missing
+        if (data.shondhaan_id && !mysqlAuth.user?.shondhaan_id) {
+          saveMySqlAuth({
+            ...mysqlAuth,
+            user: { ...mysqlAuth.user, shondhaan_id: data.shondhaan_id },
+          });
+        }
       } catch (err) {
         console.error("fetchProfile error:", err);
       }
@@ -281,6 +301,7 @@ const ClientDashboard = () => {
     return () => { supabase.removeChannel(channel); };
   }, [user]);
 
+  // ✅ FIXED: handleSaveProfile with correct endpoint and field mappings
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
@@ -291,14 +312,13 @@ const ClientDashboard = () => {
     setSaving(true);
     try {
       const mysqlAuth = getMySqlAuth();
-      const userId = Number((user as unknown as { id?: string | number }).id);
-      if (!mysqlAuth?.token || !Number.isInteger(userId) || userId <= 0) throw new Error("MySQL login is required to save profile");
+      if (!mysqlAuth?.token) throw new Error("MySQL login is required to save profile");
 
-      const res = await fetch(`${PROFILE_API_BASE}/api/users/profile`, {
+      const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${mysqlAuth.token}`, "Content-Type": "application/json" },
         body: JSON.stringify({
-          display_name: profile.display_name.trim(),
+          name: profile.display_name.trim(),
           phone: profile.phone.trim() || null,
           address: profile.address.trim() || null,
           profile_image_url: profile.profile_image_url || null,
@@ -308,14 +328,22 @@ const ClientDashboard = () => {
       if (!res.ok) throw new Error(data.message || "Update failed");
 
       setProfile({
-        display_name: data.profile?.display_name || profile.display_name.trim(),
-        phone: data.profile?.phone || profile.phone.trim(),
-        address: data.profile?.address || profile.address.trim(),
-        profile_image_url: data.profile?.profile_image_url || profile.profile_image_url,
+        display_name: data.name || profile.display_name.trim(),
+        phone: data.phone || data.mobile || profile.phone.trim(),
+        address: data.address || profile.address.trim(),
+        profile_image_url: data.avatar_url || data.profile_image || profile.profile_image_url,
+        shondhaan_id: data.shondhaan_id || profile.shondhaan_id,
       });
+      
       saveMySqlAuth({
         ...mysqlAuth,
-        user: { ...mysqlAuth.user, name: data.profile?.display_name || profile.display_name.trim(), mobile: data.profile?.phone || mysqlAuth.user.mobile, address: data.profile?.address || null },
+        user: { 
+          ...mysqlAuth.user, 
+          name: data.name || profile.display_name.trim(), 
+          mobile: data.phone || data.mobile || mysqlAuth.user.mobile, 
+          address: data.address || null,
+          shondhaan_id: data.shondhaan_id || mysqlAuth.user.shondhaan_id,
+        },
       });
       toast.success(bn ? "প্রোফাইল আপডেট হয়েছে" : "Profile updated");
     } catch (err) {
@@ -325,6 +353,7 @@ const ClientDashboard = () => {
     }
   };
 
+  // ✅ FIXED: handleProfileImageChange with correct endpoint
   const handleProfileImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -333,13 +362,12 @@ const ClientDashboard = () => {
     if (file.size > 2 * 1024 * 1024) { toast.error(bn ? "ফাইল সাইজ ২MB এর বেশি হতে পারবে না" : "File size must be under 2MB"); return; }
 
     const mysqlAuth = getMySqlAuth();
-    const userId = Number((user as unknown as { id?: string | number }).id);
-    if (!mysqlAuth?.token || !Number.isInteger(userId) || userId <= 0) { toast.error(bn ? "ছবি সেভ করতে লগইন করুন" : "Login is required to save profile photo"); return; }
+    if (!mysqlAuth?.token) { toast.error(bn ? "ছবি সেভ করতে লগইন করুন" : "Login is required to save profile photo"); return; }
 
     setUploadingProfileImage(true);
     try {
       const image = await fileToDataUrl(file);
-      const res = await fetch(`${PROFILE_API_BASE}/api/profile/${userId}/image`, {
+      const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile/image`, {
         method: "POST",
         headers: { Authorization: `Bearer ${mysqlAuth.token}`, "Content-Type": "application/json" },
         body: JSON.stringify({ image }),
@@ -347,7 +375,7 @@ const ClientDashboard = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Upload failed");
 
-      const nextUrl = data.profile_image_url || "";
+      const nextUrl = data.avatar_url || data.profile_image_url || data.profile_image || "";
       setProfile(prev => ({ ...prev, profile_image_url: nextUrl }));
       toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile photo updated");
     } catch (err) {
@@ -394,7 +422,6 @@ const ClientDashboard = () => {
 
   return (
     <>
-      {/* <Navbar /> */}
       <PanelSidebarTabs
         items={[
           { value: "dashboard", label: bn ? "ড্যাশবোর্ড" : "Dashboard", icon: <Home className="h-5 w-5" />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
@@ -432,7 +459,6 @@ const ClientDashboard = () => {
                   transition={{ duration: 0.5 }}
                   className="relative overflow-hidden rounded-3xl shadow-xl border border-blue-100 bg-white"
                 >
-                  {/* Bright Blue gradient header */}
                   <div className="h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   </div>
@@ -479,7 +505,7 @@ const ClientDashboard = () => {
                     </div>
 
                     <div>
-                      <div className="flex gap-4">
+                      <div className="flex flex-wrap gap-4 items-center">
                         <h1 className="text-xl font-bold text-slate-900">
                           {profile.display_name || (bn ? "ব্যবহারকারী" : "User")}
                         </h1>
@@ -487,8 +513,8 @@ const ClientDashboard = () => {
                           <span className="font-bold my-auto">
                             {bn ? "সন্ধান আইডিঃ" : "Shondhaan ID:"}
                           </span>
-                          <span className="text-slate-800 my-auto">
-                            {profile.shondhaan_id || (bn ? "SD-00012" : "User")}
+                          <span className="text-slate-800 font-mono font-semibold my-auto">
+                            {profile.shondhaan_id || "—"}
                           </span>
                         </div>
                       </div>
@@ -507,7 +533,6 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </motion.div>
-
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
@@ -540,7 +565,6 @@ const ClientDashboard = () => {
 
                 {/* Premium Graph Row */}
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Area Chart Card */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -567,7 +591,6 @@ const ClientDashboard = () => {
                     <AreaChart />
                   </motion.div>
 
-                  {/* Stats Card */}
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -600,7 +623,6 @@ const ClientDashboard = () => {
                     </div>
                   </motion.div>
                 </div>
-
 
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -695,7 +717,6 @@ const ClientDashboard = () => {
             {activeTab === "deal-messages" && <DealSection activeTab="messages" />}
             {activeTab === "payments" && <PaymentHistoryTab bookings={bookings} martOrders={martOrders} />}
 
-            {/* === REFERRAL TAB === */}
             {activeTab === "referral" && (
               <ReferralTab onNavigateToPayments={() => setTab("payments")} />
             )}
@@ -797,6 +818,7 @@ const ClientDashboard = () => {
                       phone: updated.phone,
                       address: updated.address,
                       profile_image_url: updated.profile_image_url || "",
+                      shondhaan_id: updated.shondhaan_id || profile.shondhaan_id,
                     });
                   }}
                 />

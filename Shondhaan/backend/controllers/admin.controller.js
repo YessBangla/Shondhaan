@@ -37,8 +37,9 @@ export const createUser = async (req, res) => {
       [name, mobile, email, passwordHash, type],
     );
 
+    // ✅ Added shondhaan_id to SELECT
     const [rows] = await pool.execute(
-      "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE email = ? LIMIT 1",
+      "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE email = ? LIMIT 1",
       [email],
     );
     console.log("User created successfully:", rows[0]);
@@ -49,32 +50,20 @@ export const createUser = async (req, res) => {
   }
 };
 
-// export const listUsers = async (req, res) => {
-//   try {
-//     const [rows] = await pool.execute(
-//       "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users ORDER BY created_at DESC",
-//     );
-//     res.json({ users: rows.map(safeAdminUser) });
-//   } catch (error) {
-//     console.error("List users error:", error);
-//     res.status(500).json({ message: "Could not load users" });
-//   }
-// };
-
 export const listUsers = async (req, res) => {
   try {
     // 1. Get the search term from the URL query parameters
     const search = req.query.search;
     
-    // 2. Base query
-    let query = "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users";
+    // 2. Base query - ✅ Added shondhaan_id to SELECT
+    let query = "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users";
     let params = [];
 
     // 3. If a search term exists, add a WHERE clause to filter results
     if (search) {
-      query += " WHERE name LIKE ? OR mobile LIKE ? OR email LIKE ?";
-      const searchTerm = `%${search}%`; // Add wildcards for partial matching
-      params.push(searchTerm, searchTerm, searchTerm);
+      query += " WHERE name LIKE ? OR mobile LIKE ? OR email LIKE ? OR shondhaan_id LIKE ?";
+      const searchTerm = `%${search}%`;
+      params.push(searchTerm, searchTerm, searchTerm, searchTerm);  // ✅ Added shondhaan_id search
     }
 
     // 4. Add ordering
@@ -123,8 +112,9 @@ export const updateUserType = async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // ✅ Added shondhaan_id to SELECT
     const [rows] = await pool.execute(
-      "SELECT id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+      "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
       [id],
     );
     res.json({ user: safeAdminUser(rows[0]) });
