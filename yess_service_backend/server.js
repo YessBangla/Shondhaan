@@ -20,7 +20,7 @@ import categoryRoutes from "./routes/category.route.js";
 import bookingRoutes from "./routes/booking.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import heroBannerRoutes from "./routes/heroBanner.route.js";
-import homepageSectionRoutes from "./routes/homePageSection.route.js";
+import homepageSectionRoutes from "./routes/homepageSection.route.js";
 import uploadRoutes from "./routes/upload.route.js";
 import serviceChatRoutes from "./routes/serviceChat.route.js";
 import prescriptionRouter from "./routes/prescription.route.js";
