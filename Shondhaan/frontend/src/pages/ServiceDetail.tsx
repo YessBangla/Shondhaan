@@ -471,7 +471,6 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       <div className="app-container pt-3">
         {/* Eyebrow */}
 
-
         {/* Breadcrumb */}
         <Breadcrumb>
           <BreadcrumbList className="text-[10px]">
@@ -786,7 +785,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   <img src={item.image} alt={item.title} className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105" loading="lazy" />
                 </div>
                 <div className="p-1.5">
-                  <p className="text-[8px] font-semibold line-clamp-1" style={{ color: T.ink }}>{bn ? item.title : item.titleEn || item.title}</p>
+                  <p className="text-[12px] font-semibold line-clamp-1" style={{ color: T.ink }}>{bn ? item.title : item.titleEn || item.title}</p>
                   <div className="flex items-center gap-0.5 mt-0.5">
                     <Star className="h-2 w-2 fill-current" style={{ color: T.brass }} />
                     <span className="text-[7px]" style={{ color: T.muted }}>{item.rating}</span>

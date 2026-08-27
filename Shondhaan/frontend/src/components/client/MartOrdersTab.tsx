@@ -562,7 +562,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                                 {bn ? "Order items are not loaded yet" : "Order items are not loaded yet"}
                               </div>
                             ) : orderItems.map((item, i) => (
-                              <div key={i} className="flex items-center gap-3">
+                              <div key={i} className="flex items-center gap-3 border border-border/50 rounded-lg p-2">
                                 <div className="h-14 w-14 rounded-lg bg-muted overflow-hidden shrink-0 border border-border/30">
                                   {item.product_image
                                     ? <img src={item.product_image} alt="" className="w-full h-full object-cover" />
