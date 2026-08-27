@@ -10,7 +10,7 @@ import { emitWithAck, getMartSocket } from "@/lib/martSocket";
 const API =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  "";
 
 // ─── Types ────────────────────────────────────────────────────
 interface Props {

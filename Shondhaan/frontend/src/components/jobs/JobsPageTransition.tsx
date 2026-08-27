@@ -8,7 +8,7 @@ interface JobsPageTransitionProps {
 }
 
 /**
- * Subtle, branded page transition for all Yess Jobs routes.
+ * Subtle, branded page transition for all Shondhaan Jobs routes.
  * - Fades + slides content up on enter
  * - Re-keys on pathname so navigation between jobs pages re-triggers the animation
  * - Respects prefers-reduced-motion via Framer Motion defaults

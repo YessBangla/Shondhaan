@@ -3,8 +3,8 @@ const pool = require("../db");
 
 const router = express.Router();
 const FREE_PRODUCT_LIMIT = 5;
-const publicBackendUrl = () => String(process.env.BACKEND_URL || "http://localhost:8081").replace(/\/$/, "");
-const publicFrontendUrl = () => String(process.env.FRONTEND_URL || "http://localhost:8080").replace(/\/$/, "");
+const publicBackendUrl = () => String(process.env.BACKEND_URL || "").replace(/\/$/, "");
+const publicFrontendUrl = () => String(process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/$/, "");
 const surjoPayBaseUrl = () => String(process.env.SURJOPAY_BASE_URL || "https://sandbox.shurjopayment.com/api").replace(/\/$/, "");
 
 function clientIp(req) {
@@ -12,7 +12,7 @@ function clientIp(req) {
 }
 
 const money = (value) => Math.round(Number(value || 0) * 100) / 100;
-const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || process.env.CENTRAL_API_BASE_URL || "").replace(/\/$/, "");
 
 async function debitMainWallet({ userId, amount, referenceId, description }) {
   const response = await fetch(`${walletApiBaseUrl()}/api/wallet/debit`, {

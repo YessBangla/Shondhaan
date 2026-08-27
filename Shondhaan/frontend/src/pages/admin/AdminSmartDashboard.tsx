@@ -88,7 +88,7 @@ type DashboardData = {
 
 const API_BASE =
   import.meta.env.VITE_SERVICE_API_URL ||
-  "http://localhost:3000";
+  import.meta.env.VITE_SERVICE_API_BASE_URL || "";
 
 const DASHBOARD_API =
   `${API_BASE}/api/service-admin/dashboard`;

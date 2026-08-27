@@ -2,7 +2,7 @@ import crypto from "crypto";
 import { pool } from "../db/pool.js";
 
 const FRONTEND_URL =
-  (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "http://localhost:8080").replace(/\/+$/, "");
+  (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/+$/, "");
 
 const money = (value) => Math.round(Number(value || 0) * 100) / 100;
 

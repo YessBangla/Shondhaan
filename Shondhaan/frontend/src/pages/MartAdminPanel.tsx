@@ -71,7 +71,7 @@ const MartAdminPanel = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const bn = language === "bn";
-  const API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "http://localhost:8081";
+  const API_BASE_URL = import.meta.env.VITE_MART_API_BASE_URL || import.meta.env.VITE_API_BASE || "";
   // FIX: getMySqlAuth() may return an object whose `.user` is undefined —
   // `.user.type` alone would throw and crash the whole page.
   const mysqlRole = getMySqlAuth()?.user?.type;

@@ -30,7 +30,7 @@ type CmsHomepageSection = {
 };
 
 const API_BASE_URL = (
-  INDIVIDUAL_API_BASE_URL || "http://localhost:3000"
+  INDIVIDUAL_API_BASE_URL || ""
 ).replace(/\/+$/, "");
 
 const empty: Partial<CmsHomepageSection> = {

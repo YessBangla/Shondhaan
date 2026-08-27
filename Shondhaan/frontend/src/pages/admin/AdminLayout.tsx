@@ -34,7 +34,7 @@ import {
 } from "@/contexts/BackendPageActionsContext";
 
 // [WALLET UPDATE] Central Wallet API Base URL
-const WALLET_API_BASE_URL = "http://localhost:5000";
+const WALLET_API_BASE_URL = import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "";
 
 type NavItem = { to: string; label: string; icon: React.ReactNode };
 type NavGroup = { label: string; items: NavItem[]; accent: string; dot: string };

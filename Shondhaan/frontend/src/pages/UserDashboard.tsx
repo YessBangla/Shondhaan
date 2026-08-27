@@ -57,8 +57,7 @@ interface UserStats {
 }
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  "https://backend-central.shondhaan.com";
+  import.meta.env.VITE_API_BASE || import.meta.env.VITE_CENTRAL_API_BASE_URL || "";
 
 const UserDashboard = () => {
   const navigate = useNavigate();

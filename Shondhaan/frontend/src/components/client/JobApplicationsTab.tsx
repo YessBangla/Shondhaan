@@ -3,7 +3,7 @@ import { Loader2, Briefcase, Wallet, CheckCircle2, XCircle, Hourglass, Undo2, Ca
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { toast } from "sonner";
 
-const JOB_API_BASE = import.meta.env.VITE_JOB_API_BASE || "http://localhost:5050";
+const JOB_API_BASE = import.meta.env.VITE_JOB_API_BASE || import.meta.env.VITE_YESSJOB_API_URL || "";
 
 interface JobApplication {
   id: number;

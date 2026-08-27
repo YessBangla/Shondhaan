@@ -793,7 +793,7 @@ const JobPostForm = () => {
 
       <div className="mx-auto max-w-7xl px-1 mt-6 py-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="mb-4 -ml-2 text-muted-foreground">
-          <ArrowLeft className="h-4 w-4 mr-1" /> {bn ? "Yess Jobs" : "Yess Jobs"}
+          <ArrowLeft className="h-4 w-4 mr-1" /> {bn ? "সন্ধান জব" : "Shondhaan Jobs"}
         </Button>
 
         <div className="flex items-center gap-3 mb-4">
@@ -801,7 +801,7 @@ const JobPostForm = () => {
             <Briefcase className="h-6 w-6 text-primary" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">{bn ? "চাকরির বিজ্ঞাপন দিন" : "Post a Job on Yess Jobs"}</h1>
+            <h1 className="text-xl font-bold">{bn ? "চাকরির বিজ্ঞাপন দিন" : "Post a Job on Shondhaan Jobs"}</h1>
             <p className="text-xs text-muted-foreground">{bn ? "অ্যাডমিন অনুমোদনের পর প্রকাশিত হবে • বিনামূল্যে!" : "Will be published after admin approval • Free!"}</p>
           </div>
         </div>

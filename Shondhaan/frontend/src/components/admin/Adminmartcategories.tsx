@@ -5,7 +5,7 @@ import { Plus, Pencil, Trash2, X, ImageIcon, Loader2, Check } from "lucide-react
 const API_BASE =
   (import.meta as any).env?.VITE_MART_API_BASE_URL ||
   (import.meta as any).env?.VITE_API_BASE ||
-  "http://localhost:8081";
+  "";
 
 interface Category {
   id: number;

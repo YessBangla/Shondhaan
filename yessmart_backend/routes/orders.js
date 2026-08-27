@@ -63,7 +63,7 @@ const getSslCommerzConfig = () => {
   const storeId = process.env.SSLCOMMERZ_STORE_ID || (!isLive ? "testbox" : "");
   const storePassword = process.env.SSLCOMMERZ_STORE_PASSWORD || process.env.SSLCOMMERZ_STORE_PASSWD || (!isLive ? "qwerty" : "");
   const backendUrl = getBackendBaseUrl();
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:8080";
+  const frontendUrl = process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "";
 
   return {
     storeId,
@@ -136,7 +136,7 @@ const safeJsonStringify = (value) => {
 // The customer wallet is owned by the main Shondhaan backend, not the Mart
 // database.  Keep that boundary explicit and use the wallet ledger's
 // reference_id as the idempotency key.
-const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || "http://localhost:5000").replace(/\/$/, "");
+const walletApiBaseUrl = () => String(process.env.WALLET_API_BASE_URL || process.env.CENTRAL_API_BASE_URL || "").replace(/\/$/, "");
 
 const getMartRewardCoins = async (amount) => {
   const [rows] = await pool.query(

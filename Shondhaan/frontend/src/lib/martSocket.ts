@@ -4,7 +4,7 @@ export const MART_SOCKET_URL =
   import.meta.env.VITE_MART_SOCKET_URL ||
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
-  "http://localhost:8081";
+  "";
 
 let martSocket: Socket | null = null;
 

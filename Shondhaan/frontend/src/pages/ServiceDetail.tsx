@@ -134,8 +134,8 @@ type ServiceReview = {
 };
 
 /* ─── API helpers ─── */
-const VITE_SERVICE_API_BASE_URL = (INDIVIDUAL_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
-const VITE_API_BASE_URL = "http://localhost:5000";
+const VITE_SERVICE_API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
+const VITE_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CENTRAL_API_BASE_URL || "").replace(/\/+$/, "");
 
 const getServiceApiHeaders = () => {
   const auth = getMySqlAuth();
@@ -464,7 +464,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
   const jobCode = useMemo(() => { const h = service.slug.slice(0, 6).toUpperCase().replace(/[^A-Z0-9]/g, "X").padEnd(6, "X"); return `SVC-${h}-BD`; }, [service.slug]);
 
   return (
-    <div className="min-h-screen pb-20 md:pb-0" style={{ background: T.paper }}>
+    <div className="min-h-screen pb-20 pt-10 md:pt-2 md:pb-0" style={{ background: T.paper }}>
       <Navbar />
       <div className="pt-[14px] md:pt-[22px]" />
 

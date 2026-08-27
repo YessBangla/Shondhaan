@@ -16,7 +16,7 @@ const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
   import.meta.env.VITE_API_BASE ||
   import.meta.env.VITE_API_URL ||
-  "http://localhost:8081";
+  "";
 
 // Resolves a numeric product id to its real slug so the product URL can show
 // the readable product name (e.g. /mart/product/black-dress) instead of the
