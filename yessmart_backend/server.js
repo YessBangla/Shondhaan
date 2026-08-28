@@ -101,21 +101,29 @@ const io = new Server(server, {
 app.set("io", io);
 registerMartMessageSocket(io);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsMiddleware = cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.log("CORS blocked origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
+    console.log("CORS blocked origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+});
+
+// SSLCommerz callbacks are gateway redirects/server callbacks, not browser
+// API calls. They must reach the payment handler even when the gateway sends
+// an Origin that is not one of our frontend origins.
+app.use((req, res, next) => {
+  if (/^\/api\/orders\/sslcommerz\/(success|fail|cancel|ipn)$/.test(req.path)) {
+    return next();
+  }
+  return corsMiddleware(req, res, next);
+});
 // Needed for base64 JSON uploads (frontend sends { image: "data:image/...;base64,..." })
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
