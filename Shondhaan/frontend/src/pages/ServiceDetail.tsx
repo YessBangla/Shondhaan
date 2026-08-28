@@ -530,7 +530,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                     <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
                     <div className="flex flex-wrap gap-1.5">
                       {features.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[10.5px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
+                        <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
                           <CheckCircle2 className="h-2.5 w-2.5" style={{ color: T.primary }} /> {f}
                         </span>
                       ))}
@@ -580,8 +580,8 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                           <b.icon className="w-3 h-3" style={{ color: T.brassDark }} />
                         </div>
                         <div className="min-w-0">
-                          <h5 className="text-[10.5px] font-semibold leading-tight" style={{ color: T.ink }}>{b.title}</h5>
-                          <p className="text-[9px] mt-0.5 leading-[1.4]" style={{ color: T.muted }}>{b.desc}</p>
+                          <h5 className="text-[12px] font-semibold leading-tight" style={{ color: T.ink }}>{b.title}</h5>
+                          <p className="text-[10px] mt-0.5 leading-[1.4]" style={{ color: T.muted }}>{b.desc}</p>
                         </div>
                       </div>
                     ))}
