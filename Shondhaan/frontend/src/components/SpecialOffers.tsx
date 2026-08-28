@@ -211,7 +211,7 @@ const SpecialOffers = () => {
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-50px" }}
       transition={{ duration: 0.6 }}
-      className="py-8 md:py-12 px-4 md:px-0 relative overflow-hidden"
+      className="py-8 md:py-12 relative overflow-hidden"
     >
       {/* Animated background elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
@@ -233,7 +233,7 @@ const SpecialOffers = () => {
         initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-      >
+        >
         <div className="flex items-center gap-3">
           <motion.div 
             className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/40"
@@ -256,7 +256,7 @@ const SpecialOffers = () => {
           initial={{ opacity: 0, scale: 0.8 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-        >
+          >
           <Clock className="h-4 w-4 text-orange-600 shrink-0" />
           <div className="flex items-center gap-1.5">
             {days > 0 && (

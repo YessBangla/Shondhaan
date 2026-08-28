@@ -206,7 +206,6 @@ const PanelSidebarTabs = ({
       return prev;
     });
     setActiveTabState(value);
-    window.scrollTo({ top: 0, behavior: "smooth" });
     setRecent((prev) => {
       const next = prev.filter((v) => v !== value);
       next.unshift(value);
