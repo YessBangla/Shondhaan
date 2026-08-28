@@ -5,6 +5,7 @@ import { requireLoggedIn, requireServiceAdmin } from "../middleware/auth.middlew
 const router = Router();
 
 router.post("/generate", requireLoggedIn, referralController.generate);
+router.get("/config", requireLoggedIn, referralController.getSettings);
 router.get("/validate/:code", referralController.validate);
 router.post("/apply", requireLoggedIn, referralController.apply);
 router.post("/qualify/:referralId", requireLoggedIn, referralController.qualify);

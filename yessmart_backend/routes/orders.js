@@ -63,7 +63,20 @@ const getSslCommerzConfig = () => {
   const storeId = process.env.SSLCOMMERZ_STORE_ID || (!isLive ? "testbox" : "");
   const storePassword = process.env.SSLCOMMERZ_STORE_PASSWORD || process.env.SSLCOMMERZ_STORE_PASSWD || (!isLive ? "qwerty" : "");
   const backendUrl = getBackendBaseUrl();
-  const frontendUrl = process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "";
+  const frontendCandidates = String(
+    process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || ""
+  )
+    .split(",")
+    .map((url) => url.trim().replace(/\/$/, ""))
+    .filter(Boolean);
+  const isLocalBackend = /localhost|127\.0\.0\.1/i.test(backendUrl);
+  const frontendUrl = (
+    (isLocalBackend
+      ? frontendCandidates.find((url) => /localhost|127\.0\.0\.1/i.test(url))
+      : frontendCandidates[0]) ||
+    frontendCandidates[0] ||
+    ""
+  ).replace(/\/$/, "");
 
   return {
     storeId,

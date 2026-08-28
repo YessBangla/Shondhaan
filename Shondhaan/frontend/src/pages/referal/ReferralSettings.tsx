@@ -38,6 +38,21 @@ const defaultSettings = {
   min_order_amount: null,
 };
 
+const normalizeSettings = (value: typeof defaultSettings) => ({
+  is_enabled: Number(value.is_enabled) === 1 ? 1 : 0,
+  max_uses: Number(value.max_uses || 50),
+  code_valid_days: Number(value.code_valid_days || 90),
+  qualification_window_days: Number(value.qualification_window_days || 30),
+  reward_valid_days: Number(value.reward_valid_days || 60),
+  referrer_reward_currency: value.referrer_reward_currency === "COIN" ? "COIN" : "CASH",
+  referrer_reward_amount: Number(value.referrer_reward_amount || 0),
+  referred_reward_currency: value.referred_reward_currency === "COIN" ? "COIN" : "CASH",
+  referred_reward_amount: Number(value.referred_reward_amount || 0),
+  min_order_amount: value.min_order_amount === null || value.min_order_amount === ""
+    ? null
+    : Number(value.min_order_amount),
+});
+
 export default function ReferralSettings() {
   const [settings, setSettings] = useState(defaultSettings);
   const [loading, setLoading] = useState(true);
@@ -48,7 +63,7 @@ export default function ReferralSettings() {
     try {
       const res = await fetch(`${API}/settings`, { headers: authHeaders() });
       const json = await res.json();
-      if (json.data) setSettings(json.data);
+      if (json.data) setSettings(normalizeSettings(json.data));
     } catch {
       toast.error("সেটিংস লোড করতে সমস্যা");
     } finally {
@@ -66,12 +81,13 @@ export default function ReferralSettings() {
       const res = await fetch(`${API}/settings`, {
         method: "PUT",
         headers: authHeaders(),
-        body: JSON.stringify(settings),
+        body: JSON.stringify(normalizeSettings(settings)),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error);
+      if (!res.ok || json.success === false) throw new Error(json.error || json.message || "সেটিংস সেভ করা যায়নি");
       toast.success("সেটিংস সেভ হয়েছে!");
-      fetchSettings();
+      if (json.data) setSettings(normalizeSettings(json.data));
+      else await fetchSettings();
     } catch (err: any) {
       toast.error(err.message || "সেভ করতে সমস্যা");
     } finally {
@@ -113,7 +129,7 @@ export default function ReferralSettings() {
             </p>
           </div>
           <Switch
-            checked={!!settings.is_enabled}
+            checked={Number(settings.is_enabled) === 1}
             onCheckedChange={(v) => update("is_enabled", v ? 1 : 0)}
           />
         </div>

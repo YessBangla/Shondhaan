@@ -453,7 +453,8 @@ const MartCheckout = () => {
       toast.success(bn ? "অর্ডার সফল!" : "Order placed!");
     } catch (err: any) {
       console.error(err);
-      toast.error(bn ? "অর্ডার ব্যর্থ" : "Order failed");
+      const failureMessage = err instanceof Error ? err.message : "";
+      toast.error(failureMessage || (bn ? "অর্ডার ব্যর্থ" : "Order failed"));
     } finally { setSubmitting(false); }
   };
 
@@ -516,7 +517,7 @@ const MartCheckout = () => {
           <p className="text-center text-xs text-muted-foreground">Order #{paymentDialog.orderId}</p>
         )}
         {paymentDialog.gatewayPayload && (
-          <div className="max-h-56 overflow-auto rounded-md border bg-muted/40 p-3 text-left">
+          <div className="hidden max-h-56 overflow-auto rounded-md border bg-muted/40 p-3 text-left">
             <p className="mb-2 text-xs font-semibold text-muted-foreground">SSLCommerz return payload</p>
             <pre className="whitespace-pre-wrap break-words text-xs">
               {JSON.stringify(paymentDialog.gatewayPayload, null, 2)}

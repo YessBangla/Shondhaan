@@ -26,21 +26,22 @@ function normalizeProductId(product: unknown) {
 }
 
 export function MartWishlistProvider({ children }: { children: ReactNode }) {
-  const { loading: authLoading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<MartProduct[]>([]);
 
   const refreshFromBackend = useCallback(async () => {
     if (authLoading) return;
 
     const token = getMySqlAuth()?.token;
-    if (!token) {
+    if (!token && !user) {
       setItems([]);
       return;
     }
 
     try {
       const res = await fetch(`${API_BASE}/api/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` },
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       const json = await res.json().catch(() => ({}));
 
@@ -53,7 +54,7 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error("Wishlist refresh error:", error);
     }
-  }, [authLoading]);
+  }, [authLoading, user]);
 
   useEffect(() => {
     refreshFromBackend();
@@ -78,7 +79,7 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
       if (authLoading) return;
 
       const token = getMySqlAuth()?.token;
-      if (!token) {
+      if (!token && !user) {
         toast.info("Please login to use wishlist");
         return;
       }
@@ -99,7 +100,8 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
       try {
         const res = await fetch(`${API_BASE}/api/wishlist/${encodeURIComponent(productId)}`, {
           method: exists ? "DELETE" : "POST",
-          headers: { Authorization: `Bearer ${token}` },
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
         const json = await res.json().catch(() => ({}));
 
@@ -114,7 +116,7 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
         toast.error(message);
       }
     },
-    [items, isInWishlist, authLoading]
+    [items, isInWishlist, authLoading, user]
   );
 
   const clearWishlist = useCallback(() => setItems([]), []);
