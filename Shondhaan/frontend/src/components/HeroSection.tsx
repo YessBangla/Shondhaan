@@ -248,12 +248,12 @@ function SearchDropdown({
                       </div>
                     )}
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-medium text-amber-50">{s.title}</p>
-                      <p className="text-[10px] text-amber-200/50 mt-0.5">
+                      <p className="truncate text-[14px] font-semibold text-foreground">{s.title}</p>
+                      <p className="text-[12px] text-amber-foreground mt-0.5">
                         ৳{s.price} {bn ? "থেকে" : "from"}
                       </p>
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-amber-700/40" />
+                    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-foreground" />
                   </button>
                 </li>
               ))}
