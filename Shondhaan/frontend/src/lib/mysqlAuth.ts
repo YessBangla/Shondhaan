@@ -267,12 +267,17 @@ export async function loginWithMySql(
 
 export async function listMySqlUsers(){
 
+ const auth = getMySqlAuth();
+
  const response =
  await fetch(
  `${API_BASE_URL}/api/admin/users`,
  {
    method:"GET",
    credentials:"include",
+   headers: auth?.token
+    ? { Authorization: `Bearer ${auth.token}` }
+    : undefined,
  }
  );
 
@@ -316,6 +321,7 @@ export async function createMySqlUser(payload:{
  type:RoleKey;
 }){
 
+ const auth = getMySqlAuth();
 
  const response =
  await fetch(
@@ -326,7 +332,8 @@ export async function createMySqlUser(payload:{
   credentials:"include",
 
   headers:{
-   "Content-Type":"application/json"
+    "Content-Type":"application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
   },
 
   body:JSON.stringify(payload)
@@ -357,6 +364,7 @@ export async function updateMySqlUserType(
  type:RoleKey
 ){
 
+ const auth = getMySqlAuth();
 
  const response =
  await fetch(
@@ -367,7 +375,8 @@ export async function updateMySqlUserType(
   credentials:"include",
 
   headers:{
-   "Content-Type":"application/json"
+    "Content-Type":"application/json",
+    ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
   },
 
   body:JSON.stringify({type})
