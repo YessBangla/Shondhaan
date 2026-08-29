@@ -7,7 +7,8 @@ import {
   FileSearch, Wallet, LogOut, Settings, Store,
   Home, Camera, MessageSquare, Mail,
   TrendingUp, BarChart3, PieChart, ArrowUpRight,
-  Gift, Share2, Copy, Facebook, Youtube, Twitter, MessageCircle, X
+  Gift, Share2, Copy, Facebook, Youtube, Twitter, MessageCircle, X,
+  Settings2
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -138,6 +139,7 @@ const ClientDashboard = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { count: martWishlistCount } = useMartWishlist();
+  const { stats: referralStats } = useReferral();
   const bn = language === "bn";
 
   const [bookings, setBookings] = useState<Booking[]>([]);
@@ -182,12 +184,27 @@ const ClientDashboard = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingProfileImage, setUploadingProfileImage] = useState(false);
   const [referralSettings, setReferralSettings] = useState<any>(null);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
   const [referralSharing, setReferralSharing] = useState(false);
   const [referralPopupOpen, setReferralPopupOpen] = useState(false);
   const [referralShareLink, setReferralShareLink] = useState<string | null>(null);
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
   const [rebookTarget, setRebookTarget] = useState<Booking | null>(null);
   const [chatTarget, setChatTarget] = useState<Booking | null>(null);
+
+  const fetchReferralCode = useCallback(async (token: string) => {
+    try {
+      const res = await fetch(`${PROFILE_API_BASE}/api/referral/stats`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || "Failed to load referral code");
+      setReferralCode(data.code?.code || null);
+    } catch (err) {
+      console.error("fetchReferralCode error:", err);
+      setReferralCode(null);
+    }
+  }, []);
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/auth", { replace: true });
@@ -253,6 +270,7 @@ const ClientDashboard = () => {
 
         const settingsData = await fetchReferralSettings(mysqlAuth.token);
         setReferralSettings(settingsData);
+        await fetchReferralCode(mysqlAuth.token);
         
         setProfile({
           display_name: data.name || fallbackProfile.display_name,
@@ -275,7 +293,7 @@ const ClientDashboard = () => {
       }
     }
     setLoading(false);
-  }, [user]);
+  }, [user, fetchReferralCode]);
 
   useEffect(() => { fetchAll(); fetchMartOrders(); }, [fetchAll, fetchMartOrders]);
 
@@ -417,21 +435,35 @@ const ClientDashboard = () => {
   const generateCode = () => {
     const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let code = "";
-
     for (let i = 0; i < 6; i++) {
         code += characters.charAt(
             Math.floor(Math.random() * characters.length)
         );
     }
-
     return code;
-};
+  };
 
-  const handleReferralShare = async () => {
+  const handleReferralGenerate = async () => {
     setReferralSharing(true);
     try {
       const code = generateCode();
       const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${code}`;
+      toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
+
+      if (!link) return;
+      setReferralShareLink(link);
+      setReferralPopupOpen(true);
+    } catch {
+      toast.error(bn ? "রেফারেল লিংক তৈরি করা যায়নি" : "Could not prepare referral link");
+    } finally {
+      setReferralSharing(false);
+    }
+  };
+  const handleReferralShare = async () => {
+    setReferralSharing(true);
+    try {
+      const code = generateCode();
+      const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`;
       toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
 
       if (!link) return;
@@ -547,7 +579,7 @@ const ClientDashboard = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
                         className="flex gap-2 mb-2"
-                      >
+                        >
                         <button
                           onClick={() => setTab("profile")}
                           className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-all border border-slate-200 shadow-sm"
@@ -594,7 +626,7 @@ const ClientDashboard = () => {
                 </motion.div>
 
                 {referralSettings && referralSettings.is_enabled === true && (
-                    <motion.div
+                  <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
@@ -647,18 +679,35 @@ const ClientDashboard = () => {
                           )}
                         </div>
                       </div>
-                      {/* sharable modal start */}
-                      <div className="relative shrink-0">
-                        <button
-                          type="button"
-                          onClick={handleReferralShare}
-                          disabled={referralSharing}
-                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                          >
-                          {referralSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-                          {bn ? "শেয়ার করুন" : "Share referral link"}
-                        </button>
-                         {referralPopupOpen && (referralShareLink || referralStats?.code?.link) && (
+                    <div className="relative shrink-0">
+                     {referralCode ? (
+                        <>
+                          <p className="text-sm font-semibold text-slate-700">
+                            <p>{bn ? "আপনার রেফারেল লিঙ্ক:" : "Your referral link:"}{" "}</p>
+                            <span className="text-emerald-700">{`${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`}</span>
+                          </p>
+                            <button
+                              type="button"
+                              onClick={handleReferralShare}
+                              disabled={referralSharing}
+                              className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                              >
+                              {referralSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                              {bn ? "শেয়ার করুন" : "Share referral link"}
+                            </button>
+                        </>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={handleReferralGenerate}
+                            disabled={referralSharing}
+                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                            >
+                            <Settings className="h-4 w-4" />
+                            {bn ? "রেফারাল লিঙ্ক তৈরি করুন" : "Generate Referral Link"}
+                          </button>
+                      )}
+                       {referralPopupOpen && (referralShareLink || referralStats?.code?.link) && (
                           <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
                             <div className="mb-3 flex items-center justify-between">
                               <p className="text-sm font-bold text-slate-900">{bn ? "শেয়ার করুন" : "Share referral link"}</p>
@@ -703,9 +752,7 @@ const ClientDashboard = () => {
                             </div>
                           </div>
                         )}
-                      </div>
-                      {/* sharable modal end */}
-                     
+                    </div>
                     </div>
                   </motion.div>
                 )}
