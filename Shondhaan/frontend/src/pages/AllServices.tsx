@@ -303,7 +303,6 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
     try {
       const paymentAmount = Math.round(commissionFee);
       let walletTxId: string | null = null;
-
       if (useWalletPayment) {
         const wr = await fetch(`${VITE_API_BASE_URL}/api/wallet/debit`, {
           method: "POST",
@@ -318,7 +317,6 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
         if (!wr.ok || !wj.success) throw new Error(wj.error || "Wallet payment failed");
         walletTxId = wj.transaction_id;
       }
-
       const booking: any = await createBooking({
         user_id: String(activeUserId), service_id: service.id || null,
         package_id: selectedPkg?.id || null, service_slug: service.slug || "",
@@ -947,7 +945,6 @@ const CategorySidebar = ({ categories, activeCategory, getCatName, scrollToCateg
 );
 
 /* ──────────────────────── CategorySections ──────────────────────── */
-
 const CategorySections = ({ categories, services, sectionRefs, getCatName, getServiceTitle, navigate, onBook }: {
   categories: ApiCategory[]; services: ApiService[]; sectionRefs: MutableRefObject<Record<string, HTMLDivElement | null>>;
   getCatName: (cat: ApiCategory) => string; getServiceTitle: (service: ApiService) => string;
@@ -995,8 +992,9 @@ const CategorySections = ({ categories, services, sectionRefs, getCatName, getSe
     </>
   );
 };
-
 /* ──────────────────────── CmsServiceCard (with Book button) ──────────────────────── */
+
+
 
 const CmsServiceCard = ({ service, title, onClick, onBook }: {
   service: ApiService; title: string; onClick: () => void; onBook: () => void;
@@ -1094,12 +1092,10 @@ const CmsServiceCard = ({ service, title, onClick, onBook }: {
           {bn ? "বুক করুন" : "Book Now"}
         </button>
       </div>
-
       <AnimatePresence>
         {shareState && <SharePopup slug={shareState.slug} title={shareState.title} anchorRect={shareState.rect} onClose={closeShare} />}
       </AnimatePresence>
     </motion.div>
   );
 };
-
 export default AllServices;

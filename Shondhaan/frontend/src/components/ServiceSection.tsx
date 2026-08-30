@@ -644,13 +644,15 @@ const ServiceCardWrapper = ({ service, onOpen, onLongPress, disableHover, imageC
       {imageContent}
       <div className="p-3 bg-background md:p-4 pointer-events-none">
         <h3 onMouseEnter={showTooltip} onMouseLeave={hideTooltip} onFocus={showTooltip} onBlur={hideTooltip} className="text-sm font-semibold text-foreground transition-colors group-hover:text-primary md:text-base line-clamp-1 pointer-events-auto cursor-help">{service.title}</h3>
-        <div className="mt-1.5 flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /><span className="text-xs font-medium text-muted-foreground">{service.rating ? service.rating.toFixed(1) : "0.0"}</span></div>
+        <div className="mt-1.5 flex items-center gap-1"><Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" /><span className="text-xs font-medium text-muted-foreground">{service.rating ? service.rating.toFixed(1) : "0.0"}</span>
+        </div>
         <div className="mt-2 flex items-end justify-between">
           <p className="min-w-0 text-sm font-bold text-foreground md:text-base">{service.price && service.price > 0 ? (<>৳{service.price}<span className="ml-1 text-[10px] font-normal text-muted-foreground">{bn ? "থেকে" : "from"}</span></>) : <span className="text-primary">{bn ? "বুক করুন" : "Book Now"}</span>}</p>
           <div className="flex shrink-0 items-center gap-1 pointer-events-auto">
-            <button onClick={(e) => onBookNow(e, service)} className="flex h-7 items-center justify-center gap-1 rounded-full bg-primary px-2.5 text-[10px] font-semibold text-white shadow-sm shadow-primary/20 hover:bg-primary cursor-pointer"><CalendarCheck className="h-3.5 w-3.5" /><span>{bn ? "বুক" : "Book"}</span></button>
-            <button onClick={(e) => onCompare(e, service)} className={`flex h-7 w-7 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer ${isInCompareList ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-primary"}`}><GitCompareArrows className="h-3.5 w-3.5" /></button>
+             <button onClick={(e) => onCompare(e, service)} className={`flex h-7 w-7 items-center justify-center rounded-full hover:bg-primary/10 cursor-pointer ${isInCompareList ? "bg-primary/15 text-primary" : "text-muted-foreground hover:text-primary"}`}><GitCompareArrows className="h-3.5 w-3.5" /></button>
             <button onClick={(e) => onShare(e, service)} className="flex h-7 w-7 items-center justify-center rounded-full text-muted-foreground hover:bg-primary/10 hover:text-primary cursor-pointer"><Share2 className="h-3.5 w-3.5" /></button>
+            <button onClick={(e) => onBookNow(e, service)} className="flex h-7 items-center justify-center gap-1 rounded-full bg-primary px-2.5 text-[10px] font-semibold text-white shadow-sm shadow-primary/20 hover:bg-primary cursor-pointer"><CalendarCheck className="h-3.5 w-3.5" /><span>{bn ? "বুক করুন" : "Book Now"}</span></button>
+           
           </div>
         </div>
       </div>
