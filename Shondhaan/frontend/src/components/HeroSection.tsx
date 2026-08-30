@@ -647,7 +647,7 @@ const HeroSection = () => {
           </svg>
         </div>
 
-        <div className="w-full max-w-2xl mx-auto px-4" style={{ paddingTop: "22px", paddingBottom: "32px" }}>
+        <div className="w-full max-w-4xl mx-auto px-4" style={{ paddingTop: "22px", paddingBottom: "32px" }}>
           
           {/* Greeting & Headline - Centered */}
           <motion.div
@@ -655,7 +655,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
             className="mb-6 text-center"
-          >
+            >
             {/* <p className="text-[10px] font-medium uppercase tracking-widest text-white mb-1"> */}
               {/* {bn ? "স্বাগতম" : "Welcome back"}
             </p> */}
@@ -675,7 +675,7 @@ const HeroSection = () => {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="relative z-30 mx-auto mb-6"
             style={{ maxWidth: "640px" }}
-          >
+            >
               <form onSubmit={handleSubmit} className="relative group">
                 <div className="absolute inset-0 bg-gradient-to-r from-white-900/40 to-transparent rounded-lg opacity-0 group-focus-within:opacity-100 transition-opacity duration-300 blur" />
                 <div className="relative flex items-stretch gap-2 rounded-lg border border-white-900/30 bg-white backdrop-blur-sm p-1.5 shadow-lg shadow-amber-900/20 text-black">
@@ -720,18 +720,18 @@ const HeroSection = () => {
                 onSelect={handleSelect}
                 bn={bn}
               />
-            </motion.div>
+          </motion.div>
 
           {/* Cards & Popular Services Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="max-w-4xl mx-auto"
-          >
+            className="max-w-7xl mx-auto"
+            >
             {/* Platform Cards - 4 column */}
             <div className="grid grid-cols-4 gap-3 mb-4">
-              {PLATFORM_CARDS.map(({ to, labelBn, labelEn, descBn, descEn, Icon, accentColor, bgPattern }, idx) => {
+              {PLATFORM_CARDS.map(({ to, labelBn, labelEn, descBn, descEn, imgIcon, Icon, accentColor, bgPattern }, idx) => {
                 const isPressed = pressedCard === to;
                 return (
                   <motion.button
@@ -744,21 +744,20 @@ const HeroSection = () => {
                     className="group relative overflow-hidden rounded-lg border border-white backdrop-blur-sm p-1 text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
                     style={{ background: `linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(15, 23, 42, 0.6)), ${bgPattern}` }}
                   >
-                    <div className="absolute inset-0 bg-white/40 group-hover:opacity-100 transition-opacity duration-300" />
+                    <div className="absolute inset-0 bg-background group-hover:opacity-100 transition-opacity duration-300" />
                     
                     <div className="relative flex flex-col items-center h-full gap-2 pt-2">
                       <div 
-                        className="flex items-center justify-center h-5 w-6 rounded-lg flex-shrink-0"
-                        style={{ backgroundColor: `${accentColor}20` }}
-                      >
-                        <Icon className="h-7 w-7 text-white group-hover:text-primary transition-colors" />
+                        className="flex items-center justify-center h-14 w-14 rounded-lg flex-shrink-0 p-1">
+                        {/* <Icon className="h-7 w-7 text-white group-hover:text-primary transition-colors" /> */}
+                        <img src={imgIcon} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }} alt="" />
                       </div>
                       
                       <div className="flex-1">
-                        <p className="text-[9px] uppercase tracking-widest font-medium mb-0.5 text-white group-hover:text-primary transition-colors">
+                        <p className="text-[9px] uppercase tracking-widest font-medium mb-0.5 text-foreground group-hover:text-primary transition-colors">
                           {bn ? descBn : descEn}
                         </p>
-                        <h3 className="font-serif text-[15px] font-light text-white group-hover:text-primary transition-colors leading-tight">
+                        <h3 className="text-[15px] font-semibold text-foreground group-hover:text-primary transition-colors leading-tight">
                           {bn ? labelBn : labelEn}
                         </h3>
                       </div>

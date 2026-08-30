@@ -111,6 +111,14 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const normalizeProfileImageUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  const base = (PROFILE_API_BASE || "").replace(/\/+$/, "");
+  const formatted = url.startsWith("/") ? url : `/${url}`;
+  return `${base}${formatted}`;
+};
+
 const AreaChart = () => (
   <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-20">
     <defs>
@@ -224,7 +232,7 @@ const ClientDashboard = () => {
       display_name: localUser.name || String(localUser.user_metadata?.display_name || localUser.user_metadata?.name || ""),
       phone: localUser.mobile || localUser.phone || String(localUser.user_metadata?.phone || ""),
       address: localUser.address || String(localUser.user_metadata?.address || ""),
-      profile_image_url: String(localUser.user_metadata?.avatar_url || ""),
+      profile_image_url: normalizeProfileImageUrl(String(localUser.user_metadata?.avatar_url || "")),
       shondhaan_id: String(mysqlAuth?.user?.shondhaan_id || ""),
     };
     setProfile(fallbackProfile);
@@ -276,7 +284,7 @@ const ClientDashboard = () => {
           display_name: data.name || fallbackProfile.display_name,
           phone: data.phone || data.mobile || fallbackProfile.phone,
           address: data.address || fallbackProfile.address,
-          profile_image_url: data.avatar_url || data.profile_image || fallbackProfile.profile_image_url,
+          profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || fallbackProfile.profile_image_url),
           shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
         });
 
@@ -359,7 +367,7 @@ const ClientDashboard = () => {
         display_name: data.name || profile.display_name.trim(),
         phone: data.phone || data.mobile || profile.phone.trim(),
         address: data.address || profile.address.trim(),
-        profile_image_url: data.avatar_url || data.profile_image || profile.profile_image_url,
+        profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || profile.profile_image_url),
         shondhaan_id: data.shondhaan_id || profile.shondhaan_id,
       });
       
@@ -403,7 +411,7 @@ const ClientDashboard = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Upload failed");
 
-      const nextUrl = data.avatar_url || data.profile_image_url || data.profile_image || "";
+      const nextUrl = normalizeProfileImageUrl(data.avatar_url || data.profile_image_url || data.profile_image || "");
       setProfile(prev => ({ ...prev, profile_image_url: nextUrl }));
       toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile photo updated");
     } catch (err) {
@@ -432,41 +440,40 @@ const ClientDashboard = () => {
   const reviewedSlugs = new Set(reviews.map(r => r.service_slug));
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const generateCode = () => {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-        code += characters.charAt(
-            Math.floor(Math.random() * characters.length)
-        );
-    }
-    return code;
-  };
 
   const handleReferralGenerate = async () => {
     setReferralSharing(true);
     try {
-      const code = generateCode();
-      const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${code}`;
-      toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
+      const mysqlAuth = getMySqlAuth();
+      if (!mysqlAuth?.token) throw new Error("Login required");
 
-      if (!link) return;
-      setReferralShareLink(link);
-      setReferralPopupOpen(true);
-    } catch {
-      toast.error(bn ? "রেফারেল লিংক তৈরি করা যায়নি" : "Could not prepare referral link");
+      const res = await fetch(`${PROFILE_API_BASE}/api/referral/generate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${mysqlAuth.token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.reason || data.message || "Failed to generate referral code");
+      }
+
+      toast.success(bn ? "রেফারেল কোড তৈরি হয়েছে" : "Referral code generated");
+
+      // reload so fetchAll() re-runs and fetchReferralCode picks up the new code
+      window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : (bn ? "রেফারেল কোড তৈরি করা যায়নি" : "Could not generate referral code"));
     } finally {
       setReferralSharing(false);
     }
   };
+
   const handleReferralShare = async () => {
     setReferralSharing(true);
     try {
-      const code = generateCode();
+      if (!referralCode) throw new Error("No referral code available");
       const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`;
-      toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
+      toast.success(bn ? `রেফারেল লিংক: ${link}` : `Referral link: ${link}`);
 
-      if (!link) return;
       setReferralShareLink(link);
       setReferralPopupOpen(true);
     } catch {

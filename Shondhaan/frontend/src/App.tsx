@@ -61,6 +61,7 @@ import FabStackPreview from "@/components/FabStackPreview";
 import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
 import MartAdminPanel from "@/components/mart/MartAdminPanel";
+import { captureReferralCodeFromUrl } from "@/lib/referralCookie";
 
 const Index = lazy(() => import("./pages/Index"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
@@ -205,6 +206,10 @@ function SocketInitializer() {
 const App = () => {
   const [splashDone, setSplashDone] = useState(false);
   const handleSplashFinish = useCallback(() => setSplashDone(true), []);
+
+  useEffect(() => {
+    captureReferralCodeFromUrl();
+  }, []);
 
   const [showOnboarding, setShowOnboarding] = useState(() => {
     if (typeof window === "undefined") return false;

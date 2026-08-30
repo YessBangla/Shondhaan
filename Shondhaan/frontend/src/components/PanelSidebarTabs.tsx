@@ -16,6 +16,11 @@ import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faReply, faHouse } from "@fortawesome/free-solid-svg-icons";
+import { useReferralCode } from "@/hooks/useReferralCode";
+const ReferralCode = () => {
+  const referralCode = useReferralCode();
+  return <p>{referralCode}</p>;
+};
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -291,6 +296,14 @@ const PanelSidebarTabs = ({
     return String(src).trim().slice(0, 1).toUpperCase();
   }, [user]);
 
+  const resolveProfileImageUrl = useCallback((url?: string) => {
+    if (!url) return "";
+    if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+    const base = (import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || "").replace(/\/+$/, "");
+    const formatted = url.startsWith("/") ? url : `/${url}`;
+    return base ? `${base}${formatted}` : formatted;
+  }, []);
+
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
   const toggleLang = () => setLanguage(language === "bn" ? "en" : "bn");
 
@@ -306,7 +319,7 @@ const PanelSidebarTabs = ({
           >
             <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
               {profileImageUrl ? (
-                <img src={profileImageUrl} alt="" className="h-full w-full object-cover" />
+                <img src={resolveProfileImageUrl(profileImageUrl)} alt="" className="h-full w-full object-cover" />
               ) : (
                 initials
               )}
@@ -520,6 +533,7 @@ const PanelSidebarTabs = ({
                   <h1 className="text-xl font-semibold text-gray-800 my-auto">
                     {bn ? "ড্যাশবোর্ড" : "Dashboard"}
                   </h1>
+                  <p><ReferralCode /></p>
                 </div>
 
                 <div className="flex gap-2">

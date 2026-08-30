@@ -10,7 +10,10 @@ import AuthHeroPanel from "@/components/auth/AuthHeroPanel";
 import BiometricLoginButton, { useBiometricEnrolment } from "@/components/auth/BiometricLoginButton";
 import { getRoleRedirectPath } from "@/lib/roleRedirect";
 import { useSEO } from "@/hooks/useSEO";
-import { loginWithMySql, requestSignupOtp, verifySignupOtp } from "@/lib/mysqlAuth";
+import { loginWithMySql, requestSignupOtp, verifySignupOtp, getMySqlAuth } from "@/lib/mysqlAuth";
+import { getStoredReferralCode, clearStoredReferralCode, applyReferralIfPresent } from "@/lib/referralCookie";
+
+const PROFILE_API_BASE = import.meta.env.VITE_CENTRAL_API_BASE_URL;
 
 type Step = "form" | "otp";
 
@@ -37,6 +40,7 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState<Step>("form");
   const [otpEmail, setOtpEmail] = useState("");
+  const [detectedReferralCode, setDetectedReferralCode] = useState<string | null>(null);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -63,7 +67,7 @@ const Auth = () => {
       valid: password.length >= 8,
     },
     {
-      label: language === "bn" ? "বড় ও ছোট অক্ষর" : "Uppercase and lowercase letters",
+      label: language === "bn" ? "বড় ও ছোট অক্ষর" : "Uppercase and lowercase letters",
       valid: /[A-Z]/.test(password) && /[a-z]/.test(password),
     },
     {
@@ -78,7 +82,7 @@ const Auth = () => {
   const isPasswordStrong = passwordRules.every((rule) => rule.valid);
   const passwordPolicyMessage =
     language === "bn"
-      ? "পাসওয়ার্ডে কমপক্ষে ৮ অক্ষর, বড়/ছোট অক্ষর, সংখ্যা ও বিশেষ চিহ্ন দিন।"
+      ? "পাসওয়ার্ডে কমপক্ষে ৮ অক্ষর, বড়/ছোট অক্ষর, সংখ্যা ও বিশেষ চিহ্ন দিন।"
       : "Use at least 8 characters with uppercase, lowercase, a number, and a special character.";
 
   const generatePasswordSuggestion = () => {
@@ -127,6 +131,10 @@ const Auth = () => {
   }, [searchParams]);
 
   useEffect(() => {
+    setDetectedReferralCode(getStoredReferralCode());
+  }, []);
+
+  useEffect(() => {
     // Intentionally do NOT auto-redirect already-logged-in users away from /auth.
     // The user explicitly wants the dashboard to open in a separate tab on
     // login, while the current tab stays on the public site.
@@ -159,6 +167,11 @@ const Auth = () => {
       });
 
       toast.success(t("auth.loginSuccess"));
+      // If they arrived via a referral link and aren't already linked to a referrer, link them now
+      const mysqlAuth = getMySqlAuth();
+      if (mysqlAuth?.token) {
+        await applyReferralIfPresent(PROFILE_API_BASE, mysqlAuth.token);
+      }
       // Offer biometric enrolment on a real mobile device, once
       try {
         const supportsWebAuthn = typeof window !== "undefined" && !!window.PublicKeyCredential;
@@ -215,16 +228,18 @@ const Auth = () => {
     }
         setLoading(true);
         try {
+        const referralCode = getStoredReferralCode();
         await requestSignupOtp({
-      name: name.trim(),
-      mobile: phone.trim(),
-      address: address.trim(),
-      email: email.trim(),
-      password,
-      type: role,
-      shop_name: role === "mart_vendor" ? shopName.trim() : "",
-      shop_type: role === "mart_vendor" ? shopType : "",
-    });
+          name: name.trim(),
+          mobile: phone.trim(),
+          address: address.trim(),
+          email: email.trim(),
+          password,
+          type: role,
+          shop_name: role === "mart_vendor" ? shopName.trim() : "",
+          shop_type: role === "mart_vendor" ? shopType : "",
+          referral_code: referralCode || undefined,
+        });
       setOtpEmail(email.trim());
       setStep("otp");
       toast.success(t("auth.otpSent"));
@@ -245,6 +260,7 @@ const Auth = () => {
       });
 
       toast.success(t("auth.accountCreated"));
+      clearStoredReferralCode();
       await openDashboardInNewTab();
     } catch (error: any) {
       toast.error(error.message || t("auth.invalidOtp"));
@@ -256,6 +272,7 @@ const Auth = () => {
   const handleResendOtp = async () => {
     setLoading(true);
     try {
+      const referralCode = getStoredReferralCode();
       await requestSignupOtp({
           name: name.trim(),
           mobile: phone.trim(),
@@ -265,6 +282,7 @@ const Auth = () => {
           type: role,
           shop_name: role === "mart_vendor" ? shopName.trim() : "",
           shop_type: role === "mart_vendor" ? shopType : "",
+          referral_code: referralCode || undefined,
         });
       toast.success(t("auth.otpSent"));
     } catch (error: any) {
@@ -407,6 +425,13 @@ const Auth = () => {
                 {/* Registration fields */}
                 {!isLogin && (
                   <>
+                  {detectedReferralCode && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+                      {language === "bn"
+                        ? `রেফারেল কোড প্রয়োগ হবে: ${detectedReferralCode}`
+                        : `Referral code will be applied: ${detectedReferralCode}`}
+                    </div>
+                  )}
                     <div className="relative">
                       <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       <input

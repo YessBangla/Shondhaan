@@ -438,7 +438,7 @@ const Index = () => {
                 {selectedCategoryId === "all" && groupedServices.length > 4 && (
                   <div className="flex justify-center my-8">
                     <Link to="/all-services">
-                      <Button variant="outline" className="rounded-xl px-8">
+                      <Button variant="outline" className="rounded-xl bg-primary text-white hover:bg-emerald-600 px-8">
                         {bn ? "আরও দেখুন" : "See More"}
                       </Button>
                     </Link>
