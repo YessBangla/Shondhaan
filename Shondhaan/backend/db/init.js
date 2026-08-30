@@ -111,6 +111,23 @@ export async function initDatabase() {
     )
   `);
 
+  // User profile details are optional and stored separately from accounts.
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS user_profiles (
+      id INT AUTO_INCREMENT PRIMARY KEY,
+      user_id INT NOT NULL UNIQUE,
+      profile_image VARCHAR(500) NULL,
+      bio TEXT NULL,
+      gender VARCHAR(50) NULL,
+      date_of_birth DATE NULL,
+      nid_front VARCHAR(500) NULL,
+      nid_back VARCHAR(500) NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_user_profiles_user_id (user_id)
+    )
+  `);
+
   // ─── Categories table ─────────────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS categories (

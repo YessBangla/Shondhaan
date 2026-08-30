@@ -2,6 +2,8 @@ import cors from "cors";
 
 const corsOrigins = [
   ...new Set([
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
     ...(process.env.CORS_ORIGIN || "")
       .split(",")
       .map((origin) => origin.trim())

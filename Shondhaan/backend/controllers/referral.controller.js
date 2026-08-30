@@ -272,12 +272,6 @@ const generate = async (req, res, next) => {
   try {
     const userId = req.user.id;
     const settings = await getSettings();
-    if (!Number(settings.is_enabled)) {
-      return res.status(403).json({ success: false, reason: "REFERRALS_DISABLED" });
-    }
-
-    const requestedMaxUses = Number(req.body.max_uses || settings.max_uses || 50);
-    const maxUses = Math.max(1, Math.min(requestedMaxUses, Number(settings.max_uses || 50)));
 
     const [existing] = await pool.query(
       `SELECT id, code, used_count, max_uses, created_at, expires_at
@@ -300,6 +294,13 @@ const generate = async (req, res, next) => {
         link: codeLink(row.code),
       });
     }
+
+    if (!Number(settings.is_enabled)) {
+      return res.status(403).json({ success: false, reason: "REFERRALS_DISABLED" });
+    }
+
+    const requestedMaxUses = Number(req.body?.max_uses || settings.max_uses || 50);
+    const maxUses = Math.max(1, Math.min(requestedMaxUses, Number(settings.max_uses || 50)));
 
     let code = "";
     for (let attempt = 0; attempt < 12; attempt += 1) {

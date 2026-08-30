@@ -4,7 +4,10 @@ const jwt = require("jsonwebtoken");
 const pool = require("../db");
 
 const router = express.Router();
-const TOKEN_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
+// The central auth service signs users with JWT_SECRET. Keep AUTH_TOKEN_SECRET
+// as a fallback for deployments that explicitly configure the Mart service
+// with the same shared secret.
+const TOKEN_SECRET = process.env.JWT_SECRET || process.env.AUTH_TOKEN_SECRET || "secret";
 
 function verifyCustomToken(token = "") {
   const parts = String(token).split(".");
@@ -52,7 +55,9 @@ function verifyToken(token = "") {
 
 function requireAuth(req, res, next) {
   const header = req.headers.authorization || "";
-  const token = header.startsWith("Bearer ") ? header.slice(7) : "";
+  const token = header.startsWith("Bearer ")
+    ? header.slice(7)
+    : req.cookies?.token || "";
 
   const auth = verifyToken(token);
 

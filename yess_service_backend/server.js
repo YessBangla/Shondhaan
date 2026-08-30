@@ -20,7 +20,7 @@ import categoryRoutes from "./routes/category.route.js";
 import bookingRoutes from "./routes/booking.route.js";
 import reviewRoutes from "./routes/review.route.js";
 import heroBannerRoutes from "./routes/heroBanner.route.js";
-import homepageSectionRoutes from "./routes/homePageSection.route.js";
+import homepageSectionRoutes from "./routes/homepageSection.route.js";
 import uploadRoutes from "./routes/upload.route.js";
 import serviceChatRoutes from "./routes/serviceChat.route.js";
 import prescriptionRouter from "./routes/prescription.route.js";
@@ -78,38 +78,30 @@ process.on("uncaughtException", (err) => {
 const app = express();
 
 // ─────────────────────────────────────────────
-// CORS
+// CORS — consolidated origin list
+// ─────────────────────────────────────────────
+//
+// All three env vars (CORS_ORIGIN, FRONTEND_URL, FRONTEND_BASE_URL)
+// are merged here, in ONE place, BEFORE cors() is configured.
+// This avoids the previous bug where FRONTEND_BASE_URL was pushed
+// onto allowedOrigins at the bottom of the file, after cors()
+// middleware was already set up — fragile and easy to break.
+//
+// Remember: `localhost` and `127.0.0.1` are different origins to
+// the browser, even on the same machine. Both must be listed
+// explicitly if your frontend might run on either.
 // ─────────────────────────────────────────────
 
-const allowedOrigins = [];
+const allowedOrigins = [
+  ...(process.env.CORS_ORIGIN || "").split(","),
+  ...(process.env.FRONTEND_URL || "").split(","),
+  ...(process.env.FRONTEND_BASE_URL || "").split(","),
+]
+  .map((origin) => origin.trim())
+  .filter(Boolean)
+  .filter((origin, index, arr) => arr.indexOf(origin) === index); // dedupe
 
-// Add CORS_ORIGIN values from environment
-if (process.env.CORS_ORIGIN) {
-  process.env.CORS_ORIGIN.split(",").forEach((origin) => {
-    const trimmed = origin.trim();
-
-    if (
-      trimmed &&
-      !allowedOrigins.includes(trimmed)
-    ) {
-      allowedOrigins.push(trimmed);
-    }
-  });
-}
-
-// Add FRONTEND_URL values from environment
-if (process.env.FRONTEND_URL) {
-  process.env.FRONTEND_URL.split(",").forEach((origin) => {
-    const trimmed = origin.trim();
-
-    if (
-      trimmed &&
-      !allowedOrigins.includes(trimmed)
-    ) {
-      allowedOrigins.push(trimmed);
-    }
-  });
-}
+console.log("✅ Allowed CORS origins:", allowedOrigins);
 
 const corsOptions = {
   origin: function (origin, callback) {
@@ -169,8 +161,6 @@ app.use(
   })
 );
 
-app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
-
 // ─────────────────────────────────────────────
 // HTTP Server
 // ─────────────────────────────────────────────
@@ -195,6 +185,8 @@ initServiceChatSocket(io);
 // ─────────────────────────────────────────────
 // Static uploads
 // ─────────────────────────────────────────────
+// (was previously mounted twice — once here, once above middleware;
+// consolidated into a single mount)
 
 app.use(
   "/uploads",
@@ -433,11 +425,4 @@ if (
   setTimeout(() => {
     safeReconcile();
   }, 5 * 1000);
-}
-
-if (process.env.FRONTEND_BASE_URL) {
-  process.env.FRONTEND_BASE_URL.split(",").forEach((origin) => {
-    const trimmed = origin.trim();
-    if (trimmed && !allowedOrigins.includes(trimmed)) allowedOrigins.push(trimmed);
-  });
 }

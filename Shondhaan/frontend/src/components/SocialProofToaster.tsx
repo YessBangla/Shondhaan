@@ -52,6 +52,7 @@ export default function SocialProofToaster() {
         {
           description: bn ? `${minsAgo} মিনিট আগে` : `${minsAgo} min ago`,
           icon: <Users className="h-4 w-4 text-primary" />,
+          closeButton: true,
           duration: 4500,
         }
       );

@@ -303,7 +303,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                           onClick={() => setSelectedSlug(s.slug)}
                           className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/50 hover:shadow-md"
                         >
-                          <img src={s.image} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
+                          <img src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${s.image}`} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
                           <span className="text-xs font-medium text-foreground text-center leading-tight">{s.title}</span>
                           <span className="text-[10px] text-muted-foreground">
                             ৳{Math.round((s.packages[0]?.price || 0) * EMERGENCY_SURCHARGE).toLocaleString("bn-BD")} {t("hero.from")}

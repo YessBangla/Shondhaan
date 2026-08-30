@@ -31,6 +31,8 @@ const createMessagesTable = require("./database/Createmessage.table"); // Import
 const createUserProfileTable = require("./database/user_profile.table");
 const createBannersTable = require("./database/banners.table"); // ★ NEW — banners table for mart home carousel
 const createMartRewardTables = require("./database/mart_reward_rules"); // ★ NEW — mart_reward_rules table for mart reward rules
+const createWithdrawalRequestsTable = require("./database/Createwithdrawalrequeststable"); // ★ FIXED — was pointing at ./routes/Withdrawalrequests and using destructuring; this file's default export is the function itself
+
 // create table
 
 const categoriesRoutes = require("./routes/categories");
@@ -53,7 +55,6 @@ const MessagesRoutes = require("./routes/messages"); // Import the messages rout
 const bannersRoutes = require("./routes/banners"); // ★ NEW — banners CRUD routes
 const transactionsRoutes = require("./routes/transactions"); // ★ NEW — transactions routes
 const martWalletRoutes = require("./routes/martWallets");
-
 const { registerMartMessageSocket } = require("./socket/martMessages");
 const { getBackendBaseUrl } = require("./utils/baseUrl");
 const app = express();
@@ -100,21 +101,29 @@ const io = new Server(server, {
 app.set("io", io);
 registerMartMessageSocket(io);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
+const corsMiddleware = cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
 
-      console.log("CORS blocked origin:", origin);
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
-  }),
-);
+    console.log("CORS blocked origin:", origin);
+    return callback(new Error("Not allowed by CORS"));
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
+});
+
+// SSLCommerz callbacks are gateway redirects/server callbacks, not browser
+// API calls. They must reach the payment handler even when the gateway sends
+// an Origin that is not one of our frontend origins.
+app.use((req, res, next) => {
+  if (/^\/api\/orders\/sslcommerz\/(success|fail|cancel|ipn)$/.test(req.path)) {
+    return next();
+  }
+  return corsMiddleware(req, res, next);
+});
 // Needed for base64 JSON uploads (frontend sends { image: "data:image/...;base64,..." })
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ extended: true }));
@@ -182,6 +191,7 @@ app.use("/api/transactions", transactionsRoutes); // ★ NEW — transactions ro
 app.use("/api/mart-wallets", martWalletRoutes);
 app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
 app.use("/api/mart-reward-rules", require("./routes/martRewardRules")); // ★ NEW — mart reward rules routes (defines /api/mart-reward-rules, /api/mart-reward-rules/active, etc.)
+app.use("/api/withdrawal-requests", require("./routes/Withdrawalrequests")); // ★ NEW — withdrawal requests routes (defines /api/withdrawal-requests, /api/withdrawal-requests/:id, etc.)
 server.listen(PORT, async () => {
   const backendBaseUrl = getBackendBaseUrl();
   console.log(`Server running on ${backendBaseUrl}`);
@@ -215,6 +225,7 @@ server.listen(PORT, async () => {
     await createMartPackageTransactionsTable(); // Payment audit trail for package purchases
     await createMartWalletTables(); // Seller wallet balances and adjustment audit trail
     await createMartRewardTables(); // ★ NEW — Create the mart_reward_rules table
+    await createWithdrawalRequestsTable(); // ★ NEW — Create the withdrawal_requests table for seller withdrawal requests
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);

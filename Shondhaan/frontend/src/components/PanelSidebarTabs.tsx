@@ -206,7 +206,6 @@ const PanelSidebarTabs = ({
       return prev;
     });
     setActiveTabState(value);
-    window.scrollTo({ top: 0, behavior: "smooth" });
     setRecent((prev) => {
       const next = prev.filter((v) => v !== value);
       next.unshift(value);
@@ -557,7 +556,7 @@ const PanelSidebarTabs = ({
         )}
 
         <main className="flex-1 min-w-0">
-          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-2 py-2")}>
+          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-5 py-2")}>
             {hero && !hero.hideOnTabs?.includes(activeTab) && (
               <PanelHero
                 title={hero.title}
