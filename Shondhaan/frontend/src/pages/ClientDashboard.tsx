@@ -111,6 +111,14 @@ const fileToDataUrl = (file: File): Promise<string> =>
     reader.readAsDataURL(file);
   });
 
+const normalizeProfileImageUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://") || url.startsWith("data:")) return url;
+  const base = (PROFILE_API_BASE || "").replace(/\/+$/, "");
+  const formatted = url.startsWith("/") ? url : `/${url}`;
+  return `${base}${formatted}`;
+};
+
 const AreaChart = () => (
   <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-20">
     <defs>
@@ -224,7 +232,7 @@ const ClientDashboard = () => {
       display_name: localUser.name || String(localUser.user_metadata?.display_name || localUser.user_metadata?.name || ""),
       phone: localUser.mobile || localUser.phone || String(localUser.user_metadata?.phone || ""),
       address: localUser.address || String(localUser.user_metadata?.address || ""),
-      profile_image_url: String(localUser.user_metadata?.avatar_url || ""),
+      profile_image_url: normalizeProfileImageUrl(String(localUser.user_metadata?.avatar_url || "")),
       shondhaan_id: String(mysqlAuth?.user?.shondhaan_id || ""),
     };
     setProfile(fallbackProfile);
@@ -276,7 +284,7 @@ const ClientDashboard = () => {
           display_name: data.name || fallbackProfile.display_name,
           phone: data.phone || data.mobile || fallbackProfile.phone,
           address: data.address || fallbackProfile.address,
-          profile_image_url: data.avatar_url || data.profile_image || fallbackProfile.profile_image_url,
+          profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || fallbackProfile.profile_image_url),
           shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
         });
 
@@ -359,7 +367,7 @@ const ClientDashboard = () => {
         display_name: data.name || profile.display_name.trim(),
         phone: data.phone || data.mobile || profile.phone.trim(),
         address: data.address || profile.address.trim(),
-        profile_image_url: data.avatar_url || data.profile_image || profile.profile_image_url,
+        profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || profile.profile_image_url),
         shondhaan_id: data.shondhaan_id || profile.shondhaan_id,
       });
       
@@ -403,7 +411,7 @@ const ClientDashboard = () => {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Upload failed");
 
-      const nextUrl = data.avatar_url || data.profile_image_url || data.profile_image || "";
+      const nextUrl = normalizeProfileImageUrl(data.avatar_url || data.profile_image_url || data.profile_image || "");
       setProfile(prev => ({ ...prev, profile_image_url: nextUrl }));
       toast.success(bn ? "প্রোফাইল ছবি আপডেট হয়েছে" : "Profile photo updated");
     } catch (err) {
