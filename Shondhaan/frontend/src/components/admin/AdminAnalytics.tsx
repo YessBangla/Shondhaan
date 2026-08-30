@@ -407,7 +407,7 @@ const AdminAnalytics = () => {
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["7d", "30d", "6m", "1y"] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-primary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
+                className={`px-3 py-1.5 text-[11px] font-medium transition-colors ${period === p ? "bg-userprimary text-white" : "text-muted-foreground hover:bg-secondary"}`}>
                 {p === "7d" ? "৭ দিন" : p === "30d" ? "৩০ দিন" : p === "6m" ? "৬ মাস" : "১ বছর"}
               </button>
             ))}
@@ -429,7 +429,7 @@ const AdminAnalytics = () => {
         {/* ── সার্ভিস ও বুকিং ── */}
         <TabsContent value="service" className="space-y-4">
           <div className="flex justify-end">
-            <Button variant="outline" size="sm" onClick={exportBookingReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
+            <Button variant="outline" size="sm" className="hover:bg-userprimary" onClick={exportBookingReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
@@ -504,7 +504,7 @@ const AdminAnalytics = () => {
               ) : (
                 <>
                   <div className="flex justify-end">
-                    <Button variant="outline" size="sm" onClick={exportJobPackageReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
+                    <Button variant="outline" className="hover:bg-userprimary" size="sm" onClick={exportJobPackageReport}><Download className="h-3.5 w-3.5 mr-1" /> CSV এক্সপোর্ট</Button>
                   </div>
 
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

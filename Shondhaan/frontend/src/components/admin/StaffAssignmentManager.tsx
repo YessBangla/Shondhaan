@@ -769,7 +769,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
               {hasBackendSuperAdminSession && (
                 <Sheet open={createPanelOpen} onOpenChange={setCreatePanelOpen}>
                   <SheetTrigger asChild>
-                    <Button size="sm" className="gap-1.5"><UserPlus className="h-4 w-4" /> নতুন ব্যাকএন্ড ইউজার</Button>
+                    <Button size="sm" className="gap-1.5 bg-userprimary"><UserPlus className="h-4 w-4" /> নতুন ব্যাকএন্ড ইউজার</Button>
                   </SheetTrigger>
                   <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
                     <SheetHeader>
@@ -959,7 +959,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
                       <Badge variant="outline" className="text-[10px]">টাইপ: {ROLE_LABELS[selectedUser.type] || selectedUser.type}</Badge>
                       {selectedUser.mysql_id && <Badge variant="secondary" className="text-[10px]">ID: {selectedUser.mysql_id}</Badge>}
                       {typeof selectedUser.email_verified === "boolean" && (
-                        <Badge variant={selectedUser.email_verified ? "default" : "outline"} className="text-[10px]">
+                        <Badge variant={selectedUser.email_verified ? "default" : "outline"} className="text-[10px] bg-userprimary hover:bg-emerald-600">
                           {selectedUser.email_verified ? "ভেরিফায়েড" : "আনভেরিফায়েড"}
                         </Badge>
                       )}
@@ -982,7 +982,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
                 </div>
                 <Sheet open={panelOpen} onOpenChange={setPanelOpen}>
                   <SheetTrigger asChild>
-                    <Button size="sm" className="gap-1.5 flex-shrink-0">
+                    <Button size="sm" className="gap-1.5 flex-shrink-0 bg-userprimary">
                       <UserPlus className="h-4 w-4" /> অ্যাসাইন
                     </Button>
                   </SheetTrigger>
