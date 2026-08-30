@@ -414,7 +414,7 @@ async function safeReconcile() {
     await reconcilePendingShurjopayPayments();
   } catch (error) {
     console.error(
-      "⚠️ Shurjopay reconciliation failed (will retry next cycle):",
+      " Shurjopay reconciliation failed (will retry next cycle):",
       error
     );
   }
