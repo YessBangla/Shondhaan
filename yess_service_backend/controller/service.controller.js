@@ -23,7 +23,7 @@ const parseJsonArray = (value) => {
 
 const stringifyArray = (value) => {
   if (!value) return JSON.stringify([]);
-
+  
   if (Array.isArray(value)) {
     return JSON.stringify(value);
   }
