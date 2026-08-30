@@ -481,7 +481,7 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingAvatar}
-              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-white shadow-md hover:bg-primary/90 transition-colors disabled:opacity-50"
+              className="absolute -bottom-1 -right-1 flex h-8 w-8 items-center justify-center rounded-full bg-userprimary text-white shadow-md hover:bg-emerald-600 transition-colors disabled:opacity-50"
             >
               {uploadingAvatar ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
             </button>
@@ -494,7 +494,7 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
               {!showHeader && !editMode && !isMartVendor && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-userprimary text-white text-xs font-semibold hover:bg-emerald-600 transition"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   {bn ? "সম্পাদনা" : "Edit"}
@@ -532,7 +532,7 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
 
             <div className="flex flex-wrap gap-2 mt-4">
               {roleLabels.map((label) => (
-                <span key={label} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-primary border border-primary/30">
+                <span key={label} className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold bg-primary/10 text-userprimary border border-userprimary">
                   <Shield className="h-3 w-3" />
                   {label}
                 </span>
@@ -553,7 +553,7 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
         >
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              <User className="h-5 w-5 text-primary" />
+              <User className="h-5 w-5 text-userprimary" />
               {bn ? "ব্যক্তিগত তথ্য" : "Personal Information"}
             </h2>
             <button type="button" onClick={() => setEditMode(false)} className="p-1 hover:bg-secondary rounded-lg transition">
@@ -654,7 +654,7 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-primary text-white font-semibold hover:bg-primary/90 transition disabled:opacity-50"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-userprimary text-white font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -683,9 +683,9 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.05 }}
           className="rounded-2xl border border-border bg-card p-6 shadow-sm mb-4"
-        >
+          >
           <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
-            <Info className="h-5 w-5 text-primary" />
+            <Info className="h-5 w-5 text-userprimary" />
             {bn ? "বিস্তারিত তথ্য" : "Detailed Information"}
           </h2>
 
