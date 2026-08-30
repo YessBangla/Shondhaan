@@ -187,8 +187,8 @@ const CategoryCard = ({
     </motion.div>
     <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors duration-300 md:text-xs ${
       selected 
-        ? "text-blue-600 font-bold" 
-        : "text-slate-600 group-hover:text-blue-600"
+        ? "text-emerald-600 font-bold" 
+        : "text-slate-600 group-hover:text-emerald-600"
     }`}>
       {label}
     </span>
@@ -368,7 +368,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       </div>
       <div className="p-4 bg-transparent md:bg-white/80 backdrop-blur-xl border border-white/40 md:rounded-3xl md:shadow hover:shadow-3xl transition-shadow duration-300">
 
-        <div className="relative group">
+        <div className="relative">
           {/* Premium Scroll buttons */}
           <motion.button
             onClick={() => scroll("left")}
