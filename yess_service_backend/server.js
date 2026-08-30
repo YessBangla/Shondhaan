@@ -73,24 +73,8 @@ process.on("uncaughtException", (err) => {
 
 // ─────────────────────────────────────────────
 // App
-// ─────────────────────────────────────────────
 
 const app = express();
-
-// ─────────────────────────────────────────────
-// CORS — consolidated origin list
-// ─────────────────────────────────────────────
-//
-// All three env vars (CORS_ORIGIN, FRONTEND_URL, FRONTEND_BASE_URL)
-// are merged here, in ONE place, BEFORE cors() is configured.
-// This avoids the previous bug where FRONTEND_BASE_URL was pushed
-// onto allowedOrigins at the bottom of the file, after cors()
-// middleware was already set up — fragile and easy to break.
-//
-// Remember: `localhost` and `127.0.0.1` are different origins to
-// the browser, even on the same machine. Both must be listed
-// explicitly if your frontend might run on either.
-// ─────────────────────────────────────────────
 
 const allowedOrigins = [
   ...(process.env.CORS_ORIGIN || "").split(","),
@@ -99,7 +83,7 @@ const allowedOrigins = [
 ]
   .map((origin) => origin.trim())
   .filter(Boolean)
-  .filter((origin, index, arr) => arr.indexOf(origin) === index); // dedupe
+  .filter((origin, index, arr) => arr.indexOf(origin) === index);
 
 console.log("✅ Allowed CORS origins:", allowedOrigins);
 
@@ -255,7 +239,7 @@ app.use(
 );
 
 // ─────────────────────────────────────────────
-// ⭐ SERVICE ADMIN DASHBOARD
+// SERVICE ADMIN DASHBOARD
 // ─────────────────────────────────────────────
 //
 // Endpoints:
@@ -273,7 +257,7 @@ app.use(
 );
 
 // ─────────────────────────────────────────────
-// ⭐ SERVICE OFFERS
+// SERVICE OFFERS
 // ─────────────────────────────────────────────
 //
 // Endpoints:
