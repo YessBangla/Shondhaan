@@ -16,6 +16,11 @@ import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faReply, faHouse } from "@fortawesome/free-solid-svg-icons";
+import { useReferralCode } from "@/hooks/useReferralCode";
+const ReferralCode = () => {
+  const referralCode = useReferralCode();
+  return <p>{referralCode}</p>;
+};
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -520,6 +525,7 @@ const PanelSidebarTabs = ({
                   <h1 className="text-xl font-semibold text-gray-800 my-auto">
                     {bn ? "ড্যাশবোর্ড" : "Dashboard"}
                   </h1>
+                  <p><ReferralCode /></p>
                 </div>
 
                 <div className="flex gap-2">
