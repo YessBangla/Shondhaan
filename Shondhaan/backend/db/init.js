@@ -1,6 +1,7 @@
 import mysql from "mysql2/promise";
 import { DB_NAME } from "../config/env.js";
 import { pool, setPool } from "./pool.js";
+import { ensurePaymentGatewaysTable } from "./paymentGateways.js";
 import { hashPassword } from "../utils/crypto.js";
 import { normalizeEmail, normalizeMobile } from "../utils/normalize.js";
 
@@ -459,8 +460,11 @@ export async function initDatabase() {
 
   console.log("Created users shondhaan_id trigger");
 
+  // ─── Payment gateways ───────────────────────────────────────────
+  await ensurePaymentGatewaysTable();
+
   // ─── Seed default super admin ─────────────────────────────────────
   await seedDefaultSuperAdmin();
-  
+
   console.log("Database initialization complete!");
 }

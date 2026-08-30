@@ -55,6 +55,7 @@ import AdminDeliveryKyc from "@/components/mart/AdminDeliveryKyc";
 import AdminMartCategories from "@/components/admin/Adminmartcategories";
 import AdminMartBanners from "@/components/mart/Adminmartbanners";
 import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
+import AdminPaymentSettings from "@/components/admin/Adminpaymentsettings";
 const sidebarItems = [
   // ড্যাশবোর্ড
   { value: "overview", label: "ওভারভিউ", icon: <LayoutDashboard />, group: "ড্যাশবোর্ড" },
@@ -113,6 +114,7 @@ const sidebarItems = [
   { value: "permissions", label: "পারমিশন", icon: <ShieldCheck />, group: "সিস্টেম ও সিকিউরিটি" },
   { value: "settings", label: "সেটিংস", icon: <Settings />, group: "সিস্টেম ও সিকিউরিটি" },
   { value: "profile", label: "আমার প্রোফাইল", icon: <UserCog />, group: "সিস্টেম ও সিকিউরিটি" },
+  { value: "payment-settings", label: "পেমেন্ট সেটিংস", icon: <CreditCard />, group: "সিস্টেম ও সিকিউরিটি" },
 ];
 
 const SuperAdminPanel = () => {
@@ -230,6 +232,9 @@ const SuperAdminPanel = () => {
       case "delivery kyc verification": return <div className="p-4"><AdminDeliveryKyc /></div>;
       case "category add": return <div className="p-4"><AdminMartCategories /></div>;
       case "mart-banners": return <div className="p-4"><AdminMartBanners /></div>;
+      case "payment-settings": return <div className="p-4"><AdminPaymentSettings /></div>;
+      
+
       default: return null;
     }
   };
