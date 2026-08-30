@@ -81,15 +81,6 @@ const extractCategories = (payload: unknown): Category[] => {
   return data?.data || data?.categories || data?.results || data?.items || [];
 };
 
-const extractCategory = (payload: unknown): Category | null => {
-  const data = payload as { data?: Category; category?: Category; result?: Category } | Category | null;
-
-  if (!data) return null;
-  if ("id" in data) return data as Category;
-
-  return data.data || data.category || data.result || null;
-};
-
 const isActiveCategory = (category: Category) => {
   return (
     category.is_active === true ||
@@ -119,7 +110,6 @@ const categoryFallbackImages: Record<string, string> = {
   "plumbing": catAppliance,
 };
 
-// FIXED: Applied getImageSrc here to format the URL correctly
 const getCategoryImageUrl = (category: Category) => {
   const rawUrl = category.icon_url || category.image_url || "";
   return getImageSrc(rawUrl);
@@ -130,29 +120,30 @@ const getCategoryFallbackImage = (category: Category) => {
 };
 
 const CategoryIcon = ({ category, label }: { category: Category; label: string }) => {
-  // const [imageFailed, setImageFailed] = useState(false);
+  const [imageFailed, setImageFailed] = useState(false);
   const icon_url = getCategoryImageUrl(category);
   const fallbackImage = getCategoryFallbackImage(category);
 
   const isFullUrl = (url: string | null | undefined) =>
     !!url && /^https?:\/\//i.test(url);
 
-  const imageSrc = !icon_url
+  const imageSrc = imageFailed || !icon_url
     ? fallbackImage
     : isFullUrl(icon_url)
     ? icon_url
     : `${import.meta.env.VITE_SERVICE_API_BASE_URL}${icon_url}`;
 
-    return (
-      <img
-        src={imageSrc}
-        alt={label}
-        referrerPolicy="no-referrer"
-        onError={() => setImageFailed(true)}
-        className="h-full md:p-4 lg:p-4 xl:p-4  w-full object-contain"
-      />
-      
-    );
+  if (!imageSrc) return null;
+
+  return (
+    <img
+      src={imageSrc}
+      alt={label}
+      referrerPolicy="no-referrer"
+      onError={() => setImageFailed(true)}
+      className="h-full md:p-4 lg:p-4 xl:p-4 w-full object-contain"
+    />
+  );
 };
 
 /* ─── Premium Sheba-style Category Card (desktop + tablet) ─── */
@@ -173,10 +164,10 @@ const CategoryCard = ({
     whileTap={{ scale: 0.95 }}
     className="group flex shrink-0 flex-col items-center gap-2 transition-all md:w-[110px]"
   >
-    <motion.div 
+    <motion.div
       className={`flex h-10 w-10 md:h-20 md:w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
-        selected 
-          ? "border-primary" 
+        selected
+          ? "border-primary"
           : ""
       }`}
       animate={selected ? { scale: 1 } : { scale: 1 }}
@@ -196,17 +187,6 @@ const CategoryCard = ({
 );
 
 /* ─── Premium Mobile category tile ─── */
-const MOBILE_TILE_BG = [
-  "bg-gradient-to-br from-blue-100 to-blue-50",
-  "bg-gradient-to-br from-emerald-100 to-emerald-50",
-  "bg-gradient-to-br from-cyan-100 to-blue-50",
-  "bg-gradient-to-br from-teal-100 to-emerald-50",
-  "bg-gradient-to-br from-blue-100 to-cyan-50",
-  "bg-gradient-to-br from-emerald-100 to-teal-50",
-  "bg-gradient-to-br from-cyan-100 to-emerald-50",
-  "bg-gradient-to-br from-teal-100 to-cyan-50",
-];
-
 const MobileCategoryTile = ({
   icon,
   label,
@@ -226,10 +206,10 @@ const MobileCategoryTile = ({
     whileTap={{ scale: 0.92 }}
     className="press flex flex-col items-center gap-2 min-h-[100px] transition-all"
   >
-    <motion.div 
+    <motion.div
       className={`flex h-16 w-16 items-center justify-center p-2.5 transition-all ${
-        selected 
-          ? "border-primary rounded-3xl" 
+        selected
+          ? "border-primary rounded-3xl"
           : ""
       }`}
       whileHover={!selected ? { y: -2 } : {}}
@@ -239,7 +219,7 @@ const MobileCategoryTile = ({
       </div>
     </motion.div>
     <span className={`line-clamp-2 text-center text-[11px] font-semibold leading-tight transition-colors duration-300 ${
-      selected 
+      selected
         ? "text-emerald-600 font-bold"
         : "text-slate-700"
     }`}>
@@ -296,30 +276,8 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
           ? cat.name || cat.title || ""
           : cat.name_en || cat.title_en || cat.name || cat.title || "",
         selected: String(cat.id) === String(selectedCategoryId),
-        onClick: async () => {
-          let selectedCategory = cat;
-
-          if (cat.slug) {
-            try {
-              const response = await fetch(`${CATEGORIES_API_URL}/${encodeURIComponent(cat.slug)}`);
-              const payload = await response.json().catch(() => ({}));
-
-              if (response.ok) {
-                selectedCategory = extractCategory(payload) || cat;
-              } else {
-                console.error("CategoryBar single category fetch failed:", payload);
-              }
-            } catch (error) {
-              console.error("CategoryBar single category fetch failed:", error);
-            }
-          }
-
-          if (onCategorySelect) {
-            onCategorySelect(String(selectedCategory.id || cat.id));
-            return;
-          }
-
-          navigate(`/all-services?category=${selectedCategory.id || cat.id}`);
+        onClick: () => {
+          navigate(`/all-services?category=${cat.id}`);
         },
         icon: (
           <CategoryIcon
@@ -337,22 +295,20 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       }));
 
   const showAllCategories = () => {
-    if (onCategorySelect) {
-      onCategorySelect("all");
-      return;
-    }
     navigate("/all-services");
   };
+
   const scroll = (dir: "left" | "right") => {
     if (scrollRef.current) {
       scrollRef.current.scrollBy({ left: dir === "left" ? -320 : 320, behavior: "smooth" });
     }
   };
+
   return (
     <>
-  
+
     {/* Desktop / tablet: Premium card style - positioned over banner with glass effect */}
-  <motion.div
+    <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.3 }}
@@ -372,16 +328,12 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
           {/* Premium Scroll buttons */}
           <motion.button
             onClick={() => scroll("left")}
-            // whileHover={{ scale: 1.1, x: -2 }}
-            // whileTap={{ scale: 0.95 }}
             className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-blue-500 to-emerald-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll left">
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
           <motion.button
             onClick={() => scroll("right")}
-            // whileHover={{ scale: 1.1, x: 2 }}
-            // whileTap={{ scale: 0.95 }}
             className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-emerald-500 to-blue-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex"
             aria-label="Scroll right">
             <ChevronRight className="h-5 w-5" />

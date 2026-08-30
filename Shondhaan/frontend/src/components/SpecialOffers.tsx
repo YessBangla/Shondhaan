@@ -14,7 +14,6 @@ const tabs: { key: TabKey; labelBn: string; labelEn: string; icon: typeof Flame;
   { key: "top", labelBn: "⭐ টপ রেটেড", labelEn: "⭐ Top Rated", icon: Star, color: "text-amber-500", activeGradient: "bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-400 shadow-2xl shadow-amber-500/50", bgColor: "bg-amber-500" },
 ];
 
-// ✅ Add this helper
 const SERVICE_API = (import.meta.env.VITE_SERVICE_API_BASE_URL || "http://localhost:3000").replace(/\/+$/, "");
 const getImageUrl = (url: string) => {
   if (!url) return "";
@@ -44,7 +43,7 @@ const useCountdown = (expiresAt: string | null) => {
 };
 
 const TimeUnit = ({ value, label }: { value: number; label: string }) => (
-  <motion.div 
+  <motion.div
     className="flex flex-col items-center"
     animate={{ scale: [1, 1.05, 1] }}
     transition={{ duration: 0.6, repeat: Infinity, repeatDelay: 0.5 }}
@@ -77,7 +76,7 @@ const OfferCountdown = ({ deadline, bn }: { deadline: string; bn: boolean }) => 
   const expired = days + hours + minutes + seconds <= 0;
   if (expired) {
     return (
-      <motion.div 
+      <motion.div
         className="flex items-center gap-1 text-xs font-bold text-muted-foreground/60"
         animate={{ opacity: [0.6, 1] }}
         transition={{ duration: 1, repeat: Infinity }}
@@ -89,7 +88,7 @@ const OfferCountdown = ({ deadline, bn }: { deadline: string; bn: boolean }) => 
   }
   const pad = (n: number) => String(n).padStart(2, "0");
   return (
-    <motion.div 
+    <motion.div
       className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-orange-500/20 to-red-500/20 backdrop-blur-sm border border-orange-300/40 px-2 py-1"
       animate={{ boxShadow: ["0 0 10px rgba(255,100,0,0)", "0 0 20px rgba(255,100,0,0.5)", "0 0 10px rgba(255,100,0,0)"] }}
       transition={{ duration: 2, repeat: Infinity }}
@@ -147,7 +146,7 @@ const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
     discount_en: `${discountLabel} OFF`,
     description_bn: descriptionBn,
     description_en: descriptionEn,
-    service_slug: offer.service_slug || (offer.service_id ? `service-${offer.service_id}` : ""),
+    service_slug: offer.service_slug || "",
     image: offer.image_url || "",
     gradient: offer.gradient || "from-blue-600/20 via-purple-600/10 to-transparent",
     accent_color: offer.accent_color || "text-blue-600",
@@ -157,7 +156,7 @@ const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
   };
 };
 
-const SpecialOffers = () => { 
+const SpecialOffers = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const bn = language === "bn";
@@ -167,7 +166,6 @@ const SpecialOffers = () => {
 
   useEffect(() => {
     let ignore = false;
-
     const fetchLiveOffers = async () => {
       try {
         setLoadingOffers(true);
@@ -185,18 +183,15 @@ const SpecialOffers = () => {
         if (!ignore) setLoadingOffers(false);
       }
     };
-
     fetchLiveOffers();
-    return () => {
-      ignore = true;
-    };
+    return () => { ignore = true; };
   }, []);
 
   const tabOffers: Record<TabKey, any[]> = {
     hot: apiOffers,
     new: apiOffers,
     deal: apiOffers,
-    top: apiOffers.filter(o => o.is_featured)
+    top: apiOffers.filter(o => o.is_featured),
   };
 
   const offers = tabOffers[activeTab];
@@ -215,12 +210,12 @@ const SpecialOffers = () => {
     >
       {/* Animated background elements */}
       <div className="absolute inset-0 -z-10 overflow-hidden">
-        <motion.div 
+        <motion.div
           className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-orange-400/20 to-transparent rounded-full blur-3xl"
           animate={{ rotate: 360 }}
           transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
         />
-        <motion.div 
+        <motion.div
           className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-blue-400/20 to-transparent rounded-full blur-3xl"
           animate={{ rotate: -360 }}
           transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -228,16 +223,14 @@ const SpecialOffers = () => {
       </div>
 
       {/* Header */}
-      <motion.div 
+      <motion.div
         className="flex items-center justify-between mb-6 md:mb-8 gap-4 flex-wrap"
         initial={{ opacity: 0, x: -20 }}
         whileInView={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.6 }}
-        >
+      >
         <div className="flex items-center gap-3">
-          <motion.div 
-            className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/40"
-          >
+          <motion.div className="p-2.5 rounded-xl bg-gradient-to-br from-orange-500 to-red-500 text-white shadow-lg shadow-orange-500/40">
             <Flame className="h-5 w-5" />
           </motion.div>
           <div>
@@ -251,12 +244,12 @@ const SpecialOffers = () => {
         </div>
 
         {/* Global Countdown */}
-        <motion.div 
+        <motion.div
           className="flex items-center gap-2 bg-gradient-to-r from-orange-50 to-red-50 dark:from-orange-950/30 dark:to-red-950/30 border border-orange-200/50 dark:border-orange-800/50 rounded-2xl px-3 md:px-4 py-2 backdrop-blur-sm"
           initial={{ opacity: 0, scale: 0.8 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.6, delay: 0.2 }}
-          >
+        >
           <Clock className="h-4 w-4 text-orange-600 shrink-0" />
           <div className="flex items-center gap-1.5">
             {days > 0 && (
@@ -291,7 +284,13 @@ const SpecialOffers = () => {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.4, delay: i * 0.1 }}
               whileHover={{ y: -8 }}
-              onClick={() => navigate("/all-services")}
+              onClick={() => {
+                if (offer.service_slug) {
+                  navigate(`/service/${offer.service_slug}`);
+                } else {
+                  navigate("/all-services");
+                }
+              }}
               className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden"
             >
               <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60">
@@ -306,19 +305,19 @@ const SpecialOffers = () => {
                     />
                   ) : (
                     <>
-                      <motion.div 
+                      <motion.div
                         className={`absolute -top-8 -left-8 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-60`}
                         animate={{ scale: [1, 1.3, 1] }}
                         transition={{ duration: 4, repeat: Infinity }}
                       />
-                      <motion.div 
+                      <motion.div
                         className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full ${offer.bg_accent} blur-3xl opacity-40`}
                         animate={{ scale: [1.3, 1, 1.3] }}
                         transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
                       />
                     </>
                   )}
-                  
+
                   {/* Premium Badge */}
                   <motion.div
                     className={`absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30`}
@@ -340,10 +339,10 @@ const SpecialOffers = () => {
                   <p className="text-[11px] md:text-xs text-muted-foreground/80 leading-snug line-clamp-2 flex-1">
                     {bn ? offer.description_bn : (offer.description_en || offer.description_bn)}
                   </p>
-                  
+
                   <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto border-t border-border/50">
                     <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
-                    <motion.span 
+                    <motion.span
                       className={`flex items-center gap-1 text-xs md:text-sm font-bold text-primary group-hover:gap-2 transition-all whitespace-nowrap`}
                       whileHover={{ x: 4 }}
                     >

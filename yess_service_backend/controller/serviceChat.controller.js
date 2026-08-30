@@ -1,17 +1,83 @@
 import jwt from "jsonwebtoken";
 import { v4 as uuidv4 } from "uuid";
 import { pool } from "../config/db.js";
+import "dotenv/config";
 
-// Read the secret directly from the environment variables
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_dev_secret";
+// ✅ FIXED: Same secret as authMiddleware
+const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
 
-if (JWT_SECRET === "fallback_dev_secret") {
-  console.warn("[ChatController] WARNING: JWT_SECRET is not found in .env! Falling back to insecure default.");
-}
-
-const STAFF_ROLES = new Set(["call_center", "admin", "super_admin", "service_admin"]);
+const STAFF_ROLES = new Set([
+  "call_center", 
+  "admin", 
+  "super_admin", 
+  "service_admin",
+  "mart_admin",
+  "deal_admin",
+  "job_admin",
+  "moderator",
+  "supervisor",
+  "finance"
+]);
 
 const clean = (value, fallback = "") => String(value ?? fallback).trim();
+
+export const getBearerUser = async (req) => {
+  let token = null;
+
+  // 1. Try cookie
+  token = req.cookies?.token;
+
+  // 2. Manual cookie parse
+  if (!token && req.headers.cookie) {
+    const rawCookies = req.headers.cookie.split('; ').reduce((acc, c) => {
+      const [key, val] = c.split('=');
+      acc[key] = val;
+      return acc;
+    }, {});
+    token = rawCookies.token;
+  }
+
+  // 3. Bearer header
+  if (!token) {
+    const header = req.headers.authorization || "";
+    if (header.startsWith("Bearer ")) {
+      token = header.split(" ")[1];
+    }
+  }
+
+  if (!token) return null;
+
+  try {
+    const decoded = jwt.verify(token, JWT_SECRET);
+    
+    // Fetch type from DB if not in token
+    if (!decoded.type && decoded.id) {
+      const [rows] = await pool.query(
+        "SELECT type FROM users WHERE id = ? LIMIT 1",
+        [decoded.id]
+      );
+      if (rows[0]) {
+        decoded.type = rows[0].type;
+      }
+    }
+
+    return decoded;
+  } catch (err) {
+    console.error("[getBearerUser] Token error:", err.message);
+    return null;
+  }
+};
+
+export const isStaffUser = (user) => {
+  if (!user) return false;
+  
+  const role = String(
+    user.type || user.role || ""
+  ).toLowerCase().trim();
+  
+  return STAFF_ROLES.has(role);
+};
+
 
 export const ensureServiceChatSchema = async () => {
   console.log("[Schema] Ensuring service chat schema exists...");
@@ -56,62 +122,6 @@ export const ensureServiceChatSchema = async () => {
   console.log("[Schema] Schema check complete.");
 };
 
-export const getBearerUser = (req) => {
-  console.log("--- getBearerUser Initiated ---");
-  
-  // 1. Try to get token from req.cookies (requires cookie-parser middleware)
-  let cookieToken = req.cookies?.token;
-
-  // 2. Fallback: Manually parse the cookie header if cookie-parser isn't installed
-  if (!cookieToken && req.headers.cookie) {
-    const rawCookies = req.headers.cookie.split('; ').reduce((acc, c) => {
-      const [key, val] = c.split('=');
-      acc[key] = val;
-      return acc;
-    }, {});
-    cookieToken = rawCookies.token;
-  }
-
-  if (cookieToken) {
-    console.log("Token found in cookie. Attempting to verify...");
-    try {
-      const decoded = jwt.verify(cookieToken, JWT_SECRET);
-      console.log("Cookie token SUCCESSFULLY verified:", decoded);
-      return decoded;
-    } catch (err) {
-      console.error("Cookie token verification FAILED:", err.message);
-      return null;
-    }
-  } else {
-    console.log("No token found in cookies.");
-  }
-
-  // 3. Fallback to Authorization header for API clients/Postman
-  const header = req.headers.authorization || "";
-  if (!header.startsWith("Bearer ")) {
-    console.log("No valid Bearer header found.");
-    return null;
-  }
-
-  console.log("Bearer token found in headers. Attempting to verify...");
-  try {
-    const token = header.split(" ")[1];
-    const decoded = jwt.verify(token, JWT_SECRET);
-    console.log("Bearer token SUCCESSFULLY verified:", decoded);
-    return decoded;
-  } catch (err) {
-    console.error("Bearer token verification FAILED:", err.message);
-    return null;
-  }
-};
-
-export const isStaffUser = (user) => {
-  const role = String(user?.type || user?.role || "");
-  const isStaff = STAFF_ROLES.has(role);
-  console.log(`[isStaffUser] Checking role: "${role}". Is Staff? ${isStaff}`);
-  return isStaff;
-};
-
 export const normalizeConversation = (row) => ({
   ...row,
   unread_count: Number(row.unread_count || 0),
@@ -125,46 +135,35 @@ export const normalizeMessage = (row) => ({
 });
 
 export const getConversationById = async (id) => {
-  console.log(`[DB] Fetching conversation by ID: ${id}`);
-  const [rows] = await pool.execute(
-    `SELECT * FROM service_chat_conversations WHERE id = ? LIMIT 1`,
+  const [rows] = await pool.query(
+    "SELECT * FROM service_chat_conversations WHERE id = ? LIMIT 1",
     [id]
   );
-
   return rows[0] || null;
 };
 
-const ensureParticipantCanRead = (req, conversation) => {
-  console.log("[Auth] Ensuring participant can read...");
-  const user = getBearerUser(req);
+const ensureParticipantCanRead = async (req, conversation) => {
+  const user = await getBearerUser(req);
   if (isStaffUser(user)) {
-    console.log("[Auth] Access granted: Staff.");
     return { ok: true, user, staff: true };
   }
 
   const visitorId = clean(req.query.visitor_id || req.body?.visitor_id);
   if (user?.id && String(conversation.user_id || "") === String(user.id)) {
-    console.log("[Auth] Access granted: Matches user ID.");
     return { ok: true, user, staff: false };
   }
 
   if (visitorId && conversation.visitor_id && visitorId === conversation.visitor_id) {
-    console.log("[Auth] Access granted: Matches visitor ID.");
     return { ok: true, user, staff: false };
   }
 
-  console.warn("[Auth] Access DENIED.");
   return { ok: false, user, staff: false };
 };
 
 const emitChatUpdate = (req, payload) => {
   const io = req.app.get("io");
-  if (!io) {
-    console.log("[Socket] No IO instance found on app.");
-    return;
-  }
+  if (!io) return;
 
-  console.log("[Socket] Emitting chat update for conversation:", payload.conversation.id);
   io.to(`service-chat:${payload.conversation.id}`).emit("service-chat:message:new", payload);
   io.to("service-chat:staff").emit("service-chat:conversation:updated", payload);
 };
@@ -178,7 +177,6 @@ export const createConversationRecord = async ({
   user_phone,
   subject,
 }) => {
-  console.log("[Service] Creating conversation record...");
   const body = clean(message);
   if (!body) {
     const error = new Error("Message is required");
@@ -192,14 +190,11 @@ export const createConversationRecord = async ({
   const finalEmail = clean(user_email || user?.email) || null;
   const finalUserId = user?.id ? String(user.id) : null;
 
-  await pool.execute(
-    `
-    INSERT INTO service_chat_conversations (
+  await pool.query(
+    `INSERT INTO service_chat_conversations (
       id, visitor_id, user_id, user_name, user_email, user_phone, subject,
       last_message, last_message_at
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())
-    `,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
     [
       conversationId,
       clean(visitor_id) || null,
@@ -212,38 +207,32 @@ export const createConversationRecord = async ({
     ]
   );
 
-  await pool.execute(
-    `
-    INSERT INTO service_chat_messages (
+  await pool.query(
+    `INSERT INTO service_chat_messages (
       id, conversation_id, sender_role, sender_id, sender_name, body, read_by_customer
-    )
-    VALUES (?, ?, 'customer', ?, ?, ?, 1)
-    `,
+    ) VALUES (?, ?, 'customer', ?, ?, ?, 1)`,
     [messageId, conversationId, finalUserId || clean(visitor_id) || null, finalName, body]
   );
 
   const conversation = await getConversationById(conversationId);
-  const [messages] = await pool.execute(
-    `SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1`,
+  const [messages] = await pool.query(
+    "SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1",
     [messageId]
   );
 
-  console.log("[Service] Conversation record created successfully.");
   return {
     conversation: normalizeConversation(conversation),
     message: normalizeMessage(messages[0]),
   };
 };
-
 export const addMessageRecord = async ({ conversationId, message, visitor_id, user, staffName }) => {
-  console.log(`[Service] Adding message record to conversation: ${conversationId}`);
   const conversation = await getConversationById(conversationId);
   if (!conversation) {
     const error = new Error("Conversation not found");
     error.status = 404;
     throw error;
   }
-
+  
   const body = clean(message);
   if (!body) {
     const error = new Error("Message is required");
@@ -271,14 +260,11 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
     ? clean(staffName || user?.name || user?.email, "Support")
     : clean(conversation.user_name, "Anonymous");
 
-  await pool.execute(
-    `
-    INSERT INTO service_chat_messages (
+  await pool.query(
+    `INSERT INTO service_chat_messages (
       id, conversation_id, sender_role, sender_id, sender_name, body,
       read_by_staff, read_by_customer
-    )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `,
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
     [
       messageId,
       conversationId,
@@ -291,34 +277,31 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
     ]
   );
 
-  await pool.execute(
-    `
-    UPDATE service_chat_conversations
+  await pool.query(
+    `UPDATE service_chat_conversations
     SET last_message = ?, last_message_at = NOW(), status = 'open'
-    WHERE id = ?
-    `,
+    WHERE id = ?`,
     [body, conversationId]
   );
 
   const updatedConversation = await getConversationById(conversationId);
-  const [messages] = await pool.execute(
-    `SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1`,
+  const [messages] = await pool.query(
+    "SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1",
     [messageId]
   );
 
-  console.log("[Service] Message record added successfully.");
   return {
     conversation: normalizeConversation(updatedConversation),
     message: normalizeMessage(messages[0]),
   };
 };
 
+// ✅ All handlers now use async getBearerUser
 export const createConversation = async (req, res) => {
-  console.log("=== POST /conversations Request Received ===");
   try {
     const payload = await createConversationRecord({
       ...req.body,
-      user: getBearerUser(req),
+      user: await getBearerUser(req),
     });
 
     emitChatUpdate(req, payload);
@@ -332,17 +315,18 @@ export const createConversation = async (req, res) => {
 };
 
 export const listConversations = async (req, res) => {
-  console.log("=== GET /conversations Request Received ===");
   try {
-    const user = getBearerUser(req);
+    const user = await getBearerUser(req);
+    
+    if (!user) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
     
     if (!isStaffUser(user)) {
-      console.warn("[Controller] Access denied to listConversations. User is not staff.");
       return res.status(403).json({ message: "Staff access required" });
     }
 
-    console.log("[Controller] Fetching conversations from DB...");
-    const [rows] = await pool.execute(`
+    const [rows] = await pool.query(`
       SELECT
         c.*,
         SUM(CASE WHEN m.sender_role = 'customer' AND m.read_by_staff = 0 THEN 1 ELSE 0 END) AS unread_count
@@ -352,7 +336,6 @@ export const listConversations = async (req, res) => {
       ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
     `);
 
-    console.log(`[Controller] Found ${rows.length} conversations.`);
     return res.json({ data: rows.map(normalizeConversation) });
   } catch (error) {
     console.error("[Controller] List Conversations Error:", error);
@@ -361,45 +344,34 @@ export const listConversations = async (req, res) => {
 };
 
 export const listMessages = async (req, res) => {
-  console.log(`=== GET /conversations/${req.params.id}/messages Request Received ===`);
   try {
     const conversation = await getConversationById(req.params.id);
     if (!conversation) {
-      console.warn("[Controller] Conversation not found.");
       return res.status(404).json({ message: "Conversation not found" });
     }
 
-    const access = ensureParticipantCanRead(req, conversation);
+    const access = await ensureParticipantCanRead(req, conversation);
     if (!access.ok) {
-      console.warn("[Controller] Participant access denied.");
       return res.status(403).json({ message: "Not allowed for this conversation" });
     }
 
     if (access.staff) {
-      console.log("[Controller] Marking messages as read by staff...");
-      await pool.execute(
-        `UPDATE service_chat_messages SET read_by_staff = 1 WHERE conversation_id = ? AND sender_role = 'customer'`,
+      await pool.query(
+        "UPDATE service_chat_messages SET read_by_staff = 1 WHERE conversation_id = ? AND sender_role = 'customer'",
         [conversation.id]
       );
     } else {
-      console.log("[Controller] Marking messages as read by customer...");
-      await pool.execute(
-        `UPDATE service_chat_messages SET read_by_customer = 1 WHERE conversation_id = ? AND sender_role = 'staff'`,
+      await pool.query(
+        "UPDATE service_chat_messages SET read_by_customer = 1 WHERE conversation_id = ? AND sender_role = 'staff'",
         [conversation.id]
       );
     }
 
-    const [messages] = await pool.execute(
-      `
-      SELECT *
-      FROM service_chat_messages
-      WHERE conversation_id = ?
-      ORDER BY created_at ASC
-      `,
+    const [messages] = await pool.query(
+      "SELECT * FROM service_chat_messages WHERE conversation_id = ? ORDER BY created_at ASC",
       [conversation.id]
     );
 
-    console.log(`[Controller] Found ${messages.length} messages.`);
     return res.json({
       data: {
         conversation: normalizeConversation(conversation),
@@ -413,14 +385,13 @@ export const listMessages = async (req, res) => {
 };
 
 export const sendConversationMessage = async (req, res) => {
-  console.log(`=== POST /conversations/${req.params.id}/messages Request Received ===`);
   try {
     const payload = await addMessageRecord({
       conversationId: req.params.id,
       message: req.body.message,
       visitor_id: req.body.visitor_id,
       staffName: req.body.sender_name,
-      user: getBearerUser(req),
+      user: await getBearerUser(req),
     });
 
     emitChatUpdate(req, payload);
