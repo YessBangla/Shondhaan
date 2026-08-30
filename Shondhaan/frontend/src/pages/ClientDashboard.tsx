@@ -432,41 +432,40 @@ const ClientDashboard = () => {
   const reviewedSlugs = new Set(reviews.map(r => r.service_slug));
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  const generateCode = () => {
-    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-        code += characters.charAt(
-            Math.floor(Math.random() * characters.length)
-        );
-    }
-    return code;
-  };
 
   const handleReferralGenerate = async () => {
     setReferralSharing(true);
     try {
-      const code = generateCode();
-      const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${code}`;
-      toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
+      const mysqlAuth = getMySqlAuth();
+      if (!mysqlAuth?.token) throw new Error("Login required");
 
-      if (!link) return;
-      setReferralShareLink(link);
-      setReferralPopupOpen(true);
-    } catch {
-      toast.error(bn ? "রেফারেল লিংক তৈরি করা যায়নি" : "Could not prepare referral link");
+      const res = await fetch(`${PROFILE_API_BASE}/api/referral/generate`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${mysqlAuth.token}` },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.success) {
+        throw new Error(data.reason || data.message || "Failed to generate referral code");
+      }
+
+      toast.success(bn ? "রেফারেল কোড তৈরি হয়েছে" : "Referral code generated");
+
+      // reload so fetchAll() re-runs and fetchReferralCode picks up the new code
+      window.location.reload();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : (bn ? "রেফারেল কোড তৈরি করা যায়নি" : "Could not generate referral code"));
     } finally {
       setReferralSharing(false);
     }
   };
+
   const handleReferralShare = async () => {
     setReferralSharing(true);
     try {
-      const code = generateCode();
+      if (!referralCode) throw new Error("No referral code available");
       const link = `${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`;
-      toast.success(bn? `রেফারেল লিংক: ${link}`: `Referral link: ${link}`);
+      toast.success(bn ? `রেফারেল লিংক: ${link}` : `Referral link: ${link}`);
 
-      if (!link) return;
       setReferralShareLink(link);
       setReferralPopupOpen(true);
     } catch {
