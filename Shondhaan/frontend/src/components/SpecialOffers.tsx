@@ -1,7 +1,13 @@
-import { useState, useEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowRight, Clock, Flame, Sparkles, Tag, Star, Timer, TrendingUp, Zap } from "lucide-react";
+import { ArrowRight, Clock, Flame, Sparkles, Tag, Star, Timer, Zap } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
@@ -144,6 +150,8 @@ const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
     title_en: titleEn,
     discount_bn: `${discountLabel} ছাড়`,
     discount_en: `${discountLabel} OFF`,
+    discount_type: discountType,
+    discount_value: discountValue,
     description_bn: descriptionBn,
     description_en: descriptionEn,
     service_slug: offer.service_slug || "",
@@ -156,6 +164,15 @@ const normalizeApiOffer = (offer: ServiceOfferApiItem, index: number) => {
   };
 };
 
+/* ── Price calculator ── */
+const calcDiscounted = (original: number, type: string, value: number) => {
+  if (!original || original <= 0 || value <= 0) return null;
+  const discounted = type === "fixed"
+    ? Math.max(0, original - value)
+    : Math.max(0, original - (original * value) / 100);
+  return discounted < original ? discounted : null;
+};
+
 const SpecialOffers = () => {
   const navigate = useNavigate();
   const { language } = useLanguage();
@@ -163,6 +180,7 @@ const SpecialOffers = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("hot");
   const [apiOffers, setApiOffers] = useState<any[]>([]);
   const [loadingOffers, setLoadingOffers] = useState(true);
+  const [servicePrices, setServicePrices] = useState<Record<string, number>>({});
 
   useEffect(() => {
     let ignore = false;
@@ -174,7 +192,26 @@ const SpecialOffers = () => {
         const rows = Array.isArray(json?.data) ? json.data : Array.isArray(json) ? json : [];
         if (!ignore) {
           const activeRows = rows.filter((offer: any) => offer?.is_active !== false && offer?.is_active !== 0);
-          setApiOffers(activeRows.map(normalizeApiOffer));
+          const normalized = activeRows.map(normalizeApiOffer);
+          setApiOffers(normalized);
+
+          // Fetch prices for linked services
+          const slugs = [...new Set(normalized.map((o: any) => o.service_slug).filter(Boolean))];
+          if (slugs.length > 0) {
+            const priceMap: Record<string, number> = {};
+            await Promise.all(
+              slugs.map(async (slug) => {
+                try {
+                  const sRes = await fetch(`${SERVICE_API}/api/services/${encodeURIComponent(slug)}`);
+                  const sJson = await sRes.json().catch(() => ({}));
+                  const s = sJson?.data ?? sJson?.service ?? sJson;
+                  if (s?.price != null) priceMap[slug] = Number(s.price);
+                } catch { /* skip */ }
+              })
+            );
+            if (!ignore) setServicePrices(priceMap);
+          }
+          
         }
       } catch (error) {
         console.error("Failed to load service offers:", error);
@@ -277,87 +314,115 @@ const SpecialOffers = () => {
           transition={{ duration: 0.4 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6"
         >
-          {offers.slice(0, 4).map((offer: any, i: number) => (
-            <motion.div
-              key={`${offer.id ?? offer.service_slug ?? "offer"}-${i}`}
-              initial={{ opacity: 0, scale: 0.8, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: i * 0.1 }}
-              whileHover={{ y: -8 }}
-              onClick={() => {
-                if (offer.service_slug) {
-                  navigate(`/service/${offer.service_slug}`);
-                } else {
-                  navigate("/all-services");
-                }
-              }}
-              className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden"
-            >
-              <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60">
-                {/* Image / Gradient Header */}
-                <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden`}>
-                  {offer.image ? (
-                    <img
-                      src={getImageUrl(offer.image)}
-                      alt={offer.title_en || offer.title_bn}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  ) : (
-                    <>
-                      <motion.div
-                        className={`absolute -top-8 -left-8 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-60`}
-                        animate={{ scale: [1, 1.3, 1] }}
-                        transition={{ duration: 4, repeat: Infinity }}
+          {offers.slice(0, 4).map((offer: any, i: number) => {
+            const originalPrice = servicePrices[offer.service_slug] || 0;
+            const discountedPrice = calcDiscounted(originalPrice, offer.discount_type, offer.discount_value);
+            const hasPrice = originalPrice > 0 && discountedPrice !== null;
+
+            return (
+              <motion.div
+                key={`${offer.id ?? offer.service_slug ?? "offer"}-${i}`}
+                initial={{ opacity: 0, scale: 0.8, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ duration: 0.4, delay: i * 0.1 }}
+                whileHover={{ y: -8 }}
+                onClick={() => {
+                  if (offer.service_slug) {
+                    navigate(`/service/${offer.service_slug}`);
+                  } else {
+                    navigate("/all-services");
+                  }
+                }}
+                className="cursor-pointer border shadow group relative rounded-2xl overflow-hidden"
+              >
+                <div className="relative bg-card border border-border/60 rounded-2xl overflow-hidden h-full flex flex-col shadow-lg group-hover:shadow-2xl group-hover:border-orange-400/60">
+                  {/* Image / Gradient Header */}
+                  <div className={`relative bg-gradient-to-br ${offer.gradient} flex items-center justify-center h-36 md:h-48 overflow-hidden`}>
+                    {offer.image ? (
+                      <img
+                        src={getImageUrl(offer.image)}
+                        alt={offer.title_en || offer.title_bn}
+                        loading="lazy"
+                        className="absolute inset-0 w-full h-full object-cover"
                       />
-                      <motion.div
-                        className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full ${offer.bg_accent} blur-3xl opacity-40`}
-                        animate={{ scale: [1.3, 1, 1.3] }}
-                        transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
-                      />
-                    </>
-                  )}
+                    ) : (
+                      <>
+                        <motion.div
+                          className={`absolute -top-8 -left-8 w-24 h-24 rounded-full ${offer.bg_accent} blur-2xl opacity-60`}
+                          animate={{ scale: [1, 1.3, 1] }}
+                          transition={{ duration: 4, repeat: Infinity }}
+                        />
+                        <motion.div
+                          className={`absolute -bottom-8 -right-8 w-32 h-32 rounded-full ${offer.bg_accent} blur-3xl opacity-40`}
+                          animate={{ scale: [1.3, 1, 1.3] }}
+                          transition={{ duration: 5, repeat: Infinity, delay: 0.5 }}
+                        />
+                      </>
+                    )}
 
-                  {/* Premium Badge */}
-                  <motion.div
-                    className={`absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30`}
-                    animate={{ scale: [1, 1.05, 1], y: [0, -2, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="flex items-center gap-1">
-                      <Zap className="h-3 w-3 md:h-4 md:w-4" />
-                      {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
-                    </div>
-                  </motion.div>
-                </div>
-
-                {/* Content */}
-                <div className="p-3.5 md:p-4 space-y-2.5 flex-1 flex flex-col">
-                  <h3 className="text-sm md:text-base font-bold text-foreground leading-tight line-clamp-2">
-                    {bn ? offer.title_bn : (offer.title_en || offer.title_bn)}
-                  </h3>
-                  <p className="text-[11px] md:text-xs text-muted-foreground/80 leading-snug line-clamp-2 flex-1">
-                    {bn ? offer.description_bn : (offer.description_en || offer.description_bn)}
-                  </p>
-
-                  <div className="flex items-center justify-between gap-2 pt-2.5 mt-auto border-t border-border/50">
-                    <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
-                    <motion.span
-                      className={`flex items-center gap-1 text-xs md:text-sm font-bold text-primary group-hover:gap-2 transition-all whitespace-nowrap`}
-                      whileHover={{ x: 4 }}
+                    {/* Premium Badge */}
+                    <motion.div
+                      className="absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30"
+                      animate={{ scale: [1, 1.05, 1], y: [0, -2, 0] }}
+                      transition={{ duration: 2, repeat: Infinity }}
                     >
-                      {bn ? "বুক করুন" : "Book Now"}
-                      <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
-                    </motion.span>
+                      <div className="flex items-center gap-1">
+                        <Zap className="h-3 w-3 md:h-4 md:w-4" />
+                        {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}
+                      </div>
+                    </motion.div>
+
+                    {/* Original price tag on image (when discount available) */}
+                    {hasPrice && (
+                      <div className="absolute bottom-3 left-3 z-10 rounded-lg bg-black/60 backdrop-blur-sm px-2.5 py-1">
+                        <span className="text-[11px] md:text-xs text-white/60 line-through">
+                          ৳{originalPrice.toLocaleString(bn ? "bn-BD" : "en-US")}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Content */}
+                  <div className="p-3.5 md:p-4 space-y-2 flex-1 flex flex-col">
+                    <h3 className="text-sm md:text-base font-bold text-foreground leading-tight line-clamp-2">
+                      {bn ? offer.title_bn : (offer.title_en || offer.title_bn)}
+                    </h3>
+                    <p className="text-[11px] md:text-xs text-muted-foreground/80 leading-snug line-clamp-2 flex-1">
+                      {bn ? offer.description_bn : (offer.description_en || offer.description_bn)}
+                    </p>
+
+                    {/* ── Discounted price ── */}
+                    {hasPrice ? (
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-base md:text-lg font-black text-primary">
+                          ৳{discountedPrice!.toLocaleString(bn ? "bn-BD" : "en-US")}
+                        </span>
+                        <span className="text-[10px] font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
+                          {offer.discount_type === "fixed" ? `৳${offer.discount_value} ছাড়` : `${offer.discount_value}% ছাড়`}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    <div className="flex items-center justify-between gap-2 pt-2 mt-auto border-t border-border/50">
+                      <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
+                      <motion.span
+                        className="flex items-center gap-1 text-xs md:text-sm font-bold text-primary group-hover:gap-2 transition-all whitespace-nowrap"
+                        whileHover={{ x: 4 }}
+                      >
+                        {bn ? "বুক করুন" : "Book Now"}
+                        <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                      </motion.span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </motion.div>
       </AnimatePresence>
     </motion.section>
   );
 };
+
 
 export default SpecialOffers;
