@@ -91,14 +91,13 @@ export const createOffer = async (req, res) => {
       return res.status(400).json({ success: false, message: "Title is required" });
     }
 
-    // Save image if base64 provided, otherwise use image_url
     const finalImageUrl = saveBase64Image(image_base64) || image_url || null;
 
     const [result] = await db.query(
       `INSERT INTO service_offers 
         (title, title_bn, description, description_bn, image_url, discount_type, discount_value,
-         service_id, category_id, offer_code, start_date, end_date, is_featured, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+         service_id, service_slug, category_id, offer_code, start_date, end_date, is_featured, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         rest.title,
         rest.title_bn ?? null,
@@ -108,6 +107,7 @@ export const createOffer = async (req, res) => {
         rest.discount_type || "percentage",
         rest.discount_value || 0,
         rest.service_id ?? null,
+        rest.service_slug ?? null,
         rest.category_id ?? null,
         rest.offer_code ?? null,
         rest.start_date ?? null,
@@ -139,7 +139,6 @@ export const updateOffer = async (req, res) => {
       return res.status(404).json({ success: false, message: "Offer not found" });
     }
 
-    // Handle image: new base64 upload takes priority, then explicit URL, then keep existing
     let finalImageUrl = existing[0].image_url;
 
     if (image_base64) {
@@ -158,7 +157,7 @@ export const updateOffer = async (req, res) => {
     await db.query(
       `UPDATE service_offers SET 
         title = ?, title_bn = ?, description = ?, description_bn = ?, image_url = ?,
-        discount_type = ?, discount_value = ?, service_id = ?, category_id = ?,
+        discount_type = ?, discount_value = ?, service_id = ?, service_slug = ?, category_id = ?,
         offer_code = ?, start_date = ?, end_date = ?, is_featured = ?, is_active = ?
        WHERE id = ?`,
       [
@@ -170,6 +169,7 @@ export const updateOffer = async (req, res) => {
         rest.discount_type || "percentage",
         rest.discount_value || 0,
         rest.service_id ?? null,
+        rest.service_slug ?? null,
         rest.category_id ?? null,
         rest.offer_code ?? null,
         rest.start_date ?? null,
@@ -211,3 +211,41 @@ export const deleteOffer = async (req, res) => {
     return res.status(500).json({ success: false, message: "Server Error", error: error.message });
   }
 };
+
+// ─── Validate offer code and return discount info ───
+export const validateOfferCode = async (req, res) => {
+  try {
+    const { code } = req.params;
+
+    const [offers] = await db.query(
+      `SELECT * FROM service_offers 
+       WHERE offer_code = ? AND is_active = 1 
+       AND (end_date IS NULL OR end_date > NOW())`,
+      [code]
+    );
+
+    if (offers.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "অফার কোডটি বৈধ নয় বা মেয়াদ উত্তীর্ণ",
+      });
+    }
+
+    const offer = offers[0];
+    return res.status(200).json({
+      success: true,
+      data: {
+        id: offer.id,
+        title: offer.title,
+        title_bn: offer.title_bn,
+        discount_type: offer.discount_type,
+        discount_value: Number(offer.discount_value),
+        service_id: offer.service_id,
+        service_slug: offer.service_slug,
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: "Server Error" });
+  }
+};
+

@@ -182,7 +182,7 @@ export const initializeDatabase = async () => {
     `);
     console.log("✅ cms_hero_banners table ready");
 
-
+    // 8. Create cms_homepage_sections table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS cms_homepage_sections (
         id VARCHAR(36) PRIMARY KEY,
@@ -257,10 +257,37 @@ export const initializeDatabase = async () => {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY service_idx (service_slug),
         KEY active_idx (is_active),
-        KEY end_date_idx (end_date)
+        KEY end_date_idx (end_date),
+        KEY offer_code_idx (offer_code)
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log("✅ service_offers table ready");
+
+    // ── Migrations: add columns to existing tables if missing ──
+
+    // service_offers: service_slug (for tables created before it was added)
+    try {
+      await pool.query(`ALTER TABLE service_offers ADD COLUMN service_slug VARCHAR(255) DEFAULT NULL AFTER service_id`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ service_slug:", err.message);
+    }
+
+    // bookings: offer support columns
+    try {
+      await pool.query(`ALTER TABLE bookings ADD COLUMN offer_code VARCHAR(100) DEFAULT NULL AFTER note`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ offer_code:", err.message);
+    }
+    try {
+      await pool.query(`ALTER TABLE bookings ADD COLUMN offer_discount_amount DECIMAL(10,2) DEFAULT 0 AFTER offer_code`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ offer_discount_amount:", err.message);
+    }
+    try {
+      await pool.query(`ALTER TABLE bookings ADD COLUMN final_price DECIMAL(10,2) DEFAULT 0 AFTER offer_discount_amount`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ final_price:", err.message);
+    }
 
     console.log("✨ Database initialization complete!");
     return true;
