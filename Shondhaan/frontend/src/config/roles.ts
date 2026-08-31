@@ -8,7 +8,20 @@ export type RoleKey =
   | "super_admin" | "admin" | "mart_admin" | "job_admin" | "service_admin" | "deal_admin" | "moderator" | "call_center" | "provider"
   | "representative" | "supervisor" | "finance" | "mart_vendor"
   | "mart_delivery" | "mart_cs" | "yessdeal_seller" | "employer" | "user";
-
+export const WALLET_HIDDEN_ROLES = new Set<RoleKey>([
+  "super_admin",
+  "admin",
+  "mart_admin",
+  "job_admin",
+  "service_admin",
+  "deal_admin",
+  "moderator",
+  "call_center",
+  "provider",
+  "representative",
+  "supervisor",
+  "finance",
+]);
 export interface RoleConfig {
   key: RoleKey;
   labelBn: string;

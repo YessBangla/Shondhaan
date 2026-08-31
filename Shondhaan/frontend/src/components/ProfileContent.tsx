@@ -153,28 +153,36 @@ const ProfileContent = ({ onProfileUpdated, showHeader = false }: ProfileContent
     setAccountUpdatedAt(profile.updated_at || null);
   };
 
-  const fetchCentralProfile = async () => {
-    const response = await fetch(CENTRAL_PROFILE_API, {
-      method: "GET",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (response.status === 401) throw new Error("Unauthorized");
-    if (!response.ok) throw new Error(`Error: ${response.status}`);
-    return await response.json();
-  };
+const fetchCentralProfile = async () => {
+  const auth = getMySqlAuth();
+  const response = await fetch(CENTRAL_PROFILE_API, {
+    method: "GET",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+    },
+  });
+  if (response.status === 401) throw new Error("Unauthorized");
+  if (!response.ok) throw new Error(`Error: ${response.status}`);
+  return await response.json();
+};
 
-  const saveCentralProfile = async (payload: Record<string, unknown>) => {
-    const response = await fetch(CENTRAL_PROFILE_API, {
-      method: "PATCH",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || "Could not update profile");
-    return data as CentralProfile;
-  };
+const saveCentralProfile = async (payload: Record<string, unknown>) => {
+  const auth = getMySqlAuth();
+  const response = await fetch(CENTRAL_PROFILE_API, {
+    method: "PATCH",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+      ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+    },
+    body: JSON.stringify(payload),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data.message || "Could not update profile");
+  return data as CentralProfile;
+};
 
   const fetchSellerProfile = async (userId: string | number) => {
     try {
