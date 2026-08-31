@@ -319,46 +319,46 @@ useEffect(() => {
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
     <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
       {/* User Profile Mini Card */}
-      {(!collapsed || inDrawer) && user && (
-        <div className="px-3 pt-4">
-          <div
-            ref={profileMenuRef}
-            className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer"
-            onClick={() => setProfileMenuOpen(o => !o)}
-          >
-            <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
-              {profileImageUrl ? (
-                <img src={resolveProfileImageUrl(profileImageUrl)} alt="" className="h-full w-full object-cover" />
-              ) : (
-                initials
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{(user as any)?.user_metadata?.full_name || (user as any)?.email?.split("@")[0]}</p>
-              <p className="text-[10px] text-foreground truncate leading-tight">{(user as any)?.email}</p>
-            </div>
-            <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
-          </div>
+     {/* User Profile Mini Card */}
+{(!collapsed || inDrawer) && user && (
+  <div className="px-3 pt-4" ref={profileMenuRef}>
+    <div
+      className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer"
+      onClick={() => setProfileMenuOpen(o => !o)}
+    >
+      <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
+        {profileImageUrl ? (
+          <img src={resolveProfileImageUrl(profileImageUrl)} alt="" className="h-full w-full object-cover" />
+        ) : (
+          initials
+        )}
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{(user as any)?.user_metadata?.full_name || (user as any)?.email?.split("@")[0]}</p>
+        <p className="text-[10px] text-foreground truncate leading-tight">{(user as any)?.email}</p>
+      </div>
+      <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
+    </div>
 
-          <AnimatePresence>
-            {profileMenuOpen && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
-                className="overflow-hidden space-y-1 mt-1"
-              >
-                <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-foreground transition-colors">
-                  <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
-                </button>
-                <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
-                  <LogOut className="h-3.5 w-3.5" /> সাইন আউট
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+    <AnimatePresence>
+      {profileMenuOpen && (
+        <motion.div
+          initial={{ opacity: 0, height: 0 }}
+          animate={{ opacity: 1, height: 'auto' }}
+          exit={{ opacity: 0, height: 0 }}
+          className="overflow-hidden space-y-1 mt-1"
+        >
+          <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-foreground transition-colors">
+            <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
+          </button>
+          <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
+            <LogOut className="h-3.5 w-3.5" /> সাইন আউট
+          </button>
+        </motion.div>
       )}
+    </AnimatePresence>
+  </div>
+)}
 
       {/* Wallet Balance Card */}
       {(!collapsed || inDrawer) && user && !isWalletHiddenRole && (
