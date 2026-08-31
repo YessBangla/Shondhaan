@@ -298,7 +298,7 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
           <Filter className="h-3.5 w-3.5" /> ফিল্টার <ChevronDown className={`h-3 w-3 transition-transform ${showFilters ? "rotate-180" : ""}`} />
         </button>
         <button onClick={exportCSV}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white hover:bg-primary/90">
+          className="flex items-center gap-1.5 rounded-lg bg-userprimary px-3 py-2 text-xs font-medium text-white hover:bg-userprimary">
           <Download className="h-3.5 w-3.5" /> CSV এক্সপোর্ট
         </button>
         <span className="text-xs text-muted-foreground ml-auto">{filtered.length}টি লেনদেন</span>
@@ -389,8 +389,8 @@ const AccountsSection = ({ userId, role }: AccountsSectionProps) => {
             <h3 className="text-sm font-semibold text-foreground">ওয়ালেট ফ্লো চার্ট</h3>
           </div>
           <div className="flex rounded-lg border border-border overflow-hidden">
-            <button onClick={() => setChartPeriod("weekly")} className={`px-3 py-1 text-[10px] font-medium transition-colors ${chartPeriod === "weekly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"}`}>সাপ্তাহিক</button>
-            <button onClick={() => setChartPeriod("monthly")} className={`px-3 py-1 text-[10px] font-medium transition-colors ${chartPeriod === "monthly" ? "bg-primary text-white" : "bg-background text-muted-foreground hover:bg-secondary"}`}>মাসিক</button>
+            <button onClick={() => setChartPeriod("weekly")} className={`px-3 py-1 text-[10px] font-medium transition-colors ${chartPeriod === "weekly" ? "bg-userprimary text-white" : "bg-background text-muted-foreground hover:bg-secondary"}`}>সাপ্তাহিক</button>
+            <button onClick={() => setChartPeriod("monthly")} className={`px-3 py-1 text-[10px] font-medium transition-colors ${chartPeriod === "monthly" ? "bg-userprimary text-white" : "bg-background text-muted-foreground hover:bg-secondary"}`}>মাসিক</button>
           </div>
         </div>
         {chartData.length === 0 ? (

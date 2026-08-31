@@ -108,13 +108,14 @@ const sidebarItems = [
   // ফিনান্স
   { value: "coupons", label: "কুপন", icon: <Tag />, group: "ফিনান্স" },
   { value: "withdrawals", label: "উইথড্রয়াল", icon: <Banknote />, group: "ফিনান্স" },
+  { value: "payment-settings", label: "পেমেন্ট সেটিংস", icon: <CreditCard />, group: "ফিনান্স" },
 
   // সিস্টেম
   { value: "users", label: "ইউজার রোল", icon: <Users />, group: "সিস্টেম ও সিকিউরিটি" },
   { value: "permissions", label: "পারমিশন", icon: <ShieldCheck />, group: "সিস্টেম ও সিকিউরিটি" },
   { value: "settings", label: "সেটিংস", icon: <Settings />, group: "সিস্টেম ও সিকিউরিটি" },
   { value: "profile", label: "আমার প্রোফাইল", icon: <UserCog />, group: "সিস্টেম ও সিকিউরিটি" },
-  { value: "payment-settings", label: "পেমেন্ট সেটিংস", icon: <CreditCard />, group: "সিস্টেম ও সিকিউরিটি" },
+
 ];
 
 const SuperAdminPanel = () => {

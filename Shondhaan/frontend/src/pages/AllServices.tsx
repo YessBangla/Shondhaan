@@ -362,11 +362,11 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
         <motion.div
           initial={{ opacity: 0, y: 40 }} animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 24 }} transition={{ type: "spring", stiffness: 300, damping: 30 }}
-          className="max-h-[100dvh] sm:max-h-[calc(100vh-2rem)] w-full sm:max-w-[420px] overflow-y-auto sm:rounded-xl sm:border sm:border-border sm:shadow-2xl"
+          className="max-h-[100dvh] sm:max-h-[calc(100vh-2rem)] w-full sm:max-w-[420px] sm:rounded-xl sm:border sm:border-border sm:shadow-2xl overflow-y-auto overflow-x-hidden"
           style={{ background: TK.paper }}
           onClick={(e) => e.stopPropagation()}
           role="dialog" aria-modal="true"
-        >
+          >
           {/* Header */}
           <div className="sticky top-0 z-10 flex items-center gap-3 px-4 py-3 border-b" style={{ borderColor: TK.line, background: TK.card }}>
             <img src={serviceImageUrl} alt={service.title} className="h-10 w-10 rounded-lg object-cover shrink-0" />
@@ -1086,7 +1086,7 @@ const CmsServiceCard = ({ service, title, onClick, onBook }: {
         <button
           type="button"
           onClick={handleBookClick}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-[6px] text-[10px] font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-primary/90 cursor-pointer"
+          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-[10px] text-[10px] font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-emerald-600 cursor-pointer"
         >
           <CalendarCheck className="h-3 w-3" />
           {bn ? "বুক করুন" : "Book Now"}

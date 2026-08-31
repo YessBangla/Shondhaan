@@ -108,12 +108,12 @@ const CentralAccounts = () => {
           <div className="flex rounded-lg border border-border overflow-hidden">
             {(["7d", "30d", "90d", "1y"] as const).map(p => (
               <button key={p} onClick={() => setPeriod(p)}
-                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p ? "bg-primary text-white" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
+                className={`px-3 py-1.5 text-xs font-medium transition-colors ${period === p ? "bg-userprimary text-white" : "bg-card text-muted-foreground hover:bg-secondary"}`}>
                 {p === "7d" ? "৭ দিন" : p === "30d" ? "৩০ দিন" : p === "90d" ? "৯০ দিন" : "১ বছর"}
               </button>
             ))}
           </div>
-          <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={exportCSV}>
+          <Button variant="outline" size="sm" className="text-xs gap-1.5 hover:bg-userprimary" onClick={exportCSV}>
             <Download className="h-3.5 w-3.5" /> এক্সপোর্ট
           </Button>
         </div>
