@@ -11,6 +11,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { WALLET_HIDDEN_ROLES } from "@/config/roles";
 import NotificationBell from "@/components/NotificationBell";
 import BackendShortcutsHelp from "@/components/BackendShortcutsHelp";
 import PanelHero from "@/components/PanelHero";
@@ -82,8 +83,16 @@ const PanelSidebarTabs = ({
 
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
+// inside component, near other derived values
 
-  useEffect(() => {
+ const mysqlAuthUser = useMemo(() => getMySqlAuth()?.user, []);
+const userRole =
+  (mysqlAuthUser as any)?.type ||
+  (mysqlAuthUser as any)?.role ||
+  (user as any)?.user_metadata?.role ||
+  "";
+const isWalletHiddenRole = WALLET_HIDDEN_ROLES.has(userRole);
+useEffect(() => {
     if (!requestedTab) return;
     if (items.some((item) => item.value === requestedTab)) {
       setActiveTabState(requestedTab);
@@ -352,7 +361,7 @@ const PanelSidebarTabs = ({
       )}
 
       {/* Wallet Balance Card */}
-      {(!collapsed || inDrawer) && user && (
+      {(!collapsed || inDrawer) && user && !isWalletHiddenRole && (
         <div className="px-2.5 pt-3">
           <div className="rounded-lg bg-gradient-to-br from-primary to-green-700 p-2 text-white shadow-lg">
             <div className="flex items-center justify-between">
