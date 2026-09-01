@@ -279,25 +279,51 @@ const AdminDealManagement = () => {
     }
   }, []);
 
+  // FIX: fetchReports no longer depends on `listings`. Previously this callback
+  // was recreated every time `listings` changed (because it was in the
+  // useCallback dependency array), which made the mount `useEffect` below
+  // re-run every time `listings` changed, which called `fetchListings` again,
+  // which changed `listings` again, forming an infinite render/fetch loop —
+  // this is what caused the page to appear permanently "buffering".
+  //
+  // Now fetchReports is stable (empty deps) and simply stores raw reports.
+  // Title enrichment from `listings` happens in a separate effect below that
+  // only touches local state and never re-triggers network fetches.
   const fetchReports = useCallback(async () => {
     try {
       const data = await apiFetch(`/deal/reports`);
       const rawReports: any[] = data.data || data;
-
-      // Enrich with listing titles from whatever is already loaded in state
-      // (fetchListings runs alongside this, so it may or may not have landed
-      // yet — either way this is best-effort and never blocks the reports list)
-      const titleMap = new Map(listings.map(l => [l.id, l.title]));
       setReports(rawReports.map((r: any) => ({
         ...r,
-        listing_title: r.deal_listings?.title || titleMap.get(r.listing_id) || "—",
+        listing_title: r.deal_listings?.title || "—",
       })));
     } catch (err: any) {
       toast.error(err.message || "রিপোর্ট লোড ব্যর্থ");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Backfill report titles once listings are available/updated, without
+  // re-fetching reports from the network. Safe to depend on `listings` here
+  // because this effect never calls fetchListings/fetchCategories/fetchReports.
+  useEffect(() => {
+    if (listings.length === 0) return;
+    setReports(prev => {
+      let changed = false;
+      const next = prev.map(r => {
+        if (r.listing_title && r.listing_title !== "—") return r;
+        const match = listings.find(l => l.id === r.listing_id);
+        if (match) {
+          changed = true;
+          return { ...r, listing_title: match.title };
+        }
+        return r;
+      });
+      return changed ? next : prev;
+    });
   }, [listings]);
 
+  // Mount effect: now runs exactly once, since fetchListings, fetchCategories,
+  // and fetchReports are all stable (empty-deps) callbacks.
   useEffect(() => {
     fetchListings();
     fetchCategories();
@@ -424,7 +450,7 @@ const AdminDealManagement = () => {
       toast.success(`${ids.length}টি বিজ্ঞাপন মুছে ফেলা হয়েছে`);
       sel.clear();
     } catch (err: any) {
-      toast.error(err.message || "মুছতে ব্যর্থ");
+      toast.error(err.message || "আপডেট ব্যর্থ");
     }
   };
 

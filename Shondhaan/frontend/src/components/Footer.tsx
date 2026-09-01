@@ -264,29 +264,7 @@ const Footer = () => {
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="mt-12 pt-8 border-t border-slate-800/50">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <p className="text-xs text-slate-400 text-center md:text-left">
-              {bn ? settings.footer_copyright_bn : settings.footer_copyright_en}
-            </p>
-            <div className="flex items-center justify-center gap-4 text-xs text-slate-500">
-              <button 
-                onClick={() => navigate("/privacy")} 
-                className="hover:text-slate-300 transition-colors"
-              >
-                {bn ? "গোপনীয়তা" : "Privacy"}
-              </button>
-              <span className="w-px h-4 bg-slate-700" />
-              <button 
-                onClick={() => navigate("/terms")} 
-                className="hover:text-slate-300 transition-colors"
-              >
-                {bn ? "শর্তাবলী" : "Terms"}
-              </button>
-            </div>
-          </div>
-        </div>
+       
       </div>
     </footer>
   );

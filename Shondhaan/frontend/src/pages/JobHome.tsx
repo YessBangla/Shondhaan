@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import Navbar from "@/components/Navbar";
 import JobsMenuBar from "@/components/jobs/JobsMenuBar";
 import JobsPageTransition from "@/components/jobs/JobsPageTransition";
@@ -27,12 +27,26 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSEO } from "@/hooks/useSEO";
 import DesktopMegaMenu from "@/components/DesktopMegaMenu";
 
+// job_type values that map 1:1 onto JOB_TYPES in useJobData.ts. Any ?type=
+// link using one of these strings passes straight through to selectedType
+// with no translation needed. Keep this in sync with JOB_TYPES.
+const DIRECT_JOB_TYPE_VALUES = [
+  "full-time",
+  "part-time",
+  "contract",
+  "internship",
+  "freelance",
+  "remote",
+  "temporary",
+];
+
 const JobHome = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
   const navigate = useNavigate();
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const [searchParams] = useSearchParams();
 
   useSEO({
     title: bn ? "সন্ধান জবস — চাকরি খুঁজুন" : "Shondhaan Jobs — Find Your Next Job",
@@ -69,6 +83,50 @@ const JobHome = () => {
   const handleDivisionChange = (v: string) => { setSelectedDivision(v); setSelectedDistrict(""); setSelectedThana(""); };
   const handleDistrictChange = (v: string) => { setSelectedDistrict(v); setSelectedThana(""); };
   const clearLocation = () => { setSelectedDivision(""); setSelectedDistrict(""); setSelectedThana(""); };
+
+  // ── Sync filters from the JobsMenuBar submenu's ?type= param ───────────
+  // JobsMenuBar links (e.g. "Internship" -> /jobs?type=internship) land
+  // here since /jobs stays mounted across navigations within itself.
+  // Values that match a real job_type (see DIRECT_JOB_TYPE_VALUES) map
+  // straight onto selectedType. A handful of menu items aren't job types
+  // at all ("government" is a company_type, "fresher" is an experience
+  // bucket, "featured"/"deadline" are existing sections we just scroll to,
+  // "new" is already the default sort) — those get handled explicitly.
+ useEffect(() => {
+  const type = searchParams.get("type");
+  if (!type) return;
+
+  if (DIRECT_JOB_TYPE_VALUES.includes(type)) {
+    setSelectedType(type);
+  } else {
+    switch (type) {
+      case "government":
+        setSelectedCompanyType("government");
+        break;
+      case "fresher":
+        setSelectedExperience("0");
+        break;
+      case "new":
+        // already sorted newest-first server-side; nothing to set
+        break;
+      // "featured" and "deadline" scroll to their own sections below
+      // instead of the general results list
+    }
+  }
+
+  // Scroll to the right section for every type= click
+  const scrollTargetId =
+    type === "featured" ? "featured-jobs-section" :
+    type === "deadline" ? "deadline-soon-section" :
+    "latest-jobs-section";
+
+  // Small delay lets the filtered list render first so scrollIntoView
+  // measures the post-filter layout, not the stale pre-filter one
+  setTimeout(() => {
+    document.getElementById(scrollTargetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, 100);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [searchParams]);
 
   // Data queries
   const { data: jobs = [], isLoading } = useApprovedJobs({
@@ -179,7 +237,7 @@ const JobHome = () => {
           <div className="flex-1 min-w-0">
             {/* Deadline Soon */}
             {deadlineSoonJobs.length > 0 && selectedCategory === "all" && !search && (
-              <div className="mb-8">
+              <div className="mb-8" id="deadline-soon-section">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1 h-5 rounded-full bg-red-500" />
                   <h2 className="font-bold text-base">{bn ? "শীঘ্রই শেষ হচ্ছে!" : "Closing Soon!"}</h2>
@@ -212,7 +270,7 @@ const JobHome = () => {
 
             {/* Featured Jobs */}
             {featuredJobs.length > 0 && (
-              <div className="mb-8">
+              <div className="mb-8" id="featured-jobs-section">
                 <div className="flex items-center gap-2 mb-4">
                   <div className="w-1 h-5 rounded-full bg-amber-500" />
                   <h2 className="font-bold text-base">{bn ? "ফিচার্ড চাকরি" : "Featured Jobs"}</h2>
@@ -227,7 +285,7 @@ const JobHome = () => {
             )}
 
             {/* All Jobs */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-2 mb-4" id="latest-jobs-section">
               <div className="w-1 h-5 rounded-full bg-blue-600"/>
               <h2 className="font-bold  text-base">
                 {selectedCategory !== "all" ? getCatLabel(selectedCategory) : bn ? "নতুন চাকরির বিজ্ঞাপন" : "Latest Jobs"}
