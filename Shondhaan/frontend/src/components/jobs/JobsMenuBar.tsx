@@ -62,17 +62,17 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
       icon: Search,
       hideForEmployer: true,
       children: [
-        { labelBn: "সকল চাকরি", labelEn: "All Jobs", href: "/jobs", icon: Briefcase },
-        { labelBn: "নতুন চাকরি", labelEn: "New / Latest Jobs", href: "/jobs?type=new", icon: Star },
-        { labelBn: "ডেডলাইন আগামীকাল", labelEn: "Deadline Tomorrow", href: "/jobs?type=deadline", icon: Clock },
-        { labelBn: "ইন্টার্নশিপ", labelEn: "Internship", href: "/jobs?type=intern", icon: GraduationCap },
-        { labelBn: "পার্ট-টাইম চাকরি", labelEn: "Part-time Jobs", href: "/jobs?type=parttime", icon: Clock },
-        { labelBn: "চুক্তিভিত্তিক চাকরি", labelEn: "Contractual Jobs", href: "/jobs?type=contract", icon: FileText },
-        { labelBn: "রিমোট / ওয়ার্ক ফ্রম হোম", labelEn: "Remote / Work from Home", href: "/jobs?type=remote", icon: Laptop },
-        { labelBn: "ফ্রেশার চাকরি", labelEn: "Fresher / Entry Level", href: "/jobs?type=fresher", icon: TrendingUp },
-        { labelBn: "ফিচার্ড / হট জব", labelEn: "Featured / Hot Jobs", href: "/jobs?type=featured", icon: Award },
-        { labelBn: "সরকারি চাকরি", labelEn: "Government Jobs", href: "/jobs?type=government", icon: Building2 },
-      ],
+  { labelBn: "সকল চাকরি", labelEn: "All Jobs", href: "/jobs", icon: Briefcase },
+  { labelBn: "নতুন চাকরি", labelEn: "New / Latest Jobs", href: "/jobs?type=new", icon: Star },
+  { labelBn: "ফুল-টাইম চাকরি", labelEn: "Full-time Jobs", href: "/jobs?type=full-time", icon: Clock },
+  { labelBn: "ইন্টার্নশিপ", labelEn: "Internship", href: "/jobs?type=internship", icon: GraduationCap },
+  { labelBn: "পার্ট-টাইম চাকরি", labelEn: "Part-time Jobs", href: "/jobs?type=part-time", icon: Clock },
+  { labelBn: "চুক্তিভিত্তিক চাকরি", labelEn: "Contractual Jobs", href: "/jobs?type=contract", icon: FileText },
+  { labelBn: "রিমোট / ওয়ার্ক ফ্রম হোম", labelEn: "Remote / Work from Home", href: "/jobs?type=remote", icon: Laptop },
+  { labelBn: "ফ্রেশার চাকরি", labelEn: "Fresher / Entry Level", href: "/jobs?type=fresher", icon: TrendingUp },
+  { labelBn: "ফিচার্ড / হট জব", labelEn: "Featured / Hot Jobs", href: "/jobs?type=featured", icon: Award },
+  { labelBn: "সরকারি চাকরি", labelEn: "Government Jobs", href: "/jobs?type=government", icon: Building2 },
+],
     },
     {
       key: "career",
@@ -84,9 +84,9 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
         { labelBn: "কোম্পানি তালিকা", labelEn: "Employer Directory", href: "/jobs/employers", icon: Building2 },
         { labelBn: "ক্যাটেগরি অনুযায়ী চাকরি", labelEn: "Jobs by Category", href: "/jobs#categories", icon: Filter },
         { labelBn: "বিভাগ অনুযায়ী চাকরি", labelEn: "Jobs by Division", href: "/jobs#divisions", icon: MapPin },
-        { labelBn: "প্রশ্নোত্তর (FAQ)", labelEn: "FAQ", href: "/faq", icon: HelpCircle },
-        { labelBn: "যোগাযোগ করুন", labelEn: "Contact Us", href: "/contact", icon: Phone },
-        { labelBn: "আমাদের সম্পর্কে", labelEn: "About Us", href: "/about", icon: Info },
+        // { labelBn: "প্রশ্নোত্তর (FAQ)", labelEn: "FAQ", href: "/faq", icon: HelpCircle },
+        // { labelBn: "যোগাযোগ করুন", labelEn: "Contact Us", href: "/contact", icon: Phone },
+        // { labelBn: "আমাদের সম্পর্কে", labelEn: "About Us", href: "/about", icon: Info },
         { labelBn: "হোম পেজে ফিরুন", labelEn: "Back to Home", href: "/", icon: Home },
       ],
     },
@@ -110,10 +110,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
     },
   ];
 
-  // Exclusive split: employer accounts see ONLY "For Employers" — the job
-  // seeker menus (Find Jobs / My Profile / Career Resources) are hidden for
-  // them via hideForEmployer. Everyone else sees those three, but never
-  // "For Employers" (employerOnly).
+  
   const menus = allMenus.filter((menu) => {
     if (isEmployer) return !menu.hideForEmployer;
     return !menu.employerOnly;
