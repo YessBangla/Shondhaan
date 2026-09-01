@@ -741,14 +741,14 @@ const HeroSection = () => {
                     transition={{ duration: 0.35, delay: 0.22 + idx * 0.06 }}
                     onClick={() => handleCardClick(to)}
                     whileHover={{ y: -8 }}
-                    className="group relative overflow-hidden rounded-lg border border-white backdrop-blur-sm p-1 text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
+                    className="group relative overflow-hidden rounded-lg border border-white backdrop-blur-sm text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
                     style={{ background: `linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(15, 23, 42, 0.6)), ${bgPattern}` }}
                   >
                     <div className="absolute inset-0 bg-background group-hover:opacity-100 transition-opacity duration-300" />
                     
                     <div className="relative flex flex-col items-center h-full gap-2 pt-2">
                       <div 
-                        className="flex items-center justify-center h-14 w-14 rounded-lg flex-shrink-0 p-1">
+                        className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 p-1">
                         {/* <Icon className="h-7 w-7 text-white group-hover:text-primary transition-colors" /> */}
                         <img src={imgIcon} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }} alt="" />
                       </div>

@@ -118,7 +118,7 @@ const JobSeekerProfile = () => {
     })();
   }, [user, userId]);
 
-  if (!user) { navigate("/auth"); return null; }
+  if (!user) { navigate("/login"); return null; }
 
   const calculateCompleteness = () => {
     let score = 0;

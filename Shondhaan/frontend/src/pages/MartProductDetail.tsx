@@ -70,7 +70,7 @@ const MartProductDetail = () => {
   const requireAuthForPurchase = (action: () => void) => {
     if (!user) {
       toast.info(bn ? "ক্রয় করতে অনুগ্রহ করে লগইন করুন" : "Please login to purchase");
-      navigate(`/auth?redirect=/mart/product/${slug}`);
+      navigate(`/login?redirect=/mart/product/${slug}`);
       return;
     }
     action();
@@ -624,7 +624,7 @@ const MartProductDetail = () => {
                   </button>
                   <button
                     onClick={() => {
-                      if (!user) { toast.info(bn ? "চ্যাট করতে লগইন করুন" : "Login to chat"); navigate(`/auth?redirect=/mart/product/${slug}`); return; }
+                      if (!user) { toast.info(bn ? "চ্যাট করতে লগইন করুন" : "Login to chat"); navigate(`/login?redirect=/mart/product/${slug}`); return; }
                       if (user.id === product?.vendor_id) { toast.info(bn ? "নিজের পণ্যে চ্যাট করা যায় না" : "Can't chat on your own product"); return; }
                       setChatOpen(true);
                     }}

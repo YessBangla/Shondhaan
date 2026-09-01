@@ -289,7 +289,7 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
 
   /* Submit */
   const submitBooking = async () => {
-    if (!activeUserId) { toast.error(bn ? "লগইন করুন" : "Login required"); navigate("/auth"); return; }
+    if (!activeUserId) { toast.error(bn ? "লগইন করুন" : "Login required"); navigate("/login"); return; }
     if (hasPackages && !selectedPkg) { toast.error(bn ? "প্যাকেজ বেছে নিন" : "Select a package"); return; }
     if (!bookingDate || !bookingTime || !bookingName.trim() || !bookingPhone.trim() || !bookingAddress.trim()) {
       toast.error(bn ? "সব তথ্য পূরণ করুন" : "Fill all details"); return;
@@ -789,7 +789,7 @@ const AllServices = () => {
 
   /* ── Handle book from card ── */
   const handleBookFromCard = (service: ApiService) => {
-    if (!getMySqlAuth()?.user?.id) { toast.info(bn ? "লগইন করুন" : "Login to book"); navigate("/auth"); return; }
+    if (!getMySqlAuth()?.user?.id) { toast.info(bn ? "লগইন করুন" : "Login to book"); navigate("/login"); return; }
     setBookingTarget(service);
   };
 

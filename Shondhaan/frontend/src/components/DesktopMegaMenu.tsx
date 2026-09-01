@@ -94,7 +94,7 @@ const hasSidebar =
   }, [user]);
 
   const hiddenPaths = [
-    "/auth", "/reset-password",
+    "/login", "/reset-password",
     "/main-login", "/mart/login", "/deal/login", "/jobs/login",
     "/admin", "/call-center", "/provider", "/representative",
     "/moderator", "/supervisor", "/finance", "/internal", "/super-admin",
@@ -191,7 +191,7 @@ if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWit
         { labelBn: "Notifications", labelEn: "Notifications", href: "/dashboard?tab=notifications", icon: Bell },
         { labelBn: "সার্ভিস ট্র্যাক করুন", labelEn: "Track My Service", href: "/track/search", icon: Route },
         ...(!user ? [
-          { labelBn: "লগইন", labelEn: "Login", href: "/auth", icon: LogIn },
+          { labelBn: "লগইন", labelEn: "Login", href: "/login", icon: LogIn },
           { labelBn: "রেজিস্ট্রেশন", labelEn: "Register", href: "/auth?mode=register", icon: UserPlus },
           { labelBn: "পাসওয়ার্ড রিসেট", labelEn: "Reset Password", href: "/reset-password", icon: KeyRound },
         ] as MenuItem[] : []),

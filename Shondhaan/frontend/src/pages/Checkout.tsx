@@ -101,7 +101,7 @@ const Checkout = () => {
 
     if (!user) {
       toast.error(t("sd.loginFirst"));
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -318,7 +318,7 @@ const Checkout = () => {
               {!user && (
                 <div className="mb-4 rounded-lg bg-secondary p-3 text-center">
                   <p className="text-xs text-muted-foreground mb-2">{t("sd.loginToBook")}</p>
-                  <button onClick={() => navigate("/auth")} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">
+                  <button onClick={() => navigate("/login")} className="rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white">
                     {t("sd.loginRegister")}
                   </button>
                 </div>

@@ -167,7 +167,7 @@ const Footer = () => {
               </li>
               <li>
                 <button 
-                  onClick={() => navigate("/auth")} 
+                  onClick={() => navigate("/login")} 
                   className="text-slate-400 hover:text-blue-400 transition-colors duration-200 flex items-center gap-2 group"
                 >
                   <span className="h-1 w-1 rounded-full bg-blue-500/0 group-hover:bg-blue-500 transition-colors" />

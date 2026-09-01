@@ -265,7 +265,7 @@ const BookingModal = ({ service, bn, onClose }: BookingModalProps) => {
 
   /* ── Submit booking ── */
   const submitBooking = async () => {
-    if (!activeUserId) { toast.error(bn ? "লগইন করুন" : "Login required"); navigate("/auth"); return; }
+    if (!activeUserId) { toast.error(bn ? "লগইন করুন" : "Login required"); navigate("/login"); return; }
     if (hasPackages && !selectedPkg) { toast.error(bn ? "প্যাকেজ বেছে নিন" : "Select a package"); return; }
     if (!bookingDate || !bookingTime || !bookingName.trim() || !bookingPhone.trim() || !bookingAddress.trim()) {
       toast.error(bn ? "সব তথ্য পূরণ করুন" : "Fill all details"); return;
@@ -455,7 +455,10 @@ const BookingModal = ({ service, bn, onClose }: BookingModalProps) => {
                     {bookingDate ? format(bookingDate, "EEE, dd MMM") : (bn ? "তারিখ বেছে নিন" : "Pick date")}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+               <PopoverContent
+  className="z-[10000] w-auto p-0"
+  align="start"
+>
                   <Calendar
                     mode="single"
                     selected={bookingDate}
@@ -710,7 +713,7 @@ const ServiceSection = forwardRef<HTMLElement, ServiceSectionProps>(({ heading, 
   }, []);
 
   const scroll = (d: "left" | "right") => scrollRef.current?.scrollBy({ left: d === "left" ? -280 : 280, behavior: "smooth" });
-  const handleBookNow = (e: React.MouseEvent, s: ServiceItem) => { e.preventDefault(); e.stopPropagation(); if (!s.slug) return; if (!getMySqlAuth()?.user?.id) { toast.info(bn ? "লগইন করুন" : "Login to book"); navigate("/auth"); return; } haptic("medium"); setBookingTarget(s); };
+  const handleBookNow = (e: React.MouseEvent, s: ServiceItem) => { e.preventDefault(); e.stopPropagation(); if (!s.slug) return; if (!getMySqlAuth()?.user?.id) { toast.info(bn ? "লগইন করুন" : "Login to book"); navigate("/login"); return; } haptic("medium"); setBookingTarget(s); };
   const handleShare = (e: React.MouseEvent, s: ServiceItem) => { e.preventDefault(); e.stopPropagation(); if (!s.slug) return; if (shareState?.slug === s.slug) setShareState(null); else setShareState({ slug: s.slug, title: s.title, rect: (e.currentTarget as HTMLElement).getBoundingClientRect() }); };
   const handleCompare = (e: React.MouseEvent, s: ServiceItem) => { e.preventDefault(); e.stopPropagation(); if (!s.cmsService || !s.slug) return; if (isInCompare(s.slug)) { removeFromCompare(s.slug); haptic("light"); toast.info(bn ? "তুলনা থেকে সরানো" : "Removed"); } else { if (compareList.length >= 3) { toast.warning(bn ? "সর্বোচ্চ ৩টি" : "Max 3"); return; } addToCompare(s.cmsService); haptic("medium"); toast.success(bn ? "তুলনায় যোগ" : "Added", { action: compareList.length >= 1 ? { label: bn ? "তুলনা" : "Compare", onClick: () => navigate("/compare") } : undefined }); } };
   const closeShare = useCallback(() => setShareState(null), []);

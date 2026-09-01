@@ -282,8 +282,8 @@ const App = () => {
                                   <Route path="/all-services" element={<AllServices />} />
                                   <Route path="/service-message" element={<ServiceMessage />} />
                                   <Route path="/compare" element={<Compare />} />
-                                  <Route path="/auth" element={<Auth />} />
-                                  <Route path="/auth/callback" element={<AuthCallback />} />
+                                  <Route path="/login" element={<Auth />} />
+                                  <Route path="/login/callback" element={<AuthCallback />} />
                                   <Route path="/main-login" element={<MainLogin />} />
                                   <Route path="/super-admin-login" element={<SuperAdminLogin />} />
                                   <Route path="/bookings" element={<BookingHistory />} />

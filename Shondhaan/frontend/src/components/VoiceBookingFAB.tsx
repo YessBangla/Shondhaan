@@ -114,7 +114,7 @@ const VoiceBookingFAB = () => {
   // Hide on staff/admin routes (after all hooks)
   if (typeof window !== "undefined") {
     const p = window.location.pathname;
-    if (p.startsWith("/admin") || p.startsWith("/super-admin") || p === "/auth") return null;
+    if (p.startsWith("/admin") || p.startsWith("/super-admin") || p === "/login") return null;
   }
 
   return (

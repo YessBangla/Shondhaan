@@ -130,7 +130,7 @@ export default function JobSidebar({ bn, user, topEmployers, stats, setSearch, s
               </Button>
             )}
             {!user && (
-              <Button size="sm" className="w-full justify-start gap-2 text-xs h-9 rounded-lg bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/auth")}>
+              <Button size="sm" className="w-full justify-start gap-2 text-xs h-9 rounded-lg bg-blue-600 hover:bg-blue-700" onClick={() => navigate("/login")}>
                 <User className="h-3.5 w-3.5" /> {bn ? "রেজিস্ট্রেশন করুন" : "Register Now"}
               </Button>
             )}

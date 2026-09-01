@@ -291,7 +291,7 @@ const DealAdDetail = () => {
     const userId = getDealAuthUserId(user);
 
     if (!userId) {
-      navigate("/auth");
+      navigate("/login");
       toast.info(bn ? "পছন্দে যোগ করতে লগইন করুন" : "Please login to save this ad");
       return;
     }
@@ -324,7 +324,7 @@ const DealAdDetail = () => {
 
   const handleChatClick = async () => {
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
     if (!listing) return;
@@ -541,7 +541,7 @@ const DealAdDetail = () => {
                       className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                       onClick={() => {
                         if (!user) {
-                          navigate("/auth");
+                          navigate("/login");
                           toast.info(bn ? "ফোন নম্বর দেখতে লগইন করুন" : "Please login to see phone number");
                           return;
                         }
@@ -637,7 +637,7 @@ const DealAdDetail = () => {
                 className="w-full text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 font-medium"
                 onClick={() => {
                   if (!user) {
-                    navigate("/auth");
+                    navigate("/login");
                     return;
                   }
                   if (user.id === listing.user_id) {

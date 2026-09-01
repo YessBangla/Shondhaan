@@ -689,7 +689,7 @@ const JobPostForm = () => {
     { label: bn ? "বিলিং ও যোগাযোগ" : "Billing & Contact", icon: Phone, done: step4Done },
   ];
 
-  if (!user) { navigate("/auth"); return null; }
+  if (!user) { navigate("/login"); return null; }
 
   const handleAIDescription = async () => {
     if (!title.trim()) { toast.error(bn ? "প্রথমে পদের নাম লিখুন" : "Enter job title first"); return; }

@@ -202,7 +202,7 @@ const Notifications = () => {
                 : "Sign in to see updates about your bookings, orders, and more."}
             </p>
             <Link
-              to="/auth"
+              to="/login"
               className="press mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary/90"
             >
               <LogIn className="h-4 w-4" />

@@ -197,7 +197,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
 
   useEffect(() => {
     if (!authLoading && !user && !mysqlAuth?.user) {
-      navigate("/auth", { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [user, mysqlAuth, authLoading, navigate]);
 
@@ -335,7 +335,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
 
     if (!mysqlAuth?.user) {
       toast.error("Please login first");
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -393,7 +393,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
     } catch (error: any) {
       if (error.message.includes("401")) {
         clearMySqlAuth?.();
-        navigate("/auth");
+        navigate("/login");
       }
       toast.error(error.message || (bn ? "আপডেট ব্যর্থ হয়েছে" : "Failed to update profile"));
     } finally {

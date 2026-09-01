@@ -325,7 +325,7 @@ const DealAllAds = () => {
     const userId = getDealAuthUserId(user);
 
     if (!userId) {
-      navigate("/auth");
+      navigate("/login");
       toast.info(bn ? "Please login to save ads" : "Please login to save ads");
       return;
     }

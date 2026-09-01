@@ -22,7 +22,7 @@ const LoyaltyWalletCard = () => {
   // Hide on auth, splash, and admin/staff routes
   if (typeof window !== "undefined") {
     const p = window.location.pathname;
-    if (p === "/auth" || p.startsWith("/admin") || p.startsWith("/super-admin")) return null;
+    if (p === "/login" || p.startsWith("/admin") || p.startsWith("/super-admin")) return null;
   }
 
   return (

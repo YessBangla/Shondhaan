@@ -372,7 +372,7 @@ const MartStore = () => {
   const handleFollow = () => {
     if (!user) {
       toast.info("Login to follow this store");
-      navigate(`/auth?redirect=${encodeURIComponent(`/mart/store/${vendorId}`)}`);
+      navigate(`/login?redirect=${encodeURIComponent(`/mart/store/${vendorId}`)}`);
       return;
     }
 
