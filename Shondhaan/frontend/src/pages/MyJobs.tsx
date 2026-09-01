@@ -37,7 +37,7 @@ const MyJobs = () => {
   const [appFilter, setAppFilter] = useState("all");
   const updateAppStatus = useUpdateApplicationStatus();
 
-  if (!user) { navigate("/auth"); return null; }
+  if (!user) { navigate("/login"); return null; }
 
   const statusLabel = (s: string) => {
     const map: Record<string, string> = bn

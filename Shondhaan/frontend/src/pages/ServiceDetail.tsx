@@ -422,7 +422,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
   useEffect(() => { if (referralSource === "url" && referralCode) handleValidateReferral(); }, [referralSource, referralCode, handleValidateReferral]);
 
   const handleDirectBooking = async () => {
-    if (!activeUserId) { toast.error(t("sd.loginFirst")); navigate("/auth"); return; }
+    if (!activeUserId) { toast.error(t("sd.loginFirst")); navigate("/login"); return; }
     if (!bookingDate || !bookingTime || !bookingName.trim() || !bookingPhone.trim() || !bookingAddress.trim()) {
       if (!showBookingForm) { setShowBookingForm(true); return; }
       toast.error(t("sd.fillAll")); return;
@@ -825,7 +825,7 @@ const ReviewSection = ({ serviceSlug, t, bn, navigate }: { serviceSlug: string; 
   }, [serviceSlug]);
 
   const handleSubmitReview = async () => {
-    if (!userId) { toast.error(t("sd.loginFirst")); navigate("/auth"); return; }
+    if (!userId) { toast.error(t("sd.loginFirst")); navigate("/login"); return; }
     if (!newComment.trim()) { toast.error(bn ? "মন্তব্য লিখুন" : "Write a comment"); return; }
     setSubmitting(true);
     try {

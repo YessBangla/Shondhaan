@@ -12,6 +12,7 @@ interface ProtectedRouteProps {
   onlyUser?: boolean; // If true, only "user" role can access
 }
 
+
 /**
  * ProtectedRoute Component
  * 
@@ -62,13 +63,13 @@ const ProtectedRoute = ({
   // Check if user is authenticated
   if (!user && !mysqlAuth?.user) {
     toast.error("Please login to continue");
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Verify user ID is present (data isolation)
   if (!userId) {
     toast.error("Session error. Please login again");
-    return <Navigate to="/auth" replace />;
+    return <Navigate to="/login" replace />;
   }
 
   // Check role restrictions

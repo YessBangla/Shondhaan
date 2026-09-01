@@ -11,7 +11,7 @@ const AuthCallback = () => {
   useEffect(() => {
     if (loading) return;
     if (!user) {
-      navigate("/auth", { replace: true });
+      navigate("/login", { replace: true });
       return;
     }
     getRoleRedirectPath().then((path) => {

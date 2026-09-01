@@ -89,7 +89,7 @@ const DealEditAd = () => {
   };
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth", { replace: true });
+    if (!authLoading && !user) navigate("/login", { replace: true });
   }, [user, authLoading, navigate]);
 
   useEffect(() => {

@@ -65,7 +65,7 @@ const DealPostAd = () => {
 
   useEffect(() => {
     if (!authLoading && !user) {
-      navigate("/auth", { replace: true });
+      navigate("/login", { replace: true });
     }
   }, [user, authLoading, navigate]);
 

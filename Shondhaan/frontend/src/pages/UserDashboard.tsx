@@ -106,7 +106,7 @@ const UserDashboard = () => {
     if (mysqlAuth === null) return;
 
     if (!mysqlAuth?.user || !mysqlAuth?.token) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -203,7 +203,7 @@ const UserDashboard = () => {
 
     toast.success(bn ? "লগ আউট সফল" : "Logged out");
 
-    navigate("/auth");
+    navigate("/login");
   };
 
   // --------------------------------------------------

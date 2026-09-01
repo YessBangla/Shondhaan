@@ -25,7 +25,6 @@ import {
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
 type Booking = BookingRecord;
-
 interface Provider {
   id: string | number;
   user_id: string | number;
@@ -196,21 +195,24 @@ const CallCenterPanel = () => {
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const providersRes = await fetch(`${API_BASE_URL}/api/providers?status=approved`, {
-        headers: getAuthHeaders(),
-        credentials: "include",
-      });
-      const providerPayload = await providersRes.json().catch(() => ({}));
-      if (!providersRes.ok) {
-        throw new Error(providerPayload.message || "Failed to fetch providers");
-      }
+const providersRes = await fetch(`${API_BASE_URL}/api/providers?status=approved`, {
+  headers: getAuthHeaders(),
+  credentials: "include",
+});
+
+const providerPayload = await providersRes.json().catch(() => ({}));
+
+if (!providersRes.ok) {
+  throw new Error(providerPayload.message || "Failed to fetch providers");
+}
+
+  setProviders(extractArray<Provider>(providerPayload));
       const [bookingRows, requestRows, labRows] = await Promise.all([
         listBookings(),
-        fetchOptionalArray<ServiceRequest>(`${API_BASE_URL}/api/service-requests`),
+        fetchOptionalArray<ServiceRequest>(`${API_BASE_URL}/api/bookings`),
         fetchOptionalArray<any>(`${API_BASE_URL}/api/lab-test-reports`),
       ]);
       setBookings((bookingRows || []) as Booking[]);
-      setProviders(extractArray<Provider>(providerPayload));
       setRequests(requestRows || []);
       setLabTests(labRows || []);
     } catch (error: any) {

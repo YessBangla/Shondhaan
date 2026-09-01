@@ -28,7 +28,7 @@ const MobileFabHub = () => {
     pathname.startsWith("/admin") ||
     pathname.startsWith("/super-admin") ||
     pathname.startsWith("/internal") ||
-    pathname === "/auth";
+    pathname === "/login";
 
   // Close the dial on route change.
   useEffect(() => { setOpen(false); }, [pathname]);

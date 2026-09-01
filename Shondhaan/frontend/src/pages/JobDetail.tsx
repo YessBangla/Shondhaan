@@ -208,7 +208,7 @@ const JobDetail = () => {
 
   const handleApply = async () => {
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
 
@@ -274,7 +274,7 @@ const JobDetail = () => {
 
   const handleSave = () => {
     if (!user) {
-      navigate("/auth");
+      navigate("/login");
       return;
     }
     saveJob.mutate({ jobId: id!, action: isSaved ? "unsave" : "save" });
@@ -476,7 +476,7 @@ const JobDetail = () => {
           </p>
           <Button
             size="sm"
-            onClick={() => navigate("/auth")}
+            onClick={() => navigate("/login")}
             className="bg-primary hover:bg-emerald-700 text-white"
           >
             {bn ? "লগইন" : "Login"}
@@ -509,7 +509,7 @@ const JobDetail = () => {
       <div className="mx-auto max-w-7xl px-11 py-3">
         <div className="flex flex-wrap items-center justify-end gap-2">
           <Button
-            onClick={() => (user ? setShowApplyModal(true) : navigate("/auth"))}
+            onClick={() => (user ? setShowApplyModal(true) : navigate("/login"))}
             className="bg-primary hover:bg-emerald-700 text-white gap-1.5 h-11 sm:h-9"
           >
             <Send className="h-4 w-4" /> {bn ? "আবেদন করুন" : "Apply Now"}
@@ -671,7 +671,7 @@ const JobDetail = () => {
                 >
                   <Button
                     onClick={() =>
-                      user ? setShowApplyModal(true) : navigate("/auth")
+                      user ? setShowApplyModal(true) : navigate("/login")
                     }
                     className="bg-primary hover:bg-emerald-700 text-white gap-1.5"
                   >
@@ -1036,7 +1036,7 @@ const JobDetail = () => {
             <div className="flex flex-wrap items-center gap-2">
               <Button
                 onClick={() =>
-                  user ? setShowApplyModal(true) : navigate("/auth")
+                  user ? setShowApplyModal(true) : navigate("/login")
                 }
                 className="bg-primary hover:bg-emerald-700 text-white gap-1.5 flex-1 sm:flex-none h-11 sm:h-9"
               >

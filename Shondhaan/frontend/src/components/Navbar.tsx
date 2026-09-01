@@ -669,7 +669,7 @@ const handleSignOut = async () => {
                 if (isLoggedIn) {
                   navigate("/mart/wishlist");
                 } else {
-                  navigate("/auth", { state: { from: "/mart/wishlist" } });
+                  navigate("/login", { state: { from: "/mart/wishlist" } });
                 }
               }}
               className="relative h-10 w-10 rounded-xl bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
@@ -933,7 +933,7 @@ const handleSignOut = async () => {
                 <PopoverContent className="w-52 p-1.5 z-[9999] bg-secondary" align="end">
                   <div className="flex flex-col">
                     <button
-                      onClick={() => navigate("/auth?tab=signup")}
+                      onClick={() => navigate("/login?tab=signup")}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
                       hover:text-white"
                     >
@@ -942,7 +942,7 @@ const handleSignOut = async () => {
                     </button>
 
                     <button
-                      onClick={() => navigate("/auth")}
+                      onClick={() => navigate("/login")}
                       className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-primary 
                       hover:text-white"
                     >

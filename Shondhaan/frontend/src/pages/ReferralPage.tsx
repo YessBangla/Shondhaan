@@ -16,7 +16,7 @@ const ReferralPage = () => {
   const [claiming, setClaiming] = useState<number | null>(null);
 
   useEffect(() => {
-    if (!authLoading && !user) navigate("/auth", { replace: true });
+    if (!authLoading && !user) navigate("/login", { replace: true });
   }, [authLoading, navigate, user]);
 
   const handleGenerate = async () => {
