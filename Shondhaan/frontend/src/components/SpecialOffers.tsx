@@ -328,7 +328,7 @@ const SpecialOffers = () => {
                 whileHover={{ y: -8 }}
                 onClick={() => {
                   if (offer.service_slug) {
-                    navigate(`/service/${offer.service_slug}`);
+                    navigate(`/service/${offer.service_slug}?offerId=${offer.id}`);
                   } else {
                     navigate("/all-services");
                   }
@@ -365,7 +365,7 @@ const SpecialOffers = () => {
                       className="absolute top-3 right-3 z-10 rounded-full bg-gradient-to-br from-orange-500 to-red-600 text-white backdrop-blur-md px-3 py-1.5 text-xs md:text-sm font-black shadow-lg border border-white/30"
                       animate={{ scale: [1, 1.05, 1], y: [0, -2, 0] }}
                       transition={{ duration: 2, repeat: Infinity }}
-                    >
+                      >
                       <div className="flex items-center gap-1">
                         <Zap className="h-3 w-3 md:h-4 md:w-4" />
                         {bn ? offer.discount_bn : (offer.discount_en || offer.discount_bn)}

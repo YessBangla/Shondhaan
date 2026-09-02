@@ -1,9 +1,9 @@
+// service detail page
 import { useParams, useNavigate, Link, useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Star,
   ShieldCheck,
-  
   CheckCircle2,
   Phone,
   MapPin,
@@ -19,6 +19,7 @@ import {
   Wallet,
   User,
   Building2,
+  Tag,
 } from "lucide-react";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { format } from "date-fns";
@@ -133,6 +134,17 @@ type ServiceReview = {
   created_at?: string;
 };
 
+type ServiceOffer = {
+  id: string;
+  title?: string | null;
+  title_bn?: string | null;
+  discount_type?: string;
+  discount_value?: number;
+  service_slug?: string | null;
+  offer_code?: string | null;
+  end_date?: string | null;
+};
+
 /* ─── API helpers ─── */
 const VITE_SERVICE_API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
 const VITE_API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_CENTRAL_API_BASE_URL || "").replace(/\/+$/, "");
@@ -220,6 +232,16 @@ const makePricePackage = (service: CmsService | null): any[] => {
 const isRealUuid = (v?: string | null) => !!v && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v);
 const getSafePackageId = (v: unknown): string | null => { const id = String(v ?? "").trim(); if (!id || id.includes("default")) return null; return isRealUuid(id) ? id : null; };
 
+/* ─── Offer discount calculator (mirrors SpecialOffers.tsx) ─── */
+const calcOfferDiscountedPrice = (original: number, type?: string, value?: number) => {
+  const v = Number(value || 0);
+  if (!original || original <= 0 || v <= 0) return null;
+  const discounted = type === "fixed"
+    ? Math.max(0, original - v)
+    : Math.max(0, original - (original * v) / 100);
+  return discounted < original ? Math.round(discounted) : null;
+};
+
 /* ─── Query hooks ─── */
 const useServiceBySlug = (slug?: string) =>
   useQuery({
@@ -258,6 +280,20 @@ const useUserWallet = (userId?: string | number) =>
     enabled: !!userId, retry: 1,
   });
 
+const useServiceOfferById = (offerId?: string | null) =>
+  useQuery({
+    queryKey: ["service-offer", offerId],
+    queryFn: async (): Promise<ServiceOffer | null> => {
+      const res = await fetch(`${VITE_SERVICE_API_BASE_URL}/api/service-offers/${encodeURIComponent(offerId || "")}`, { headers: getServiceApiHeaders() });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return null;
+      const payload = json?.data ?? json;
+      return payload && payload.id != null ? payload : null;
+    },
+    enabled: !!offerId,
+    retry: 1,
+  });
+
 /* ─── Barcode generator ─── */
 const useBarcode = () => useMemo(() => Array.from({ length: 20 }, () => 4 + Math.random() * 7), []);
 
@@ -271,12 +307,15 @@ const ServiceDetail = () => {
   const { t, language } = useLanguage();
   const bn = language === "bn";
   const [selectedPackage, setSelectedPackage] = useState(0);
+  const [searchParams] = useSearchParams();
+  const offerId = searchParams.get("offerId");
 
   injectFonts();
 
   const detailQuery = useServiceBySlug(slug);
   const cmsService = detailQuery.data?.service || null;
   const pkgQuery = useServicePackages(cmsService?.id);
+  const offerQuery = useServiceOfferById(offerId);
   const legacyService = getServiceBySlug(slug || "");
   const fallbackPkgs = makePricePackage(cmsService);
 
@@ -306,7 +345,19 @@ const ServiceDetail = () => {
   }
 
   if (cmsService) {
-    return <CmsServiceDetail service={cmsService} packages={cmsPackages} selectedPackage={selectedPackage} setSelectedPackage={setSelectedPackage} addItem={addItem} navigate={navigate} t={t} bn={bn} />;
+    return (
+      <CmsServiceDetail
+        service={cmsService}
+        packages={cmsPackages}
+        selectedPackage={selectedPackage}
+        setSelectedPackage={setSelectedPackage}
+        addItem={addItem}
+        navigate={navigate}
+        t={t}
+        bn={bn}
+        offer={offerQuery.data || null}
+      />
+    );
   }
 
   const service = legacyService!;
@@ -347,9 +398,10 @@ const ServiceDetail = () => {
 /* ═══════════════════════════════════════════════════════════════════════
    CmsServiceDetail — compact version
    ═══════════════════════════════════════════════════════════════════════ */
-const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPackage, addItem, navigate, t, bn }: {
+const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPackage, addItem, navigate, t, bn, offer }: {
   service: CmsService; packages: any[]; selectedPackage: number;
   setSelectedPackage: (i: number) => void; addItem: any; navigate: any; t: any; bn: boolean;
+  offer?: ServiceOffer | null;
 }) => {
   injectFonts();
   const mysqlAuth = getMySqlAuth();
@@ -360,7 +412,13 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
   const cities = Array.isArray(service.available_cities) ? service.available_cities : [];
   const pkg = packages[selectedPackage] || packages[0];
   const commissionPercent = Number(service.commission_percent || 0);
-  const platformFee = Math.round(Number(pkg?.price || 0) * (commissionPercent / 100));
+
+  // ── Offer-aware pricing ──
+  const offerDiscountedPrice = offer && pkg ? calcOfferDiscountedPrice(Number(pkg.price || 0), offer.discount_type, offer.discount_value) : null;
+  const hasActiveOffer = !!offer && offerDiscountedPrice !== null;
+  const effectivePrice = hasActiveOffer ? offerDiscountedPrice! : Number(pkg?.price || 0);
+  const platformFee = Math.round(effectivePrice * (commissionPercent / 100));
+
   const { addItem: addRecentlyViewed, getItems: getRecentItems } = useRecentlyViewed();
   const heroImage = getServiceDisplayImage(service.slug, service.image_url);
   const minPrice = packages.length ? Math.min(...packages.map((p: any) => Number(p.price) || 0)) : null;
@@ -400,7 +458,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
 
   const handleAddToCart = () => {
     if (!pkg) return;
-    addItem({ serviceSlug: service.slug, serviceTitle, serviceImage: heroImage, packageName: pkg.name, packagePrice: pkg.price, originalPrice: pkg.original_price });
+    addItem({ serviceSlug: service.slug, serviceTitle, serviceImage: heroImage, packageName: pkg.name, packagePrice: effectivePrice, originalPrice: hasActiveOffer ? pkg.price : pkg.original_price });
     toast.success(t("cart.added"));
   };
 
@@ -441,7 +499,31 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
         if (!wr.ok || !wj.success) throw new Error(wj.error || "Wallet payment failed");
         walletTxId = wj.transaction_id;
       }
-      const booking: any = await createBooking({ user_id: String(activeUserId), service_id: service.id || null, package_id: getSafePackageId(pkg?.id), service_slug: service.slug, service_title: serviceTitle, package_name: pkg.name, package_price: Number(pkg.price || 0), platform_fee_amount: paymentAmount, customer_name: bookingName.trim(), customer_phone: bookingPhone.trim(), customer_address: bookingAddress.trim(), booking_date: format(bookingDate, "yyyy-MM-dd"), booking_time: bookingTime, status: "pending", payment_status: useWalletPayment ? "paid" : "unpaid", payment_method: useWalletPayment ? "wallet" : "gateway", wallet_cash_used: useWalletPayment ? paymentAmount : 0, wallet_coins_used: 0, referral_code: referralValidation?.valid ? referralValidation.code : null, referred_reward_type: referralValidation?.valid ? referralValidation.referred_reward_type : null, referred_reward_amount: referralValidation?.valid ? referralValidation.referred_reward_amount : null });
+      const booking: any = await createBooking({
+        user_id: String(activeUserId),
+        service_id: service.id || null,
+        package_id: getSafePackageId(pkg?.id),
+        service_slug: service.slug,
+        service_title: serviceTitle,
+        package_name: pkg.name,
+        package_price: effectivePrice,
+        platform_fee_amount: paymentAmount,
+        customer_name: bookingName.trim(),
+        customer_phone: bookingPhone.trim(),
+        customer_address: bookingAddress.trim(),
+        booking_date: format(bookingDate, "yyyy-MM-dd"),
+        booking_time: bookingTime,
+        status: "pending",
+        payment_status: useWalletPayment ? "paid" : "unpaid",
+        payment_method: useWalletPayment ? "wallet" : "gateway",
+        wallet_cash_used: useWalletPayment ? paymentAmount : 0,
+        wallet_coins_used: 0,
+        referral_code: referralValidation?.valid ? referralValidation.code : null,
+        referred_reward_type: referralValidation?.valid ? referralValidation.referred_reward_type : null,
+        referred_reward_amount: referralValidation?.valid ? referralValidation.referred_reward_amount : null,
+        offer_id: hasActiveOffer ? offer?.id : null,
+        offer_code: hasActiveOffer ? offer?.offer_code : null,
+      });
       if (useWalletPayment) {
         await fetch(`${VITE_SERVICE_API_BASE_URL}/api/bookings/${booking.id}/payment-status`, { method: "PUT", headers: getServiceApiHeaders(), body: JSON.stringify({ payment_status: "paid", payment_method: "wallet", payment_transaction_id: walletTxId, wallet_cash_used: paymentAmount, wallet_coins_used: 0 }) });
         toast.success(bn ? "ওয়ালেট থেকে পেমেন্ট সফল!" : "Payment successful via wallet!");
@@ -469,8 +551,6 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       <div className="pt-[14px] md:pt-[22px]" />
 
       <div className="app-container pt-3">
-        {/* Eyebrow */}
-
         {/* Breadcrumb */}
         <Breadcrumb>
           <BreadcrumbList className="text-[10px]">
@@ -622,7 +702,17 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
               <div className="border rounded-[16px] bg-white shadow-[0_8px_24px_rgba(24,38,32,0.08)]">
                 {/* Top: Price Block */}
                 <div className="p-3.5 pb-3">
-                  <h2 className="font-['Fraunces',serif] font-medium text-[15px] mb-2.5" style={{ color: T.ink }}>{bn ? "বুকিং করুন" : "Book this visit"}</h2>
+                  <h2 className="font-medium text-[15px] mb-2.5" style={{ color: T.ink }}>{bn ? "বুকিং করুন" : "Book this visit"}</h2>
+
+                  {hasActiveOffer && (
+                    <div className="mb-2 flex items-center gap-1.5 rounded-[8px] px-2.5 py-1.5" style={{ background: "linear-gradient(90deg,#f97316,#ef4444)" }}>
+                      <Tag className="h-3 w-3 text-white shrink-0" />
+                      <span className="text-[10px] font-bold text-white">
+                        {bn ? (offer?.title_bn || offer?.title || "অফার প্রয়োগ হয়েছে") : (offer?.title || offer?.title_bn || "Offer applied")}
+                      </span>
+                    </div>
+                  )}
+
                   {pkg && (
                     <div className="rounded-[10px] p-3 flex justify-between items-end text-white" style={{ background: T.primaryDark }}>
                       <div>
@@ -630,7 +720,14 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                         <div className="text-[11px] font-semibold mt-0.5">{pkg.name}</div>
                       </div>
                       <div className="text-right">
-                        <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{pkg.price}</div>
+                        {hasActiveOffer ? (
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <span className="text-[10px] line-through" style={{ color: "rgba(255,255,255,0.5)" }}>৳{pkg.price}</span>
+                            <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{offerDiscountedPrice}</div>
+                          </div>
+                        ) : (
+                          <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{pkg.price}</div>
+                        )}
                         {platformFee > 0 && <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.65)" }}>{bn ? "প্লাটফর্ম ফি" : "Platform fee"} ৳{platformFee}</div>}
                       </div>
                     </div>
@@ -702,31 +799,31 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                             <input value={bookingName} onChange={(e) => setBookingName(e.target.value)} placeholder={bn ? "নাম" : "Name"} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
                           </div>
                          <div className="relative">
-  <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
-  <input
-    type="text"
-    inputMode="numeric"
-    value={bookingPhone}
-    onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
-    onKeyDown={(e) => {
-      const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
-      if (allowed.includes(e.key)) return;
-      if (e.metaKey || e.ctrlKey) return;
-      if (!/^\d$/.test(e.key)) e.preventDefault();
-    }}
-    onPaste={(e) => {
-      const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
-      e.preventDefault();
-      setBookingPhone(paste);
-    }}
-    placeholder="01XXXXXXXXX"
-    maxLength={100}
-    className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
-  />
-</div>
-<div className="relative">
-  <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
-  <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
+                            <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3 w-3 text-muted-foreground" />
+                            <input
+                              type="text"
+                              inputMode="numeric"
+                              value={bookingPhone}
+                              onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
+                              onKeyDown={(e) => {
+                                const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
+                                if (allowed.includes(e.key)) return;
+                                if (e.metaKey || e.ctrlKey) return;
+                                if (!/^\d$/.test(e.key)) e.preventDefault();
+                              }}
+                              onPaste={(e) => {
+                                const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
+                                e.preventDefault();
+                                setBookingPhone(paste);
+                              }}
+                              placeholder="01XXXXXXXXX"
+                              maxLength={100}
+                              className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
+                            />
+                          </div>
+                          <div className="relative">
+                            <Building2 className="absolute left-2.5 top-2.5 h-3 w-3" style={{ color: T.muted }} />
+                            <textarea value={bookingAddress} onChange={(e) => setBookingAddress(e.target.value)} placeholder={bn ? "ঠিকানা" : "Address"} rows={2} className="w-full rounded-[7px] border bg-white pl-7 pr-2 py-2 text-[11px] outline-none focus:ring-1 resize-none" style={{ borderColor: T.line, color: T.ink, "--tw-ring-color": T.primary } as any} />
                           </div>
                           {activeUserId && walletBalance > 0 && (
                             <button type="button" onClick={() => setUseWalletPayment(!useWalletPayment)} className="flex items-center gap-2 w-full rounded-[7px] border p-2 text-left cursor-pointer" style={{ borderColor: useWalletPayment ? T.primary : T.line, background: useWalletPayment ? T.primaryTint : "white" }}>
@@ -798,7 +895,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       )}
 
       <Footer />
-      {pkg && <StickyBottomCTA price={pkg.price} originalPrice={pkg.original_price} packageName={pkg.name} onAddToCart={handleAddToCart} />}
+      {pkg && <StickyBottomCTA price={effectivePrice} originalPrice={hasActiveOffer ? pkg.price : pkg.original_price} packageName={pkg.name} onAddToCart={handleAddToCart} />}
     </div>
   );
 };

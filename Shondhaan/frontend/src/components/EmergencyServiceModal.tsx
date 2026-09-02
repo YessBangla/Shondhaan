@@ -325,7 +325,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                   ← {t("emergency.backToServices")}
                 </button>
                 <div className="flex items-center gap-3 mb-4">
-                  <img src={selectedService!.image} alt={selectedService!.title} className="h-14 w-14 rounded-lg object-cover" />
+                  <img src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${selectedService!.image}`} alt={selectedService!.title} className="h-14 w-14 rounded-lg object-cover" />
                   <div>
                     <h3 className="text-sm font-bold text-foreground">{selectedService!.title}</h3>
                     <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">

@@ -684,7 +684,7 @@ const AdminOffers = () => {
                   <AnimatePresence>
                     {serviceDropdownOpen && (
                       <motion.div initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }} className="absolute z-50 mt-1 w-full max-h-52 overflow-hidden rounded-lg border border-border bg-card shadow-xl">
-                        <div className="sticky top-0 bg-card border-b border-border px-2 py-1.5">
+                        <div className="sticky top-0 bg-card border-b z-100 border-border px-2 py-1.5">
                           <div className="relative">
                             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
                             <input type="text" value={serviceSearch} onChange={(e) => setServiceSearch(e.target.value)} placeholder="সার্ভিস খুঁজুন…" className="w-full rounded-md border border-input bg-background pl-8 pr-2 py-1.5 text-xs outline-none focus:ring-1 focus:ring-ring" autoFocus />

@@ -470,7 +470,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
           {!editMode && !isMartVendor && (
             <button
               onClick={() => setEditMode(true)}
-              className="flex items-center gap-2 px-4 py-1 md:py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition"
+              className="flex items-center gap-2 px-4 py-1 md:py-2 rounded-lg bg-primary text-white hover:bg-emerald-600 transition"
             >
               <Edit2 className="h-4 w-4" />
               {bn ? "এডিট" : "Edit"}
