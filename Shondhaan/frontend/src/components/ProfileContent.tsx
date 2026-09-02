@@ -4,7 +4,8 @@ import { motion } from "framer-motion";
 import {
   User, Phone, Save, Loader2, Camera, Mail, Calendar, Lock,
   LogOut, Shield, FileText,
-  Info, Edit2, X, CheckCircle
+  Info, Edit2, X, CheckCircle,
+  Edit
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -469,10 +470,10 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
           {!editMode && !isMartVendor && (
             <button
               onClick={() => setEditMode(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition"
+              className="flex items-center gap-2 px-4 py-1 md:py-2 rounded-lg bg-primary text-white hover:bg-primary/90 transition"
             >
               <Edit2 className="h-4 w-4" />
-              {bn ? "সম্পাদনা" : "Edit"}
+              {bn ? "এডিট" : "Edit"}
             </button>
           )}
         </motion.div>
@@ -505,10 +506,10 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
               {!showHeader && !editMode && !isMartVendor && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-userprimary text-white text-xs font-semibold hover:bg-emerald-600 transition"
-                >
-                  <Edit2 className="h-3.5 w-3.5" />
-                  {bn ? "সম্পাদনা" : "Edit"}
+                  className="rounded-full md:bg-userprimary text-foreground md:flex px-2 py-1 md:gap-1 md:text-white text-xs font-semibold md:hover:bg-emerald-600 transition"
+                  >
+                  <Edit className="my-auto h-3.5 w-3.5"/>
+                  <span className="hidden md:inline">{bn ? "এডিট" : "Edit"}</span>
                 </button>
               )}
             </div>
@@ -665,7 +666,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
             <button
               type="submit"
               disabled={saving}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-lg bg-userprimary text-white font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
+              className="flex-1 flex text-[12px] md:text-[14px] items-center justify-center gap-2 px-4 py-1 md:py-3 text-nowrap rounded-lg bg-userprimary text-white font-semibold hover:bg-emerald-600 transition disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -675,14 +676,14 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
               ) : (
                 <>
                   <Save className="h-4 w-4" />
-                  {bn ? "পরিবর্তন সংরক্ষণ করুন" : "Save Changes"}
+                  {bn ? "সেইভ চেইঞ্জস" : "Save Changes"}
                 </>
               )}
             </button>
             <button
               type="button"
               onClick={() => setEditMode(false)}
-              className="flex-1 px-4 py-3 rounded-lg border border-input text-foreground font-semibold hover:bg-secondary transition"
+              className="flex-1 px-4 py-1 md:py-3 text-nowrap text-[12px] md:text-[14px] rounded-lg border border-input text-foreground font-semibold hover:bg-secondary transition"
             >
               {bn ? "বাতিল" : "Cancel"}
             </button>
