@@ -379,7 +379,7 @@ const Index = () => {
        </div>
 
         {/* Service Section */}
-        <div className="relative bg-[aliceblue]">
+        <div className="relative bg-[aliceblue]" id="services-section">
           {/* <div className="absolute inset-0 bg-gradient-to-b from-slate-50/50 via-blue-400/30 to-emerald-700/40 pointer-events-none" /> */}
 
           <div className="app-container relative z-10">

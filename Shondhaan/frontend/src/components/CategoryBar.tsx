@@ -325,7 +325,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       <div className="p-4 bg-transparent md:bg-white/80 backdrop-blur-xl border border-white/40 md:rounded-3xl md:shadow hover:shadow-3xl transition-shadow duration-300">
 
         {/* group on this div so group-hover controls the button visibility */}
-        <div className="relative">
+        <div className="relative group">
 
           {/* Left scroll button — hidden by default, visible on group hover */}
           <motion.button
