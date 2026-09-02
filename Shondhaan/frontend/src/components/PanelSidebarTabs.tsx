@@ -527,7 +527,7 @@ useEffect(() => {
       {/* Main content */}
       <div className={cn("flex-1 min-w-0 flex flex-col", !embedded && "bg-slate-50 dark:bg-slate-950")}>
         {!embedded && (
-          <header className="sticky top-0 z-40 h-auto py-3 border-b border-gray-300 bg-gray-200">
+          <header className="sticky top-0 z-40 h-auto py-1 border-b border-gray-300 bg-gray-200">
             <div className="flex h-full items-center gap-4 px-4 md:px-6">
               <button
                 type="button"

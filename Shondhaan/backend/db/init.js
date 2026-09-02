@@ -130,27 +130,27 @@ export async function initDatabase() {
   `);
 
   // ─── Categories table ─────────────────────────────────────────────
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS categories (
-      id VARCHAR(100) PRIMARY KEY,
-      name VARCHAR(255) NOT NULL,
-      name_en VARCHAR(255),
-      icon VARCHAR(255),
-      color_key VARCHAR(50),
-      is_active BOOLEAN DEFAULT TRUE,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-    )
-  `);
+  // await pool.query(`
+  //   CREATE TABLE IF NOT EXISTS categories (
+  //     id VARCHAR(100) PRIMARY KEY,
+  //     name VARCHAR(255) NOT NULL,
+  //     name_en VARCHAR(255),
+  //     icon VARCHAR(255),
+  //     color_key VARCHAR(50),
+  //     is_active BOOLEAN DEFAULT TRUE,
+  //     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  //     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  //   )
+  // `);
 
   // ─── Category Services table ──────────────────────────────────────
-  await pool.query(`
-    CREATE TABLE IF NOT EXISTS category_services (
-      category_id VARCHAR(100),
-      service_slug VARCHAR(100),
-      PRIMARY KEY (category_id, service_slug)
-    )
-  `);
+  // await pool.query(`
+  //   CREATE TABLE IF NOT EXISTS category_services (
+  //     category_id VARCHAR(100),
+  //     service_slug VARCHAR(100),
+  //     PRIMARY KEY (category_id, service_slug)
+  //   )
+  // `);
 
   // ─── CMS Categories table ─────────────────────────────────────────
   await pool.query(`
