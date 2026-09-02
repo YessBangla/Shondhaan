@@ -87,6 +87,8 @@ const  Navbar = () => {
   );
 
   const isMartVendor = effectiveRoles.includes("mart_vendor");
+   const isEmployerdashboard = effectiveRoles.includes("employer");
+  const isEmployer = userRoles.includes("employer") || userRoles.includes("admin");
   const isSuperAdmin = userRoles.includes("super_admin");
   const isSupervisor =
     userRoles.includes("supervisor") || userRoles.includes("admin") || isSuperAdmin;
@@ -893,21 +895,27 @@ const handleSignOut = async () => {
 
                       <div className="my-1 border-t border-border" />
 
-                      <button
-                        onClick={() => navigate("/user-dashboard")}
-                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-                      >
-                        <User className="h-4 w-4 text-blue-600" />
-                        {bn ? "আমার ড্যাশবোর্ড" : "My Dashboard"}
-                      </button>
+                    {(isMartVendor || isEmployerdashboard) && (
+  <button
+    onClick={() => navigate("/dashboard")}
+    className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+  >
+    <User className="h-4 w-4 text-blue-600" />
+    {bn ? "আমার ড্যাশবোর্ড" : "User dashboard"}
+  </button>
+)}
 
-                      <button
-                        onClick={handleDashboardClick}
-                        className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
-                      >
-                        <User className="h-4 w-4 text-primary" />
-                        {bn ? "ড্যাশবোর্ড" : "Dashboard"}
-                      </button>
+<button
+  onClick={handleDashboardClick}
+  className="flex items-center gap-2 rounded-md px-2.5 py-2 text-sm text-foreground transition-colors hover:bg-secondary"
+>
+  <User className="h-4 w-4 text-primary" />
+  {isMartVendor
+    ? (bn ? "মার্ট ড্যাশবোর্ড" : "Mart Dashboard")
+    : isEmployerdashboard
+      ? (bn ? "জব ড্যাশবোর্ড" : "Job Dashboard")
+      : (bn ? "ড্যাশবোর্ড" : "Dashboard")}
+</button>
 
                       <button
                           onClick={handleSignOut}
