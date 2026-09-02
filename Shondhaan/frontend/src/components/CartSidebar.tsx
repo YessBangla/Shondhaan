@@ -76,7 +76,7 @@ const CartSidebar = () => {
                   <div className="rounded-xl glass-card p-3 space-y-2">
                   <div className="flex gap-3">
                     <img
-                      src={item.serviceImage}
+                      src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${item.serviceImage}`}
                       alt={item.serviceTitle}
                       className="h-14 w-14 rounded-lg object-cover shrink-0"
                     />

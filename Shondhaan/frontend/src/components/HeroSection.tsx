@@ -146,7 +146,7 @@ const normalizeHeroBanner = (banner: any): HeroBanner => ({
 
 const PLATFORM_CARDS = [
   {
-    to: "/",
+    to: "/#services-section",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
     Icon: LucideWorkflow,
@@ -455,6 +455,29 @@ const HeroSection = () => {
     if (pressedCard) return;
     haptic("medium");
     setPressedCard(to);
+
+    // Handle same-page anchor scroll (e.g. "/#services-section")
+    if (to.startsWith("/#")) {
+      const targetId = to.split("#")[1];
+
+      window.setTimeout(() => {
+        if (window.location.pathname === "/") {
+          // Already on home page — just smooth scroll, no navigation needed
+          document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          setPressedCard(null);
+        } else {
+          // Not on home page — navigate there, then scroll after it mounts
+          try { sessionStorage.setItem("yess:nav-transition", to); } catch {}
+          navigate("/");
+          window.setTimeout(() => {
+            document.getElementById(targetId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 300);
+          setPressedCard(null);
+        }
+      }, 200);
+      return;
+    }
+
     try { sessionStorage.setItem("yess:nav-transition", to); } catch {}
     window.setTimeout(() => { navigate(to); setPressedCard(null); }, 200);
   };
