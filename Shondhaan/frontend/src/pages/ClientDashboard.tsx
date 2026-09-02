@@ -1248,7 +1248,13 @@ const ClientDashboard = () => {
             {activeTab === "requests" && <ServiceRequestsTab />}
 
             {/* === MART ORDERS TAB === */}
-            {activeTab === "mart-orders" && <MartOrdersTab />}
+           {activeTab === "mart-orders" && (
+  <MartOrdersTab
+    orders={martOrders}
+    onRefresh={fetchMartOrders}
+    apiBase={`${MART_API_BASE}/api`}
+  />
+)}
 
             {/* === PAYMENTS TAB === */}
             {activeTab === "payments" && <PaymentHistoryTab />}

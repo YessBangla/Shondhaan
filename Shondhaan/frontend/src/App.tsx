@@ -286,6 +286,7 @@ const App = () => {
                                   <Route path="/login/callback" element={<AuthCallback />} />
                                   <Route path="/main-login" element={<MainLogin />} />
                                   <Route path="/super-admin-login" element={<SuperAdminLogin />} />
+                                  <Route path="/forgot-password" element={<ResetPassword />} />
                                   <Route path="/bookings" element={<BookingHistory />} />
                                   <Route path="/profile" element={<Profile />} />
                                   <Route path="/notifications" element={<Notifications />} />

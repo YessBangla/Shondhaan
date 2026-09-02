@@ -271,10 +271,10 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
     setProcessing(true);
     try {
       const res = await fetch(`${apiBase}/orders/${dialogOrderId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "cancelled" }),
-      });
+  method: "PUT",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ status: "cancelled" }),
+});
       const data = await res.json();
       if (!data.success) throw new Error(data.message);
       toast.success(bn ? "অর্ডার বাতিল হয়েছে" : "Order cancelled");
