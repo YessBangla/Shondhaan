@@ -277,6 +277,9 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
         const res = await fetch(CENTRAL_PROFILE_API, {
           method: "PATCH",
           credentials: "include",
+          headers: {
+            ...(mysqlAuth.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+          },
           body: formData,
         });
 
@@ -502,7 +505,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
               {!showHeader && !editMode && !isMartVendor && (
                 <button
                   onClick={() => setEditMode(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-userprimary text-white text-xs font-semibold hover:bg-emerald-600 transition"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-userprimary text-white text-xs font-semibold hover:bg-emerald-600 transition"
                 >
                   <Edit2 className="h-3.5 w-3.5" />
                   {bn ? "সম্পাদনা" : "Edit"}
