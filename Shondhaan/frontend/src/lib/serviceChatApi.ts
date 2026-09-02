@@ -66,7 +66,12 @@ const headers = () => {
 
 async function parseResponse<T>(response: Response): Promise<T> {
   const data = await response.json().catch(() => ({}));
-  if (!response.ok) throw new Error(data?.message || "Service chat request failed");
+  if (!response.ok) {
+    const msg = data?.message || "Service chat request failed";
+    const err = new Error(msg) as Error & { status?: number };
+    err.status = response.status;
+    throw err;
+  }
   return data as T;
 }
 
@@ -77,6 +82,7 @@ export async function createServiceChatConversation(message: string) {
   const response = await fetch(`${API_BASE}/conversations`, {
     method: "POST",
     headers: headers(),
+    credentials: "include",
     body: JSON.stringify({
       message,
       visitor_id: getServiceChatVisitorId(),
@@ -97,6 +103,7 @@ export async function sendServiceChatMessage(conversationId: string, message: st
   const response = await fetch(`${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages`, {
     method: "POST",
     headers: headers(),
+    credentials: "include",
     body: JSON.stringify({
       message,
       visitor_id: getServiceChatVisitorId(),
@@ -112,7 +119,10 @@ export async function listServiceChatMessages(conversationId: string) {
   const query = new URLSearchParams({ visitor_id: getServiceChatVisitorId() });
   const response = await fetch(
     `${API_BASE}/conversations/${encodeURIComponent(conversationId)}/messages?${query}`,
-    { headers: headers() }
+    {
+      headers: headers(),
+      credentials: "include",
+    }
   );
 
   const payload = await parseResponse<{
@@ -125,7 +135,38 @@ export async function listServiceChatMessages(conversationId: string) {
 }
 
 export async function listServiceChatConversations() {
-  const response = await fetch(`${API_BASE}/conversations`, { headers: headers() });
+  const query = new URLSearchParams({ visitor_id: getServiceChatVisitorId() });
+  const response = await fetch(`${API_BASE}/conversations?${query}`, {
+    headers: headers(),
+    credentials: "include",
+  });
+
   const payload = await parseResponse<{ data: ServiceChatConversation[] }>(response);
   return payload.data;
+}
+
+// Debug helper — call once from browser console:
+// import { debugServiceChatAuth } from "@/lib/serviceChatApi";
+// debugServiceChatAuth();
+export async function debugServiceChatAuth() {
+  const auth = getMySqlAuth();
+  console.table({
+    hasToken: !!auth?.token,
+    tokenPrefix: auth?.token?.slice(0, 20) + "...",
+    userId: auth?.user?.id,
+    userType: auth?.user?.type,
+    apiBase: API_BASE,
+  });
+
+  try {
+    const res = await fetch(`${API_BASE}/conversations`, {
+      headers: headers(),
+      credentials: "include",
+    });
+    console.log("Status:", res.status, res.statusText);
+    const body = await res.json().catch(() => null);
+    console.log("Response body:", body);
+  } catch (err) {
+    console.error("Fetch error:", err);
+  }
 }

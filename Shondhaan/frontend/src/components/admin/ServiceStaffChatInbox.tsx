@@ -1,5 +1,22 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { Headphones, Loader2, MessageSquare, RefreshCw, Send, User } from "lucide-react";
+import {
+  Headphones,
+  Loader2,
+  MessageSquare,
+  RefreshCw,
+  Send,
+  User,
+  Search,
+  X,
+  ChevronLeft,
+  Phone,
+  Mail,
+  Clock,
+  Inbox,
+  Sparkles,
+  ShieldCheck,
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
   listServiceChatConversations,
@@ -19,6 +36,72 @@ type Ack = {
   data?: ServiceChatPayload;
 };
 
+/* ── Helpers ── */
+
+const avatarGradients = [
+  ["#6366f1", "#8b5cf6"],
+  ["#06b6d4", "#0ea5e9"],
+  ["#10b981", "#14b8a6"],
+  ["#f59e0b", "#f97316"],
+  ["#ec4899", "#f43f5e"],
+  ["#8b5cf6", "#a855f7"],
+  ["#3b82f6", "#6366f1"],
+  ["#14b8a6", "#06b6d4"],
+];
+
+const getAvatarStyle = (id: string) => {
+  const idx = String(id).split("").reduce((a, c) => a + c.charCodeAt(0), 0) % avatarGradients.length;
+  const [from, to] = avatarGradients[idx];
+  return { background: `linear-gradient(135deg, ${from}, ${to})` };
+};
+
+const getInitial = (name: string) => {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  return parts[0][0].toUpperCase();
+};
+
+const timeAgo = (dateStr: string) => {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return "now";
+  if (mins < 60) return `${mins}m`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d`;
+  return new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+};
+
+const formatMessageTime = (dateStr: string) => {
+  return new Date(dateStr).toLocaleTimeString("en-US", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true,
+  });
+};
+
+const formatMessageDate = (dateStr: string) => {
+  const d = new Date(dateStr);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const isYesterday = d.toDateString() === yesterday.toDateString();
+
+  if (isToday) return "Today";
+  if (isYesterday) return "Yesterday";
+  return d.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+};
+
+const shouldShowDateSeparator = (current: string, previous?: string) => {
+  if (!previous) return true;
+  return new Date(current).toDateString() !== new Date(previous).toDateString();
+};
+
+/* ── Component ── */
+
 const ServiceStaffChatInbox = () => {
   const auth = getMySqlAuth();
   const [conversations, setConversations] = useState<ServiceChatConversation[]>([]);
@@ -28,22 +111,52 @@ const ServiceStaffChatInbox = () => {
   const [loading, setLoading] = useState(true);
   const [threadLoading, setThreadLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [search, setSearch] = useState("");
+  const [showChat, setShowChat] = useState(false);
   const bottomRef = useRef<HTMLDivElement | null>(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const activeConversation = conversations.find((conversation) => conversation.id === activeId) || null;
+  const activeConversation =
+    conversations.find((c) => c.id === activeId) || null;
+
+  const filteredConversations = useMemo(() => {
+    if (!search.trim()) return conversations;
+    const q = search.toLowerCase();
+    return conversations.filter(
+      (c) =>
+        (c.user_name || "").toLowerCase().includes(q) ||
+        (c.user_phone || "").includes(q) ||
+        (c.user_email || "").toLowerCase().includes(q) ||
+        (c.last_message || "").toLowerCase().includes(q)
+    );
+  }, [conversations, search]);
+
   const sortedConversations = useMemo(
     () =>
-      [...conversations].sort(
-        (a, b) =>
+      [...filteredConversations].sort((a, b) => {
+        const ua = a.unread_count || 0;
+        const ub = b.unread_count || 0;
+        if (ua !== ub) return ub - ua;
+        return (
           new Date(b.last_message_at || b.created_at).getTime() -
           new Date(a.last_message_at || a.created_at).getTime()
-      ),
-    [conversations]
+        );
+      }),
+    [filteredConversations]
   );
 
   const sortedMessages = useMemo(
-    () => [...messages].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()),
+    () =>
+      [...messages].sort(
+        (a, b) =>
+          new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      ),
     [messages]
+  );
+
+  const totalUnread = useMemo(
+    () => conversations.reduce((s, c) => s + (c.unread_count || 0), 0),
+    [conversations]
   );
 
   const loadConversations = async () => {
@@ -51,7 +164,7 @@ const ServiceStaffChatInbox = () => {
     try {
       const rows = await listServiceChatConversations();
       setConversations(rows);
-      setActiveId((current) => current || rows[0]?.id || "");
+      if (!activeId) setActiveId(rows[0]?.id || "");
     } catch (error: any) {
       toast.error(error?.message || "Could not load service chats");
     } finally {
@@ -75,7 +188,9 @@ const ServiceStaffChatInbox = () => {
       .then((data) => {
         if (!cancelled) setMessages(data.messages || []);
       })
-      .catch((error: any) => !cancelled && toast.error(error?.message || "Could not load messages"))
+      .catch((error: any) =>
+        !cancelled && toast.error(error?.message || "Could not load messages")
+      )
       .finally(() => !cancelled && setThreadLoading(false));
 
     const socket = getServiceChatSocket();
@@ -121,6 +236,14 @@ const ServiceStaffChatInbox = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [sortedMessages.length, activeId]);
 
+  // Auto-resize textarea
+  useEffect(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  }, [draft]);
+
   const appendPayload = (payload?: ServiceChatPayload) => {
     if (!payload) return;
     setConversations((prev) => {
@@ -133,8 +256,17 @@ const ServiceStaffChatInbox = () => {
     });
   };
 
-  const handleSubmit = async (event: FormEvent) => {
-    event.preventDefault();
+  const openConversation = (id: string) => {
+    setActiveId(id);
+    setShowChat(true);
+  };
+
+  const closeChat = () => {
+    setShowChat(false);
+  };
+
+  const handleSubmit = async (event?: FormEvent) => {
+    event?.preventDefault();
     const message = draft.trim();
     if (!message || !activeId || sending) return;
 
@@ -142,14 +274,14 @@ const ServiceStaffChatInbox = () => {
     setSending(true);
 
     try {
-      const ack = await emitServiceChatWithAck<Record<string, unknown>, Ack>(
-        "service-chat:message:send",
-        {
-          conversationId: activeId,
-          message,
-          sender_name: auth?.user?.name || "Support",
-        }
-      ).catch(() => null);
+      const ack = await emitServiceChatWithAck<
+        Record<string, unknown>,
+        Ack
+      >("service-chat:message:send", {
+        conversationId: activeId,
+        message,
+        sender_name: auth?.user?.name || "Support",
+      }).catch(() => null);
 
       if (ack?.ok) appendPayload(ack.data);
       else appendPayload(await sendServiceChatMessage(activeId, message));
@@ -162,104 +294,436 @@ const ServiceStaffChatInbox = () => {
   };
 
   return (
-    <div className="grid min-h-[620px] overflow-hidden rounded-xl border border-border bg-card md:grid-cols-[320px_1fr]">
-      <div className="border-b border-border md:border-b-0 md:border-r">
-        <div className="flex items-center justify-between border-b border-border p-3">
-          <div className="flex items-center gap-2">
-            <Headphones className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-bold text-foreground">Service messages</h2>
+    <div className="flex h-[calc(100vh-120px)] min-h-[580px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      {/* ═══════════════════════════════════════
+          Conversation List
+      ═══════════════════════════════════════ */}
+      <div
+        className={cn(
+          "w-full md:w-[340px] md:min-w-[300px] md:max-w-[380px] border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300 bg-slate-50/60 dark:bg-slate-950/40",
+          showChat ? "hidden md:flex" : "flex"
+        )}
+      >
+        {/* List header */}
+        <div className="px-4 pt-4 pb-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 space-y-3 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="relative">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20">
+                  <Headphones className="h-4 w-4" />
+                </div>
+                {totalUnread > 0 && (
+                  <span className="absolute -top-1 -right-1 flex h-4.5 min-w-[18px] items-center justify-center rounded-full bg-rose-500 text-[9px] font-bold text-white border-2 border-white dark:border-slate-900 shadow-sm">
+                    {totalUnread > 99 ? "99+" : totalUnread}
+                  </span>
+                )}
+              </div>
+              <div>
+                <h2 className="text-sm font-bold text-slate-900 dark:text-white leading-tight">
+                  Service Inbox
+                </h2>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                  {conversations.length} conversation
+                  {conversations.length !== 1 ? "s" : ""}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={loadConversations}
+              disabled={loading}
+              className="p-2 rounded-xl text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:text-slate-300 dark:hover:bg-slate-800 transition-all active:scale-95 disabled:opacity-40"
+              title="Refresh"
+            >
+              <RefreshCw
+                className={cn("h-3.5 w-3.5", loading && "animate-spin")}
+              />
+            </button>
           </div>
-          <button onClick={loadConversations} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary">
-            <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} />
-          </button>
+
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 pointer-events-none" />
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search name, phone or message..."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 pl-9 pr-8 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 dark:focus:border-blue-500 transition-all placeholder:text-slate-400 dark:placeholder:text-slate-500"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors"
+              >
+                <X className="h-3 w-3" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="max-h-[560px] overflow-y-auto">
-          {loading ? (
-            <div className="flex h-40 items-center justify-center text-muted-foreground">
-              <Loader2 className="h-5 w-5 animate-spin" />
+        {/* List body */}
+        <div className="flex-1 overflow-y-auto">
+          {loading && conversations.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 gap-2.5">
+              <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+              <p className="text-xs text-slate-400 font-medium">
+                Loading conversations...
+              </p>
             </div>
           ) : sortedConversations.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              <MessageSquare className="mx-auto mb-2 h-8 w-8 opacity-40" />
-              No service messages yet.
+            <div className="flex flex-col items-center justify-center h-48 gap-2.5 px-6 text-center">
+              <div className="relative">
+                <div className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                  <Inbox className="h-6 w-6 text-slate-300 dark:text-slate-600" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 h-5 w-5 rounded-lg bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center shadow-md shadow-orange-500/20">
+                  <Sparkles className="h-2.5 w-2.5 text-white" />
+                </div>
+              </div>
+              <div>
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-semibold">
+                  {search ? "No results found" : "No messages yet"}
+                </p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                  {search
+                    ? "Try a different search term"
+                    : "Customer messages will appear here"}
+                </p>
+              </div>
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="text-[11px] text-blue-600 dark:text-blue-400 font-medium hover:underline"
+                >
+                  Clear search
+                </button>
+              )}
             </div>
           ) : (
-            sortedConversations.map((conversation) => (
-              <button
-                key={conversation.id}
-                onClick={() => setActiveId(conversation.id)}
-                className={cn(
-                  "flex w-full items-start gap-3 border-b border-border/60 p-3 text-left hover:bg-secondary/70",
-                  activeId === conversation.id && "bg-primary/10"
-                )}
-              >
-                <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
-                  <User className="h-4 w-4" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-foreground">
-                      {conversation.user_name || "Anonymous"}
-                    </p>
-                    {conversation.unread_count ? (
-                      <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-destructive-foreground">
-                        {conversation.unread_count}
-                      </span>
-                    ) : null}
-                  </div>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {conversation.user_phone || conversation.user_email || "Visitor message"}
-                  </p>
-                  <p className="mt-1 line-clamp-1 text-xs text-foreground/70">{conversation.last_message}</p>
-                </div>
-              </button>
-            ))
+            <div className="p-2 space-y-0.5">
+              {sortedConversations.map((conv, idx) => {
+                const isActive = conv.id === activeId;
+                const hasUnread = (conv.unread_count || 0) > 0;
+                return (
+                  <motion.button
+                    key={conv.id}
+                    initial={{ opacity: 0, x: -6 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: Math.min(idx * 0.025, 0.15) }}
+                    onClick={() => openConversation(conv.id)}
+                    className={cn(
+                      "w-full flex items-center gap-3 p-3 rounded-xl text-left transition-all duration-150 group",
+                      isActive
+                        ? "bg-blue-50 dark:bg-blue-500/10 border border-blue-200 dark:border-blue-500/20 shadow-sm shadow-blue-500/5"
+                        : hasUnread
+                        ? "bg-white dark:bg-slate-900 border border-transparent hover:bg-blue-50/40 dark:hover:bg-blue-500/5 hover:border-blue-100 dark:hover:border-blue-500/10"
+                        : "bg-transparent border border-transparent hover:bg-white dark:hover:bg-slate-800/50 hover:border-slate-200 dark:hover:border-slate-700"
+                    )}
+                  >
+                    {/* Avatar */}
+                    <div className="relative shrink-0">
+                      <div
+                        className="h-11 w-11 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md"
+                        style={getAvatarStyle(conv.id)}
+                      >
+                        {getInitial(conv.user_name || "Visitor")}
+                      </div>
+                      {hasUnread && (
+                        <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white border-2 border-slate-50 dark:border-slate-900 shadow-sm shadow-blue-600/30">
+                          {conv.unread_count}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-1.5">
+                        <p
+                          className={cn(
+                            "text-[13px] truncate leading-tight",
+                            hasUnread
+                              ? "font-bold text-slate-900 dark:text-white"
+                              : "font-semibold text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-white"
+                          )}
+                        >
+                          {conv.user_name || "Anonymous Visitor"}
+                        </p>
+                        <span
+                          className={cn(
+                            "text-[10px] font-medium shrink-0 whitespace-nowrap",
+                            hasUnread
+                              ? "text-blue-600 dark:text-blue-400"
+                              : "text-slate-400 dark:text-slate-500"
+                          )}
+                        >
+                          {timeAgo(conv.last_message_at || conv.created_at)}
+                        </span>
+                      </div>
+
+                      {(conv.user_phone || conv.user_email) && (
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate mt-0.5 flex items-center gap-1">
+                          {conv.user_phone ? (
+                            <Phone className="h-2.5 w-2.5 shrink-0" />
+                          ) : (
+                            <Mail className="h-2.5 w-2.5 shrink-0" />
+                          )}
+                          {conv.user_phone || conv.user_email}
+                        </p>
+                      )}
+
+                      <p
+                        className={cn(
+                          "text-[11px] truncate mt-1 leading-relaxed",
+                          hasUnread
+                            ? "text-slate-700 dark:text-slate-300 font-medium"
+                            : "text-slate-400 dark:text-slate-500"
+                        )}
+                      >
+                        {conv.last_message || "No messages yet"}
+                      </p>
+                    </div>
+                  </motion.button>
+                );
+              })}
+            </div>
           )}
         </div>
       </div>
 
-      <div className="flex min-h-[520px] flex-col">
-        {activeConversation ? (
-          <>
-            <div className="border-b border-border p-4">
-              <p className="text-sm font-bold text-foreground">{activeConversation.user_name || "Anonymous"}</p>
-              <p className="text-xs text-muted-foreground">
-                {activeConversation.user_id
-                  ? `Logged in user #${activeConversation.user_id}`
-                  : `Anonymous visitor ${activeConversation.visitor_id?.slice(0, 8) || ""}`}
-              </p>
-              {(activeConversation.user_phone || activeConversation.user_email) && (
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {[activeConversation.user_phone, activeConversation.user_email].filter(Boolean).join(" | ")}
-                </p>
-              )}
+      {/* ═══════════════════════════════════════
+          Chat Panel
+      ═══════════════════════════════════════ */}
+      <AnimatePresence mode="wait">
+        {showChat && activeConversation ? (
+          <motion.div
+            key="chat-panel"
+            initial={{ opacity: 0, x: 16 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: 16 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 flex flex-col bg-white dark:bg-slate-900 min-w-0"
+          >
+            {/* Chat header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shrink-0">
+              <div className="flex items-center gap-3 min-w-0">
+                <button
+                  onClick={closeChat}
+                  className="md:hidden p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all active:scale-95"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <div
+                  className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md shrink-0"
+                  style={getAvatarStyle(activeConversation.id)}
+                >
+                  {getInitial(activeConversation.user_name || "Visitor")}
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
+                      {activeConversation.user_name || "Anonymous Visitor"}
+                    </p>
+                    {!activeConversation.user_id && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20">
+                        <User className="h-2.5 w-2.5" />
+                        Visitor
+                      </span>
+                    )}
+                    {activeConversation.user_id && (
+                      <span className="inline-flex items-center gap-1 text-[9px] font-semibold px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-600 border border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20">
+                        <ShieldCheck className="h-2.5 w-2.5" />
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    {activeConversation.user_phone && (
+                      <a
+                        href={`tel:${activeConversation.user_phone}`}
+                        className="text-[10px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5 truncate max-w-[140px]"
+                      >
+                        <Phone className="h-2.5 w-2.5 shrink-0" />
+                        {activeConversation.user_phone}
+                      </a>
+                    )}
+                    {activeConversation.user_phone && activeConversation.user_email && (
+                      <span className="text-slate-300 dark:text-slate-700">•</span>
+                    )}
+                    {activeConversation.user_email && (
+                      <a
+                        href={`mailto:${activeConversation.user_email}`}
+                        className="text-[10px] text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors flex items-center gap-0.5 truncate max-w-[160px]"
+                      >
+                        <Mail className="h-2.5 w-2.5 shrink-0" />
+                        {activeConversation.user_email}
+                      </a>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 shrink-0">
+                {activeConversation.user_phone && (
+                  <a
+                    href={`tel:${activeConversation.user_phone}`}
+                    className="p-2 rounded-xl text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 dark:hover:text-emerald-400 dark:hover:bg-emerald-500/10 transition-all active:scale-95"
+                    title="Call customer"
+                  >
+                    <Phone className="h-4 w-4" />
+                  </a>
+                )}
+              </div>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-muted/30 p-4">
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto bg-gradient-to-b from-slate-50/80 via-slate-50/40 to-slate-100/60 dark:from-slate-950/60 dark:via-slate-950/40 dark:to-slate-900/60 px-4 py-4">
               {threadLoading ? (
-                <div className="flex h-full items-center justify-center text-muted-foreground">
-                  <Loader2 className="h-5 w-5 animate-spin" />
+                <div className="flex flex-col items-center justify-center h-full gap-3">
+                  <Loader2 className="h-5 w-5 animate-spin text-blue-500" />
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                    Loading messages...
+                  </p>
+                </div>
+              ) : sortedMessages.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full gap-3 text-center px-4">
+                  <div className="relative">
+                    <div className="h-16 w-16 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
+                      <MessageSquare className="h-7 w-7 text-slate-200 dark:text-slate-600" />
+                    </div>
+                    <div className="absolute -bottom-1 -right-1 h-6 w-6 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                      <Send className="h-3 w-3 text-white -rotate-12" />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Start the conversation
+                    </p>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-0.5 max-w-[220px]">
+                      Send a message below to begin helping this customer
+                    </p>
+                  </div>
                 </div>
               ) : (
-                <div className="space-y-2">
-                  {sortedMessages.map((message) => {
-                    const staff = message.sender_role === "staff";
+                <div className="space-y-3 max-w-2xl mx-auto">
+                  {sortedMessages.map((msg, idx) => {
+                    const isStaff = msg.sender_role === "staff";
+                    const prevMsg = sortedMessages[idx - 1];
+                    const showDate = shouldShowDateSeparator(
+                      msg.created_at,
+                      prevMsg?.created_at
+                    );
+                    const showSenderAvatar =
+                      idx === 0 ||
+                      sortedMessages[idx - 1]?.sender_role !== msg.sender_role;
+                    const isLast =
+                      idx === sortedMessages.length - 1;
+
                     return (
-                      <div key={message.id} className={cn("flex", staff ? "justify-end" : "justify-start")}>
-                        <div
+                      <div key={msg.id}>
+                        {/* Date separator */}
+                        {showDate && (
+                          <div className="flex items-center gap-3 py-2">
+                            <div className="flex-1 h-px bg-slate-200/80 dark:bg-slate-800/80" />
+                            <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider shrink-0">
+                              {formatMessageDate(msg.created_at)}
+                            </span>
+                            <div className="flex-1 h-px bg-slate-200/80 dark:bg-slate-800/80" />
+                          </div>
+                        )}
+
+                        {/* Message */}
+                        <motion.div
+                          initial={{ opacity: 0, y: 4, scale: 0.98 }}
+                          animate={{ opacity: 1, y: 0, scale: 1 }}
+                          transition={{
+                            duration: 0.12,
+                            delay: isLast ? 0.04 : 0,
+                          }}
                           className={cn(
-                            "max-w-[78%] rounded-2xl px-3 py-2 text-sm shadow-sm",
-                            staff
-                              ? "rounded-br-md bg-primary text-white"
-                              : "rounded-bl-md border border-border bg-card text-foreground"
+                            "flex gap-2",
+                            isStaff ? "justify-end" : "justify-start"
                           )}
                         >
-                          <p className="mb-0.5 text-[10px] font-semibold opacity-70">
-                            {message.sender_name || (staff ? "Support" : "Customer")}
-                          </p>
-                          <p className="whitespace-pre-wrap break-words">{message.body}</p>
-                        </div>
+                          {/* Customer avatar */}
+                          {!isStaff && (
+                            <div className="w-7 shrink-0 flex flex-col items-center">
+                              {showSenderAvatar ? (
+                                <div
+                                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
+                                  style={getAvatarStyle(activeConversation.id)}
+                                >
+                                  {getInitial(
+                                    activeConversation.user_name ||
+                                      "Visitor"
+                                  )}
+                                </div>
+                              ) : (
+                                <div className="w-7" />
+                              )}
+                            </div>
+                          )}
+
+                          <div
+                            className={cn(
+                              "max-w-[78%] sm:max-w-[70%] flex flex-col",
+                              isStaff ? "items-end" : "items-start"
+                            )}
+                          >
+                            {/* Sender name */}
+                            {showSenderAvatar && (
+                              <span
+                                className={cn(
+                                  "text-[10px] font-semibold mb-1 px-1",
+                                  isStaff
+                                    ? "text-blue-500 dark:text-blue-400"
+                                    : "text-slate-400 dark:text-slate-500"
+                                )}
+                              >
+                                {isStaff
+                                  ? msg.sender_name || "You (Staff)"
+                                  : msg.sender_name ||
+                                    activeConversation.user_name ||
+                                    "Customer"}
+                              </span>
+                            )}
+
+                            <div
+                              className={cn(
+                                "rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
+                                isStaff
+                                  ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-md shadow-blue-600/10"
+                                  : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-bl-md"
+                              )}
+                            >
+                              <div className="whitespace-pre-wrap break-words">
+                                {msg.body}
+                              </div>
+                            </div>
+
+                            <span
+                              className={cn(
+                                "text-[9px] mt-1 px-1 font-medium flex items-center gap-1",
+                                isStaff
+                                  ? "text-blue-400 dark:text-blue-500"
+                                  : "text-slate-400 dark:text-slate-500"
+                              )}
+                            >
+                              <Clock className="h-2.5 w-2.5" />
+                              {formatMessageTime(msg.created_at)}
+                            </span>
+                          </div>
+
+                          {/* Staff avatar */}
+                          {isStaff && (
+                            <div className="w-7 shrink-0 flex flex-col items-center">
+                              {showSenderAvatar ? (
+                                <div className="h-7 w-7 rounded-lg bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white shadow-sm">
+                                  <Headphones className="h-3.5 w-3.5" />
+                                </div>
+                              ) : (
+                                <div className="w-7" />
+                              )}
+                            </div>
+                          )}
+                        </motion.div>
                       </div>
                     );
                   })}
@@ -268,36 +732,73 @@ const ServiceStaffChatInbox = () => {
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="flex items-end gap-2 border-t border-border p-3">
-              <textarea
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" && !event.shiftKey) {
-                    event.preventDefault();
-                    handleSubmit(event);
-                  }
-                }}
-                rows={1}
-                placeholder="Reply to customer..."
-                className="max-h-28 min-h-10 flex-1 resize-none rounded-xl border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-1 focus:ring-ring"
-              />
-              <button
-                type="submit"
-                disabled={sending || !draft.trim()}
-                className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary text-white disabled:opacity-50"
-              >
-                {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              </button>
-            </form>
-          </>
+            {/* Input area */}
+            <div className="border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-3 shrink-0">
+              <div className="flex items-end gap-2 max-w-2xl mx-auto">
+                <div className="flex-1">
+                  <textarea
+                    ref={textareaRef}
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSubmit();
+                      }
+                    }}
+                    rows={1}
+                    placeholder="Type your reply..."
+                    className="w-full max-h-28 min-h-[44px] resize-none rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2.5 text-sm outline-none placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-400 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all"
+                  />
+                </div>
+                <button
+                  onClick={() => handleSubmit()}
+                  disabled={sending || !draft.trim()}
+                  className={cn(
+                    "flex h-[44px] w-[44px] items-center justify-center rounded-xl transition-all shrink-0 active:scale-95",
+                    draft.trim() && !sending
+                      ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-600/25 hover:shadow-blue-600/40"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed"
+                  )}
+                >
+                  {sending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Send className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+              <p className="text-[10px] text-slate-400 dark:text-slate-600 mt-1.5 text-center">
+                Enter to send · Shift+Enter for new line
+              </p>
+            </div>
+          </motion.div>
         ) : (
-          <div className="flex flex-1 flex-col items-center justify-center p-8 text-center text-muted-foreground">
-            <MessageSquare className="mb-3 h-10 w-10 opacity-40" />
-            Select a conversation to reply.
-          </div>
+          <motion.div
+            key="empty-chat"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="hidden md:flex flex-1 flex-col items-center justify-center bg-gradient-to-b from-slate-50/80 to-slate-100/60 dark:from-slate-950/60 dark:to-slate-900/60 text-center px-6"
+          >
+            <div className="relative mb-5">
+              <div className="h-20 w-20 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm">
+                <Headphones className="h-9 w-9 text-slate-200 dark:text-slate-600" />
+              </div>
+              <div className="absolute -bottom-2 -right-2 h-8 w-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-500/20">
+                <MessageSquare className="h-4 w-4 text-white" />
+              </div>
+            </div>
+            <p className="text-base font-bold text-slate-700 dark:text-slate-300">
+              Select a conversation
+            </p>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 max-w-[240px] leading-relaxed">
+              Choose a conversation from the list to view and reply to customer
+              messages
+            </p>
+          </motion.div>
         )}
-      </div>
+      </AnimatePresence>
     </div>
   );
 };

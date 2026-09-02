@@ -4,9 +4,13 @@ import {
   listConversations,
   listMessages,
   sendConversationMessage,
+  debugAuth,
 } from "../controller/serviceChat.controller.js";
 
 const router = express.Router();
+
+// Debug endpoint - remove in production
+router.get("/debug-auth", debugAuth);
 
 router.get("/conversations", listConversations);
 router.post("/conversations", createConversation);

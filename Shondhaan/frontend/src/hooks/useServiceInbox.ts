@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEffect } from "react";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { listServiceChatConversations } from "@/lib/serviceChatApi";
 
 const SERVICE_API_BASE =
   (import.meta.env.VITE_SERVICE_API_BASE as string) || import.meta.env.VITE_SERVICE_API_BASE_URL || "";
@@ -99,6 +100,28 @@ export function useServiceConversations() {
     queryFn: async () => {
       if (!user?.id) return [];
 
+      try {
+        const supportRows = await listServiceChatConversations();
+        if (supportRows?.length) {
+          return supportRows.map((conversation) => ({
+            booking_id: conversation.id,
+            booking_date: conversation.created_at,
+            booking_status: conversation.status,
+            service_title: conversation.subject || "Support chat",
+            service_slug: "support-chat",
+            package_name: "Support",
+            package_price: 0,
+            provider_name: "Support Team",
+            last_message: conversation.last_message || "",
+            last_message_at: conversation.last_message_at || conversation.created_at,
+            last_sender_role: "staff",
+            unread_count: Number(conversation.unread_count || 0),
+          }));
+        }
+      } catch (error) {
+        console.warn("Support chat fallback failed, falling back to booking inbox:", error);
+      }
+
       const mysqlAuth = getMySqlAuth();
       const userId = Number(mysqlAuth?.user?.id ?? user?.id);
 
@@ -138,7 +161,7 @@ export function useServiceConversations() {
 
       // 4. Build conversation list from bookings + messages
       const conversations: ServiceConversation[] = bookings
-        .filter((b) => latestMsgMap.has(b.id)) // only bookings with messages
+        .filter((b) => latestMsgMap.has(b.id))
         .map((b) => {
           const msg = latestMsgMap.get(b.id)!;
           return {

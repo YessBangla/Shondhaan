@@ -36,7 +36,7 @@ import ServiceMessage from "@/pages/ServiceMessage";
 import ReferralTab from "@/components/client/ReferralTab";
 import { fetchReferralSettings } from "../lib/referralSettings";
 import { useReferral } from "@/contexts/ReferalContext";
-
+import { updateBookingStatus as updateBackendBookingStatus } from "@/lib/bookingApi";
 
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -192,6 +192,8 @@ const DashboardBookingCard = ({
   onNavigate,
   onReview,
   onRebook,
+  onComplete,
+  completingId,
   bn,
 }: {
   booking: Booking;
@@ -199,9 +201,12 @@ const DashboardBookingCard = ({
   onNavigate: (path: string) => void;
   onReview: (b: Booking) => void;
   onRebook: (b: Booking) => void;
+  onComplete: (b: Booking) => void;
+  completingId: string | null;
   bn: boolean;
 }) => {
   const b = booking;
+  const isCompleting = completingId === b.id;
 
   const statusConfig: Record<string, { label: string; className: string }> = {
     pending: {
@@ -243,6 +248,9 @@ const DashboardBookingCard = ({
   const payableAfterService = isPayableAfterService(b);
   const totalAmount = Number(b.package_price || 0);
 
+  // Show "Mark Complete" for these statuses
+  const canMarkComplete = ["confirmed", "assigned", "in_progress", "processing"].includes(b.status);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
@@ -251,10 +259,12 @@ const DashboardBookingCard = ({
       className={`rounded-2xl border bg-white p-4 sm:p-5 shadow-sm hover:shadow-md transition-all duration-200 ${
         payableAfterService
           ? "border-amber-400/60 hover:border-amber-500/70 ring-1 ring-amber-400/20"
+          : canMarkComplete
+          ? "border-blue-200 hover:border-blue-300 ring-1 ring-blue-100"
           : "border-slate-200 hover:border-slate-300"
       }`}
     >
-      {/* Header: Title + Status */}
+      {/* Header: Title + Status Badge */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="min-w-0">
           <button
@@ -360,10 +370,31 @@ const DashboardBookingCard = ({
 
       {/* Action Buttons */}
       <div className="flex gap-2 mt-3 pt-3 border-t border-slate-100">
+        {canMarkComplete && (
+          <button
+            onClick={() => {
+              if (confirm(bn ? "এই বুকিং সম্পন্ন হিসেবে চিহ্নিত করবেন?" : "Mark this booking as completed?")) {
+                onComplete(b);
+              }
+            }}
+            disabled={isCompleting}
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed active:scale-[0.98] shadow-sm shadow-emerald-600/20"
+          >
+            {isCompleting ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <CheckCircle2 className="h-3.5 w-3.5" />
+            )}
+            {isCompleting
+              ? (bn ? "হচ্ছে..." : "Completing...")
+              : (bn ? "সম্পন্ন করুন" : "Mark Complete")}
+          </button>
+        )}
+
         {b.status === "completed" && (
           <button
             onClick={() => onReview(b)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-semibold transition-colors"
           >
             <Star className="h-3.5 w-3.5" />
             {bn ? "রিভিউ দিন" : "Review"}
@@ -372,7 +403,7 @@ const DashboardBookingCard = ({
         {(b.status === "completed" || b.status === "cancelled") && (
           <button
             onClick={() => onRebook(b)}
-            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
+            className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2.5 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-semibold transition-colors"
           >
             <ClipboardList className="h-3.5 w-3.5" />
             {bn ? "পুনরায় বুক" : "Rebook"}
@@ -439,6 +470,8 @@ const ClientDashboard = () => {
   const [referralShareLink, setReferralShareLink] = useState<string | null>(null);
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
   const [rebookTarget, setRebookTarget] = useState<Booking | null>(null);
+  
+  const [completingId, setCompletingId] = useState<string | null>(null);
 
   const fetchReferralCode = useCallback(async () => {
     try {
@@ -582,6 +615,19 @@ const ClientDashboard = () => {
       .subscribe();
     return () => { supabase.removeChannel(channel); };
   }, [user]);
+
+  const handleComplete = async (b: Booking) => {
+    setCompletingId(b.id);
+    try {
+      const updated = await updateBackendBookingStatus(b.id, "completed");
+      setBookings(prev => prev.map(bk => bk.id === b.id ? { ...bk, ...updated } : bk));
+      toast.success(bn ? "বুকিং সম্পন্ন হয়েছে" : "Booking marked as completed");
+    } catch (err) {
+      toast.error(bn ? "বুকিং সম্পন্ন করা যায়নি" : "Failed to complete booking");
+    } finally {
+      setCompletingId(null);
+    }
+  };
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -764,7 +810,7 @@ const ClientDashboard = () => {
 
     if (platform === "youtube") {
       await navigator.clipboard.writeText(link);
-      toast.success(bn ? "লিংক কপি হয়েছে" : "Link copied");
+      toast.success(bn ? "লিংক কপি হয়েছা" : "Link copied");
     }
     window.open(targets[platform], "_blank", "noopener,noreferrer");
   };
@@ -939,7 +985,7 @@ const ClientDashboard = () => {
                         {referralCode ? (
                           <>
                             <p className="text-sm font-semibold text-slate-700">
-                              <p>{bn ? "আপনার রেফারেল লিঙ্ক:" : "Your referral link:"}{" "}</p>
+                              <p>{bn ? "আপনার রেফারেল লিংক:" : "Your referral link:"}{" "}</p>
                               <span className="text-emerald-700">{`${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`}</span>
                             </p>
                             <button
@@ -1186,6 +1232,8 @@ const ClientDashboard = () => {
                       onNavigate={navigate}
                       onReview={(b) => setReviewTarget(b)}
                       onRebook={(b) => setRebookTarget(b)}
+                      onComplete={handleComplete}
+                      completingId={completingId}
                       bn={bn}
                     />
                   ))}
@@ -1299,6 +1347,7 @@ const ClientDashboard = () => {
           }}
         />
       )}
+      
       {rebookTarget && (
         <RebookModal
           booking={rebookTarget}

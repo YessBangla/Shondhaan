@@ -297,7 +297,7 @@ const ContactUs = () => {
           <div className="mt-6 rounded-xl overflow-hidden border border-border">
             <iframe
               title={bn ? "আমাদের অবস্থান" : "Our location"}
-              src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d29693.639546653176!2d90.34508489084963!3d23.81741131858642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sBlock%23A%2C%20Road%233%2C%20House%23127%20(Green%20View)%20(1st%20Floor)%2C%20Mirpur%2312%2C%20Dhaka%231216!5e1!3m2!1sen!2sbd!4v1786653577294!5m2!1sen!2sbd" width="600" height="450" style="border:0;" allowfullscreen="" loading="lazy" referrerpolicy="strict-origin-when-cross-origin"
+              src="https://www.google.com/maps/embed?pb=!1m16!1m12!1m3!1d29693.639546653176!2d90.34508489084963!3d23.81741131858642!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!2m1!1sBlock%23A%2C%20Road%233%2C%20House%23127%20(Green%20View)%20(1st%20Floor)%2C%20Mirpur%2312%2C%20Dhaka%231216!5e1!3m2!1sen!2sbd!4v1786653577294!5m2!1sen!2sbd"
               width="100%"
               height="360"
               style={{ border: 0 }}
