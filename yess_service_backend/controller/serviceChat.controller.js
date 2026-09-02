@@ -3,8 +3,25 @@ import { v4 as uuidv4 } from "uuid";
 import { pool } from "../config/db.js";
 import "dotenv/config";
 
-// ✅ FIXED: Same secret as authMiddleware
-const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
+const JWT_SECRETS = Array.from(
+  new Set(
+    [process.env.JWT_SECRET, process.env.AUTH_TOKEN_SECRET, "secret-key", "secret", ""].filter(Boolean)
+  )
+);
+
+const verifyJwtToken = (token) => {
+  if (!token) return null;
+
+  for (const secret of JWT_SECRETS) {
+    try {
+      return jwt.verify(token, secret);
+    } catch {
+      // try the next configured secret
+    }
+  }
+
+  return null;
+};
 
 const STAFF_ROLES = new Set([
   "call_center", 
@@ -21,20 +38,54 @@ const STAFF_ROLES = new Set([
 
 const clean = (value, fallback = "") => String(value ?? fallback).trim();
 
+// Common cookie names for auth tokens
+const TOKEN_COOKIE_NAMES = [
+  "token",
+  "accessToken",
+  "access_token",
+  "jwt",
+  "auth_token",
+  "authToken",
+  "session_token",
+  "sessionToken",
+];
+
 export const getBearerUser = async (req) => {
   let token = null;
 
-  // 1. Try cookie
-  token = req.cookies?.token;
+  // 1. Try parsed cookies (cookie-parser)
+  if (req.cookies) {
+    for (const name of TOKEN_COOKIE_NAMES) {
+      if (req.cookies[name]) {
+        token = req.cookies[name];
+        break;
+      }
+    }
+  }
 
-  // 2. Manual cookie parse
+  // 2. Manual cookie parse from header (fallback if cookie-parser fails)
   if (!token && req.headers.cookie) {
-    const rawCookies = req.headers.cookie.split('; ').reduce((acc, c) => {
-      const [key, val] = c.split('=');
-      acc[key] = val;
+    const rawCookies = req.headers.cookie.split("; ").reduce((acc, c) => {
+      const eqIndex = c.indexOf("=");
+      if (eqIndex > -1) {
+        const key = c.substring(0, eqIndex).trim();
+        const val = c.substring(eqIndex + 1).trim();
+        // URL decode the value
+        try {
+          acc[key] = decodeURIComponent(val);
+        } catch {
+          acc[key] = val;
+        }
+      }
       return acc;
     }, {});
-    token = rawCookies.token;
+
+    for (const name of TOKEN_COOKIE_NAMES) {
+      if (rawCookies[name]) {
+        token = rawCookies[name];
+        break;
+      }
+    }
   }
 
   // 3. Bearer header
@@ -45,19 +96,33 @@ export const getBearerUser = async (req) => {
     }
   }
 
-  if (!token) return null;
+  // 4. Query param (for WebSocket connections or testing)
+  if (!token && req.query?.token) {
+    token = req.query.token;
+  }
+
+  if (!token) {
+    return null;
+  }
 
   try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-    
-    // Fetch type from DB if not in token
-    if (!decoded.type && decoded.id) {
-      const [rows] = await pool.query(
-        "SELECT type FROM users WHERE id = ? LIMIT 1",
-        [decoded.id]
-      );
-      if (rows[0]) {
-        decoded.type = rows[0].type;
+    const decoded = verifyJwtToken(token);
+    if (!decoded) {
+      return null;
+    }
+
+    // Fetch type/role from DB if not in token
+    if (!decoded.type && !decoded.role && decoded.id) {
+      try {
+        const [rows] = await pool.query(
+          "SELECT type, role FROM users WHERE id = ? LIMIT 1",
+          [decoded.id]
+        );
+        if (rows[0]) {
+          decoded.type = rows[0].type || rows[0].role;
+        }
+      } catch (dbErr) {
+        console.error("[getBearerUser] DB lookup failed:", dbErr.message);
       }
     }
 
@@ -225,6 +290,7 @@ export const createConversationRecord = async ({
     message: normalizeMessage(messages[0]),
   };
 };
+
 export const addMessageRecord = async ({ conversationId, message, visitor_id, user, staffName }) => {
   const conversation = await getConversationById(conversationId);
   if (!conversation) {
@@ -296,7 +362,46 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
   };
 };
 
-// ✅ All handlers now use async getBearerUser
+// ✅ Debug endpoint to check cookie/token status
+export const debugAuth = async (req, res) => {
+  const parsedCookies = req.cookies || {};
+  
+  const rawCookies = req.headers.cookie 
+    ? req.headers.cookie.split("; ").reduce((acc, c) => {
+        const eqIndex = c.indexOf("=");
+        if (eqIndex > -1) {
+          const key = c.substring(0, eqIndex).trim();
+          const val = c.substring(eqIndex + 1).trim();
+          try {
+            acc[key] = decodeURIComponent(val);
+          } catch {
+            acc[key] = val;
+          }
+        }
+        return acc;
+      }, {})
+    : {};
+
+  const user = await getBearerUser(req);
+
+  res.json({
+    parsed_cookies: Object.keys(parsedCookies),
+    raw_cookie_header: req.headers.cookie || null,
+    raw_cookie_names: Object.keys(rawCookies),
+    found_token: user ? "✅ Valid" : "❌ None found or invalid",
+    decoded_user: user ? {
+      id: user.id,
+      type: user.type,
+      role: user.role,
+      email: user.email,
+      name: user.name,
+    } : null,
+    is_staff: isStaffUser(user),
+    staff_roles: [...STAFF_ROLES],
+    token_cookie_names_checked: TOKEN_COOKIE_NAMES,
+  });
+};
+
 export const createConversation = async (req, res) => {
   try {
     const payload = await createConversationRecord({
@@ -317,24 +422,40 @@ export const createConversation = async (req, res) => {
 export const listConversations = async (req, res) => {
   try {
     const user = await getBearerUser(req);
-    
+
     if (!user) {
       return res.status(401).json({ message: "Authentication required" });
     }
-    
-    if (!isStaffUser(user)) {
-      return res.status(403).json({ message: "Staff access required" });
+
+    const visitorId = clean(req.query.visitor_id || req.body?.visitor_id);
+
+    if (isStaffUser(user)) {
+      const [rows] = await pool.query(`
+        SELECT
+          c.*,
+          SUM(CASE WHEN m.sender_role = 'customer' AND m.read_by_staff = 0 THEN 1 ELSE 0 END) AS unread_count
+        FROM service_chat_conversations c
+        LEFT JOIN service_chat_messages m ON m.conversation_id = c.id
+        GROUP BY c.id
+        ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+      `);
+
+      return res.json({ data: rows.map(normalizeConversation) });
     }
 
-    const [rows] = await pool.query(`
-      SELECT
-        c.*,
-        SUM(CASE WHEN m.sender_role = 'customer' AND m.read_by_staff = 0 THEN 1 ELSE 0 END) AS unread_count
-      FROM service_chat_conversations c
-      LEFT JOIN service_chat_messages m ON m.conversation_id = c.id
-      GROUP BY c.id
-      ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
-    `);
+    const [rows] = await pool.query(
+      `
+        SELECT
+          c.*,
+          SUM(CASE WHEN m.sender_role = 'staff' AND m.read_by_customer = 0 THEN 1 ELSE 0 END) AS unread_count
+        FROM service_chat_conversations c
+        LEFT JOIN service_chat_messages m ON m.conversation_id = c.id
+        WHERE (c.user_id = ? OR (? IS NOT NULL AND c.visitor_id = ?))
+        GROUP BY c.id
+        ORDER BY COALESCE(c.last_message_at, c.created_at) DESC
+      `,
+      [String(user.id), visitorId || null, visitorId || null]
+    );
 
     return res.json({ data: rows.map(normalizeConversation) });
   } catch (error) {

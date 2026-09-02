@@ -11,6 +11,7 @@ const safeFolder = (value) => {
   const folder = String(value || "common")
     .toLowerCase()
     .replace(/[^a-z0-9-_]/g, "");
+    
 
   return folder || "common";
 };

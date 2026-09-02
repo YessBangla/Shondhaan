@@ -18,10 +18,12 @@ import PanelHero from "@/components/PanelHero";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faReply, faHouse } from "@fortawesome/free-solid-svg-icons";
 import { useReferralCode } from "@/hooks/useReferralCode";
+
 const ReferralCode = () => {
   const referralCode = useReferralCode();
   return <p>{referralCode}</p>;
 };
+
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
@@ -55,6 +57,8 @@ interface PanelSidebarTabsProps {
   hero?: PanelHeroConfig;
   offsetForDesktopMegaMenu?: boolean;
   embedded?: boolean;
+  /** Tabs that should fill the entire viewport (no wrapper scroll, no hero) */
+  fullViewportTabs?: string[];
 }
 
 const customScrollbar = "[&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-white/10 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:hover:bg-blue-500/50 [&::-webkit-scrollbar]:transition-colors";
@@ -71,6 +75,7 @@ const PanelSidebarTabs = ({
   hero,
   offsetForDesktopMegaMenu = false,
   embedded = false,
+  fullViewportTabs = [],
 }: PanelSidebarTabsProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -83,16 +88,16 @@ const PanelSidebarTabs = ({
 
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
-// inside component, near other derived values
 
- const mysqlAuthUser = useMemo(() => getMySqlAuth()?.user, []);
-const userRole =
-  (mysqlAuthUser as any)?.type ||
-  (mysqlAuthUser as any)?.role ||
-  (user as any)?.user_metadata?.role ||
-  "";
-const isWalletHiddenRole = WALLET_HIDDEN_ROLES.has(userRole);
-useEffect(() => {
+  const mysqlAuthUser = useMemo(() => getMySqlAuth()?.user, []);
+  const userRole =
+    (mysqlAuthUser as any)?.type ||
+    (mysqlAuthUser as any)?.role ||
+    (user as any)?.user_metadata?.role ||
+    "";
+  const isWalletHiddenRole = WALLET_HIDDEN_ROLES.has(userRole);
+
+  useEffect(() => {
     if (!requestedTab) return;
     if (items.some((item) => item.value === requestedTab)) {
       setActiveTabState(requestedTab);
@@ -120,6 +125,9 @@ useEffect(() => {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
 
+  // Whether current tab should fill the full viewport
+  const isFullViewport = fullViewportTabs.includes(activeTab);
+
   useEffect(() => {
     const fetchWallet = async () => {
       if (!user?.id) return;
@@ -141,7 +149,6 @@ useEffect(() => {
         console.error("Failed to fetch wallet balance");
       }
     };
-
     fetchWallet();
   }, [user?.id]);
 
@@ -319,46 +326,45 @@ useEffect(() => {
   const SidebarBody = ({ inDrawer = false }: { inDrawer?: boolean }) => (
     <div className="flex flex-col h-full bg-background text-userprimary border-r border-white/5">
       {/* User Profile Mini Card */}
-     {/* User Profile Mini Card */}
-{(!collapsed || inDrawer) && user && (
-  <div className="px-3 pt-4" ref={profileMenuRef}>
-    <div
-      className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer"
-      onClick={() => setProfileMenuOpen(o => !o)}
-    >
-      <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
-        {profileImageUrl ? (
-          <img src={resolveProfileImageUrl(profileImageUrl)} alt="" className="h-full w-full object-cover" />
-        ) : (
-          initials
-        )}
-      </div>
-      <div className="min-w-0 flex-1">
-        <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{(user as any)?.user_metadata?.full_name || (user as any)?.email?.split("@")[0]}</p>
-        <p className="text-[10px] text-foreground truncate leading-tight">{(user as any)?.email}</p>
-      </div>
-      <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
-    </div>
+      {(!collapsed || inDrawer) && user && (
+        <div className="px-3 pt-4" ref={profileMenuRef}>
+          <div
+            className="flex items-center gap-3 rounded-xl bg-white/5 hover:bg-white/10 transition-colors p-2.5 cursor-pointer"
+            onClick={() => setProfileMenuOpen(o => !o)}
+          >
+            <div className="h-9 w-9 overflow-hidden rounded-full bg-userprimary text-white flex items-center justify-center text-[13px] font-bold ring-1 ring-white/20 shrink-0">
+              {profileImageUrl ? (
+                <img src={resolveProfileImageUrl(profileImageUrl)} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">{(user as any)?.user_metadata?.full_name || (user as any)?.email?.split("@")[0]}</p>
+              <p className="text-[10px] text-foreground truncate leading-tight">{(user as any)?.email}</p>
+            </div>
+            <ChevronDown className={cn("h-4 w-4 text-foreground transition-transform", profileMenuOpen && "rotate-180")} />
+          </div>
 
-    <AnimatePresence>
-      {profileMenuOpen && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
-          exit={{ opacity: 0, height: 0 }}
-          className="overflow-hidden space-y-1 mt-1"
-        >
-          <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-foreground transition-colors">
-            <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
-          </button>
-          <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
-            <LogOut className="h-3.5 w-3.5" /> সাইন আউট
-          </button>
-        </motion.div>
+          <AnimatePresence>
+            {profileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="overflow-hidden space-y-1 mt-1"
+              >
+                <button onClick={() => setResetConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-medium text-slate-400 hover:bg-white/5 hover:text-foreground transition-colors">
+                  <RotateCcw className="h-3.5 w-3.5" /> লেআউট রিসেট
+                </button>
+                <button onClick={() => setSignOutConfirmOpen(true)} className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-[12px] font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors">
+                  <LogOut className="h-3.5 w-3.5" /> সাইন আউট
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
       )}
-    </AnimatePresence>
-  </div>
-)}
 
       {/* Wallet Balance Card */}
       {(!collapsed || inDrawer) && user && !isWalletHiddenRole && (
@@ -420,7 +426,7 @@ useEffect(() => {
       )}
 
       {/* Main Nav */}
-      <nav className={cn("flex-1 overflow-y-auto py-4 px-3 space-y-1", customScrollbar)}>
+      <nav className={cn("flex-1 overflow-y-auto py-4 px-3 space-y-1 min-h-0", customScrollbar)}>
         {groups.map((group, gi) => {
           const groupKey = group.label || `g-${gi}`;
           const groupCollapsed = collapsedGroups[groupKey];
@@ -472,7 +478,7 @@ useEffect(() => {
       </nav>
 
       {/* Footer Collapse Btn */}
-      <div className="border-t border-white/5 p-3">
+      <div className="border-t border-white/5 p-3 shrink-0">
         <button
           onClick={() => setCollapsed((c) => !c)}
           className={cn(
@@ -485,49 +491,59 @@ useEffect(() => {
       </div>
     </div>
   );
+
   const bn = language === "bn";
 
   return (
-    <div className={cn("flex w-full", !embedded && "min-h-screen", offsetForDesktopMegaMenu && "md:pt-0")}>
+    <div className={cn("flex w-full", !embedded && "h-screen overflow-hidden", offsetForDesktopMegaMenu && "md:pt-0")}>
       {/* Desktop sidebar */}
-      {!embedded && <aside
-        className={cn(
-          "hidden md:flex flex-col shrink-0 sticky self-start transition-[width] duration-300 ease-in-out z-30 border shadow-2xl",
-          offsetForDesktopMegaMenu ? "top-0 h-[calc(100vh)]" : "top-0 h-screen",
-          collapsed ? "w-[80px]" : "w-[280px]"
-        )}
-      >
-        <SidebarBody />
-      </aside>}
+      {!embedded && (
+        <aside
+          className={cn(
+            "hidden md:flex flex-col shrink-0 h-full transition-[width] duration-300 ease-in-out z-30 border shadow-2xl shrink-0",
+            collapsed ? "w-[80px]" : "w-[280px]"
+          )}
+        >
+          <SidebarBody />
+        </aside>
+      )}
 
       {/* Mobile drawer */}
-      {!embedded && <AnimatePresence>
-        {mobileOpen && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setMobileOpen(false)}
-              className="md:hidden fixed inset-0 z-[60] bg-black/70 backdrop-blur-md"
-            />
-            <motion.aside
-              initial={{ x: -320 }}
-              animate={{ x: 0 }}
-              exit={{ x: -320 }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] shadow-2xl"
-            >
-              <SidebarBody inDrawer />
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>}
+      {!embedded && (
+        <AnimatePresence>
+          {mobileOpen && (
+            <>
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setMobileOpen(false)}
+                className="md:hidden fixed inset-0 z-[60] bg-black/70 backdrop-blur-md"
+              />
+              <motion.aside
+                initial={{ x: -320 }}
+                animate={{ x: 0 }}
+                exit={{ x: -320 }}
+                transition={{ type: "spring", damping: 30, stiffness: 300 }}
+                className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] shadow-2xl"
+              >
+                <SidebarBody inDrawer />
+              </motion.aside>
+            </>
+          )}
+        </AnimatePresence>
+      )}
 
-      {/* Main content */}
-      <div className={cn("flex-1 min-w-0 flex flex-col", !embedded && "bg-slate-50 dark:bg-slate-950")}>
+      {/* ═══════════════════════════════════════════
+          Main content — sticky, fills viewport
+      ═══════════════════════════════════════════ */}
+      <div className={cn(
+        "flex-1 min-w-0 flex flex-col overflow-hidden",
+        !embedded && "bg-slate-50 dark:bg-slate-950"
+      )}>
+        {/* Header — shrink-0, no sticky needed since parent is fixed height */}
         {!embedded && (
-          <header className="sticky top-0 z-40 h-auto py-3 border-b border-gray-300 bg-gray-200">
+          <header className="shrink-0 z-40 py-3 bg-userprimaryshade">
             <div className="flex h-full items-center gap-4 px-4 md:px-6">
               <button
                 type="button"
@@ -537,40 +553,35 @@ useEffect(() => {
               >
                 <Menu className="h-6 w-6" />
               </button>
-              <div className="border flex w-full">
+              <div className="flex w-full">
                 <div className="w-full flex">
                   <h1 className="text-xl font-semibold text-gray-800 my-auto">
                     {bn ? "ড্যাশবোর্ড" : "Dashboard"}
                   </h1>
                   <p><ReferralCode /></p>
                 </div>
-
                 <div className="flex gap-2">
                   <button
                     onClick={toggleLang}
                     aria-label={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
                     title={language === "bn" ? "Switch to English" : "বাংলায় দেখুন"}
                     className="group flex h-9 items-center gap-1.5 rounded-full border shadow bg-background/60 px-2.5 text-foreground/85 transition-all hover:border-primary/40 hover:bg-secondary hover:text-foreground"
-                    >
+                  >
                     <Globe className="h-4 w-4 text-primary/80" />
                     <span className="flex items-center gap-1 text-[11px] font-bold leading-none tracking-wide">
-                      <span className={language === "bn" ? "text-foreground" : "text-muted-foreground/60"}>
-                        BN
-                      </span>
+                      <span className={language === "bn" ? "text-foreground" : "text-muted-foreground/60"}>BN</span>
                       <span aria-hidden="true" className="h-2.5 w-px bg-border/80" />
-                      <span className={language === "en" ? "text-foreground" : "text-muted-foreground/60"}>
-                        EN
-                      </span>
+                      <span className={language === "en" ? "text-foreground" : "text-muted-foreground/60"}>EN</span>
                     </span>
                   </button>
-
-                  <button onClick={() => navigate("/")} 
-                    className="border hidden md:block shadow text-nowrap rounded-full px-2 py-1 border-userprimary bg-userprimaryshade text-black font-semibold
-                    hover:bg-userprimary text-[12px] hover:text-white transition-all">
+                  <button
+                    onClick={() => navigate("/")}
+                    className="border hidden md:block shadow text-nowrap rounded-full px-2 py-1 border-userprimary bg-userprimaryshade text-black font-semibold hover:bg-userprimary text-[12px] hover:text-white transition-all"
+                  >
                     {bn ? "হোম পেইজ" : "Home Page"} <FontAwesomeIcon icon={faReply} />
                   </button>
                   <button onClick={() => navigate("/")} className="md:hidden text-[20px] text-userprimary">
-                      <FontAwesomeIcon icon={faHouse} />
+                    <FontAwesomeIcon icon={faHouse} />
                   </button>
                 </div>
               </div>
@@ -578,9 +589,20 @@ useEffect(() => {
           </header>
         )}
 
-        <main className="flex-1 min-w-0">
-          <div className={cn("w-full space-y-6", embedded ? "p-0" : "px-5 py-2")}>
-            {hero && !hero.hideOnTabs?.includes(activeTab) && (
+        {/* ═══ Main content area — fills remaining height ═══ */}
+        <main className={cn(
+          "flex-1 min-h-0 overflow-hidden",
+          isFullViewport ? "flex flex-col" : ""
+        )}>
+          <div className={cn(
+            "w-full",
+            isFullViewport
+              ? "h-full flex-1 min-h-0"
+              : "h-full overflow-y-auto",
+            embedded ? "p-0" : "px-5 py-2"
+          )}>
+            {/* Hero — hidden for full-viewport tabs */}
+            {hero && !hero.hideOnTabs?.includes(activeTab) && !isFullViewport && (
               <PanelHero
                 title={hero.title}
                 subtitle={hero.subtitle}
@@ -589,6 +611,7 @@ useEffect(() => {
                 rightIcon={hero.rightIcon || panelIcon}
               />
             )}
+
             <AnimatePresence mode="wait" initial={false}>
               <motion.div
                 key={activeTab}
@@ -596,6 +619,7 @@ useEffect(() => {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -4 }}
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
+                className={isFullViewport ? "h-full min-h-0" : "space-y-6"}
               >
                 {children(activeTab, setActiveTabState)}
               </motion.div>
@@ -639,7 +663,7 @@ useEffect(() => {
         onClose={() => setShortcutsHelpOpen(false)}
         shortcuts={[
           { keys: "⌘K / Ctrl+K", label: "কমান্ড প্যালেট" },
-          { keys: "Shift + ?", label: "এই হেল্প" },
+          { keys: "Shift + ?", label: "এই হেলপ" },
           { keys: "g h", label: "হোম পেজে যান" },
           ...items.slice(0, 9).map((it, i) => ({ keys: `g ${i + 1}`, label: it.label })),
           { keys: "Esc", label: "বন্ধ করুন" },
@@ -666,7 +690,7 @@ useEffect(() => {
       <AlertDialog
         open={signOutConfirmOpen}
         onOpenChange={(o) => !signingOut && setSignOutConfirmOpen(o)}
-        >
+      >
         <AlertDialogContent className="rounded-2xl">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
@@ -870,7 +894,6 @@ const CommandPalette = ({
             ))
           )}
         </div>
-
         <div className="flex items-center justify-between px-4 py-2.5 border-t border-white/5 text-[10px] text-slate-500 bg-white/5">
           <span className="font-medium">Shondhaan Workspace</span>
           <div className="flex items-center gap-4">

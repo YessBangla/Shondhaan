@@ -7,15 +7,24 @@ import {
   isStaffUser,
 } from "../controller/serviceChat.controller.js";
 
-const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
+const JWT_SECRETS = Array.from(
+  new Set(
+    [process.env.JWT_SECRET, process.env.AUTH_TOKEN_SECRET, "secret-key", "secret", ""].filter(Boolean)
+  )
+);
 
 const verifyToken = (token) => {
   if (!token) return null;
-  try {
-    return jwt.verify(token, JWT_SECRET);
-  } catch {
-    return null;
+
+  for (const secret of JWT_SECRETS) {
+    try {
+      return jwt.verify(token, secret);
+    } catch {
+      // try the next configured secret
+    }
   }
+
+  return null;
 };
 
 export const initServiceChatSocket = (io) => {

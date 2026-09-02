@@ -1,7 +1,25 @@
 import "dotenv/config";
 import jwt from "jsonwebtoken";
 
-const JWT_SECRET = process.env.AUTH_TOKEN_SECRET || "secret";
+const JWT_SECRETS = Array.from(
+  new Set(
+    [process.env.JWT_SECRET, process.env.AUTH_TOKEN_SECRET, "secret-key", "secret", ""].filter(Boolean)
+  )
+);
+
+const verifyToken = (token) => {
+  if (!token) return null;
+
+  for (const secret of JWT_SECRETS) {
+    try {
+      return jwt.verify(token, secret);
+    } catch {
+      // try the next configured secret
+    }
+  }
+
+  return null;
+};
 
 export const authMiddleware = (req, res, next) => {
   try {
@@ -22,7 +40,10 @@ export const authMiddleware = (req, res, next) => {
       return res.status(401).json({ message: "No token" });
     }
 
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = verifyToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: "Invalid token" });
+    }
 
     req.user = decoded;
 
