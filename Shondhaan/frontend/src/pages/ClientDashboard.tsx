@@ -9,7 +9,8 @@ import {
   TrendingUp, BarChart3, PieChart, ArrowUpRight,
   Gift, Share2, Copy, Facebook, Youtube, Twitter, MessageCircle, X,
   Settings2, CreditCard, AlertCircle,
-  Calendar, Clock
+  Calendar, Clock,
+  Edit
 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -148,6 +149,18 @@ const normalizeProfileImageUrl = (url?: string | null) => {
   const base = (PROFILE_API_BASE || "").replace(/\/+$/, "");
   const formatted = url.startsWith("/") ? url : `/${url}`;
   return `${base}${formatted}`;
+};
+
+// Small helper so every authenticated fetch call includes the Bearer token
+// the same way ProfileContent.tsx does. Without this, requests that rely
+// only on `credentials: "include"` were coming back 401 from the backend.
+const buildAuthHeaders = (extra?: Record<string, string>) => {
+  const mysqlAuth = getMySqlAuth();
+  return {
+    "Content-Type": "application/json",
+    ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+    ...(extra || {}),
+  };
 };
 
 const AreaChart = () => (
@@ -428,6 +441,7 @@ const ClientDashboard = () => {
     try {
       const res = await fetch(`${MART_API_BASE}/api/orders?user_id=${encodeURIComponent(String(userId))}`, {
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to fetch mart orders");
@@ -463,6 +477,7 @@ const ClientDashboard = () => {
     try {
       const res = await fetch(`${PROFILE_API_BASE}/api/referral/stats`, {
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Failed to load referral code");
@@ -512,6 +527,7 @@ const ClientDashboard = () => {
       try {
         const bookingRes = await fetch(`${SERVICE_API_BASE}/api/bookings?user_id=${encodeURIComponent(String(userId))}`, {
           credentials: "include",
+          headers: buildAuthHeaders(),
         });
         const bookingData = await bookingRes.json().catch(() => ({}));
         if (!bookingRes.ok) throw new Error(bookingData?.message || bookingData?.error || "Failed to load bookings");
@@ -526,37 +542,43 @@ const ClientDashboard = () => {
       setBookings([]);
     }
 
-    if (mysqlAuth?.user) {
-      try {
-        const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Failed to load profile");
+   if (mysqlAuth?.user) {
+  try {
+    const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
+      credentials: "include",
+      headers: buildAuthHeaders(),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Failed to load profile");
 
-        const settingsData = await fetchReferralSettings();
-        setReferralSettings(settingsData);
-        await fetchReferralCode();
+    // Update profile FIRST so a later failure can't block the image/name from showing
+    setProfile({
+      display_name: data.name || fallbackProfile.display_name,
+      phone: data.phone || data.mobile || fallbackProfile.phone,
+      address: data.address || fallbackProfile.address,
+      profile_image_url: normalizeProfileImageUrl(data.profile_image || data.avatar_url || fallbackProfile.profile_image_url),
+      shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
+    });
 
-        setProfile({
-          display_name: data.name || fallbackProfile.display_name,
-          phone: data.phone || data.mobile || fallbackProfile.phone,
-          address: data.address || fallbackProfile.address,
-          profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || fallbackProfile.profile_image_url),
-          shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
-        });
-
-        if (data.shondhaan_id && !mysqlAuth.user?.shondhaan_id) {
-          saveMySqlAuth({
-            ...mysqlAuth,
-            user: { ...mysqlAuth.user, shondhaan_id: data.shondhaan_id },
-          });
-        }
-      } catch (err) {
-        console.error("fetchProfile error:", err);
-      }
+    if (data.shondhaan_id && !mysqlAuth.user?.shondhaan_id) {
+      saveMySqlAuth({
+        ...mysqlAuth,
+        user: { ...mysqlAuth.user, shondhaan_id: data.shondhaan_id },
+      });
     }
+
+    // Referral calls moved after — if these fail, the profile (and image) already rendered
+    try {
+      const settingsData = await fetchReferralSettings();
+      setReferralSettings(settingsData);
+      await fetchReferralCode();
+    } catch (referralErr) {
+      console.error("referral fetch error (non-blocking):", referralErr);
+    }
+  } catch (err) {
+    console.error("fetchProfile error:", err);
+  }
+}
     setLoading(false);
   }, [user, fetchReferralCode]);
 
@@ -622,7 +644,7 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
         method: "PATCH",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAuthHeaders(),
         body: JSON.stringify({
           name: profile.display_name.trim(),
           phone: profile.phone.trim() || null,
@@ -636,8 +658,10 @@ const ClientDashboard = () => {
         display_name: data.name || profile.display_name.trim(),
         phone: data.phone || data.mobile || profile.phone.trim(),
         address: data.address || profile.address.trim(),
-        profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || profile.profile_image_url),
+        // profile_image checked before avatar_url to match ProfileContent.tsx
+        profile_image_url: normalizeProfileImageUrl(data.profile_image || data.avatar_url || profile.profile_image_url),
         shondhaan_id: data.shondhaan_id || profile.shondhaan_id,
+        
       });
 
       saveMySqlAuth({
@@ -676,6 +700,9 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
         method: "PATCH",
         credentials: "include",
+        headers: {
+          ...(mysqlAuth.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+        },
         body: formData,
       });
       const data = await res.json().catch(() => ({}));
@@ -712,6 +739,7 @@ const ClientDashboard = () => {
         await fetch(`${PROFILE_API_BASE}/api/auth/logout`, {
           method: "POST",
           credentials: "include",
+          headers: buildAuthHeaders(),
         });
       } catch { /* ignore */ }
       localStorage.removeItem("yess_mysql_auth");
@@ -738,6 +766,7 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/referral/generate`, {
         method: "POST",
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
@@ -839,13 +868,13 @@ const ClientDashboard = () => {
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
-                  className="relative overflow-hidden rounded-3xl shadow-xl border border-blue-100 bg-white"
+                  className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-xl border border-blue-100 bg-white"
                 >
-                  <div className="h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
+                  <div className="h-20 md:h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   </div>
 
-                  <div className="px-6 pb-6 relative">
+                  <div className="px-2 md:px-6 pb-6 relative">
                     <div className="flex items-end justify-between -mt-14 mb-4">
                       <motion.div
                         initial={{ scale: 0.8 }}
@@ -853,16 +882,16 @@ const ClientDashboard = () => {
                         transition={{ delay: 0.2 }}
                         className="relative"
                       >
-                        <div className="h-24 w-24 rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
+                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl md:rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
                           {profile.profile_image_url ? (
-                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded-2xl" alt="" />
+                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded md:rounded-2xl" alt="" />
                           ) : (
                             <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center">
                               <User className="h-10 w-10 text-slate-400" />
                             </div>
                           )}
                         </div>
-                        <div className="absolute bottom-3 right-3 h-5 w-5 bg-green-500 border-4 border-white rounded-full shadow-md"></div>
+                        <div className="absolute bottom-3 right-3 h-3 md:h-5 w-3 md:w-5 bg-green-500 border-2 md:border-4 border-white rounded-full shadow-md"></div>
                       </motion.div>
 
                       <motion.div
@@ -870,28 +899,29 @@ const ClientDashboard = () => {
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 }}
                         className="flex gap-2 mb-2"
-                      >
+                        >
                         <button
                           onClick={() => setTab("profile")}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-4 py-2 text-xs font-semibold text-slate-700 transition-all border border-slate-200 shadow-sm"
-                        >
-                          <Settings className="h-3.5 w-3.5" /> {bn ? "এডিট" : "Edit"}
+                          className="inline-flex items-center my-auto gap-1 md:gap-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 px-2 md:px-4 md:py-2 text-[10px] md:text-xs font-semibold text-slate-700 transition-all border border-slate-200 shadow-sm"
+                          >
+                          <Edit className="h-3.5 w-3.5" /> 
+                          <span className="hidden md:inline">{bn ? "এডিট" : "Edit"}</span>
                         </button>
                         <button
                           onClick={handleSignOut}
-                          className="inline-flex items-center gap-1.5 rounded-xl bg-red-50 hover:bg-red-100 px-4 py-2 text-xs font-semibold text-red-600 transition-all border border-red-200 shadow-sm"
-                        >
+                          className="hidden md:inline-flex items-center gap-1 md:gap-1.5 rounded-xl bg-red-50 hover:bg-red-100 px-2 md:px-4 md:py-2 text-[10px] md:text-xs font-semibold text-red-600 transition-all border border-red-200 shadow-sm"
+                          >
                           <LogOut className="h-3.5 w-3.5" /> {bn ? "লগআউট" : "Logout"}
                         </button>
                       </motion.div>
                     </div>
 
                     <div>
-                      <div className="flex flex-wrap gap-4 items-center">
+                      <div className="flex flex-col md:flex-row gap-1 md:gap-4 items-start">
                         <h1 className="text-xl font-bold text-slate-900">
                           {profile.display_name || (bn ? "ব্যবহারকারী" : "User")}
                         </h1>
-                        <div className="flex gap-2 text-[11px] border px-3 py-1 rounded-full border-userprimary bg-userprimaryshade">
+                        <div className="flex gap-2 text-[9px] md:text-[11px] border px-3 py-1 rounded-full border-userprimary bg-userprimaryshade">
                           <span className="font-bold my-auto">{bn ? "সন্ধান আইডিঃ" : "Shondhaan ID:"}</span>
                           <span className="text-slate-800 font-mono font-semibold my-auto">{profile.shondhaan_id || "—"}</span>
                         </div>
@@ -1030,7 +1060,7 @@ const ClientDashboard = () => {
                 )}
 
                 {/* Quick Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 md:gap-4">
                   {[
                     { value: bookings.length, label: bn ? "বুকিং" : "Bookings", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <ClipboardList className="h-5 w-5" />, tab: "bookings" },
                     { value: bookings.filter(b => b.status === "completed").length, label: bn ? "সম্পন্ন" : "Done", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <CheckCircle2 className="h-5 w-5" />, tab: "bookings" },
@@ -1053,15 +1083,15 @@ const ClientDashboard = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05 }}
                       onClick={() => setTab(stat.tab)}
-                      className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group text-left"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</span>
-                        <div className={`h-8 w-8 rounded-lg ${stat.bg} flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
+                      className="bg-background px-2 border rounded-xl md:p-5 md:rounded-2xl flex flex-row md:block border-slate-200 md:shadow hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group text-left justify-start"
+                      >
+                      <div className="flex items-center flex-row-reverse justify-start gap-2 md:mb-3 md:justify-between md:gap-0">
+                        <span className="text-xs font-bold uppercase text-nowrap tracking-wider text-slate-700">{stat.label}</span>
+                        <div className={`h-8 w-8 rounded-lg md:${stat.bg} flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
                           {stat.icon}
                         </div>
                       </div>
-                      <p className={`text-2xl font-extrabold text-slate-900 tabular-nums ${typeof stat.value === "string" ? "text-lg" : "text-3xl"}`}>{stat.value}</p>
+                      <p className={`text-sm md:text-2xl my-auto font-extrabold text-slate-900 tabular-nums text-right w-full md:text-left ${typeof stat.value === "string" ? "text-lg" : "text-3xl"}`}>{stat.value}</p>
                     </motion.button>
                   ))}
                 </div>
@@ -1072,11 +1102,11 @@ const ClientDashboard = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="lg:col-span-2 bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
-                  >
+                    className="lg:col-span-2 bg-white p-3 md:p-6 rounded-xl md:rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden"
+                    >
                     <div className="flex items-center justify-between mb-6">
                       <div>
-                        <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
+                        <h3 className="text-sm md:text-lg font-bold text-slate-900 flex items-center gap-2">
                           <div className="p-2 rounded-lg bg-userprimaryshade text-userprimary">
                             <TrendingUp className="h-5 w-5" />
                           </div>
@@ -1098,9 +1128,9 @@ const ClientDashboard = () => {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
-                  >
-                    <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2 mb-6">
+                    className="bg-white p-3 md:p-6 rounded-xl md:rounded-3xl border border-slate-200 shadow-sm hover:shadow-md transition-all overflow-hidden flex flex-col"
+                    >
+                    <h3 className="text-sm md:text-lg font-bold text-slate-900 flex items-center gap-2 mb-6">
                       <div className="p-2 rounded-lg bg-userprimaryshade text-userprimary">
                         <PieChart className="h-5 w-5" />
                       </div>
@@ -1129,10 +1159,14 @@ const ClientDashboard = () => {
                 {/* Quick Actions */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
-                    { title: bn ? "মার্ট" : "Mart", subtitle: bn ? "পণ্য কিনুন" : "Shop products", icon: ShoppingBag, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/mart/home") },
-                    { title: bn ? "ডিল" : "Deal", subtitle: bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell", icon: Megaphone, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal") },
-                    { title: bn ? "বিজ্ঞাপন দিন" : "Post Ad", subtitle: bn ? "ফ্রি বিজ্ঞাপন" : "Free listing", icon: Megaphone, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal/post") },
-                    { title: bn ? "সার্ভিস নিন" : "Get Service", subtitle: bn ? "১৮৬+ সার্ভিস" : "186+ services", icon: ClipboardList, bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/") },
+                    { title: bn ? "মার্ট" : "Mart", subtitle: bn ? "পণ্য কিনুন" : "Shop products", icon: ShoppingBag, 
+                      img_icon:'images/modules_logo/mart.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/mart/home") },
+                    { title: bn ? "ডিল" : "Deal", subtitle: bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell", icon: Megaphone, 
+                      img_icon:'images/modules_logo/deal.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal") },
+                    { title: bn ? "বিজ্ঞাপন দিন" : "Post Ad", subtitle: bn ? "ফ্রি বিজ্ঞাপন" : "Free listing", icon: Megaphone, 
+                      img_icon:'images/modules_logo/ads.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal/post") },
+                    { title: bn ? "সার্ভিস নিন" : "Get Service", subtitle: bn ? "১৮৬+ সার্ভিস" : "186+ services", icon: ClipboardList, 
+                      img_icon:'images/modules_logo/service.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/") },
                   ].map((action, i) => {
                     const Icon = action.icon;
                     return (
@@ -1142,12 +1176,15 @@ const ClientDashboard = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 + i * 0.05 }}
                         onClick={action.action}
-                        className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all text-left group"
-                      >
-                        <div className={`h-12 w-12 rounded-xl ${action.bg} flex items-center justify-center ${action.color} mb-3 group-hover:scale-110 transition-transform`}>
+                        className="bg-white p-3 md:p-5 rounded-xl md:rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all text-left group"
+                        >
+                        {/* <div className={`h-12 w-12 rounded-xl ${action.bg} flex items-center justify-center ${action.color} mb-3 group-hover:scale-110 transition-transform`}>
                           <Icon className="h-6 w-6" />
+                        </div> */}
+                        <div className={`w-full flex gap-2 items-center justify-start ${action.color} mb-3 group-hover:scale-110 transition-transform`}>
+                          <img src={action.img_icon} className="h-8 w-8 md:h-12 md:w-12" alt={action.title} />
+                          <p className="text-[11px] text-nowrap md:text-sm font-bold text-slate-900">{action.title}</p>
                         </div>
-                        <p className="text-sm font-bold text-slate-900">{action.title}</p>
                         <p className="text-xs text-slate-500 mt-0.5">{action.subtitle}</p>
                       </motion.button>
                     );

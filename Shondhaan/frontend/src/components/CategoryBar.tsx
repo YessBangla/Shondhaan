@@ -163,7 +163,7 @@ const CategoryCard = ({
     whileHover={{ y: -4 }}
     whileTap={{ scale: 0.95 }}
     className="group flex shrink-0 flex-col items-center gap-2 transition-all md:w-[110px]"
-  >
+    >
     <motion.div
       className={`flex h-10 w-10 md:h-20 md:w-20 items-center justify-center rounded-3xl transition-all duration-300 ${
         selected
@@ -171,7 +171,7 @@ const CategoryCard = ({
           : ""
       }`}
       animate={selected ? { scale: 1 } : { scale: 1 }}
-    >
+      >
       <div className={`transition-all ${selected ? "brightness-110" : ""}`}>
         {icon}
       </div>
@@ -325,7 +325,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
       <div className="p-4 bg-transparent md:bg-white/80 backdrop-blur-xl border border-white/40 md:rounded-3xl md:shadow hover:shadow-3xl transition-shadow duration-300">
 
         {/* group on this div so group-hover controls the button visibility */}
-        <div className="relative group">
+        <div className="relative">
 
           {/* Left scroll button — hidden by default, visible on group hover */}
           <motion.button
@@ -347,7 +347,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
             ref={scrollRef}
             className="flex gap-4 overflow-x-auto pb-2 md:gap-5"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-          >
+            >
             {categoryItems.map((item) => (
               <CategoryCard key={item.key} icon={item.icon} label={item.label} selected={item.selected} onClick={item.onClick} />
             ))}
