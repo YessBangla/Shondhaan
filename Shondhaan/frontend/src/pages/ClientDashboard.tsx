@@ -150,6 +150,18 @@ const normalizeProfileImageUrl = (url?: string | null) => {
   return `${base}${formatted}`;
 };
 
+// Small helper so every authenticated fetch call includes the Bearer token
+// the same way ProfileContent.tsx does. Without this, requests that rely
+// only on `credentials: "include"` were coming back 401 from the backend.
+const buildAuthHeaders = (extra?: Record<string, string>) => {
+  const mysqlAuth = getMySqlAuth();
+  return {
+    "Content-Type": "application/json",
+    ...(mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+    ...(extra || {}),
+  };
+};
+
 const AreaChart = () => (
   <svg viewBox="0 0 100 40" preserveAspectRatio="none" className="w-full h-20">
     <defs>
@@ -397,6 +409,7 @@ const ClientDashboard = () => {
     try {
       const res = await fetch(`${MART_API_BASE}/api/orders?user_id=${encodeURIComponent(String(userId))}`, {
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data?.success) throw new Error(data?.message || "Failed to fetch mart orders");
@@ -430,6 +443,7 @@ const ClientDashboard = () => {
     try {
       const res = await fetch(`${PROFILE_API_BASE}/api/referral/stats`, {
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.message || "Failed to load referral code");
@@ -479,6 +493,7 @@ const ClientDashboard = () => {
       try {
         const bookingRes = await fetch(`${SERVICE_API_BASE}/api/bookings?user_id=${encodeURIComponent(String(userId))}`, {
           credentials: "include",
+          headers: buildAuthHeaders(),
         });
         const bookingData = await bookingRes.json().catch(() => ({}));
         if (!bookingRes.ok) throw new Error(bookingData?.message || bookingData?.error || "Failed to load bookings");
@@ -493,37 +508,43 @@ const ClientDashboard = () => {
       setBookings([]);
     }
 
-    if (mysqlAuth?.user) {
-      try {
-        const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok) throw new Error(data.message || "Failed to load profile");
+   if (mysqlAuth?.user) {
+  try {
+    const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
+      credentials: "include",
+      headers: buildAuthHeaders(),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || "Failed to load profile");
 
-        const settingsData = await fetchReferralSettings();
-        setReferralSettings(settingsData);
-        await fetchReferralCode();
+    // Update profile FIRST so a later failure can't block the image/name from showing
+    setProfile({
+      display_name: data.name || fallbackProfile.display_name,
+      phone: data.phone || data.mobile || fallbackProfile.phone,
+      address: data.address || fallbackProfile.address,
+      profile_image_url: normalizeProfileImageUrl(data.profile_image || data.avatar_url || fallbackProfile.profile_image_url),
+      shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
+    });
 
-        setProfile({
-          display_name: data.name || fallbackProfile.display_name,
-          phone: data.phone || data.mobile || fallbackProfile.phone,
-          address: data.address || fallbackProfile.address,
-          profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || fallbackProfile.profile_image_url),
-          shondhaan_id: data.shondhaan_id || fallbackProfile.shondhaan_id,
-        });
-
-        if (data.shondhaan_id && !mysqlAuth.user?.shondhaan_id) {
-          saveMySqlAuth({
-            ...mysqlAuth,
-            user: { ...mysqlAuth.user, shondhaan_id: data.shondhaan_id },
-          });
-        }
-      } catch (err) {
-        console.error("fetchProfile error:", err);
-      }
+    if (data.shondhaan_id && !mysqlAuth.user?.shondhaan_id) {
+      saveMySqlAuth({
+        ...mysqlAuth,
+        user: { ...mysqlAuth.user, shondhaan_id: data.shondhaan_id },
+      });
     }
+
+    // Referral calls moved after — if these fail, the profile (and image) already rendered
+    try {
+      const settingsData = await fetchReferralSettings();
+      setReferralSettings(settingsData);
+      await fetchReferralCode();
+    } catch (referralErr) {
+      console.error("referral fetch error (non-blocking):", referralErr);
+    }
+  } catch (err) {
+    console.error("fetchProfile error:", err);
+  }
+}
     setLoading(false);
   }, [user, fetchReferralCode]);
 
@@ -576,7 +597,7 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
         method: "PATCH",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
+        headers: buildAuthHeaders(),
         body: JSON.stringify({
           name: profile.display_name.trim(),
           phone: profile.phone.trim() || null,
@@ -590,8 +611,10 @@ const ClientDashboard = () => {
         display_name: data.name || profile.display_name.trim(),
         phone: data.phone || data.mobile || profile.phone.trim(),
         address: data.address || profile.address.trim(),
-        profile_image_url: normalizeProfileImageUrl(data.avatar_url || data.profile_image || profile.profile_image_url),
+        // profile_image checked before avatar_url to match ProfileContent.tsx
+        profile_image_url: normalizeProfileImageUrl(data.profile_image || data.avatar_url || profile.profile_image_url),
         shondhaan_id: data.shondhaan_id || profile.shondhaan_id,
+        
       });
 
       saveMySqlAuth({
@@ -630,6 +653,9 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/users/me/profile`, {
         method: "PATCH",
         credentials: "include",
+        headers: {
+          ...(mysqlAuth.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {}),
+        },
         body: formData,
       });
       const data = await res.json().catch(() => ({}));
@@ -666,6 +692,7 @@ const ClientDashboard = () => {
         await fetch(`${PROFILE_API_BASE}/api/auth/logout`, {
           method: "POST",
           credentials: "include",
+          headers: buildAuthHeaders(),
         });
       } catch { /* ignore */ }
       localStorage.removeItem("yess_mysql_auth");
@@ -692,6 +719,7 @@ const ClientDashboard = () => {
       const res = await fetch(`${PROFILE_API_BASE}/api/referral/generate`, {
         method: "POST",
         credentials: "include",
+        headers: buildAuthHeaders(),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok || !data.success) {
@@ -1133,22 +1161,6 @@ const ClientDashboard = () => {
                 </motion.div>
               ) : (
                 <div className="space-y-4">
-                  {/* <motion.div
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between mb-6">
-                      <h3 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-                          <BarChart3 className="h-5 w-5" />
-                        </div>
-                        {bn ? "মাসিক খরচ" : "Monthly Spend"}
-                      </h3>
-                    </div>
-                    <BarChart data={[40, 65, 30, 80, 50, 90, 70]} />
-                  </motion.div> */}
-
                   <h2 className="text-sm font-semibold text-slate-900 flex items-center gap-2 pt-2">
                     <div className="p-1.5 rounded-lg bg-blue-50 text-blue-600">
                       <ClipboardList className="h-4 w-4" />
