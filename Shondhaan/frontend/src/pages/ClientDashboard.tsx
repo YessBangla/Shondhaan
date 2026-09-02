@@ -1012,7 +1012,7 @@ const ClientDashboard = () => {
                 )}
 
                 {/* Quick Stats Grid */}
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 md:gap-4">
                   {[
                     { value: bookings.length, label: bn ? "বুকিং" : "Bookings", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <ClipboardList className="h-5 w-5" />, tab: "bookings" },
                     { value: bookings.filter(b => b.status === "completed").length, label: bn ? "সম্পন্ন" : "Done", color: "text-userprimary", bg: "bg-userprimaryshade", icon: <CheckCircle2 className="h-5 w-5" />, tab: "bookings" },
@@ -1035,15 +1035,15 @@ const ClientDashboard = () => {
                       animate={{ opacity: 1, scale: 1 }}
                       transition={{ delay: i * 0.05 }}
                       onClick={() => setTab(stat.tab)}
-                      className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group text-left"
-                    >
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-xs font-bold uppercase tracking-wider text-slate-400">{stat.label}</span>
-                        <div className={`h-8 w-8 rounded-lg ${stat.bg} flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
+                      className="bg-background px-2 border rounded md:p-5 md:rounded-2xl flex flex-row md:block border-slate-200 md:shadow hover:shadow-md hover:border-slate-300 transition-all cursor-pointer group text-left justify-start"
+                      >
+                      <div className="flex items-center flex-row-reverse justify-start gap-2 md:mb-3 md:justify-between md:gap-0">
+                        <span className="text-xs font-bold uppercase text-nowrap tracking-wider text-slate-700">{stat.label}</span>
+                        <div className={`h-8 w-8 rounded-lg md:${stat.bg} flex items-center justify-center ${stat.color} group-hover:scale-110 transition-transform`}>
                           {stat.icon}
                         </div>
                       </div>
-                      <p className={`text-2xl font-extrabold text-slate-900 tabular-nums ${typeof stat.value === "string" ? "text-lg" : "text-3xl"}`}>{stat.value}</p>
+                      <p className={`text-sm md:text-2xl my-auto font-extrabold text-slate-900 tabular-nums text-right w-full md:text-left ${typeof stat.value === "string" ? "text-lg" : "text-3xl"}`}>{stat.value}</p>
                     </motion.button>
                   ))}
                 </div>
