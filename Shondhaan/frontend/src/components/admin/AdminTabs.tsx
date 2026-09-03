@@ -7,7 +7,7 @@ import AdminBanners from "./AdminBanners";
 import AdminHomepageSections from "./AdminHomepageSections";
 import AdminSiteSettings from "./AdminSiteSettings";
 import AdminServiceRequests from "./AdminServiceRequests";
-import AdminContactMessages from "./AdminContactMessages";
+import ServiceStaffChatInbox from "./ServiceStaffChatInbox";
 import AdminJobApplications from "./AdminJobApplications";
 import AdminReviews from "./AdminReviews";
 import AdminUserRoles from "./AdminUserRoles";
@@ -109,7 +109,7 @@ const AdminTabs = () => (
     <TabsContent value="deal-overview"><AdminDealOverview /></TabsContent>
     <TabsContent value="deal-categories"><AdminDealManagement /></TabsContent>
     <TabsContent value="requests"><AdminServiceRequests /></TabsContent>
-    <TabsContent value="contacts"><AdminContactMessages /></TabsContent>
+    <TabsContent value="contacts"><ServiceStaffChatInbox /></TabsContent>
     <TabsContent value="jobs"><AdminJobApplications /></TabsContent>
     <TabsContent value="job-listings"><AdminJobListings /></TabsContent>
     <TabsContent value="reviews"><AdminReviews /></TabsContent>

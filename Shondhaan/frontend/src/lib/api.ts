@@ -2,6 +2,7 @@ export const CENTRAL_API_BASE_URL =
   import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "";
 
 export const INDIVIDUAL_API_BASE_URL =
+  import.meta.env.VITE_SERVICE_API_URL ||
   import.meta.env.VITE_SERVICE_API_BASE_URL || "";
 
 export const YESSJOB_API_BASE_URL =
