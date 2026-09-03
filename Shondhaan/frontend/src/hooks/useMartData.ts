@@ -324,3 +324,16 @@ export function useMartBanners() {
     },
   });
 }
+
+export function useTopSellingProducts(limit = 6) {
+  return useQuery({
+    queryKey: ["mart-top-selling", limit],
+    queryFn: async () => {
+      const products = await fetchVendorProducts();
+      return products
+        .filter((product) => Number(product.total_sold || 0) > 0)
+        .sort((a, b) => Number(b.total_sold || 0) - Number(a.total_sold || 0))
+        .slice(0, limit);
+    },
+  });
+}

@@ -27,6 +27,7 @@ import ForYouSection from "@/components/ForYouSection"; // THIS FEATURE WILL USE
 import SpecialOffers from "@/components/SpecialOffers";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import TopSellingSection from "@/components/MartHomeSection";
 
 type Service = {
   id: string;
@@ -465,6 +466,14 @@ const Index = () => {
                 )}
               </>
             )}
+          </div>
+        </div>
+
+        {/* MART Section */}
+        <div className="relative bg-background py-6">
+          <div className="app-container relative z-10">
+            {/* Mart product Top Selling */}
+            <TopSellingSection limit={6} />
           </div>
         </div>
 
