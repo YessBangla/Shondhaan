@@ -10,6 +10,8 @@ import NotificationBell from "@/components/NotificationBell";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import { supabase } from "@/integrations/supabase/client";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 
@@ -31,6 +33,8 @@ interface ContactMessage {
   message: string;
   created_at: string;
 }
+
+const CONTACT_MESSAGES_API = `${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/contact-messages`;
 
 const ModeratorPanel = () => {
   const { user, loading: authLoading } = useAuth();
@@ -64,8 +68,14 @@ const ModeratorPanel = () => {
   }, []);
 
   const fetchMessages = useCallback(async () => {
-    const { data } = await supabase.from("contact_messages").select("*").order("created_at", { ascending: false });
-    if (data) setMessages(data);
+    const auth = getMySqlAuth();
+    const response = await fetch(CONTACT_MESSAGES_API, {
+      headers: auth?.token ? { Authorization: `Bearer ${auth.token}` } : {},
+      credentials: "include",
+    });
+    const payload = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(payload?.message || "Failed to fetch contact messages");
+    if (Array.isArray(payload?.data)) setMessages(payload.data);
   }, []);
 
   const fetchAll = useCallback(async () => {

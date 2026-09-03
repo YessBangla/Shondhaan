@@ -25,7 +25,6 @@ import AdminBanners from "@/components/admin/AdminBanners";
 import AdminHomepageSections from "@/components/admin/AdminHomepageSections";
 import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
 import AdminServiceRequests from "@/components/admin/AdminServiceRequests";
-import AdminContactMessages from "@/components/admin/AdminContactMessages";
 import AdminJobApplications from "@/components/admin/AdminJobApplications";
 import AdminReviews from "@/components/admin/AdminReviews";
 import AdminUserRoles from "@/components/admin/AdminUserRoles";
@@ -355,7 +354,7 @@ const AdminDashboard = () => {
       case "banners": return <div className="p-4 md:p-6"><AdminBanners /></div>;
       case "sections": return <div className="p-4 md:p-6"><AdminHomepageSections /></div>;
       case "requests": return <div className="p-4 md:p-6"><AdminServiceRequests /></div>;
-      case "contacts": return <div className="p-4 md:p-6"><AdminContactMessages /></div>;
+      case "contacts": return <div className="p-4 md:p-6"><ServiceStaffChatInbox /></div>;
       case "service-messages": return <div className="p-4 md:p-6"><ServiceStaffChatInbox /></div>;
       case "jobs": return <div className="p-4 md:p-6"><AdminJobApplications /></div>;
       case "job-listings": return <div className="p-4 md:p-6"><AdminJobListings /></div>;

@@ -27,7 +27,6 @@ import AdminBanners from "@/components/admin/AdminBanners";
 import AdminHomepageSections from "@/components/admin/AdminHomepageSections";
 import AdminSiteSettings from "@/components/admin/AdminSiteSettings";
 import AdminServiceRequests from "@/components/admin/AdminServiceRequests";
-import AdminContactMessages from "@/components/admin/AdminContactMessages";
 import AdminJobApplications from "@/components/admin/AdminJobApplications";
 import AdminReviews from "@/components/admin/AdminReviews";
 import AdminUserRoles from "@/components/admin/AdminUserRoles";
@@ -216,7 +215,7 @@ const SuperAdminPanel = () => {
       case "deal-categories": return <div className="p-4"><AdminDealManagement /></div>;
       case "requests": return <div className="p-4"><AdminServiceRequests /></div>;
       case "bookings": return <div className="p-4"><AdminServiceRequests /></div>;
-      case "contacts": return <div className="p-4"><AdminContactMessages /></div>;
+      case "contacts": return <div className="p-4"><ServiceStaffChatInbox /></div>;
       case "service-messages": return <div className="p-4"><ServiceStaffChatInbox /></div>;
       case "jobs": return <div className="p-4"><AdminJobApplications /></div>;
       case "reviews": return <div className="p-4"><AdminReviews /></div>;

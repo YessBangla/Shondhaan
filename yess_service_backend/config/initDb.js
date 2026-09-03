@@ -161,6 +161,19 @@ export const initializeDatabase = async () => {
     `);
     console.log("✅ service_reviews table ready");
 
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS contact_messages (
+        id VARCHAR(36) PRIMARY KEY,
+        name VARCHAR(100) NOT NULL,
+        email VARCHAR(255) NOT NULL,
+        phone VARCHAR(20),
+        message TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY created_at_idx (created_at)
+      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+    `);
+    console.log("✅ contact_messages table ready");
+
     // 7. Create cms_hero_banners table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS cms_hero_banners (

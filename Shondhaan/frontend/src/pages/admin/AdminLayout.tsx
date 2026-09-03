@@ -9,7 +9,7 @@ import {
   ScrollText, BookOpenCheck, Inbox, LifeBuoy,
   UserPlus, Sun, Moon, Monitor, Languages, Pin, PinOff, Command as CommandIcon,
   ChevronDown,
-  Coins,  Gift,
+  Coins, Gift,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
@@ -33,7 +33,6 @@ import {
   useBackendPageMeta,
 } from "@/contexts/BackendPageActionsContext";
 
-// [WALLET UPDATE] Central Wallet API Base URL
 const WALLET_API_BASE_URL = import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "";
 
 type NavItem = { to: string; label: string; icon: React.ReactNode };
@@ -93,41 +92,29 @@ const NAV: NavGroup[] = [
       { to: "/admin/employers", label: "এমপ্লয়ার", icon: <Store className="h-4 w-4" /> },
     ],
   },
-  // [WALLET UPDATE] Service Admin Role-Specific Section
   {
     label: "সার্ভিস অ্যাডমিন - একাউন্টস",
     accent: "from-sky-500 to-blue-600",
     dot: "bg-sky-500",
-    items: [
-      { to: "/admin/service-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
-    ],
+    items: [{ to: "/admin/service-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
   },
-  // [WALLET UPDATE] Deal Admin Role-Specific Section
   {
     label: "ডিল অ্যাডমিন - একাউন্টস",
     accent: "from-amber-500 to-orange-600",
     dot: "bg-amber-500",
-    items: [
-      { to: "/admin/deal-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
-    ],
+    items: [{ to: "/admin/deal-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
   },
-  // [WALLET UPDATE] Mart Admin Role-Specific Section
   {
     label: "মার্ট অ্যাডমিন - একাউন্টস",
     accent: "from-emerald-500 to-teal-600",
     dot: "bg-teal-500",
-    items: [
-      { to: "/admin/mart-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
-    ],
+    items: [{ to: "/admin/mart-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
   },
-  // [WALLET UPDATE] Job Admin Role-Specific Section
   {
     label: "জবস অ্যাডমিন - একাউন্টস",
     accent: "from-blue-500 to-indigo-600",
     dot: "bg-blue-500",
-    items: [
-      { to: "/admin/job-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
-    ],
+    items: [{ to: "/admin/job-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
   },
   {
     label: "কমিউনিকেশন",
@@ -163,7 +150,7 @@ const NAV: NavGroup[] = [
       { to: "/admin/payment-ledger", label: "পেমেন্ট লেজার", icon: <BookOpenCheck className="h-4 w-4" /> },
     ],
   },
-    {
+  {
     label: "রেফারেল",
     accent: "from-violet-500 to-purple-600",
     dot: "bg-violet-500",
@@ -225,7 +212,6 @@ const ADMIN_NAV: NavGroup[] = [
           ],
         };
       }
-
       return { ...group, items: group.items.filter((item) => item.to !== "/admin/jobs") };
     }),
 ];
@@ -250,7 +236,6 @@ const AdminLayout = () => {
   const [shortcutsHelpOpen, setShortcutsHelpOpen] = useState(false);
   const sidebarNavRef = useRef<HTMLElement | null>(null);
 
-  // [WALLET UPDATE] State for Admin Wallet Balance
   const [adminWalletBalance, setAdminWalletBalance] = useState(0);
 
   const A11Y = {
@@ -452,7 +437,6 @@ const AdminLayout = () => {
       setUserRole(null);
     }
 
-    // [WALLET UPDATE] Fetch Admin Wallet Balance
     const fetchAdminWallet = async () => {
       const adminId = mysqlAuth?.user?.id;
       if (!adminId) return;
@@ -523,6 +507,7 @@ const AdminLayout = () => {
   const dateStr = now.toLocaleDateString("bn-BD", { weekday: "short", day: "numeric", month: "short" });
   const timeStr = now.toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" });
   const ThemeIcon = mode === "dark" ? Moon : mode === "system" ? Monitor : Sun;
+  
   if (authLoading || isAdmin === null) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -542,45 +527,46 @@ const AdminLayout = () => {
       </div>
     );
   }
+
   const SidebarBody = (
     <nav
       ref={sidebarNavRef}
       onKeyDown={handleSidebarKeyDown}
       aria-label="ব্যাকএন্ড নেভিগেশন"
-      className="flex-1 overflow-y-auto py-3 focus:outline-none"
+      className="flex-1 overflow-y-auto py-3 px-2 focus:outline-none custom-scrollbar"
     >
       {!collapsed && (
-        <div className="px-3 mb-2">
+        <div className="px-1 mb-3">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors px-2.5 py-2 text-[12px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            className="w-full flex items-center gap-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors px-3 py-2 text-[13px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
-            <Search className="h-3.5 w-3.5" />
+            <Search className="h-4 w-4" />
             <span className="flex-1 text-left">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1 text-[9px] font-mono">⌘K</kbd>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1.5 text-[10px] font-mono">⌘K</kbd>
           </button>
         </div>
       )}
       {pinnedItems.length > 0 && !collapsed && (
-        <div className="px-2 mb-2">
-          <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1">
-            <Pin className="h-2.5 w-2.5" />পিন করা
+        <div className="mb-3">
+          <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1.5">
+            <Pin className="h-3 w-3" />পিন করা
           </p>
-          <ul className="space-y-0.5 px-0">
+          <ul className="space-y-1">
             {pinnedItems.map(item => (
               <li key={`pin-${item.to}`}>
                 <NavLink to={item.to} end
                   data-sidebar-link
                   data-group={item.group}
                   className={() =>
-                  `group relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isNavItemActive(item.to) ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary"
+                  `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                    isNavItemActive(item.to) ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary hover:translate-x-0.5 transition-transform"
                   }`}>
                   <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
                   <span className="truncate flex-1">{item.label}</span>
                   <button onClick={(e) => { e.preventDefault(); togglePin(item.to); }}
                     aria-label={`${item.label} আনপিন করুন`}
-                    className="opacity-60 hover:opacity-100 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"><PinOff className="h-3 w-3" /></button>
+                    className="opacity-60 hover:opacity-100 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60"><PinOff className="h-3.5 w-3.5" /></button>
                 </NavLink>
               </li>
             ))}
@@ -588,7 +574,7 @@ const AdminLayout = () => {
         </div>
       )}
       {filteredNav.map((group) => (
-        <div key={group.label} className="mb-1">
+        <div key={group.label} className="mb-2">
           {!collapsed && (
             <button
               onClick={() => {
@@ -601,20 +587,20 @@ const AdminLayout = () => {
               aria-expanded={!collapsedGroups[group.label]}
               aria-controls={`sidebar-group-${group.label}`}
               className={cn(
-                "w-full flex items-center justify-between px-4 pt-3 pb-1.5 text-[10px] font-semibold uppercase tracking-wider hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                "w-full flex items-center justify-between px-3 pt-3 pb-2 text-[11px] font-semibold uppercase tracking-wider hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
                 group.label === currentGroup ? "text-foreground" : "text-muted-foreground/70"
               )}
             >
               <span className="inline-flex items-center gap-2">
                 <span className={cn("h-1.5 w-1.5 rounded-full", group.dot)} />
                 {group.label}
-                <span className="ml-1 text-[9px] font-mono text-muted-foreground/60 normal-case tracking-normal">{group.items.length}</span>
+                <span className="ml-1 text-[10px] font-mono text-muted-foreground/60 normal-case tracking-normal">{group.items.length}</span>
               </span>
-              <ChevronDown className={`h-3 w-3 transition-transform ${collapsedGroups[group.label] ? "-rotate-90" : ""}`} />
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsedGroups[group.label] ? "-rotate-90" : ""}`} />
             </button>
           )}
           {collapsed && (
-            <div className="px-2 pt-2 pb-1 flex justify-center">
+            <div className="px-2 pt-3 pb-2 flex justify-center">
               <span className={cn("h-1 w-6 rounded-full opacity-70", group.dot)} />
             </div>
           )}
@@ -623,8 +609,8 @@ const AdminLayout = () => {
               <motion.ul
                 id={`sidebar-group-${group.label}`}
                 initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.18 }}
-                className="overflow-hidden space-y-0.5 px-2"
+                exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }}
+                className="overflow-hidden space-y-1"
               >
                 {group.items.map((item) => (
                   <li key={item.to} className="group relative">
@@ -634,10 +620,10 @@ const AdminLayout = () => {
                       data-sidebar-link
                       data-group={group.label}
                       className={() =>
-                        `relative flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                        `relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                           isNavItemActive(item.to)
-                            ? `bg-gradient-to-r ${group.accent} text-white font-semibold shadow-md`
-                            : "text-foreground/75 hover:bg-secondary hover:text-foreground"
+                            ? `bg-gradient-to-r ${group.accent} text-white font-semibold shadow-md hover:shadow-lg hover:-translate-y-0.5`
+                            : "text-foreground/75 hover:bg-secondary hover:text-foreground hover:translate-x-0.5"
                         } ${collapsed ? "justify-center" : ""}`
                       }
                       title={collapsed ? item.label : undefined}
@@ -649,10 +635,10 @@ const AdminLayout = () => {
                       <button
                         onClick={() => togglePin(item.to)}
                         aria-label={pinned.includes(item.to) ? `${item.label} আনপিন করুন` : `${item.label} পিন করুন`}
-                        className={`absolute right-1.5 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${pinned.includes(item.to) ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:opacity-100 focus-visible:opacity-100 text-muted-foreground"}`}
+                        className={`absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 rounded-md flex items-center justify-center transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 ${pinned.includes(item.to) ? "text-primary opacity-100" : "opacity-0 group-hover:opacity-60 group-focus-within:opacity-60 hover:opacity-100 focus-visible:opacity-100 text-muted-foreground"}`}
                         title={pinned.includes(item.to) ? "পিন সরান" : "পিন করুন"}
                       >
-                        {pinned.includes(item.to) ? <PinOff className="h-3 w-3" /> : <Pin className="h-3 w-3" />}
+                        {pinned.includes(item.to) ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
                       </button>
                     )}
                   </li>
@@ -664,21 +650,22 @@ const AdminLayout = () => {
       ))}
     </nav>
   );
+
   return (
     <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/30">
       <aside
-        className={`hidden md:flex flex-col border-r border-border/50 bg-card/70 backdrop-blur-2xl transition-[width] duration-200 ${
-          collapsed ? "w-[68px]" : "w-64"
+        className={`hidden md:flex flex-col transition-[width] duration-300 ease-in-out border-r border-border/40 bg-card/50 backdrop-blur-sm ${
+          collapsed ? "w-[72px]" : "w-[260px]"
         }`}
       >
-        <div className={`flex items-center gap-2.5 border-b border-border/40 px-3.5 h-14 ${collapsed ? "justify-center" : ""}`}>
+        <div className={`flex items-center gap-3 border-b border-border/40 px-4 h-16 ${collapsed ? "justify-center" : ""}`}>
           <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-primary/30">
             <Sparkles className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-[13px] font-bold text-foreground truncate leading-tight">অ্যাডমিন প্যানেল</p>
-              <p className="text-[10px] text-muted-foreground leading-tight">Yess Workspace</p>
+              <p className="text-sm font-bold text-foreground truncate leading-tight">অ্যাডমিন প্যানেল</p>
+              <p className="text-[11px] text-muted-foreground leading-tight">Yess Workspace</p>
             </div>
           )}
         </div>
@@ -686,12 +673,12 @@ const AdminLayout = () => {
         <div className="border-t border-border/40 p-2">
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className={`flex w-full items-center gap-1.5 rounded-lg px-2 py-1.5 text-[11px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors ${
+            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors ${
               collapsed ? "justify-center" : ""
             }`}
           >
-            {collapsed ? <ChevronRight className="h-3.5 w-3.5" /> : <ChevronLeft className="h-3.5 w-3.5" />}
-            {!collapsed && <span>সংকুচিত</span>}
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {!collapsed && <span>সংকুচিত করুন</span>}
           </button>
         </div>
       </aside>
@@ -699,11 +686,11 @@ const AdminLayout = () => {
       {mobileOpen && (
         <div className="fixed inset-0 z-50 md:hidden">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
-          <aside className="absolute inset-y-0 left-0 w-[78%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
-            <div className="flex items-center justify-between border-b border-border/40 px-3.5 h-14">
+          <aside className="absolute inset-y-0 left-0 w-[80%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
+            <div className="flex items-center justify-between border-b border-border/40 px-4 h-16">
               <div className="flex items-center gap-2">
                 <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md"><Sparkles className="h-4 w-4" /></div>
-                <p className="text-[13px] font-bold">অ্যাডমিন প্যানেল</p>
+                <p className="text-sm font-bold">অ্যাডমিন প্যানেল</p>
               </div>
               <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary"><X className="h-4 w-4" /></button>
             </div>
@@ -716,8 +703,8 @@ const AdminLayout = () => {
         <header className="sticky top-0 z-30 border-b border-border/40 bg-card/70 backdrop-blur-2xl">
           <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary" />
 
-          <div className="flex items-center justify-between gap-2 px-3 md:px-5 py-2">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setMobileOpen(true)}
                 className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary"
@@ -726,37 +713,34 @@ const AdminLayout = () => {
                 <Menu className="h-5 w-5" />
               </button>
 
-              <div className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
+              <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
                 {currentIcon}
               </div>
 
               <div className="min-w-0">
-                <nav aria-label="Breadcrumb" className="flex items-center gap-1 text-[10px] text-muted-foreground/80 leading-none">
+                <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 leading-none mb-1">
                   <button
                     onClick={() => navigate("/")}
                     className="inline-flex items-center gap-1 hover:text-primary transition-colors"
                   >
-                    <Home className="h-2.5 w-2.5" />
+                    <Home className="h-3 w-3" />
                     <span className="hidden xs:inline">হোম</span>
                   </button>
-                  <ChevRight className="h-2.5 w-2.5 opacity-50" />
+                  <ChevRight className="h-3 w-3 opacity-50" />
                   <span className="hover:text-primary cursor-default">{currentGroup}</span>
-                  <ChevRight className="h-2.5 w-2.5 opacity-50" />
-                  <span className="text-foreground/80 font-medium truncate max-w-[100px] md:max-w-none">{currentLabel}</span>
+                  <ChevRight className="h-3 w-3 opacity-50" />
+                  <span className="text-foreground/80 font-medium truncate max-w-[120px] md:max-w-none">{currentLabel}</span>
                 </nav>
-                <h1 className="font-heading text-[14px] md:text-[15px] font-bold text-foreground truncate mt-0.5 leading-tight">
+                <h1 className="font-heading text-base md:text-lg font-bold text-foreground truncate leading-tight">
                   {currentLabel}
                 </h1>
               </div>
             </div>
 
-           
-
-            <div className="flex items-center gap-1">
-              {/* [WALLET UPDATE] Admin Platform Wallet Balance Pill */}
+            <div className="flex items-center gap-1.5 md:gap-2">
               <NavLink 
                 to="/admin/accounts" 
-                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 px-3 py-1.5 hover:ring-primary/40 transition-all"
+                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 px-3 py-1.5 hover:ring-primary/40 hover:shadow-sm transition-all"
               >
                 <Wallet className="h-4 w-4 text-primary" />
                 <span className="text-xs font-bold text-foreground">
@@ -778,25 +762,25 @@ const AdminLayout = () => {
                 <Languages className="h-3.5 w-3.5" />{language.toUpperCase()}
               </button>
               <div className="hidden md:flex flex-col items-end leading-tight px-2 border-l border-border/40 ml-1">
-                <span className="text-[11px] font-semibold text-foreground">{timeStr}</span>
-                <span className="text-[10px] text-muted-foreground">{dateStr}</span>
+                <span className="text-[12px] font-semibold text-foreground">{timeStr}</span>
+                <span className="text-[11px] text-muted-foreground">{dateStr}</span>
               </div>
 
               <NotificationBell />
 
-              <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-2.5 py-0.5 hover:ring-primary/40 transition-all">
+              <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-3 py-0.5 hover:ring-primary/40 hover:shadow-sm transition-all">
                 <div className="relative">
-                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[11px] font-bold shadow-inner">
+                  <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[12px] font-bold shadow-inner">
                     {initials}
                   </div>
                   <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
                 </div>
                 <div className="hidden xl:flex flex-col leading-tight">
-                  <span className="text-[10px] font-semibold text-foreground inline-flex items-center gap-1">
+                  <span className="text-[11px] font-semibold text-foreground inline-flex items-center gap-1">
                     <Sparkles className="h-2.5 w-2.5 text-primary" />
                     {userRole ? userRole.replace('_', ' ') : 'Admin'}
                   </span>
-                  <span className="text-[9px] text-muted-foreground truncate max-w-[120px]">
+                  <span className="text-[10px] text-muted-foreground truncate max-w-[120px]">
                     {user?.email || "admin"}
                   </span>
                 </div>
@@ -815,21 +799,21 @@ const AdminLayout = () => {
         </header>
 
         <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
-          <div className="mx-auto w-full max-w-[1440px] px-1 py-1">
+          <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
             <BackendPageHeader
               fallbackTitle={currentLabel}
               fallbackEyebrow={currentGroup}
             />
 
-            <div className="rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-[0_1px_0_0_hsl(var(--border)),0_8px_24px_-12px_rgba(0,0,0,0.08)] overflow-hidden">
+            <div className="mt-4 rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow overflow-hidden">
               <Suspense fallback={<div className="p-8"><PageLoader /></div>}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={location.pathname}
-                    initial={{ opacity: 0, y: 6, filter: "blur(2px)" }}
+                    initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
                     animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
                     exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
-                    transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
                   >
                     <Outlet />
                   </motion.div>
@@ -837,19 +821,19 @@ const AdminLayout = () => {
               </Suspense>
             </div>
 
-            <footer className="mt-5 flex flex-wrap items-center justify-between gap-2 px-1 text-[11px] text-muted-foreground">
+            <footer className="mt-6 flex flex-wrap items-center justify-between gap-3 px-1 text-[11px] text-muted-foreground">
               <div className="inline-flex items-center gap-2">
-                <span className="inline-flex items-center gap-1">
+                <span className="inline-flex items-center gap-1.5">
                   <Sparkles className="h-3 w-3 text-primary" /> Yess Workspace
                 </span>
                 <span className="opacity-50">•</span>
                 <span>v2026.04</span>
                 <span className="opacity-50">•</span>
-                <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> All systems operational</span>
+                <span className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> All systems operational</span>
               </div>
               <div className="inline-flex items-center gap-2">
-                <button onClick={() => setShortcutsHelpOpen(true)} className="hover:text-foreground inline-flex items-center gap-1">
-                  <kbd className="rounded border border-border bg-card px-1 font-mono text-[9px]">Shift + ?</kbd> শর্টকাট
+                <button onClick={() => setShortcutsHelpOpen(true)} className="hover:text-foreground inline-flex items-center gap-1.5 transition-colors">
+                  <kbd className="rounded border border-border bg-card px-1.5 py-0.5 font-mono text-[10px]">Shift + ?</kbd> শর্টকাট
                 </button>
               </div>
             </footer>
@@ -861,18 +845,18 @@ const AdminLayout = () => {
         {paletteOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/50 backdrop-blur-sm"
             onClick={() => setPaletteOpen(false)}
           >
             <motion.div
-              initial={{ scale: 0.95, opacity: 0, y: -10 }}
+              initial={{ scale: 0.96, opacity: 0, y: -10 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.95, opacity: 0, y: -10 }}
-              transition={{ duration: 0.15 }}
-              className="w-full max-w-xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden"
+              exit={{ scale: 0.96, opacity: 0, y: -10 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+              className="w-full max-w-xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden ring-1 ring-black/5"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center gap-2 px-4 py-3 border-b border-border/50">
+              <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
                 <CommandIcon className="h-4 w-4 text-muted-foreground" />
                 <input
                   ref={paletteInputRef}
@@ -888,11 +872,11 @@ const AdminLayout = () => {
                   placeholder="পেজ, সেকশন বা একশন খুঁজুন…"
                   className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
                 />
-                <kbd className="rounded-md border border-border bg-card px-1.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
+                <kbd className="rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">ESC</kbd>
               </div>
-              <div className="max-h-[50vh] overflow-y-auto p-2">
+              <div className="max-h-[50vh] overflow-y-auto p-2 custom-scrollbar">
                 {filteredPalette.length === 0 ? (
-                  <p className="text-center py-8 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
+                  <p className="text-center py-10 text-sm text-muted-foreground">কিছু পাওয়া যায়নি</p>
                 ) : filteredPalette.map((item, i) => (
                   <button
                     key={item.to}
@@ -906,14 +890,14 @@ const AdminLayout = () => {
                     <span className="h-8 w-8 rounded-lg bg-secondary flex items-center justify-center text-primary [&>svg]:h-4 [&>svg]:w-4 shrink-0">{item.icon}</span>
                     <div className="flex-1 min-w-0">
                       <p className="font-medium truncate">{item.label}</p>
-                      <p className="text-[10px] text-muted-foreground truncate">{item.group}</p>
+                      <p className="text-[11px] text-muted-foreground truncate">{item.group}</p>
                     </div>
-                    {i === paletteHi && <kbd className="rounded border border-border bg-card px-1.5 text-[9px] font-mono text-muted-foreground">↵</kbd>}
+                    {i === paletteHi && <kbd className="rounded border border-border bg-card px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">↵</kbd>}
                   </button>
                 ))}
               </div>
-              <div className="flex items-center justify-between px-4 py-2 border-t border-border/50 text-[10px] text-muted-foreground">
-                <span className="flex items-center gap-3">
+              <div className="flex items-center justify-between px-4 py-2.5 border-t border-border/50 text-[11px] text-muted-foreground bg-card/50">
+                <span className="flex items-center gap-4">
                   <span><kbd className="font-mono">↑↓</kbd> নেভিগেট</span>
                   <span><kbd className="font-mono">↵</kbd> খুলুন</span>
                 </span>
@@ -923,6 +907,7 @@ const AdminLayout = () => {
           </motion.div>
         )}
       </AnimatePresence>
+      
       <BackendShortcutsHelp
         open={shortcutsHelpOpen}
         onClose={() => setShortcutsHelpOpen(false)}
@@ -946,11 +931,12 @@ const AdminLayout = () => {
           { keys: "g p", label: "পারমিশন" },
           { keys: "g t", label: "স্টাফ অ্যাসাইনমেন্ট" },
           { keys: "g f", label: "ফিনান্স / লেজার" },
-                    { keys: "g e", label: "রেফারেল" },
+          { keys: "g e", label: "রেফারেল" },
           { keys: "g g", label: "সেটিংস" },
           { keys: "Esc", label: "বন্ধ করুন" },
         ]}
       />
+      
       <div
         role="status"
         aria-live="polite"
@@ -975,9 +961,9 @@ const BackendPageHeader = ({
   const title = meta.title ?? fallbackTitle;
 
   return (
-    <div className="">
+    <div className="w-full">
       {meta.toolbar && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-2.5 py-2">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-3 py-2.5 shadow-sm">
           {meta.toolbar}
         </div>
       )}

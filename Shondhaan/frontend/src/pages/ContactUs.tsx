@@ -8,7 +8,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
-import { supabase } from "@/integrations/supabase/client";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import contactUs from "/images/contact-us.png";
 import whatsappIcon from "/images/whatsapp.png";
 import facebookIcon from "/images/facebook.png";
 import mailIcon from "/images/email.png";
+
+const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
 
 const contactSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100),
@@ -51,20 +53,26 @@ const ContactUs = () => {
 
   const onSubmit = async (data: ContactForm) => {
     setSubmitting(true);
-    const { error } = await supabase.from("contact_messages" as any).insert({
-      name: data.name,
-      email: data.email,
-      phone: data.phone || null,
-      message: data.message,
-    } as any);
-    setSubmitting(false);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/contact-messages`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const payload = await response.json().catch(() => ({}));
 
-    if (error) {
+      if (!response.ok) {
+        throw new Error(payload?.message || "Failed to send message");
+      }
+
+      toast.success(bn ? "আপনার মেসেজ পাঠানো হয়েছে!" : "Your message has been sent!");
+      form.reset();
+    } catch (error) {
+      console.error("Contact message submit error:", error);
       toast.error(bn ? "মেসেজ পাঠাতে সমস্যা হয়েছে" : "Failed to send message");
-      return;
+    } finally {
+      setSubmitting(false);
     }
-    toast.success(bn ? "আপনার মেসেজ পাঠানো হয়েছে!" : "Your message has been sent!");
-    form.reset();
   };
 
   return (

@@ -24,6 +24,7 @@ import homepageSectionRoutes from "./routes/homepageSection.route.js";
 import uploadRoutes from "./routes/upload.route.js";
 import serviceChatRoutes from "./routes/serviceChat.route.js";
 import prescriptionRouter from "./routes/prescription.route.js";
+import contactMessageRoutes from "./routes/contactMessage.route.js";
 
 // ⭐ NEW — Service Admin Dashboard
 import serviceAdminDashboardRoutes from "./routes/serviceAdminDashboard.route.js";
@@ -238,12 +239,15 @@ app.use(
   prescriptionRouter
 );
 
+app.use(
+  "/api/contact-messages",
+  contactMessageRoutes
+);
+
 // ─────────────────────────────────────────────
 // SERVICE ADMIN DASHBOARD
 // ─────────────────────────────────────────────
-//
-// Endpoints:
-//
+
 // GET /api/service-admin/dashboard/stats
 // GET /api/service-admin/dashboard/recent-bookings
 // GET /api/service-admin/dashboard/booking-chart
