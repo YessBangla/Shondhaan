@@ -566,13 +566,21 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       {/* ── Hero ── */}
       <div className="app-container py-2">
         <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }} className="relative h-[160px] md:h-[200px] w-full overflow-hidden" style={{ borderRadius: T.radiusLg }}>
-          <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover mix-blend-luminosity" style={{ opacity: 0.55 }} />
+          {hasActiveOffer ? (
+              <img src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${offer?.image_url}`} alt={offer?.name || "Offer"} className="absolute inset-0 h-full w-full object-cover mix-blend-luminosity" style={{ opacity: 0.55 }}/>
+            ) : (                
+              <img src={heroImage} alt={serviceTitle} className="absolute inset-0 h-full w-full object-cover mix-blend-luminosity" style={{ opacity: 0.55 }} />
+            )} 
           <div className="absolute inset-0" style={{ background: "linear-gradient(180deg, rgba(15,42,34,0.25) 0%, rgba(11,23,19,0.92) 100%)" }} />
           <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4 z-10 text-white">
             <span className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] tracking-wide mb-2" style={{ background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)" }}>
               {bn ? "সার্ভিস বিবরণ" : "Service details"}
             </span>
-            <h1 className="font-['Fraunces',serif] font-medium text-[20px] md:text-[28px] leading-tight tracking-tight">{serviceTitle}</h1>
+            {hasActiveOffer ? (
+              <h1 className="font-medium text-[20px] md:text-[28px] leading-tight tracking-tight">{bn ? offer?.title_bn : offer?.title}</h1>
+              ) : (   
+               <h1 className="font-medium text-[20px] md:text-[28px] leading-tight tracking-tight">{serviceTitle}</h1>
+             )} 
             <div className="mt-1.5 flex items-center gap-3 text-[11px]" style={{ color: "rgba(255,255,255,0.82)" }}>
               <span className="flex items-center gap-0.5 font-semibold" style={{ color: T.brass }}>
                 <Star className="h-3 w-3 fill-current" /> {service.rating ?? 4.5}
@@ -618,7 +626,17 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   </div>
                 )}
 
-                {packages.length > 0 && (
+              {hasActiveOffer ? (
+                <div className="p-3 rounded-[10px] border" style={{ borderColor: T.brass, background: T.brassTint }}>
+                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-1" style={{ color: T.brassDark, letterSpacing: "-0.01em" }}>{bn ? "সর্বশেষ অফার" : "Latest Offer"}</h3>
+                  <p className="text-[12px] mb-2" style={{ color: T.brassDark }}>{bn ? `এই প্যাকেজে ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} ছাড় প্রযোজ্য!` : `Get ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} off on this package!`}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="font-['JetBrains_Mono',monospace] text-[15px] font-medium" style={{ color: T.brassDark }}>৳{offerDiscountedPrice}</span>
+                    <span className="text-[10px] line-through" style={{ color: T.brassDark }}>৳{pkg.price}</span>
+                  </div>
+                </div>    
+                ) : (
+                packages.length > 0 && (
                   <div>
                     <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "প্যাকেজ" : "Packages"}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -649,7 +667,8 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                       })}
                     </div>
                   </div>
-                )}
+                )
+              )}
 
                 <div>
                   <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সুবিধা" : "Benefits"}</h3>
@@ -720,15 +739,27 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                         <div className="text-[11px] font-semibold mt-0.5">{pkg.name}</div>
                       </div>
                       <div className="text-right">
-                        {hasActiveOffer ? (
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <span className="text-[10px] line-through" style={{ color: "rgba(255,255,255,0.5)" }}>৳{pkg.price}</span>
-                            <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{offerDiscountedPrice}</div>
+                        <div className="flex items-center gap-1.5 justify-end">
+                          <span
+                            className="text-[10px] line-through"
+                            style={{ color: "rgba(255,255,255,0.5)" }}
+                          >
+                            ৳{pkg.price}
+                          </span>
+
+                          <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">
+                            ৳{offerDiscountedPrice}
                           </div>
-                        ) : (
-                          <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">৳{pkg.price}</div>
+                        </div>
+
+                        {platformFee > 0 && (
+                          <div
+                            className="text-[9px]"
+                            style={{ color: "rgba(255,255,255,0.65)" }}
+                          >
+                            {bn ? "প্লাটফর্ম ফি" : "Platform fee"} ৳{platformFee}
+                          </div>
                         )}
-                        {platformFee > 0 && <div className="text-[9px]" style={{ color: "rgba(255,255,255,0.65)" }}>{bn ? "প্লাটফর্ম ফি" : "Platform fee"} ৳{platformFee}</div>}
                       </div>
                     </div>
                   )}
