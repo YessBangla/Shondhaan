@@ -29,6 +29,7 @@ import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import TopSellingSection from "@/components/MartHomeSection";
 import DealLatestSection from "@/components/DealLatestSection";
+import JobLatestSection from "@/components/JobLatestSection";
 
 type Service = {
   id: string;
@@ -482,6 +483,13 @@ const Index = () => {
         <div className="relative bg-background py-6">
           <div className="app-container relative z-10">
             <DealLatestSection />
+          </div>
+        </div>
+
+        {/* JOBS Section */}
+        <div className="relative bg-background py-6">
+          <div className="app-container relative z-10">
+            <JobLatestSection />
           </div>
         </div>
 

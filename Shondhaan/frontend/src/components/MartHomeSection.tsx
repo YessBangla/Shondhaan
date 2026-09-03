@@ -4,6 +4,7 @@ import { useMartProducts } from "@/hooks/useMartData";
 import MartProductCard from "@/components/mart/MartProductCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { Clock, Eye, MapPin, ChevronRight } from "lucide-react";
 import {
   Carousel,
   CarouselContent,
@@ -35,8 +36,9 @@ const bn = language === "bn";
                 </div>
             </div>
             <Link to="/mart/category/all">
-                <Button variant="outline" className="rounded-xl bg-primary text-white hover:bg-emerald-600 px-8">
+                <Button variant="outline" className="rounded-xl bg-primary text-white hover:bg-emerald-600 px-4">
                 {bn ? "সকল পন্য" : "See More"}
+                <ChevronRight className="ml-1 h-4 w-4" />
                 </Button>
             </Link>
         </div>
