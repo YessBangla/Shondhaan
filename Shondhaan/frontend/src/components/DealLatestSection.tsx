@@ -139,7 +139,7 @@ const DealLatestSection = () => {
             {latest.slice(0, 6).map((listing) => (
               <CarouselItem
                 key={listing.id}
-                className="pl-3 basis-[calc(50%-0.375rem)] sm:basis-[calc(33.333%-0.5rem)] md:basis-[calc(25%-0.5625rem)] lg:basis-[calc(16.667%-0.625rem)]"
+                className="basis-[245px] pl-3"
               >
                 <DealCard
                   listing={listing}

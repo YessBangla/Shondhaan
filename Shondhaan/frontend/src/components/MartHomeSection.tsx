@@ -45,7 +45,7 @@ const bn = language === "bn";
       <Carousel opts={{ align: "start", dragFree: true }} className="px-1" tabIndex={0}>
         <CarouselContent className="-ml-3">
           {topSelling.map((p: any) => (
-            <CarouselItem key={p.id} className="pl-3 basis-[calc(50%-0.375rem)] sm:basis-[calc(33.333%-0.5rem)] md:basis-[calc(25%-0.5625rem)] lg:basis-[calc(16.667%-0.625rem)]">
+            <CarouselItem key={p.id} className="basis-[245px] pl-3">
               <MartProductCard product={p} />
             </CarouselItem>
           ))}
