@@ -88,6 +88,9 @@ const PanelSidebarTabs = ({
 
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
+  const [addMoneyOpen, setAddMoneyOpen] = useState(false);
+  const [depositAmount, setDepositAmount] = useState("100");
+  const [depositLoading, setDepositLoading] = useState(false);
 
   const mysqlAuthUser = useMemo(() => getMySqlAuth()?.user, []);
   const userRole =
@@ -124,6 +127,33 @@ const PanelSidebarTabs = ({
   const [signingOut, setSigningOut] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement | null>(null);
+
+  const startWalletDeposit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    const amount = Number(depositAmount);
+    if (!Number.isFinite(amount) || amount < 10 || amount > 100000) {
+      toast.error("১০ থেকে ১,০০,০০০ টাকার মধ্যে একটি পরিমাণ দিন");
+      return;
+    }
+    setDepositLoading(true);
+    try {
+      const auth = getMySqlAuth();
+      const response = await fetch(`${WALLET_API_BASE_URL}/api/wallet/deposit/shurjopay`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+        },
+        body: JSON.stringify({ amount }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data.checkout_url) throw new Error(data.message || "পেমেন্ট শুরু করা যায়নি");
+      window.location.href = data.checkout_url;
+    } catch (error: any) {
+      toast.error(error.message || "পেমেন্ট শুরু করা যায়নি");
+      setDepositLoading(false);
+    }
+  };
 
   // Whether current tab should fill the full viewport
   const isFullViewport = fullViewportTabs.includes(activeTab);
@@ -380,7 +410,7 @@ const PanelSidebarTabs = ({
             </div>
             <p className="text-base font-bold tracking-tight mt-0.5">৳ {walletBalance.toFixed(2)}</p>
             <button
-              onClick={() => navigate("/wallet")}
+              onClick={() => setAddMoneyOpen(true)}
               className="mt-1.5 w-full bg-white/20 hover:bg-white/30 rounded-md py-1 text-[11px] font-semibold flex items-center justify-center gap-0.5 transition-colors"
             >
               <Plus className="h-2.5 w-2.5" /> টাকা যোগ করুন
@@ -669,6 +699,44 @@ const PanelSidebarTabs = ({
           { keys: "Esc", label: "বন্ধ করুন" },
         ]}
       />
+
+      <AnimatePresence>
+        {addMoneyOpen && (
+          <motion.div
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            onMouseDown={(event) => event.target === event.currentTarget && !depositLoading && setAddMoneyOpen(false)}
+          >
+            <motion.form
+              onSubmit={startWalletDeposit}
+              className="w-full max-w-sm rounded-2xl border border-border bg-card p-5 shadow-2xl"
+              initial={{ scale: 0.96, y: 12 }} animate={{ scale: 1, y: 0 }}
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <div>
+                  <h2 className="text-base font-bold text-foreground">ওয়ালেটে টাকা যোগ করুন</h2>
+                  <p className="mt-1 text-xs text-muted-foreground">ShurjoPay দিয়ে নিরাপদে পেমেন্ট করুন</p>
+                </div>
+                <button type="button" aria-label="বন্ধ করুন" onClick={() => setAddMoneyOpen(false)} disabled={depositLoading} className="text-xl text-muted-foreground hover:text-foreground">×</button>
+              </div>
+              <label className="block text-xs font-medium text-muted-foreground">
+                পরিমাণ (টাকা)
+                <input
+                  autoFocus type="number" min="10" max="100000" step="0.01" required
+                  value={depositAmount} onChange={(event) => setDepositAmount(event.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-border bg-background px-3 py-2.5 text-sm text-foreground outline-none focus:ring-2 focus:ring-primary"
+                />
+              </label>
+              <div className="mt-4 flex gap-2">
+                <button type="button" onClick={() => setAddMoneyOpen(false)} disabled={depositLoading} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary">বাতিল</button>
+                <button type="submit" disabled={depositLoading} className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60">
+                  {depositLoading ? "পেমেন্ট পেজ খোলা হচ্ছে..." : "ShurjoPay দিয়ে পেমেন্ট"}
+                </button>
+              </div>
+            </motion.form>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AlertDialog open={resetConfirmOpen} onOpenChange={setResetConfirmOpen}>
         <AlertDialogContent className="rounded-2xl">

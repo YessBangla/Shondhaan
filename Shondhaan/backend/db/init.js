@@ -294,6 +294,39 @@ export async function initDatabase() {
     )
   `);
 
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS wallet_deposit_requests (
+      id VARCHAR(36) PRIMARY KEY,
+      user_id VARCHAR(255) NOT NULL,
+      amount DECIMAL(10,2) NOT NULL,
+      gateway VARCHAR(50) NOT NULL DEFAULT 'shurjopay',
+      merchant_order_id VARCHAR(100) NOT NULL UNIQUE,
+      gateway_order_id VARCHAR(100) NULL,
+      status ENUM('PENDING','COMPLETED','FAILED','CANCELLED') NOT NULL DEFAULT 'PENDING',
+      transaction_id VARCHAR(64) NULL,
+      raw_response JSON NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+      INDEX idx_wallet_deposit_user (user_id),
+      INDEX idx_wallet_deposit_status (status)
+    )
+  `);
+  await ensureTableColumn(
+    "wallet_deposit_requests",
+    "merchant_order_id",
+    "ALTER TABLE wallet_deposit_requests ADD COLUMN merchant_order_id VARCHAR(100) NULL UNIQUE AFTER amount",
+  );
+  await ensureTableColumn(
+    "wallet_deposit_requests",
+    "transaction_id",
+    "ALTER TABLE wallet_deposit_requests ADD COLUMN transaction_id VARCHAR(64) NULL AFTER status",
+  );
+  await ensureTableColumn(
+    "wallet_deposit_requests",
+    "raw_response",
+    "ALTER TABLE wallet_deposit_requests ADD COLUMN raw_response JSON NULL AFTER transaction_id",
+  );
+
   // ─── Referral Settings table ──────────────────────────────────────
   await pool.query(`
     CREATE TABLE IF NOT EXISTS referral_settings (

@@ -7,8 +7,11 @@ import {
   getAllTransactions,
   adminAdjustWallet,
   creditPurchaseReward,
+  initiateWalletDeposit,
+  verifyWalletDeposit,
 } from "../controllers/wallet.controller.js";
 import {
+  requireLoggedIn,
   requireAdminPanelAccess,
   requireServiceAdmin,
   requireDealAdmin,
@@ -22,6 +25,8 @@ const router = express.Router();
 // USER ROUTES
 // ==========================================
 router.post("/debit", debitWallet);
+router.post("/deposit/shurjopay", requireLoggedIn, initiateWalletDeposit);
+router.get("/deposit/verify/:orderId", verifyWalletDeposit);
 router.post("/credit-purchase-reward", creditPurchaseReward);
 router.get("/balance/:user_id", getBalance);
 
