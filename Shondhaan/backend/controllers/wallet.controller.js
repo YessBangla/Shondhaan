@@ -1,6 +1,117 @@
 import mysql from "mysql2/promise";
 import { v4 as uuidv4 } from "uuid";
 
+const money = (value) => Math.round(Number(value || 0) * 100) / 100;
+
+const shurjopayRequest = async (url, body, token) => {
+  if (!url) throw new Error("ShurjoPay URL is not configured");
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json", ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify(body),
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(data?.message || data?.sp_message || "ShurjoPay request failed");
+  return data;
+};
+
+const paymentRecordFrom = (payload) => {
+  if (Array.isArray(payload)) return payload[0] || {};
+  if (Array.isArray(payload?.data)) return payload.data[0] || {};
+  return payload?.data && typeof payload.data === "object" ? payload.data : payload || {};
+};
+
+const checkoutUrlFrom = (data) => data?.checkout_url || data?.payment_url || data?.url || data?.redirect_url || data?.checkoutUrl;
+const isSuccessfulPayment = (record) => [record?.sp_code, record?.bank_status, record?.transaction_status, record?.payment_status, record?.status, record?.is_success]
+  .filter((value) => value !== undefined && value !== null)
+  .map((value) => String(value).toLowerCase())
+  .some((value) => ["1000", "success", "successful", "paid", "complete", "completed", "true"].includes(value));
+
+const getShurjopayToken = async () => {
+  const required = ["SURJOPAY_MERCHANT_NAME", "SURJOPAY_MERCHANT_PASSWORD", "SURJOPAY_MERCHANT_PREFIX", "SURJOPAY_GET_TOKEN_URL", "SURJOPAY_SECRETPAY_URL", "SURJOPAY_VERIFIC_URL"];
+  const missing = required.filter((key) => !process.env[key]);
+  if (missing.length) throw new Error(`Missing ShurjoPay env: ${missing.join(", ")}`);
+  return shurjopayRequest(process.env.SURJOPAY_GET_TOKEN_URL, {
+    username: process.env.SURJOPAY_MERCHANT_NAME,
+    password: process.env.SURJOPAY_MERCHANT_PASSWORD,
+  });
+};
+
+export const initiateWalletDeposit = async (req, res) => {
+  const userId = req.user?.id;
+  const amount = money(req.body?.amount);
+  if (!userId) return res.status(401).json({ success: false, message: "Unauthorized" });
+  if (!Number.isFinite(amount) || amount < 10 || amount > 100000) {
+    return res.status(400).json({ success: false, message: "Amount must be between ৳10 and ৳100,000." });
+  }
+
+  try {
+    const orderId = `WALLET-${Date.now()}-${userId}`;
+    const tokenData = await getShurjopayToken();
+    const baseUrl = (process.env.BACKEND_URL || `${req.protocol}://${req.get("host")}`).replace(/\/+$/, "");
+    const frontendUrl = (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/+$/, "");
+    const paymentResponse = await shurjopayRequest(process.env.SURJOPAY_SECRETPAY_URL, {
+      prefix: process.env.SURJOPAY_MERCHANT_PREFIX, token: tokenData.token, store_id: tokenData.store_id,
+      return_url: `${baseUrl}/api/wallet/deposit/verify/${encodeURIComponent(orderId)}`,
+      cancel_url: `${frontendUrl}/wallet?payment=cancelled`, amount, order_id: `${process.env.SURJOPAY_MERCHANT_PREFIX}${orderId}`,
+      currency: "BDT", customer_name: req.user.name || "Shondhaan User", customer_email: req.user.email || "",
+      customer_phone: req.user.mobile || "01700000000", customer_address: req.user.address || "Dhaka", customer_city: "Dhaka",
+      client_ip: req.ip || "127.0.0.1", value1: String(userId), value2: "wallet_deposit", value3: amount, value4: amount,
+    }, tokenData.token);
+    const record = paymentRecordFrom(paymentResponse);
+    const checkoutUrl = checkoutUrlFrom(record) || checkoutUrlFrom(paymentResponse);
+    if (!checkoutUrl) throw new Error("ShurjoPay checkout URL was not returned");
+    await pool.query(
+      `INSERT INTO wallet_deposit_requests (id, user_id, amount, payment_gateway, merchant_order_id, gateway_order_id, raw_response) VALUES (?, ?, ?, 'shurjopay', ?, ?, ?)`,
+      [uuidv4(), String(userId), amount, orderId, record?.sp_order_id || record?.order_id || orderId, JSON.stringify(paymentResponse)],
+    );
+    return res.json({ success: true, checkout_url: checkoutUrl, order_id: orderId });
+  } catch (error) {
+    console.error("Wallet deposit initiate error:", error);
+    return res.status(500).json({ success: false, message: error.message || "পেমেন্ট শুরু করা যায়নি" });
+  }
+};
+
+export const verifyWalletDeposit = async (req, res) => {
+  const orderId = req.params.orderId;
+  const frontendUrl = (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/+$/, "");
+  let connection;
+  try {
+    const [requests] = await pool.query("SELECT * FROM wallet_deposit_requests WHERE merchant_order_id = ? LIMIT 1", [orderId]);
+    if (!requests.length) return res.redirect(`${frontendUrl}/wallet?payment=error`);
+    const request = requests[0];
+    if (request.status === "COMPLETED") return res.redirect(`${frontendUrl}/wallet?payment=success`);
+    const tokenData = await getShurjopayToken();
+    const verification = await shurjopayRequest(process.env.SURJOPAY_VERIFIC_URL, { order_id: request.gateway_order_id || orderId }, tokenData.token);
+    const record = paymentRecordFrom(verification);
+    if (!isSuccessfulPayment(record)) {
+      await pool.query("UPDATE wallet_deposit_requests SET status = 'FAILED', raw_response = ? WHERE id = ?", [JSON.stringify(verification), request.id]);
+      return res.redirect(`${frontendUrl}/wallet?payment=failed`);
+    }
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [lockedRows] = await connection.query("SELECT * FROM wallet_deposit_requests WHERE id = ? FOR UPDATE", [request.id]);
+    if (lockedRows[0]?.status !== "COMPLETED") {
+      const transactionId = uuidv4();
+      await connection.query("INSERT INTO user_wallets (id, user_id, cash_balance, coin_balance) VALUES (?, ?, 0, 0) ON DUPLICATE KEY UPDATE user_id = user_id", [uuidv4(), request.user_id]);
+      await connection.query("UPDATE user_wallets SET cash_balance = cash_balance + ?, updated_at = CURRENT_TIMESTAMP WHERE user_id = ?", [request.amount, request.user_id]);
+      await connection.query(
+        `INSERT INTO wallet_transactions (id, user_id, type, currency_type, amount, module, reference_id, status, description, created_at) VALUES (?, ?, 'CREDIT', 'CASH', ?, 'WALLET_DEPOSIT', ?, 'COMPLETED', ?, CURRENT_TIMESTAMP)`,
+        [transactionId, request.user_id, request.amount, request.merchant_order_id, "ShurjoPay wallet deposit"],
+      );
+      await connection.query("UPDATE wallet_deposit_requests SET status = 'COMPLETED', transaction_id = ?, raw_response = ? WHERE id = ?", [transactionId, JSON.stringify(verification), request.id]);
+    }
+    await connection.commit();
+    return res.redirect(`${frontendUrl}/wallet?payment=success`);
+  } catch (error) {
+    if (connection) await connection.rollback();
+    console.error("Wallet deposit verification error:", error);
+    return res.redirect(`${frontendUrl}/wallet?payment=error`);
+  } finally {
+    if (connection) connection.release();
+  }
+};
+
 // ==========================================
 // DATABASE CONNECTION POOL
 // ==========================================
