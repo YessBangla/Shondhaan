@@ -76,13 +76,27 @@ const education = job.education_subject || null;
   return (
     <Link
       to={`/jobs/${job.id}`}
-      className="group relative flex justify-between gap-3 rounded-lg border border-gray-300 bg-[#eef3fb] p-3 transition-all duration-200 hover:border-gray-400 hover:shadow-md"
-    >
+      className="relative flex justify-between gap-3 rounded-lg border border-gray-300 bg-[#eef3fb] p-3 transition-all duration-200 hover:border-gray-400 hover:shadow-md"
+      >
       {/* Left */}
       <div className="flex-1 min-w-0">
         {/* Job Title */}
-        <h3 className="text-base font-bold text-green-700 group-hover:underline line-clamp-1">
+        <h3 className="group text-base font-bold text-green-700 hover:underline line-clamp-1">
           {job.title}
+            {/* Description popup — speech-bubble, appears BELOW the card with a
+            triangular tail pointing up toward the card edge. Fixed small
+            size, short clamped text, no scrollbar. Hidden until hover. */}
+          {descriptionPreview && (
+            <div className="pointer-events-none absolute left-4 top-[30px] z-20  opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
+              {/* Triangular tail, pointing up into the card */}
+              <div className="ml-3 h-0 w-0 border-x-8 border-x-transparent border-b-[10px]  border-primary drop-shadow-sm" />
+
+              {/* Bubble body */}
+              <div className="w-[300px] border border-primary max-w-[85vw] rounded-xl bg-background p-3 text-[11px] leading-4 text-gray-700 shadow-xl">
+                <p className="line-clamp-4">{descriptionPreview}</p>
+              </div>
+            </div>
+          )}
         </h3>
 
         {/* Company */}
@@ -143,20 +157,6 @@ const education = job.education_subject || null;
         fallbackBgClass=""
       />
 
-      {/* Description popup — speech-bubble, appears BELOW the card with a
-          triangular tail pointing up toward the card edge. Fixed small
-          size, short clamped text, no scrollbar. Hidden until hover. */}
-      {descriptionPreview && (
-        <div className="pointer-events-none absolute left-4 top-1/2 z-20  opacity-0 invisible translate-y-1 transition-all duration-150 group-hover:opacity-100 group-hover:visible group-hover:translate-y-0">
-          {/* Triangular tail, pointing up into the card */}
-          <div className="ml-3 h-0 w-0 border-x-8 border-x-transparent border-b-[10px]  border-primary drop-shadow-sm" />
-
-          {/* Bubble body */}
-          <div className="w-[300px] border border-primary max-w-[85vw] rounded-xl bg-background p-3 text-[11px] leading-4 text-gray-700 shadow-xl">
-            <p className="line-clamp-4">{descriptionPreview}</p>
-          </div>
-        </div>
-      )}
     </Link>
   );
 }

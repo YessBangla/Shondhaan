@@ -54,17 +54,19 @@ const JobLatestSection = () => {
         <Carousel opts={{ align: "start", dragFree: true }} className="px-1" tabIndex={0}>
           <CarouselContent className="-ml-3">
             {recentJobs.map((job) => (
-              <CarouselItem key={job.id} className="pl-3 basis-full md:basis-1/2 lg:basis-1/3">
-                <JobCard
-                  job={job}
-                  bn={bn}
-                  getTypeLabel={getTypeLabel}
-                  getCatLabel={getCatLabel}
-                  isSaved={savedJobIds.has(job.id)}
-                  onSave={saveJob}
-                  user={user}
-                  navigate={navigate}
-                />
+              <CarouselItem key={job.id} className="basis-full pl-3 md:basis-1/2 lg:basis-1/3 h-[160px]">
+                <div className="h-full [&>a]:h-full">
+                  <JobCard
+                    job={job}
+                    bn={bn}
+                    getTypeLabel={getTypeLabel}
+                    getCatLabel={getCatLabel}
+                    isSaved={savedJobIds.has(job.id)}
+                    onSave={saveJob}
+                    user={user}
+                    navigate={navigate}
+                  />
+                </div>
               </CarouselItem>
             ))}
           </CarouselContent>
