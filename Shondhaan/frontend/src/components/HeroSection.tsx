@@ -592,15 +592,15 @@ const HeroSection = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.05 }}
                         onClick={() => handleCardClick(to)}
-                        className="group relative bg-background overflow-hidden rounded-lg border border-white-900/20 p-2.5 text-center transition-all duration-300">
+                        className="group relative md:bg-background overflow-hidden rounded-lg md:border md:border-white-900/20 p-2.5 text-center transition-all duration-300">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="relative flex flex-col items-center gap-2">
                           <div 
-                            className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-transparent">
+                            className="flex items-center justify-center h-14 md:h-10 w-14 md:w-10 rounded-lg flex-shrink-0 bg-background p-2 md:p-0 md:bg-transparent">
                             {/* <Icon className="h-5 w-5 text-foreground" /> */}
                             <img src={imgIcon} alt="" />
                           </div>
-                          <h3 className="text-sm font-semibold text-foreground">
+                          <h3 className="text-sm font-semibold text-background md:text-foreground">
                             {bn ? labelBn : labelEn}
                           </h3>
                         </div>
