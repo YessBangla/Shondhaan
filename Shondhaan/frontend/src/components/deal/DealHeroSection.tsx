@@ -1,10 +1,15 @@
 // src/components/deal/DealHeroSection.tsx
-import { useState, useRef, useCallback, type KeyboardEvent } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useCallback,
+  type KeyboardEvent,
+} from "react";
 import { useNavigate } from "react-router-dom";
 import {
   MapPin,
   Loader2,
-  X,
   Search,
   Crosshair,
   ChevronRight,
@@ -12,6 +17,7 @@ import {
   MessageCircle,
   Package,
   LayoutGrid,
+  X,
 } from "lucide-react";
 import { Typewriter } from "react-simple-typewriter";
 import { Input } from "@/components/ui/input";
@@ -36,6 +42,8 @@ const DealHeroSection = () => {
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [activeResultIndex, setActiveResultIndex] = useState(-1);
   const [locating, setLocating] = useState(false);
   const [value, setValue] = useState<LocationValue>({
@@ -47,6 +55,8 @@ const DealHeroSection = () => {
   const geocodingProvider = true; // TODO: was probably a prop — restore if so
   const isGeoSupported =
     typeof navigator !== "undefined" && "geolocation" in navigator;
+  const baseUrl = import.meta.env.VITE_DEAL_API_BASE_URL || "";
+  const abortControllerRef = useRef<AbortController | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   // ─── handlers (reconstructed — wire to your real logic) ───
@@ -57,8 +67,61 @@ const DealHeroSection = () => {
     setResults([]);
     setSearch("");
     setActiveResultIndex(-1);
-    navigate(`/deal/ads/${item.id}`); // TODO: your listing detail route
+    navigate(`/deal/ad/${item.id}`); // TODO: your listing detail route
   };
+
+  const fetchListings = useCallback(
+    async (query: string, nextPage: number, append: boolean) => {
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      try {
+        if (append) setLoadingMore(true);
+        else setLoading(true);
+
+        const response = await fetch(
+          `${baseUrl}/api/deal/listings?search=${encodeURIComponent(
+            query
+          )}&page=${nextPage}`,
+          { signal: controller.signal }
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch listings");
+
+        const data = await response.json();
+        const list =
+          data?.data || data?.listings || data?.items || data?.rows || [];
+
+        setResults((current) => (append ? [...current, ...list] : list));
+        setHasMore(data?.pagination?.hasMore ?? list.length >= 10);
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") return;
+        console.error("Fetch deal suggestions error:", error);
+        setResults([]);
+      } finally {
+        if (append) setLoadingMore(false);
+        else setLoading(false);
+      }
+    },
+    [baseUrl]
+  );
+
+  useEffect(() => {
+    const query = search.trim();
+    const timeout = setTimeout(() => {
+      if (query) {
+        setPage(1);
+        fetchListings(query, 1, false);
+      } else {
+        setResults([]);
+        setPage(1);
+        setHasMore(true);
+      }
+    }, 400);
+
+    return () => clearTimeout(timeout);
+  }, [search, fetchListings]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "ArrowDown") {
@@ -71,18 +134,20 @@ const DealHeroSection = () => {
       if (activeResultIndex >= 0 && results[activeResultIndex]) {
         handleResultClick(results[activeResultIndex]);
       } else if (search.trim()) {
-        navigate(`/deal/ads?search=${encodeURIComponent(search.trim())}`);
+        navigate(`/deal/ad?search=${encodeURIComponent(search.trim())}`);
       }
     }
   };
 
   const handleScroll = useCallback(() => {
     const el = scrollRef.current;
-    if (!el || loading || loadingMore) return;
+    if (!el || loading || loadingMore || !hasMore || !search.trim()) return;
     if (el.scrollHeight - el.scrollTop - el.clientHeight < 40) {
-      // TODO: fetch next page of results and append to `results`
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchListings(search.trim(), nextPage, true);
     }
-  }, [loading, loadingMore]);
+  }, [fetchListings, hasMore, loading, loadingMore, page, search]);
 
   const handleClear = () => {
     setValue({ division: "", district: "", thana: "" });
@@ -127,7 +192,7 @@ const DealHeroSection = () => {
   return (
     <div className="relative">
       {/* 🔍 HERO SEARCH WITH BACKGROUND IMAGE */}
-      <div className="relative h-[300px] md:h-[400px] w-full overflow-hidden">
+      <div className="relative h-[300px] md:h-[400px] w-full overflow-visible">
 
         {/* Background image + overlay */}
         <div
@@ -200,13 +265,13 @@ const DealHeroSection = () => {
           <div className="flex mx-auto max-w-4xl px-8 flex-col sm:flex-row w-full mx-auto gap-2 relative">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
+              <Search className="absolute text-foreground left-3 z-20 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
               <Input
                 placeholder={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="pl-10 pr-10 py-6 w-full rounded-lg bg-white backdrop-blur-sm shadow-md border-2 border-primary focus-visible:ring-2 focus-visible:ring-emerald-400"
+                className="pl-10 pr-10 py-6 w-full rounded-lg bg-background backdrop-blur-sm shadow-md border-2 border-primary focus-visible:ring-2 focus-visible:ring-emerald-400"
                 aria-label={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
               />
               {loading ? (
@@ -215,20 +280,21 @@ const DealHeroSection = () => {
                 search && (
                   <button
                     onClick={() => setSearch("")}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500 hover:text-gray-700 transition-colors"
+                    className="absolute z-20 text-foreground right-3 top-1/2 -translate-y-1/2 h-4 w-4 hover:text-red-600 transition-colors"
                     >
+                    <X className="h-4 w-4" />
                   </button>
                 )
               )}
             </div>
 
             {/* 🔽 SEARCH RESULTS (with infinite scroll) */}
-            <div className="max-w-4xl mx-auto absolute sm:w-full left-0 right-0 top-0 z-50">
+            <div className="absolute left-0 right-0 top-full z-50 mt-2 w-full">
               {results.length > 0 && (
                 <div
                   ref={scrollRef}
                   onScroll={handleScroll}
-                  className="w-full border border-gray-200 top-12 bg-white rounded-lg absolute shadow-sm max-h-96 overflow-y-auto divide-y divide-gray-100"
+                  className="w-full max-h-96 overflow-y-auto rounded-lg border border-gray-200 bg-background shadow-sm divide-y divide-gray-100"
                 >
                   {results.map((item, index) => (
                     <div
@@ -271,16 +337,6 @@ const DealHeroSection = () => {
                     </div>
                   )}
                 </div>
-              )}
-              {/* 🧹 CLEAR BUTTON */}
-              {(value.division || value.district || value.thana || search) && (
-                <button
-                  onClick={handleClear}
-                  className="text-sm text-red-500 flex items-center gap-1 hover:text-red-600 transition-colors absolute right-3 top-1/2 -translate-y-1/2"
-                >
-                  <X size={14} /> 
-                  {/* {bn ? "মুছুন" : "Clear"} */}
-                </button>
               )}
             </div>
 
