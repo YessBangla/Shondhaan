@@ -113,7 +113,7 @@ const DealLatestSection = () => {
             <div className="flex items-center w-full gap-2 mb-2">
                 <img src="images/modules_logo/deal.png" alt="Shondhaan Mart" className="w-12 h-12 rounded-full mr-2" />
                 <div>
-                    <h2 className="text-2xl font-semibold">{bn ? "সন্ধান ডিল" : "Shondhaan Deal"}</h2>
+                    <h2 className="text-xl md:text-2xl font-semibold">{bn ? "সন্ধান ডিল" : "Shondhaan Deal"}</h2>
                     <span className="text-[12px] font-semibold">{bn ? "সর্বশেষ বিজ্ঞাপন" : "Latest Ads"}</span>
                 </div>
             </div>

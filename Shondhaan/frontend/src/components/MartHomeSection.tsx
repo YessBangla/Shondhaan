@@ -30,7 +30,7 @@ const bn = language === "bn";
                 <div className="flex items-center gap-2 mb-2">
                     <img src="images/modules_logo/mart.png" alt="Shondhaan Mart" className="w-12 h-12 rounded-full mr-2" />
                     <div>
-                        <h1 className="text-2xl font-semibold">{bn ? "সন্ধান মার্ট" : "Shondhaan Mart"}</h1>
+                        <h1 className="text-xl md:text-2xl font-semibold">{bn ? "সন্ধান মার্ট" : "Shondhaan Mart"}</h1>
                         <span className="text-[12px] font-semibold mb-3">{bn ? "সর্বাধিক বিক্রি হওয়া পণ্য" : "Top Selling Products"}</span>
                     </div>
                 </div>

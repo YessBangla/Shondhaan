@@ -54,6 +54,7 @@ type Category = {
   id: string;
   name: string;
   name_en?: string;
+  icon_url?: string;
   title?: string;
   title_en?: string;
 };
@@ -429,9 +430,10 @@ const Index = () => {
 
                   return (
                     <ServiceSection
-                      key={`category-${category.id}`}
-                      heading={heading}
-                      services={services}
+                    key={`category-${category.id}`}
+                    heading={heading}
+                    services={services}
+                    icon_url={category.icon_url}
                       viewAllLink={`/all-services?category=${category.id}`}
                     />
                   );

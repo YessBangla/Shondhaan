@@ -37,7 +37,7 @@ const JobLatestSection = () => {
             <div className="flex items-center w-full gap-2 mb-2">
                 <img src="images/modules_logo/job.png" alt="Shondhaan Mart" className="w-12 h-12 rounded-full mr-2" />
                 <div>
-                    <h2 className="text-2xl font-semibold">{bn ? "সন্ধান জবস" : "Shondhaan Jobs"}</h2>
+                    <h2 className="text-xl md:text-2xl font-semibold">{bn ? "সন্ধান জবস" : "Shondhaan Jobs"}</h2>
                     <span className="text-[12px] font-semibold">{bn ? "নতুন চাকরির বিজ্ঞাপন" : "Latest Jobs"}</span>
                 </div>
             </div>
