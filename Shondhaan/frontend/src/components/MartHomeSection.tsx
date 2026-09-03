@@ -4,6 +4,13 @@ import { useMartProducts } from "@/hooks/useMartData";
 import MartProductCard from "@/components/mart/MartProductCard";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 const TopSellingSection = () => {
 const { language } = useLanguage();
 const bn = language === "bn";
@@ -33,11 +40,17 @@ const bn = language === "bn";
                 </Button>
             </Link>
         </div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3">
-        {topSelling.map((p: any) => (
-          <MartProductCard key={p.id} product={p} />
-        ))}
-      </div>
+      <Carousel opts={{ align: "start", dragFree: true }} className="px-1" tabIndex={0}>
+        <CarouselContent className="-ml-3">
+          {topSelling.map((p: any) => (
+            <CarouselItem key={p.id} className="pl-3 basis-[calc(50%-0.375rem)] sm:basis-[calc(33.333%-0.5rem)] md:basis-[calc(25%-0.5625rem)] lg:basis-[calc(16.667%-0.625rem)]">
+              <MartProductCard product={p} />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="left-0 sm:-left-4" />
+        <CarouselNext className="right-0 sm:-right-4" />
+      </Carousel>
     </section>
   );
 };
