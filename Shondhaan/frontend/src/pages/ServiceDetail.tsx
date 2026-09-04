@@ -337,7 +337,7 @@ const ServiceDetail = () => {
   if (!cmsService && !legacyService) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center px-4 text-center" style={{ background: T.paper }}>
-        <h1 className="font-['Fraunces',serif] text-xl font-medium mb-2" style={{ color: T.ink }}>Service Not Found</h1>
+        <h1 className=" text-xl font-medium mb-2" style={{ color: T.ink }}>Service Not Found</h1>
         <p className="text-sm mb-4" style={{ color: T.muted }}>The service you are looking for is not available.</p>
         <button onClick={() => navigate("/")} className="rounded-full px-5 py-2 text-xs font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5" style={{ background: T.primary }}>Go Home</button>
       </div>
@@ -377,7 +377,7 @@ const ServiceDetail = () => {
           <span className="w-1 h-1 rounded-full" style={{ background: T.brass }} />
           {bn ? "হোম সার্ভিস" : "Home services"}
         </div>
-        <h1 className="font-['Fraunces',serif] font-medium text-xl" style={{ color: T.ink }}>{service.title}</h1>
+        <h1 className=" font-medium text-xl" style={{ color: T.ink }}>{service.title}</h1>
         <img src={service.image} alt={service.title} className="w-full h-[180px] object-cover mt-3 rounded-[16px] shadow-sm" />
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-4">
           {service.packages.map((p, i) => (
@@ -615,7 +615,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
 
                 {features.length > 0 && (
                   <div>
-                    <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
+                    <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
                     <div className="flex flex-wrap gap-1.5">
                       {features.map((f) => (
                         <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
@@ -627,18 +627,24 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                 )}
 
               {hasActiveOffer ? (
-                <div className="p-3 rounded-[10px] border" style={{ borderColor: T.brass, background: T.brassTint }}>
-                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-1" style={{ color: T.brassDark, letterSpacing: "-0.01em" }}>{bn ? "সর্বশেষ অফার" : "Latest Offer"}</h3>
-                  <p className="text-[12px] mb-2" style={{ color: T.brassDark }}>{bn ? `এই প্যাকেজে ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} ছাড় প্রযোজ্য!` : `Get ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} off on this package!`}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="font-['JetBrains_Mono',monospace] text-[15px] font-medium" style={{ color: T.brassDark }}>৳{offerDiscountedPrice}</span>
-                    <span className="text-[10px] line-through" style={{ color: T.brassDark }}>৳{pkg.price}</span>
+                <div>
+                  <div className="flex">
+                    <img className="h-[50px] w-[50px]" src="/icons/offer.png" alt="" />
+                    <div>
+                      <h3 className=" font-medium text-[14px] mb-1 text-green-600">{bn ? "এই অফারে পাবেন" : "This Offer Includes"}</h3>
+                      <p className="text-[12px] mb-2 text-green-600">
+                        {bn ? `এই প্যাকেজে ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} ছাড় !!!` : `Get ${offer?.discount_type === "fixed" ? `৳${offer.discount_value}` : `${offer.discount_value}%`} off on this package!`}
+                      </p>
+                    </div>
                   </div>
-                </div>    
+                  <div className="p-3 rounded-[10px] text-white bg-gradient-to-r from-green-600 via-green-700 to-primary">
+                    <p>{bn ? offer.description_bn : offer.description}</p>
+                  </div>    
+                </div>
                 ) : (
                 packages.length > 0 && (
                   <div>
-                    <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "প্যাকেজ" : "Packages"}</h3>
+                    <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "প্যাকেজ" : "Packages"}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {packages.map((p: any, i: number) => {
                         const sel = selectedPackage === i;
@@ -671,7 +677,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
               )}
 
                 <div>
-                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সুবিধা" : "Benefits"}</h3>
+                  <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সুবিধা" : "Benefits"}</h3>
                   <div className="grid grid-cols-2 gap-2">
                     {benefits.map((b, i) => (
                       <div key={i} className="flex items-start gap-2 border rounded-[10px] p-2.5" style={{ borderColor: T.line, background: T.card }}>
@@ -688,7 +694,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                 </div>
 
                 <div>
-                  <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "পরিষেবা এলাকা" : "Service Area"}</h3>
+                  <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "পরিষেবা এলাকা" : "Service Area"}</h3>
                   {cities.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {cities.map((c) => (
@@ -724,7 +730,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   <h2 className="font-medium text-[15px] mb-2.5" style={{ color: T.ink }}>{bn ? "বুকিং করুন" : "Book this visit"}</h2>
 
                   {hasActiveOffer && (
-                    <div className="mb-2 flex items-center gap-1.5 rounded-[8px] px-2.5 py-1.5" style={{ background: "linear-gradient(90deg,#f97316,#ef4444)" }}>
+                    <div className="mb-2 flex items-center gap-1.5 rounded-[8px] px-2.5 py-2 bg-gradient-to-r from-green-600 via-green-700 to-primary">
                       <Tag className="h-3 w-3 text-white shrink-0" />
                       <span className="text-[10px] font-bold text-white">
                         {bn ? (offer?.title_bn || offer?.title || "অফার প্রয়োগ হয়েছে") : (offer?.title || offer?.title_bn || "Offer applied")}
@@ -905,7 +911,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
       {/* ── Recently Viewed ── */}
       {recentlyViewed.length > 0 && (
         <div className="app-container py-5">
-          <h3 className="font-['Fraunces',serif] font-medium text-[14px] mb-3" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সাম্প্রতিক দেখা" : "Recently viewed"}</h3>
+          <h3 className=" font-medium text-[14px] mb-3" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সাম্প্রতিক দেখা" : "Recently viewed"}</h3>
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
             {recentlyViewed.map((item) => (
               <Link key={item.slug} to={`/service/${item.slug}`} className="group rounded-[10px] border overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-sm" style={{ borderColor: T.line, background: T.card }}>
