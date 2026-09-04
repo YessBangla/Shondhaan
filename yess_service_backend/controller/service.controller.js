@@ -236,10 +236,8 @@ export const getServices = async (req, res) => {
       total_reviews: Number(item.total_reviews || 0),
       total_orders: Number(item.total_orders || 0),
       commission_percent: Number(item.commission_percent || 0),
-      features: item.features ? JSON.parse(item.features) : [],
-      available_cities: item.available_cities
-        ? JSON.parse(item.available_cities)
-        : [],
+      features: parseJsonArray(item.features),
+      available_cities: parseJsonArray(item.available_cities),
       is_active: Boolean(item.is_active),
       package_count: Number(item.package_count || 0),
     }));
