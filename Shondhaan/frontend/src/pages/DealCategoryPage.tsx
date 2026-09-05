@@ -119,7 +119,7 @@ const DealCategoryPage = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[44px] md:pt-[68px]" />
+      <div className="pt-[50px] md:pt-[45px]" />
       <div className="app-container py-4 pb-28 md:pb-10">
         {/* Header */}
         <div className="flex items-center gap-2 mb-4">
@@ -134,33 +134,35 @@ const DealCategoryPage = () => {
         </div>
 
         {/* Search & Sort */}
-        <div className="flex gap-2 mb-4">
-          <div className="relative flex-1">
+        <div className="flex flex-col md:flex-row gap-2 mb-4">
+          <div className="relative flex-1 border border-primary rounded-lg">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input placeholder={bn ? "খুঁজুন..." : "Search..."} value={search} onChange={e => setSearch(e.target.value)} className="pl-9" />
           </div>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="newest">{bn ? "সর্বশেষ" : "Newest"}</SelectItem>
-              <SelectItem value="price_asc">{bn ? "কম মূল্য" : "Price ↑"}</SelectItem>
-              <SelectItem value="price_desc">{bn ? "বেশি মূল্য" : "Price ↓"}</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="hidden md:flex gap-1">
-            <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")}><Grid className="h-4 w-4" /></Button>
-            <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
+          <div className="flex items-center gap-2">
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-36"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">{bn ? "সর্বশেষ" : "Newest"}</SelectItem>
+                <SelectItem value="price_asc">{bn ? "কম মূল্য" : "Price ↑"}</SelectItem>
+                <SelectItem value="price_desc">{bn ? "বেশি মূল্য" : "Price ↓"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex gap-1">
+              <Button variant={viewMode === "grid" ? "default" : "outline"} size="icon" onClick={() => setViewMode("grid")}><Grid className="h-4 w-4" /></Button>
+              <Button variant={viewMode === "list" ? "default" : "outline"} size="icon" onClick={() => setViewMode("list")}><List className="h-4 w-4" /></Button>
+            </div>
+            {/* Mobile filter */}
+            <Sheet>
+              <SheetTrigger asChild className="md:hidden">
+                <Button variant="outline" size="icon"><SlidersHorizontal className="h-4 w-4" /></Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-72">
+                <SheetHeader><SheetTitle>{bn ? "ফিল্টার" : "Filters"}</SheetTitle></SheetHeader>
+                <div className="mt-4"><FilterPanel /></div>
+              </SheetContent>
+            </Sheet>
           </div>
-          {/* Mobile filter */}
-          <Sheet>
-            <SheetTrigger asChild className="md:hidden">
-              <Button variant="outline" size="icon"><SlidersHorizontal className="h-4 w-4" /></Button>
-            </SheetTrigger>
-            <SheetContent side="right" className="w-72">
-              <SheetHeader><SheetTitle>{bn ? "ফিল্টার" : "Filters"}</SheetTitle></SheetHeader>
-              <div className="mt-4"><FilterPanel /></div>
-            </SheetContent>
-          </Sheet>
         </div>
 
         <div className="flex gap-6">
