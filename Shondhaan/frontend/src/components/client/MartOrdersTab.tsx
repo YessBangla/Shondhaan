@@ -310,7 +310,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
         <p className="text-sm text-muted-foreground mt-1">
           {bn ? "সন্ধান মার্ট থেকে পণ্য কিনুন" : "Shop from Shondhaan Mart"}
         </p>
-        <Button className="mt-4 gap-2 text-white" onClick={() => navigate("/mart/home")}>
+        <Button className="mt-4 bg-userprimary gap-2 text-white" onClick={() => navigate("/mart/home")}>
           <ShoppingBag className="h-4 w-4" />
           {bn ? "শপিং শুরু করুন" : "Start Shopping"}
         </Button>

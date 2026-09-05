@@ -89,7 +89,7 @@ export const MOBILE_NAV_TABS: MobileNavTabConfig[] = [
     icon: MessageSquare,
     label: { bn: "চ্যাট", en: "Chat" },
     describe: { bn: "মেসেজ ও চ্যাট খুলুন", en: "Open messages and chat" },
-    action: { kind: "navigate-auth", authedTo: "/dashboard", guestTo: "/login" },
+    action: { kind: "navigate-auth", authedTo: "/messages", guestTo: "/login" },
     badge: "chat",
   },
   {

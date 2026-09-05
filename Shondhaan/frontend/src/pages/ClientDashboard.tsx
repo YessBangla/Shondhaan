@@ -900,9 +900,9 @@ const ClientDashboard = () => {
                         transition={{ delay: 0.2 }}
                         className="relative"
                       >
-                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl md:rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
+                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-full md:rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
                           {profile.profile_image_url ? (
-                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded md:rounded-2xl" alt="" />
+                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded-full md:rounded-3xl" alt="" />
                           ) : (
                             <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center">
                               <User className="h-10 w-10 text-slate-400" />
@@ -1267,12 +1267,12 @@ const ClientDashboard = () => {
 
             {/* === MART ORDERS TAB === */}
            {activeTab === "mart-orders" && (
-  <MartOrdersTab
-    orders={martOrders}
-    onRefresh={fetchMartOrders}
-    apiBase={`${MART_API_BASE}/api`}
-  />
-)}
+              <MartOrdersTab
+                orders={martOrders}
+                onRefresh={fetchMartOrders}
+                apiBase={`${MART_API_BASE}/api`}
+              />
+            )}
 
             {/* === PAYMENTS TAB === */}
             {activeTab === "payments" && <PaymentHistoryTab />}

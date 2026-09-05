@@ -577,7 +577,7 @@ const MartHome = () => {
       <Navbar />
       <PlatformSwitcher className="hidden" />
 
-      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[80px] md:mt-[30px]">
+      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[60px] md:mt-[30px]">
         <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
           <div className="app-container md:py-3">
             <div className="grid grid-cols-4 auto-cols-[100%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
@@ -613,8 +613,8 @@ const MartHome = () => {
               ].map((b, i) => (
                 <div
                   key={i}
-                  className={`group relative overflow-hidden rounded-0 md:rounded-2xl md:border bg-transparent md:bg-gradient-to-br ${b.card} px-0 md:px-3.5 py-3 shadow-sm hover:-translate-y-0.5 hover:shadow-md transition-all duration-200 shrink-0`}
-                >
+                  className={`group relative overflow-hidden rounded-0 md:rounded-2xl md:border bg-transparent md:bg-gradient-to-br ${b.card} px-0 md:px-3.5 py-3 shadow-sm hover:-translate-y-0.5 transition-all duration-200 shrink-0`}
+                  >
                   <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/45 dark:bg-white/5" />
                   <div className="relative flex flex-col md:flex-row items-center gap-3">
                     <div className={`h-9 w-9 rounded-xl ${b.iconBox} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
@@ -641,7 +641,7 @@ const MartHome = () => {
             className="relative z-30 mb-3"
             role="search"
           >
-            <div className="relative flex items-center rounded-2xl border border-border/70 bg-white dark:bg-card shadow-sm focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15">
+            <div className="relative flex items-center rounded-xl border border-primary bg-white dark:bg-card shadow-sm focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15">
               <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
               <input
                 value={homeSearch}
@@ -866,17 +866,17 @@ const MartHome = () => {
           <section className="mb-1">
             <div className="bg-white dark:bg-card border border-red-100 dark:border-red-900/30 rounded-2xl p-5 shadow-sm">
               <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col md:flex-row items-start gap-3">
                   <div className="bg-red-500 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-sm">
                     <Zap className="h-3.5 w-3.5" />
-                    <span className="font-bold text-[13px]">{bn ? "ফ্ল্যাশ সেল" : "Flash Sale"}</span>
+                    <span className="font-bold text-[13px] text-nowrap">{bn ? "ফ্ল্যাশ সেল" : "Flash Sale"}</span>
                   </div>
                   <FlashDealTimer />
                 </div>
                 <button
                   onClick={() => navigate("/mart/category/all?featured=true")}
-                  className="text-[12px] font-semibold text-red-500 hover:underline flex items-center gap-1"
-                >
+                  className="text-[12px] text-nowrap font-semibold text-red-500 hover:underline flex items-center gap-1"
+                  >
                   {bn ? "সব দেখুন" : "View All"}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </button>
