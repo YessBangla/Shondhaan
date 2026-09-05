@@ -62,7 +62,7 @@ export const initiateWalletDeposit = async (req, res) => {
     const checkoutUrl = checkoutUrlFrom(record) || checkoutUrlFrom(paymentResponse);
     if (!checkoutUrl) throw new Error("ShurjoPay checkout URL was not returned");
     await pool.query(
-      `INSERT INTO wallet_deposit_requests (id, user_id, amount, payment_gateway, merchant_order_id, gateway_order_id, raw_response) VALUES (?, ?, ?, 'shurjopay', ?, ?, ?)`,
+      `INSERT INTO wallet_deposit_requests (id, user_id, amount, gateway, merchant_order_id, gateway_order_id, raw_response) VALUES (?, ?, ?, 'shurjopay', ?, ?, ?)`,
       [uuidv4(), String(userId), amount, orderId, record?.sp_order_id || record?.order_id || orderId, JSON.stringify(paymentResponse)],
     );
     return res.json({ success: true, checkout_url: checkoutUrl, order_id: orderId });
@@ -80,7 +80,7 @@ export const verifyWalletDeposit = async (req, res) => {
     const [requests] = await pool.query("SELECT * FROM wallet_deposit_requests WHERE merchant_order_id = ? LIMIT 1", [orderId]);
     if (!requests.length) return res.redirect(`${frontendUrl}/wallet?payment=error`);
     const request = requests[0];
-    if (request.status === "COMPLETED") return res.redirect(`${frontendUrl}/wallet?payment=success`);
+    if (request.status === "COMPLETED") return res.redirect(`${frontendUrl}/dashboard?payment=success`);
     const tokenData = await getShurjopayToken();
     const verification = await shurjopayRequest(process.env.SURJOPAY_VERIFIC_URL, { order_id: request.gateway_order_id || orderId }, tokenData.token);
     const record = paymentRecordFrom(verification);
@@ -102,7 +102,7 @@ export const verifyWalletDeposit = async (req, res) => {
       await connection.query("UPDATE wallet_deposit_requests SET status = 'COMPLETED', transaction_id = ?, raw_response = ? WHERE id = ?", [transactionId, JSON.stringify(verification), request.id]);
     }
     await connection.commit();
-    return res.redirect(`${frontendUrl}/wallet?payment=success`);
+    return res.redirect(`${frontendUrl}/dashboard?payment=success`);
   } catch (error) {
     if (connection) await connection.rollback();
     console.error("Wallet deposit verification error:", error);

@@ -729,8 +729,8 @@ const PanelSidebarTabs = ({
               </label>
               <div className="mt-4 flex gap-2">
                 <button type="button" onClick={() => setAddMoneyOpen(false)} disabled={depositLoading} className="flex-1 rounded-lg border border-border px-3 py-2.5 text-xs font-semibold text-foreground hover:bg-secondary">বাতিল</button>
-                <button type="submit" disabled={depositLoading} className="flex-1 rounded-lg bg-primary px-3 py-2.5 text-xs font-semibold text-primary-foreground disabled:opacity-60">
-                  {depositLoading ? "পেমেন্ট পেজ খোলা হচ্ছে..." : "ShurjoPay দিয়ে পেমেন্ট"}
+                <button type="submit" disabled={depositLoading} className="flex-1 rounded-lg bg-userprimary px-3 py-2.5 text-xs font-semibold text-white disabled:opacity-60">
+                  {depositLoading ? "পেমেন্ট পেজ খোলা হচ্ছে..." : "ডিপোজিট করুন"}
                 </button>
               </div>
             </motion.form>
