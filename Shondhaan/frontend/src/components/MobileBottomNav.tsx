@@ -540,7 +540,7 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
       <nav
         aria-label={bn ? "প্রধান নেভিগেশন" : "Primary navigation"}
         role="navigation"
-        className="fixed left-0 !bottom-[-10px] py-1 z-[70] w-full overflow-hidden bg-primary md:hidden "
+        className="fixed left-0 !bottom-[-10px] py-1 z-[70] w-full bg-primary md:hidden "
         style={{ bottom: mobileNavBottom }}
         >
         {/* Subtle top hairline highlight for the iOS frosted feel */}
@@ -553,7 +553,7 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
             gridTemplateColumns: `repeat(${navTabs.length}, minmax(0, 1fr))`,
             paddingBottom: "max(0.5rem, env(safe-area-inset-bottom))",
           }}
-        >
+          >
           {navTabs.map((tab, idx) => {
             const tabLabel = bn ? tab.label.bn : tab.label.en;
             const tabDescribe = bn ? tab.describe.bn : tab.describe.en;
@@ -569,6 +569,7 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
               ? `, ${bn ? "নির্বাচিত" : "selected"}`
               : "";
             const fullAriaLabel = `${tabLabel}${badgeText}${stateText}. ${tabDescribe}`;
+            const isAccountTab = tab.id === "account";
             return (
               <li key={tab.id} role="presentation" className="contents">
                 <button
@@ -599,11 +600,11 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
                   aria-selected={isActive}
                   aria-current={isActive ? "page" : undefined}
                   tabIndex={isActive ? 0 : -1}
-                  className={`press group relative flex min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-1 pt-2 pb-1.5 min-h-[58px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mobile-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
+                  className={`press group relative flex min-w-0 flex-col items-center justify-center gap-1 px-1 pt-2 pb-1.5 min-h-[58px] transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-mobile-accent focus-visible:ring-offset-2 focus-visible:ring-offset-card ${
                     isActive
                       ? "text-green-600"
                       : "text-white hover:text-green-600 active:text-white"
-                  }`}
+                  } ${isAccountTab ? "border-2 rounded-full border-primary h-[65px] w-[65px] mx-auto -mt-6 z-40 !text-primary bg-background" : ""}`}
                   style={{ touchAction: "manipulation" }}
                 >
                 {/* Active pill — soft tinted backdrop */}
@@ -628,7 +629,8 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
                   <tab.icon
                     aria-hidden
                     focusable={false}
-                    className={`h-[22px] w-[22px] transition-all duration-300 ease-out ${isActive ? "scale-[1.08] -translate-y-0.5" : "group-active:scale-95"}`}
+                    className={`h-[22px] w-[22px] transition-all duration-300 ease-out ${isActive ? "scale-[1.08] -translate-y-0.5" : "group-active:scale-95"}
+                     ${isAccountTab ? "h-full w-full bg-primary text-white rounded-full p-4 text-[20px] bg-gradient-to-b from-green-500 to-primary" : ""}`}
                     strokeWidth={isActive ? 2.4 : 1.75}
                   />
                   {tabBadge > 0 && (
@@ -647,8 +649,9 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
                 </div>
                 <span
                   aria-hidden
-                  className={`relative z-[1] max-w-full truncate text-[10.5px] leading-none tracking-[-0.01em] transition-all duration-200 ${isActive ? "font-bold" : "font-medium"}`}
-                >
+                  className={`relative z-[1] max-w-full truncate text-[12px] leading-none tracking-[-0.01em] transition-all duration-200 ${isActive ? "font-bold" : "font-medium"}
+                  ${isAccountTab ? "hidden" : ""}`}
+                  >
                   {tabLabel}
                 </span>
                 </button>
