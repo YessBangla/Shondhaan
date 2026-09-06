@@ -791,7 +791,7 @@ const JobPostForm = () => {
       <Navbar />
       {/* <JobsMenuBar /> */}
 
-      <div className="mx-auto max-w-7xl px-1 mt-6 py-4">
+      <div className="mx-auto max-w-7xl px-1 mt-12 md:mt-6 py-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/jobs")} className="mb-4 -ml-2 text-muted-foreground">
           <ArrowLeft className="h-4 w-4 mr-1" /> {bn ? "সন্ধান জব" : "Shondhaan Jobs"}
         </Button>
@@ -844,7 +844,7 @@ const JobPostForm = () => {
               <div className="rounded-xl border bg-card p-3 space-y-2">
                 <h3 className="font-semibold text-sm text-primary">{bn ? "মৌলিক তথ্য" : "Basic Information"}</h3>
 
-                <div className="grid grid-cols-3 gap-2 items-start">
+                <div className="grid grid-row-3 md:grid-cols-3 gap-2 items-start">
                   <JobTitleAutocomplete
                     value={title}
                     onChange={setTitle}
