@@ -174,10 +174,9 @@ const printInvoice = (order: MartOrder, bn: boolean) => {
       <td style="text-align:right;padding:6px 0;border-bottom:1px solid #f0f0f0;font-weight:500">৳${it.total_price.toLocaleString()}</td>
     </tr>`).join("");
 
+  const deliveryFee = Number(order.shipping_fee || 0) || Number(order.courier_fee || 0) || Number(order.cod_fee || 0);
   const feeRows = [
-    order.shipping_fee > 0 ? `<tr><td colspan="3" class="muted">${bn ? "শিপিং ফি" : "Shipping"}</td><td style="text-align:right">৳${order.shipping_fee.toLocaleString()}</td></tr>` : "",
-    order.courier_fee  > 0 ? `<tr><td colspan="3" class="muted">${bn ? "কুরিয়ার ফি" : "Courier"}</td><td style="text-align:right">৳${order.courier_fee.toLocaleString()}</td></tr>` : "",
-    order.cod_fee      > 0 ? `<tr><td colspan="3" class="muted">${bn ? "COD ফি" : "COD Fee"}</td><td style="text-align:right">৳${order.cod_fee.toLocaleString()}</td></tr>` : "",
+    deliveryFee > 0 ? `<tr><td colspan="3" class="muted">${bn ? "ডেলিভারি / COD ফি" : "Delivery / COD Fee"}</td><td style="text-align:right">৳${deliveryFee.toLocaleString()}</td></tr>` : "",
     order.discount     > 0 ? `<tr><td colspan="3" class="muted">${bn ? "ছাড়" : "Discount"}${order.coupon_code ? ` (${order.coupon_code})` : ""}</td><td style="text-align:right;color:green">-৳${order.discount.toLocaleString()}</td></tr>` : "",
   ].join("");
 
@@ -591,22 +590,10 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                             <span>{bn ? "সাবটোটাল" : "Subtotal"}</span>
                             <span>৳{order.subtotal.toLocaleString("bn-BD")}</span>
                           </div>
-                          {order.shipping_fee > 0 && (
+                          {(Number(order.shipping_fee || 0) || Number(order.courier_fee || 0) || Number(order.cod_fee || 0)) > 0 && (
                             <div className="flex justify-between text-muted-foreground">
-                              <span>{bn ? "শিপিং ফি" : "Shipping Fee"}</span>
-                              <span>৳{order.shipping_fee.toLocaleString("bn-BD")}</span>
-                            </div>
-                          )}
-                          {order.courier_fee > 0 && (
-                            <div className="flex justify-between text-muted-foreground">
-                              <span>{bn ? "কুরিয়ার ফি" : "Courier Fee"}</span>
-                              <span>৳{order.courier_fee.toLocaleString("bn-BD")}</span>
-                            </div>
-                          )}
-                          {order.cod_fee > 0 && (
-                            <div className="flex justify-between text-muted-foreground">
-                              <span>{bn ? "COD ফি" : "COD Fee"}</span>
-                              <span>৳{order.cod_fee.toLocaleString("bn-BD")}</span>
+                              <span>{bn ? "ডেলিভারি / COD ফি" : "Delivery / COD Fee"}</span>
+                              <span>৳{(Number(order.shipping_fee || 0) || Number(order.courier_fee || 0) || Number(order.cod_fee || 0)).toLocaleString("bn-BD")}</span>
                             </div>
                           )}
                           {order.discount > 0 && (

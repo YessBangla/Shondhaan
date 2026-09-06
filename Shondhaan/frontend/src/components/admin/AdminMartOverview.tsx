@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Package, ShoppingCart, Store, TrendingUp, Eye, Ban, Truck, RotateCcw, Search, RefreshCw } from "lucide-react";
 import { motion } from "framer-motion";
+import MartFeeSettings from "@/components/mart/MartFeeSettings";
 
 interface MartStats {
   totalProducts: number;
@@ -135,6 +136,8 @@ const AdminMartOverview = () => {
           </motion.div>
         ))}
       </div>
+
+      <MartFeeSettings />
 
       {/* Sub Tabs */}
       <div className="flex gap-2 border-b border-border pb-2">

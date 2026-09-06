@@ -3,6 +3,7 @@ const axios = require("axios");
 const pool = require("../db");
 const { generateInvoiceNumber } = require("../utils/invoiceNumber");
 const { getBackendBaseUrl } = require("../utils/baseUrl");
+const { readDeliveryFee } = require("./martFeeSettings");
 
 const router = express.Router();
 
@@ -506,12 +507,11 @@ router.post("/", async (req, res) => {
       verifiedDiscount = calculateCouponDiscount(coupon, eligibleSubtotal);
     }
 
-    const verifiedTotal =
-      Number(subtotal || 0) +
-      Number(shipping_fee || 0) +
-      Number(courier_fee || 0) +
-      Number(cod_fee || 0) -
-      verifiedDiscount;
+    const sellerIds = items
+      .map((item) => item.vendor_id ?? item.seller_id)
+      .filter((id) => id !== null && id !== undefined && String(id).trim() !== "");
+    const deliveryFee = await readDeliveryFee(shipping_district, sellerIds);
+    const verifiedTotal = Number(subtotal || 0) + deliveryFee - verifiedDiscount;
 
     const orderNumber = generateInvoiceNumber("MRT");
 
@@ -533,7 +533,7 @@ router.post("/", async (req, res) => {
          notes, estimated_delivery_date, order_status, payment_status, order_number
        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)`,
       [
-        user_id, subtotal, shipping_fee, courier_fee, cod_fee, verifiedDiscount, verifiedTotal,
+        user_id, subtotal, deliveryFee, 0, 0, verifiedDiscount, verifiedTotal,
         normalizedCouponCode || null,
         normalizedPaymentMethod,
         customer_name,
