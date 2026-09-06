@@ -194,19 +194,32 @@ const ServiceStaffChatInbox = () => {
       .finally(() => !cancelled && setThreadLoading(false));
 
     const socket = getServiceChatSocket();
-    socket.emit("service-chat:join-conversation", {
-      conversationId: activeId,
-      token: auth?.token,
-    });
+    const joinConversation = () => {
+      socket.emit("service-chat:join-conversation", {
+        conversationId: activeId,
+        token: auth?.token,
+      });
+    };
+
+    socket.connect();
+    socket.on("connect", joinConversation);
+    if (socket.connected) joinConversation();
 
     return () => {
       cancelled = true;
+      socket.off("connect", joinConversation);
     };
   }, [activeId, auth?.token]);
 
   useEffect(() => {
     const socket = getServiceChatSocket();
-    socket.emit("service-chat:join-staff", { token: auth?.token });
+    const joinStaff = () => {
+      socket.emit("service-chat:join-staff", { token: auth?.token });
+    };
+
+    socket.connect();
+    socket.on("connect", joinStaff);
+    if (socket.connected) joinStaff();
 
     const onUpdate = (payload: ServiceChatPayload) => {
       setConversations((prev) => {
@@ -227,6 +240,7 @@ const ServiceStaffChatInbox = () => {
     socket.on("service-chat:conversation:updated", onUpdate);
     socket.on("service-chat:message:new", onMessage);
     return () => {
+      socket.off("connect", joinStaff);
       socket.off("service-chat:conversation:updated", onUpdate);
       socket.off("service-chat:message:new", onMessage);
     };

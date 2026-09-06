@@ -116,8 +116,16 @@ SELECT
   END AS other_user_id,
 
   dl.title AS listing_title,
+  COALESCE(dl.seller_name, CASE
+    WHEN c.buyer_id = ? THEN c.seller_id
+    ELSE c.buyer_id
+  END) AS other_user_name,
 
-  u.name AS other_user_name,
+  (SELECT li.image_url
+   FROM deal_listing_images li
+   WHERE li.listing_id = c.listing_id
+   ORDER BY li.sort_order ASC, li.id ASC
+   LIMIT 1) AS listing_image,
 
   c.last_message,
   c.last_message_at,
@@ -132,13 +140,6 @@ FROM deal_conversations c
 
 JOIN deal_listings dl
 ON dl.id = c.listing_id
-
-LEFT JOIN shondhaan_db.users u
-ON u.id = CASE
-    WHEN c.buyer_id = ?
-    THEN c.seller_id
-    ELSE c.buyer_id
-END
 
 WHERE c.buyer_id = ?
 OR c.seller_id = ?
@@ -155,24 +156,13 @@ ORDER BY c.last_message_at DESC
 );
 
       const data = rows.map((r) => {
-        let img = null;
-
-        try {
-          const parsed =
-            typeof r.listing_images === "string"
-              ? JSON.parse(r.listing_images)
-              : r.listing_images;
-
-          img = Array.isArray(parsed) ? parsed[0] : null;
-        } catch {}
-
         return {
           conversation_id: r.conversation_id,
           listing_id: r.listing_id,
           other_user_id: r.other_user_id,
           listing_title: r.listing_title,
-          listing_image: img,
-          other_user_name: r.other_user_name,
+          listing_image: r.listing_image || null,
+          other_user_name: r.other_user_name || r.other_user_id,
           last_message: r.last_message,
           last_message_at: r.last_message_at,
           unread_count: Number(r.unread_count) || 0,

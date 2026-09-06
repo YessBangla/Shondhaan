@@ -77,11 +77,17 @@ const ServiceChatFloatingButton = () => {
     if (!conversationId) return;
 
     const socket = getServiceChatSocket();
-    socket.emit("service-chat:join-conversation", {
-      conversationId,
-      visitorId: getServiceChatVisitorId(),
-      token: getServiceChatToken(),
-    });
+    const joinConversation = () => {
+      socket.emit("service-chat:join-conversation", {
+        conversationId,
+        visitorId: getServiceChatVisitorId(),
+        token: getServiceChatToken(),
+      });
+    };
+
+    socket.connect();
+    socket.on("connect", joinConversation);
+    if (socket.connected) joinConversation();
 
     const onMessage = (payload: ServiceChatPayload) => {
       if (payload.conversation.id !== conversationId) return;
@@ -93,6 +99,7 @@ const ServiceChatFloatingButton = () => {
 
     socket.on("service-chat:message:new", onMessage);
     return () => {
+      socket.off("connect", joinConversation);
       socket.off("service-chat:message:new", onMessage);
     };
   }, [conversationId]);
@@ -108,8 +115,14 @@ const ServiceChatFloatingButton = () => {
     if (!payload) return;
     rememberConversation(payload.conversation.id);
     setMessages((prev) => {
-      if (prev.some((message) => message.id === payload.message.id)) return prev;
-      return [...prev, payload.message];
+      const nextMessages = prev.some((message) => message.id === payload.message.id)
+        ? prev
+        : [...prev, payload.message];
+      const automaticReply = payload.automatic_reply;
+      if (!automaticReply || nextMessages.some((message) => message.id === automaticReply.id)) {
+        return nextMessages;
+      }
+      return [...nextMessages, automaticReply];
     });
   };
 
@@ -154,7 +167,7 @@ const ServiceChatFloatingButton = () => {
   };
 
   return (
-    <div className="fixed bottom-[200px] right-3 z-[100]">
+    <div className="fixed bottom-[80px] right-3 z-[100]">
       {open && (
         <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-xs overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-white">

@@ -2,6 +2,7 @@ import { ROLES, type RoleKey } from "@/config/roles";
 
 export interface MySqlAuthUser {
   id: number;
+  shondhaan_id?: string | null;
   name: string;
   mobile: string;
   address: string | null;

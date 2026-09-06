@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, Loader2, Sparkles } from "lucide-react";
-import { useDealMessages } from "@/hooks/useDealChatSocket";
+import { useDealMessages, useDealUserIdentities } from "@/hooks/useDealChatSocket";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useAITools } from "@/hooks/useAITools";
@@ -19,6 +19,8 @@ interface DealChatModalProps {
   conversation_id: string;
   listingTitle: string;
   sellerId: string;
+  participantName?: string;
+  participantShondhaanId?: string | number | null;
 }
 
 function formatTime(dateStr: string) {
@@ -42,6 +44,8 @@ export default function DealChatModal({
   conversation_id,
   listingTitle,
   sellerId,
+  participantName,
+  participantShondhaanId,
 }: DealChatModalProps) {
   const { user } = useAuth();
   const { language } = useLanguage();
@@ -55,34 +59,51 @@ export default function DealChatModal({
   const [showAiSuggestion, setShowAiSuggestion] = useState<string | null>(null);
 
   const queryClient = useQueryClient();
+  const { data: participantIdentities = [] } = useDealUserIdentities([sellerId]);
+  const participantIdentity = participantIdentities[0];
+  const displayName = participantName || participantIdentity?.name;
+  const displayShondhaanId = participantShondhaanId || participantIdentity?.shondhaan_id;
 
   // History still loads over REST — only the live send/receive loop moves to the socket
   const { data: messages, isLoading } = useDealMessages(conversation_id, sellerId);
 
   // ✅ Sync API messages → local state
   useEffect(() => {
-    if (messages) {
-      setLiveMessages(messages);
-    }
+    if (!messages) return;
+
+    setLiveMessages((current) => {
+      const serverIds = new Set(messages.map((message) => String(message.id)));
+      const unsynced = current.filter(
+        (message) =>
+          (message.pending || message.failed) && !serverIds.has(String(message.id))
+      );
+
+      return [...messages, ...unsynced];
+    });
   }, [messages]);
 
-  // ✅ Scroll to bottom
+  // ✅ Scroll the Radix viewport to the newest message
   useEffect(() => {
-    const el = scrollRef.current;
-    if (el) {
-      setTimeout(() => {
-        el.scrollTop = el.scrollHeight;
-      }, 50);
-    }
-  }, [liveMessages]);
+    if (!open) return;
+
+    const frame = requestAnimationFrame(() => {
+      const viewport = scrollRef.current?.querySelector<HTMLElement>(
+        "[data-radix-scroll-area-viewport]"
+      );
+
+      if (viewport) {
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: "smooth" });
+      }
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [liveMessages, open]);
 
   // ✅ SOCKET REALTIME (both receiving replies and the echo of our own sends)
   useEffect(() => {
     if (!user || !open) return;
 
-    // `socket` has autoConnect disabled — something has to actually call
-    // .connect() or join_user below goes nowhere. Safe to call even if
-    // already connected (no-op).
+
     socket.connect();
     socket.emit("join_user", user.id);
 
@@ -166,6 +187,9 @@ export default function DealChatModal({
         if (ack.data) {
           setLiveMessages((prev) => prev.map((m) => (m.id === tempId ? ack.data : m)));
         }
+
+        queryClient.invalidateQueries({ queryKey: ["deal-messages", conversation_id, sellerId] });
+        queryClient.invalidateQueries({ queryKey: ["deal-conversations"] });
       }
     );
 
@@ -190,8 +214,13 @@ export default function DealChatModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md p-0 gap-0 h-[80vh] max-h-[600px] flex flex-col">
         <DialogHeader className="p-4 border-b shrink-0">
-          <DialogTitle className="text-sm font-medium truncate">
-            💬 {listingTitle}
+          <DialogTitle className="min-w-0 text-left">
+            <span className="block truncate text-sm font-semibold">
+              {displayName || (bn ? "ব্যবহারকারী" : "User")}
+            </span>
+            <span className="block truncate text-[11px] font-normal text-muted-foreground">
+              {displayShondhaanId ? `Shondhaan ID: ${displayShondhaanId}` : listingTitle}
+            </span>
           </DialogTitle>
         </DialogHeader>
 

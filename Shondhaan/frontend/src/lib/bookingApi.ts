@@ -50,6 +50,7 @@ export interface CreateBookingPayload {
   platform_fee_amount?: number | null;
   note?: string | null;
   is_emergency?: boolean;
+  booking_type?: "regular" | "offer" | "emergency";
   // [WALLET UPDATE] New fields for wallet payment tracking
   payment_method?: string;
   wallet_cash_used?: number;

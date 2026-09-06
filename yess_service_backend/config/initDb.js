@@ -100,46 +100,48 @@ export const initializeDatabase = async () => {
     console.log("✅ providers table ready");
 
     // 5. Create bookings table
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS bookings (
-        id VARCHAR(36) PRIMARY KEY,
-        user_id VARCHAR(255),
-        booked_by VARCHAR(255),
-        service_id VARCHAR(36),
-        package_id VARCHAR(36),
-        service_slug VARCHAR(255),
-        service_title VARCHAR(255),
-        package_name VARCHAR(255),
-        package_price DECIMAL(10,2),
-        customer_name VARCHAR(255),
-        customer_phone VARCHAR(20),
-        customer_address LONGTEXT,
-        booker_name VARCHAR(255),
-        booker_phone VARCHAR(20),
-        booking_date DATE,
-        booking_time TIME,
-        status VARCHAR(50) DEFAULT 'pending',
-        payment_status VARCHAR(50) DEFAULT 'unpaid',
-        platform_fee_amount DECIMAL(10,2) DEFAULT 0,
-        payment_amount DECIMAL(10,2) DEFAULT 0,
-        payment_verified_at TIMESTAMP NULL,
-        provider_id VARCHAR(36),
-        assigned_to VARCHAR(255),
-        cancel_reason TEXT,
-        note TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL,
-        FOREIGN KEY (package_id) REFERENCES service_packages(id) ON DELETE SET NULL,
-        FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL,
-        KEY user_idx (user_id),
-        KEY service_idx (service_slug),
-        KEY date_idx (booking_date),
-        KEY status_idx (status),
-        KEY provider_idx (provider_id)
-      ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    `);
-    console.log("✅ bookings table ready");
+await pool.query(`
+  CREATE TABLE IF NOT EXISTS bookings (
+    id VARCHAR(36) PRIMARY KEY,
+    user_id VARCHAR(255),
+    booked_by VARCHAR(255),
+    service_id VARCHAR(36),
+    package_id VARCHAR(36),
+    service_slug VARCHAR(255),
+    service_title VARCHAR(255),
+    package_name VARCHAR(255),
+    package_price DECIMAL(10,2),
+    customer_name VARCHAR(255),
+    customer_phone VARCHAR(20),
+    customer_address LONGTEXT,
+    booker_name VARCHAR(255),
+    booker_phone VARCHAR(20),
+    booking_date DATE,
+    booking_time TIME,
+    status VARCHAR(50) DEFAULT 'pending',
+    booking_type ENUM('regular', 'offer', 'emergency') DEFAULT 'regular',
+    payment_status VARCHAR(50) DEFAULT 'unpaid',
+    platform_fee_amount DECIMAL(10,2) DEFAULT 0,
+    payment_amount DECIMAL(10,2) DEFAULT 0,
+    payment_verified_at TIMESTAMP NULL,
+    provider_id VARCHAR(36),
+    assigned_to VARCHAR(255),
+    cancel_reason TEXT,
+    note TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE SET NULL,
+    FOREIGN KEY (package_id) REFERENCES service_packages(id) ON DELETE SET NULL,
+    FOREIGN KEY (provider_id) REFERENCES providers(id) ON DELETE SET NULL,
+    KEY user_idx (user_id),
+    KEY service_idx (service_slug),
+    KEY date_idx (booking_date),
+    KEY status_idx (status),
+    KEY provider_idx (provider_id),
+    KEY booking_type_idx (booking_type)
+  ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+`);
+console.log("✅ bookings table ready");
 
     // 6. Create service_reviews table
     await pool.query(`
@@ -283,6 +285,18 @@ export const initializeDatabase = async () => {
       await pool.query(`ALTER TABLE service_offers ADD COLUMN service_slug VARCHAR(255) DEFAULT NULL AFTER service_id`);
     } catch (err) {
       if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ service_slug:", err.message);
+    }
+
+    // bookings: booking_type support
+    try {
+      await pool.query(`ALTER TABLE bookings ADD COLUMN booking_type ENUM('regular', 'offer', 'emergency') DEFAULT 'regular' AFTER status`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME') console.error("⚠️ booking_type:", err.message);
+    }
+    try {
+      await pool.query(`ALTER TABLE bookings ADD INDEX booking_type_idx (booking_type)`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_KEYNAME') console.error("⚠️ booking_type_idx:", err.message);
     }
 
     // bookings: offer support columns
