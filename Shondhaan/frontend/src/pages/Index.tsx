@@ -27,6 +27,9 @@ import ForYouSection from "@/components/ForYouSection"; // THIS FEATURE WILL USE
 import SpecialOffers from "@/components/SpecialOffers";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
+import TopSellingSection from "@/components/MartHomeSection";
+import DealLatestSection from "@/components/DealLatestSection";
+import JobLatestSection from "@/components/JobLatestSection";
 
 type Service = {
   id: string;
@@ -51,6 +54,7 @@ type Category = {
   id: string;
   name: string;
   name_en?: string;
+  icon_url?: string;
   title?: string;
   title_en?: string;
 };
@@ -426,9 +430,10 @@ const Index = () => {
 
                   return (
                     <ServiceSection
-                      key={`category-${category.id}`}
-                      heading={heading}
-                      services={services}
+                    key={`category-${category.id}`}
+                    heading={heading}
+                    services={services}
+                    icon_url={category.icon_url}
                       viewAllLink={`/all-services?category=${category.id}`}
                     />
                   );
@@ -465,6 +470,28 @@ const Index = () => {
                 )}
               </>
             )}
+          </div>
+        </div>
+
+        {/* MART Section */}
+        <div className="relative bg-background py-6">
+          <div className="app-container relative z-10">
+            {/* Mart product Top Selling */}
+            <TopSellingSection limit={6} />
+          </div>
+        </div>
+
+        {/* DEAL Section */}
+        <div className="relative bg-background py-6">
+          <div className="app-container relative z-10">
+            <DealLatestSection />
+          </div>
+        </div>
+
+        {/* JOBS Section */}
+        <div className="relative bg-background py-6">
+          <div className="app-container relative z-10">
+            <JobLatestSection />
           </div>
         </div>
 

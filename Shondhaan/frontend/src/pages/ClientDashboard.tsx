@@ -1,6 +1,7 @@
 ﻿import { useEffect, useState, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
+import Swal from "sweetalert2";
 import {
   User, Phone, MapPin, Save, Loader2,
   Package, Star, Bell, ClipboardList, CheckCircle2,
@@ -417,6 +418,7 @@ const DashboardBookingCard = ({
 const ClientDashboard = () => {
   const { user, loading: authLoading, signOut } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { language } = useLanguage();
   const { count: martWishlistCount } = useMartWishlist();
   const { stats: referralStats } = useReferral();
@@ -472,6 +474,22 @@ const ClientDashboard = () => {
   const [rebookTarget, setRebookTarget] = useState<Booking | null>(null);
   
   const [completingId, setCompletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (searchParams.get("payment") !== "success") return;
+
+    Swal.fire({
+      title: bn ? "পেমেন্ট সফল হয়েছে" : "Payment successful",
+      text: bn ? "আপনার ওয়ালেটে টাকা যোগ হয়েছে।" : "Money has been added to your wallet.",
+      icon: "success",
+      confirmButtonText: bn ? "ঠিক আছে" : "OK",
+    });
+
+    setSearchParams((current) => {
+      current.delete("payment");
+      return current;
+    }, { replace: true });
+  }, [bn, searchParams, setSearchParams]);
 
   const fetchReferralCode = useCallback(async () => {
     try {
@@ -882,9 +900,9 @@ const ClientDashboard = () => {
                         transition={{ delay: 0.2 }}
                         className="relative"
                       >
-                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-xl md:rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
+                        <div className="h-20 w-20 md:h-24 md:w-24 rounded-full md:rounded-3xl bg-white p-1.5 shadow-lg border border-slate-100 relative group">
                           {profile.profile_image_url ? (
-                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded md:rounded-2xl" alt="" />
+                            <img src={profile.profile_image_url} className="w-full h-full object-cover rounded-full md:rounded-3xl" alt="" />
                           ) : (
                             <div className="w-full h-full rounded-2xl bg-slate-100 flex items-center justify-center">
                               <User className="h-10 w-10 text-slate-400" />
@@ -1249,12 +1267,12 @@ const ClientDashboard = () => {
 
             {/* === MART ORDERS TAB === */}
            {activeTab === "mart-orders" && (
-  <MartOrdersTab
-    orders={martOrders}
-    onRefresh={fetchMartOrders}
-    apiBase={`${MART_API_BASE}/api`}
-  />
-)}
+              <MartOrdersTab
+                orders={martOrders}
+                onRefresh={fetchMartOrders}
+                apiBase={`${MART_API_BASE}/api`}
+              />
+            )}
 
             {/* === PAYMENTS TAB === */}
             {activeTab === "payments" && <PaymentHistoryTab />}

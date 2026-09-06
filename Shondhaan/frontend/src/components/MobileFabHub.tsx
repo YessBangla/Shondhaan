@@ -178,9 +178,9 @@ const MobileFabHub = () => {
         aria-expanded={open}
         aria-haspopup="menu"
         aria-label={bn ? "দ্রুত অ্যাকশন" : "Quick actions"}
-        className="press fixed right-3 z-[57] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-emerald-600 text-white shadow-[0_10px_28px_hsl(var(--primary)/0.45)] ring-1 ring-white/25 md:hidden"
+        className="press fixed right-3 bottom-6 z-[57] flex h-11 w-11 sm:h-12 sm:w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary via-primary to-emerald-600 text-white shadow-[0_10px_28px_hsl(var(--primary)/0.45)] ring-1 ring-white/25 md:hidden"
         style={{ bottom: getMobileFloatingBottom(8), touchAction: "manipulation" }}
-      >
+        >
         {/* Idle pulse ring */}
         {!open && (
           <span className="pointer-events-none absolute inset-0 rounded-full bg-primary/40 opacity-60 animate-ping" />
@@ -191,12 +191,12 @@ const MobileFabHub = () => {
           animate={{ rotate: 0, opacity: 1 }}
           transition={{ type: "spring", stiffness: 320, damping: 18 }}
           className="relative"
-        >
+          >
           {open ? (
-  <X className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.4} />
-) : (
-  <Headphones className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.2} />
-)}
+              <X className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.4} />
+            ) : (
+              <Headphones className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.2} />
+            )}
         </motion.span>
       </motion.button>
 

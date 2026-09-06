@@ -26,6 +26,7 @@ import {
   Sun,
   Moon,
   type LucideIcon,
+  Plus,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -259,6 +260,10 @@ const handleSignOut = async () => {
       short: bn ? "জরুরি" : "Emergency",
       long: bn ? "জরুরি সার্ভিস — তাৎক্ষণিক সাড়া" : "Emergency service — instant response",
     },
+    join: {
+      short: bn ? "যোগ দিন" : "Join",
+      long: bn ? "প্রোভাইডার হিসেবে যোগ দিন" : "Join as a Service Provider",
+    },
     track: {
       short: bn ? "ট্র্যাক" : "Track",
       long: bn ? "সার্ভিস ট্র্যাক করুন" : "Track your service",
@@ -466,6 +471,20 @@ const handleSignOut = async () => {
           </div>
           {/* mobile navbar start */}
           <div className="mt-2 flex items-stretch justify-between bg-background px-2 py-1 border-b shadow-xl">
+            <LongPressTooltip label={L.join.long}>
+              <button
+                onClick={() => navigate("/join")}
+                aria-label={L.join.long}
+                title={L.join.long}
+                className="press h-8 flex group relative gap-1 item-center justify-center rounded-xl px-2 bg-primary px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                >
+                {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                <Plus className="h-3 w-3 my-auto" />
+                <span className="text-[12px] my-auto font-semibold leading-none truncate max-w-full">
+                  {L.join.short}
+                </span>
+              </button>
+            </LongPressTooltip>
             <LongPressTooltip label={L.emergency.long}>
               <button
                 onClick={() => setEmergencyOpen(true)}

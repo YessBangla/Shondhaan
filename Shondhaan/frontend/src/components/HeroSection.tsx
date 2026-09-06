@@ -148,6 +148,7 @@ const PLATFORM_CARDS = [
   {
     to: "/#services-section",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
+    smlabelBn: "সার্ভিস", smlabelEn: "Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
     Icon: LucideWorkflow,
     imgIcon: "images/modules_logo/service.png",
@@ -158,6 +159,7 @@ const PLATFORM_CARDS = [
   {
     to: "/mart/home",
     labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
+    smlabelBn: "মার্ট", smlabelEn: "Mart",
     descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
     Icon: ShoppingBag,
     imgIcon: "images/modules_logo/mart.png",
@@ -168,6 +170,7 @@ const PLATFORM_CARDS = [
   {
     to: "/deal",
     labelBn: "সন্ধান ডিল", labelEn: "Shondhaan Deal",
+    smlabelBn: "ডিল", smlabelEn: "Deal",
     descBn: "নির্ভরযোগ্য লেনদেন", descEn: "Verified exchanges",
     Icon: Tag,
     imgIcon: "images/modules_logo/deal.png",
@@ -178,6 +181,7 @@ const PLATFORM_CARDS = [
   {
     to: "/jobs",
     labelBn: "চাকরির সূযোগ", labelEn: "Job Opportunities",
+    smlabelBn: "জব", smlabelEn: "Jobs",
     descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
     Icon: Briefcase,
     imgIcon: "images/modules_logo/job.png",
@@ -350,6 +354,7 @@ const HeroSection = () => {
     (bn ? "প্রিমিয়াম সার্ভিস প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
   const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
+  const heroImageMobile = "/hero-mobile.png";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
@@ -491,12 +496,12 @@ const HeroSection = () => {
       <div 
         className="md:hidden relative min-h-fit pb-6 flex flex-col bg-slate-950 bg-cover bg-center" 
         style={{ 
-          paddingTop: "100px",
-          backgroundImage: heroImage 
-            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.65)), url('${heroImage}')`
+          paddingTop: "70px",
+          backgroundImage: heroImageMobile 
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.65)), url('${heroImageMobile}')`
             : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
         }}
-      >
+        >
         {/* Subtle gradient accents */}
         <div className="absolute inset-0 -z-10 overflow-hidden pointer-events-none">
           <div className="absolute top-0 right-0 w-96 h-96 bg-amber-900/5 rounded-full blur-3xl" />
@@ -522,7 +527,7 @@ const HeroSection = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
             className="w-full text-center"
-          >
+            >
             <p className="hidden text-[10px] font-medium tracking-widest uppercase text-white mb-1">
               {bn ? "স্বাগতম" : "Welcome back"}
             </p>
@@ -582,8 +587,8 @@ const HeroSection = () => {
                 className="w-full max-w-md space-y-3"
               >
                 {/* Platform Cards - 2x2 Grid */}
-                <div className="grid grid-cols-2 gap-2">
-                  {PLATFORM_CARDS.map(({ to, labelBn, labelEn, Icon, imgIcon, accentColor, bgPattern }, idx) => {
+                <div className="flex md:grid grid-cols-2 gap-2">
+                  {PLATFORM_CARDS.map(({ to, labelBn, labelEn, smlabelBn, smlabelEn, Icon, imgIcon, accentColor, bgPattern }, idx) => {
                     const isPressed = pressedCard === to;
                     return (
                       <motion.button
@@ -592,16 +597,16 @@ const HeroSection = () => {
                         animate={{ opacity: 1, scale: 1, y: 0 }}
                         transition={{ duration: 0.3, delay: idx * 0.05 }}
                         onClick={() => handleCardClick(to)}
-                        className="group relative bg-background overflow-hidden rounded-lg border border-white-900/20 p-2.5 text-center transition-all duration-300">
+                        className="group relative md:bg-background overflow-hidden rounded-lg md:border md:border-white-900/20 p-2.5 text-center transition-all duration-300">
                         <div className="absolute inset-0 bg-gradient-to-br from-amber-900/0 to-amber-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                         <div className="relative flex flex-col items-center gap-2">
                           <div 
-                            className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 bg-transparent">
+                            className="flex items-center justify-center h-14 md:w-14 rounded-lg flex-shrink-0 bg-background p-3 md:p-0 md:bg-transparent">
                             {/* <Icon className="h-5 w-5 text-foreground" /> */}
-                            <img src={imgIcon} alt="" />
+                            <img src={imgIcon} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }} alt="" />
                           </div>
-                          <h3 className="text-sm font-semibold text-foreground">
-                            {bn ? labelBn : labelEn}
+                          <h3 className="text-sm font-semibold text-background md:text-foreground">
+                            {bn ? smlabelBn : smlabelEn}
                           </h3>
                         </div>
                         {isPressed && (
@@ -764,14 +769,14 @@ const HeroSection = () => {
                     transition={{ duration: 0.35, delay: 0.22 + idx * 0.06 }}
                     onClick={() => handleCardClick(to)}
                     whileHover={{ y: -8 }}
-                    className="group relative overflow-hidden rounded-lg border border-white backdrop-blur-sm text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
+                    className="group py-2 relative overflow-hidden rounded-lg border border-white backdrop-blur-sm text-center hover:border-primary transition-all duration-300 flex flex-col items-center"
                     style={{ background: `linear-gradient(135deg, rgba(51, 65, 85, 0.6), rgba(15, 23, 42, 0.6)), ${bgPattern}` }}
-                  >
+                    >
                     <div className="absolute inset-0 bg-background group-hover:opacity-100 transition-opacity duration-300" />
                     
                     <div className="relative flex flex-col items-center h-full gap-2 pt-2">
                       <div 
-                        className="flex items-center justify-center h-10 w-10 rounded-lg flex-shrink-0 p-1">
+                        className="flex items-center justify-center h-14 w-14 rounded-lg flex-shrink-0 p-1">
                         {/* <Icon className="h-7 w-7 text-white group-hover:text-primary transition-colors" /> */}
                         <img src={imgIcon} style={{ filter: "drop-shadow(0 1px 1px rgba(0,0,0,0.25))" }} alt="" />
                       </div>
@@ -785,7 +790,7 @@ const HeroSection = () => {
                         </h3>
                       </div>
 
-                      <ArrowRight className="h-3 w-3.5 text-amber-700/40 group-hover:text-amber-700/60 transition-colors mt-auto" />
+                      <ArrowRight className="h-3 w-3.5 text-foreground group-hover:text-amber-700/60 transition-colors mt-auto" />
                     </div>
 
                     {isPressed && (

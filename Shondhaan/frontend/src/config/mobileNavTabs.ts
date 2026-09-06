@@ -85,20 +85,20 @@ export const MOBILE_NAV_TABS: MobileNavTabConfig[] = [
     badge: "bookings",
   },
   {
-    id: "chat",
-    icon: MessageSquare,
-    label: { bn: "চ্যাট", en: "Chat" },
-    describe: { bn: "মেসেজ ও চ্যাট খুলুন", en: "Open messages and chat" },
-    action: { kind: "navigate-auth", authedTo: "/dashboard", guestTo: "/login" },
-    badge: "chat",
-  },
-  {
     id: "account",
     icon: User,
     label: { bn: "অ্যাকাউন্ট", en: "Account" },
     describe: { bn: "আপনার অ্যাকাউন্ট ও প্রোফাইল", en: "Your account and profile" },
     action: { kind: "navigate", to: "/dashboard" },
     activeRoutes: ["/dashboard", "/profile"],
+  },
+  {
+    id: "chat",
+    icon: MessageSquare,
+    label: { bn: "চ্যাট", en: "Chat" },
+    describe: { bn: "মেসেজ ও চ্যাট খুলুন", en: "Open messages and chat" },
+    action: { kind: "navigate-auth", authedTo: "/messages", guestTo: "/login" },
+    badge: "chat",
   },
   {
     id: "more",

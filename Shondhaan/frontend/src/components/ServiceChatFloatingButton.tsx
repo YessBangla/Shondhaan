@@ -154,7 +154,7 @@ const ServiceChatFloatingButton = () => {
   };
 
   return (
-    <div className="fixed bottom-[80px] right-3 z-[100]">
+    <div className="fixed bottom-[200px] right-3 z-[100]">
       {open && (
         <div className="mb-3 w-[calc(100vw-2.5rem)] max-w-xs overflow-hidden rounded-2xl border border-border bg-card shadow-2xl">
           <div className="flex items-center justify-between border-b border-border bg-primary px-4 py-3 text-white">

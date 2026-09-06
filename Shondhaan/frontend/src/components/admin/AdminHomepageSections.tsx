@@ -447,7 +447,7 @@ const AdminHomepageSections = () => {
                 </button>
                 
                 {showSlugsDropdown && (
-                  <div className="absolute z-30 mt-1 w-full max-h-60 flex flex-col rounded-lg border border-border bg-popover shadow-lg">
+                  <div className="absolute z-30 mt-1 w-full max-h-60 flex flex-col rounded-lg border border-border bg-background shadow-lg">
                     <div className="p-2 border-b border-border">
                       <div className="relative">
                         <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -519,7 +519,7 @@ const AdminHomepageSections = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saving ? "সেভ হচ্ছে..." : "সেভ করুন"}

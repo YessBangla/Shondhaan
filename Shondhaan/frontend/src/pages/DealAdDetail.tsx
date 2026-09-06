@@ -381,8 +381,8 @@ const DealAdDetail = () => {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <div className="pt-[14px] md:pt-[28px]" />
-      <div className="app-container py-6 pb-28 md:pb-12">
+      <div className="pt-[30px] md:pt-[28px]" />
+      <div className="app-container py-6 md:pb-12">
         {/* Breadcrumb */}
         <motion.div className="flex items-center gap-2 text-xs text-muted-foreground mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           <button onClick={() => navigate("/deal")} className="hover:text-primary transition-colors">{bn ? "ডিল" : "Deal"}</button>

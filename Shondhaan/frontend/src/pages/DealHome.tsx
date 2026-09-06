@@ -32,7 +32,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import BackToHomeButton from "@/components/BackToHomeButton";
 import DealSearchBox from "@/components/deal/DealSearchBox";
-import DealLocationSelector from "@/components/deal/DealLocationSelector";
+import DealHeroSection from "@/components/deal/DealHeroSection";
 import { Skeleton } from "@/components/ui/skeleton";
 import PullToRefreshIndicator from "@/components/PullToRefreshIndicator";
 import PlatformSwitcher from "@/components/mart/PlatformSwitcher";
@@ -394,7 +394,7 @@ const DealHome = () => {
           </p> */}
 
           <div className="">
-            <DealLocationSelector
+            <DealHeroSection
               value={locationFilter}
               onChange={setLocationFilter}
               bgImage={bgImage} // from DealHome's state

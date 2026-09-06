@@ -97,13 +97,13 @@ const MartCategoryPage = () => {
     <div className="min-h-screen bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
       <Navbar />
-      <div className="pt-[44px] md:pt-[30px]" />
+      <div className="pt-[50px] md:pt-[30px]" />
 
-      <div className="bg-gradient-to-r from-primary to-primary/80 text-white">
-        <div className="app-container py-4">
-          <div className="flex items-center justify-between mb-3">
+      <div className="bg-gradient-to-r from-primary to-primary/80 text-foreground">
+        <div className="app-container py-2">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-white" onClick={() => navigate("/mart/home")}>
+              <Button variant="ghost" size="icon" className="text-primary" onClick={() => navigate("/mart/home")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-xl font-bold flex items-center gap-2">
@@ -120,10 +120,10 @@ const MartCategoryPage = () => {
         </div>
       </div>
 
-      <div className="app-container py-4">
+      <div className="app-container md:py-4">
         {/* Sub-categories */}
         {subCats.length > 0 && (
-          <div className="flex gap-2 overflow-x-auto pb-3 mb-4">
+          <div className="flex gap-2 overflow-x-auto pb-3">
             <Button
               variant={!slug || slug === currentCat?.slug ? "default" : "outline"}
               size="sm"
@@ -168,38 +168,40 @@ const MartCategoryPage = () => {
         )}
 
         {/* Filter/Sort bar */}
-        <div className="flex items-center gap-2 mb-4">
-          <MartSearchBox className="flex-1" />
-          <Button variant="outline" size="sm" className="h-9" onClick={() => setShowFilters(!showFilters)}>
-            <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> {bn ? "ফিল্টার" : "Filter"}
-          </Button>
-          <Select value={sort} onValueChange={setSort}>
-            <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="popular">{bn ? "জনপ্রিয়" : "Popular"}</SelectItem>
-              <SelectItem value="newest">{bn ? "নতুন" : "Newest"}</SelectItem>
-              <SelectItem value="price-low">{bn ? "কম দাম" : "Low Price"}</SelectItem>
-              <SelectItem value="price-high">{bn ? "বেশি দাম" : "High Price"}</SelectItem>
-              <SelectItem value="rating">{bn ? "রেটিং" : "Top Rated"}</SelectItem>
-            </SelectContent>
-          </Select>
-          <div className="hidden sm:flex border border-border rounded-lg">
-            <Button
-              variant={viewMode === "grid" ? "default" : "ghost"}
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setViewMode("grid")}
-            >
-              <LayoutGrid className={`h-4 w-4 ${viewMode === "grid" ? "text-white" : "text-muted-foreground"}`} />
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-2 mb-4">
+          <MartSearchBox className="w-full flex-1" />
+          <div className="flex items-center gap-2" >
+            <Button variant="outline" size="sm" className="h-9" onClick={() => setShowFilters(!showFilters)}>
+              <SlidersHorizontal className="h-3.5 w-3.5 mr-1" /> {bn ? "ফিল্টার" : "Filter"}
             </Button>
-            <Button
-              variant={viewMode === "list" ? "default" : "ghost"}
-              size="icon"
-              className="h-9 w-9"
-              onClick={() => setViewMode("list")}
-            >
-              <List className={`h-4 w-4 ${viewMode === "list" ? "text-white" : "text-muted-foreground"}`} />
-            </Button>
+            <Select value={sort} onValueChange={setSort}>
+              <SelectTrigger className="w-[120px] h-9 text-xs"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="popular">{bn ? "জনপ্রিয়" : "Popular"}</SelectItem>
+                <SelectItem value="newest">{bn ? "নতুন" : "Newest"}</SelectItem>
+                <SelectItem value="price-low">{bn ? "কম দাম" : "Low Price"}</SelectItem>
+                <SelectItem value="price-high">{bn ? "বেশি দাম" : "High Price"}</SelectItem>
+                <SelectItem value="rating">{bn ? "রেটিং" : "Top Rated"}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="hidden sm:flex border border-border rounded-lg">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode("grid")}
+                >
+                <LayoutGrid className={`h-4 w-4 ${viewMode === "grid" ? "text-white" : "text-muted-foreground"}`} />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="icon"
+                className="h-9 w-9"
+                onClick={() => setViewMode("list")}
+              >
+                <List className={`h-4 w-4 ${viewMode === "list" ? "text-white" : "text-muted-foreground"}`} />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -243,17 +245,17 @@ const MartCategoryPage = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
             {Array.from({ length: 8 }).map((_, i) => <div key={i} className="aspect-square rounded-xl bg-muted animate-pulse" />)}
           </div>
-        ) : filtered.length > 0 ? (
-          viewMode === "grid" ? (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-              {filtered.map((p) => <MartProductCard key={p.id} product={p} />)}
-            </div>
+          ) : filtered.length > 0 ? (
+            viewMode === "grid" ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                {filtered.map((p) => <MartProductCard key={p.id} product={p} />)}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {filtered.map((p) => <MartProductCard key={p.id} product={p} variant="list" />)}
+              </div>
+            )
           ) : (
-            <div className="space-y-3">
-              {filtered.map((p) => <MartProductCard key={p.id} product={p} variant="list" />)}
-            </div>
-          )
-        ) : (
           <div className="text-center py-16 text-muted-foreground">
             <ShoppingCart className="h-12 w-12 mx-auto mb-3 opacity-40" />
             <p>{dealsFilter ? (bn ? "এখন কোনো ডিসকাউন্ট পণ্য নেই" : "No discounted products right now") : (bn ? "কোনো পণ্য পাওয়া যায়নি" : "No products found")}</p>

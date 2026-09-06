@@ -34,7 +34,7 @@ const FlashDealTimer = ({ endTime }: Props) => {
   return (
     <div className="flex items-center gap-2">
       <Flame className="h-5 w-5 text-orange-500 animate-pulse" />
-      <span className="text-sm font-bold">{bn ? "শেষ হবে" : "Ends in"}:</span>
+      <span className="text-sm font-bold text-nowrap">{bn ? "শেষ হবে" : "Ends in"}:</span>
       <div className="flex gap-1">
         {[
           { val: time.hours, label: bn ? "ঘণ্টা" : "h" },

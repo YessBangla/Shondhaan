@@ -78,9 +78,9 @@ process.on("uncaughtException", (err) => {
 const app = express();
 
 const allowedOrigins = [
-  ...(process.env.CORS_ORIGIN || "").split(","),
-  ...(process.env.FRONTEND_URL || "").split(","),
-  ...(process.env.FRONTEND_BASE_URL || "").split(","),
+  ...(process.env.CORS_ORIGIN || "https://shondhaan.com").split(","),
+  ...(process.env.FRONTEND_URL || "https://shondhaan.com").split(","),
+  ...(process.env.FRONTEND_BASE_URL || "https://shondhaan.com").split(","),
 ]
   .map((origin) => origin.trim())
   .filter(Boolean)
