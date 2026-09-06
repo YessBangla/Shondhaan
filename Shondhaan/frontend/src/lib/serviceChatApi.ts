@@ -33,6 +33,7 @@ export interface ServiceChatMessage {
 export interface ServiceChatPayload {
   conversation: ServiceChatConversation;
   message: ServiceChatMessage;
+  automatic_reply?: ServiceChatMessage | null;
 }
 
 const API_BASE = `${INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "")}/api/service-chat`;

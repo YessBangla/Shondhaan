@@ -233,6 +233,48 @@ const emitChatUpdate = (req, payload) => {
   io.to("service-chat:staff").emit("service-chat:conversation:updated", payload);
 };
 
+const AUTOMATIC_REPLY = "Thanks for your message. We are getting back to you soon.";
+
+const addAutomaticReply = async (conversationId) => {
+  const [recentReplies] = await pool.query(
+    `SELECT id
+     FROM service_chat_messages
+     WHERE conversation_id = ?
+       AND sender_role = 'staff'
+       AND sender_name = 'Service Support'
+       AND body = ?
+       AND created_at >= (NOW() - INTERVAL 24 HOUR)
+     LIMIT 1`,
+    [conversationId, AUTOMATIC_REPLY]
+  );
+
+  if (recentReplies.length) return null;
+
+  const messageId = uuidv4();
+
+  await pool.query(
+    `INSERT INTO service_chat_messages (
+      id, conversation_id, sender_role, sender_id, sender_name, body,
+      read_by_staff, read_by_customer
+    ) VALUES (?, ?, 'staff', NULL, 'Service Support', ?, 1, 0)`,
+    [messageId, conversationId, AUTOMATIC_REPLY]
+  );
+
+  await pool.query(
+    `UPDATE service_chat_conversations
+     SET last_message = ?, last_message_at = NOW(), status = 'open'
+     WHERE id = ?`,
+    [AUTOMATIC_REPLY, conversationId]
+  );
+
+  const [rows] = await pool.query(
+    "SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1",
+    [messageId]
+  );
+
+  return normalizeMessage(rows[0]);
+};
+
 export const createConversationRecord = async ({
   message,
   visitor_id,
@@ -279,6 +321,8 @@ export const createConversationRecord = async ({
     [messageId, conversationId, finalUserId || clean(visitor_id) || null, finalName, body]
   );
 
+  const automaticReply = await addAutomaticReply(conversationId);
+
   const conversation = await getConversationById(conversationId);
   const [messages] = await pool.query(
     "SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1",
@@ -288,6 +332,7 @@ export const createConversationRecord = async ({
   return {
     conversation: normalizeConversation(conversation),
     message: normalizeMessage(messages[0]),
+    automatic_reply: automaticReply,
   };
 };
 
@@ -350,6 +395,8 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
     [body, conversationId]
   );
 
+  const automaticReply = staff ? null : await addAutomaticReply(conversationId);
+
   const updatedConversation = await getConversationById(conversationId);
   const [messages] = await pool.query(
     "SELECT * FROM service_chat_messages WHERE id = ? LIMIT 1",
@@ -359,6 +406,7 @@ export const addMessageRecord = async ({ conversationId, message, visitor_id, us
   return {
     conversation: normalizeConversation(updatedConversation),
     message: normalizeMessage(messages[0]),
+    automatic_reply: automaticReply,
   };
 };
 

@@ -34,6 +34,7 @@ import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import JobApplicationsTab from "@/components/client/JobApplicationsTab";
 import ProfileContent from "@/components/ProfileContent";
 import ServiceMessage from "@/pages/ServiceMessage";
+import DealInbox from "@/pages/DealInbox";
 import ReferralTab from "@/components/client/ReferralTab";
 import { fetchReferralSettings } from "../lib/referralSettings";
 import { useReferral } from "@/contexts/ReferalContext";
@@ -1261,6 +1262,9 @@ const ClientDashboard = () => {
 
             {/* === MESSAGES TAB === */}
             {activeTab === "messages" && <ServiceMessage />}
+
+            {/* === DEAL MESSAGES TAB === */}
+            {activeTab === "deal-messages" && <DealInbox embedded />}
 
             {/* === REQUESTS TAB === */}
             {activeTab === "requests" && <ServiceRequestsTab />}

@@ -55,6 +55,34 @@ export const getMyProfile = async (req, res) => {
   }
 };
 
+export const lookupUsers = async (req, res) => {
+  try {
+    const ids = String(req.query.ids || "")
+      .split(",")
+      .map((id) => Number(id.trim()))
+      .filter((id) => Number.isInteger(id) && id > 0);
+
+    if (!ids.length) return res.json({ users: [] });
+
+    const placeholders = ids.map(() => "?").join(",");
+    const [rows] = await pool.execute(
+      `SELECT id, name, shondhaan_id FROM users WHERE id IN (${placeholders})`,
+      ids,
+    );
+
+    res.json({
+      users: rows.map((row) => ({
+        id: row.id,
+        name: row.name,
+        shondhaan_id: row.shondhaan_id,
+      })),
+    });
+  } catch (error) {
+    console.error("Lookup users error:", error);
+    res.status(500).json({ message: "Could not load user identities" });
+  }
+};
+
 export const updateMyProfile = async (req, res) => {
   try {
     const userId = req.user.id;

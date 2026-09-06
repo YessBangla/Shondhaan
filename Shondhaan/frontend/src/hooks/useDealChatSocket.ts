@@ -1,5 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/contexts/AuthContext";
+import { CENTRAL_API_BASE_URL } from "@/lib/api";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 
 // FIXED: Read the environment variable properly and provide a fallback
 const API_BASE = `${(import.meta.env.VITE_DEAL_API_BASE_URL || "").replace(/\/+$/, "")}/api`;
@@ -33,6 +35,37 @@ export interface DealConversation {
   last_message: string;
   last_message_at: string;
   unread_count: number;
+}
+
+export interface DealUserIdentity {
+  id: string | number;
+  name: string;
+  shondhaan_id: string | null;
+}
+
+export function useDealUserIdentities(userIds: string[]) {
+  const auth = getMySqlAuth();
+  const ids = [...new Set(userIds.map(String).filter(Boolean))].sort();
+
+  return useQuery<DealUserIdentity[]>({
+    queryKey: ["deal-user-identities", ids],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      const response = await fetch(
+        `${CENTRAL_API_BASE_URL.replace(/\/+$/, "")}/api/users/lookup?ids=${encodeURIComponent(ids.join(","))}`,
+        {
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+          },
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data?.message || "Failed to load user identities");
+      return Array.isArray(data.users) ? data.users : [];
+    },
+  });
 }
 
 // Full message history for one listing + the other participant.

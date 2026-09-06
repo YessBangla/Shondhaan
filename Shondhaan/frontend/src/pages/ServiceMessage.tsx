@@ -20,7 +20,10 @@ import {
   listServiceChatMessages,
   sendServiceChatMessage,
   type ServiceChatMessage,
+  type ServiceChatPayload,
 } from "@/lib/serviceChatApi";
+import { emitServiceChatWithAck, getServiceChatSocket } from "@/lib/serviceChatSocket";
+import { getServiceChatToken, getServiceChatVisitorId } from "@/lib/serviceChatApi";
 import { cn } from "@/lib/utils";
 
 /* ──────────────────────────────────────────────────────────────
@@ -106,6 +109,12 @@ const getAvatarStyle = (id: string) => {
   return { background: `linear-gradient(135deg, ${g.from}, ${g.to})` };
 };
 
+type ServiceChatAck = {
+  ok: boolean;
+  message?: string;
+  data?: ServiceChatPayload;
+};
+
 /* ──────────────────────────────────────────────────────────────
    Component
    ────────────────────────────────────────────────────────────── */
@@ -167,6 +176,40 @@ const ServiceMessage = () => {
     };
   }, [chatOpen, activeConv?.conversationId]);
 
+  useEffect(() => {
+    if (!chatOpen || !activeConv?.conversationId) return;
+
+    const socket = getServiceChatSocket();
+    const joinConversation = () => {
+      socket.emit("service-chat:join-conversation", {
+        conversationId: activeConv.conversationId,
+        visitorId: getServiceChatVisitorId(),
+        token: getServiceChatToken(),
+      });
+    };
+    const onMessage = (payload: ServiceChatPayload) => {
+      if (payload.conversation.id !== activeConv.conversationId) return;
+      setChatMessages((previous) => {
+        const next = previous.some((message) => message.id === payload.message.id)
+          ? previous
+          : [...previous, payload.message];
+        const automaticReply = payload.automatic_reply;
+        if (!automaticReply || next.some((message) => message.id === automaticReply.id)) return next;
+        return [...next, automaticReply];
+      });
+    };
+
+    socket.connect();
+    socket.on("connect", joinConversation);
+    socket.on("service-chat:message:new", onMessage);
+    if (socket.connected) joinConversation();
+
+    return () => {
+      socket.off("connect", joinConversation);
+      socket.off("service-chat:message:new", onMessage);
+    };
+  }, [chatOpen, activeConv?.conversationId]);
+
   // Auto-resize textarea
   useEffect(() => {
     const el = textareaRef.current;
@@ -201,10 +244,23 @@ const ServiceMessage = () => {
     setChatSending(true);
 
     try {
-      const payload = await sendServiceChatMessage(activeConv.conversationId, text);
-      setChatMessages((prev) =>
-        prev.some((m) => m.id === payload.message.id) ? prev : [...prev, payload.message]
-      );
+      const ack = await emitServiceChatWithAck<Record<string, unknown>, ServiceChatAck>(
+        "service-chat:message:send",
+        { conversationId: activeConv.conversationId, message: text }
+      ).catch(() => null);
+      const payload = ack?.ok && ack.data
+        ? ack.data
+        : await sendServiceChatMessage(activeConv.conversationId, text);
+      setChatMessages((prev) => {
+        const nextMessages = prev.some((m) => m.id === payload.message.id)
+          ? prev
+          : [...prev, payload.message];
+        const automaticReply = payload.automatic_reply;
+        if (!automaticReply || nextMessages.some((m) => m.id === automaticReply.id)) {
+          return nextMessages;
+        }
+        return [...nextMessages, automaticReply];
+      });
     } catch (err) {
       setChatDraft(text);
       console.error("Send failed:", err);

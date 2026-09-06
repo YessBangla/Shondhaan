@@ -1,14 +1,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Zap, ShoppingBag, Search, Droplet, Stethoscope, Pill, FileCheck, UploadCloud, ScanLine } from "lucide-react";
+import { X, Zap, CalendarCheck, Search, Droplet, Stethoscope, Pill, FileCheck, UploadCloud, ScanLine } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "@/contexts/LocationContext";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useCart } from "@/contexts/CartContext";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { createBooking, startBookingPayment } from "@/lib/bookingApi";
 
-const EMERGENCY_SURCHARGE = 1.3;
+const EMERGENCY_SURCHARGE_RATE = 0.3; // 30% Surcharge
 const PRESCRIPTION_MODAL_KEY = "prescriptionModalOpen";
 const SERVICE_API_BASE_URL = (
   import.meta.env.VITE_SERVICE_API_BASE_URL || ""
@@ -29,12 +29,18 @@ interface Props {
 const EmergencyServiceModal = ({ open, onClose }: Props) => {
   const { selectedCity } = useLocation();
   const { t, language } = useLanguage();
-  const { addItem } = useCart();
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const bn = language === "bn";
 
   const [apiServices, setApiServices] = useState<any[]>([]);
   const [isLoadingServices, setIsLoadingServices] = useState(false);
+  const authUser = getMySqlAuth()?.user;
+  const [bookingName, setBookingName] = useState(authUser?.name || "");
+  const [bookingPhone, setBookingPhone] = useState(authUser?.mobile || "");
+  const [bookingAddress, setBookingAddress] = useState(authUser?.address || "");
+  const [bookingDate, setBookingDate] = useState("");
+  const [bookingTime, setBookingTime] = useState("10:00");
+  const [isBooking, setIsBooking] = useState(false);
 
   // Fetch services from API
   useEffect(() => {
@@ -54,13 +60,23 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
 
         if (!response.ok) throw new Error(json?.message || "Failed to fetch services");
 
+        // Robust payload extraction
         let list: any[] = [];
         if (Array.isArray(json)) {
           list = json;
-        } else if (json && Array.isArray(json.data)) {
+        } else if (Array.isArray(json?.data)) {
           list = json.data;
-        } else if (json && Array.isArray(json.services)) {
+        } else if (Array.isArray(json?.services)) {
           list = json.services;
+        } else if (json?.data && Array.isArray(json?.data?.services)) {
+          list = json.data.services;
+        } else if (json && typeof json === 'object') {
+          for (const key in json) {
+            if (Array.isArray(json[key])) {
+              list = json[key];
+              break;
+            }
+          }
         }
 
         if (list.length > 0) {
@@ -79,19 +95,32 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                 }
               }
 
-              let packages = Array.isArray(s.packages) ? s.packages : [];
+              let packages = [];
+              if (Array.isArray(s.packages)) {
+                packages = s.packages;
+              } else if (typeof s.packages === "string" && s.packages) {
+                try {
+                  const parsed = JSON.parse(s.packages);
+                  if (Array.isArray(parsed)) packages = parsed;
+                } catch {}
+              }
               if (packages.length === 0 && Number(s.price) > 0) {
                 packages = [{ name: "Basic Service", price: Number(s.price) }];
               }
 
+              let imageUrl = s.image_url || s.image || "";
+              if (imageUrl && !imageUrl.startsWith("http") && !imageUrl.startsWith("data:")) {
+                imageUrl = `${import.meta.env.VITE_SERVICE_API_BASE_URL}${imageUrl.startsWith("/") ? "" : "/"}${imageUrl}`;
+              }
+
               return {
                 ...s,
-                image: s.image_url || s.image || "",
+                image: imageUrl,
                 availableCities: cities,
                 packages: packages,
               };
             })
-            .filter((s: any) => s.slug && s.title && s.is_active !== false);
+            .filter((s: any) => s.slug && s.title && Number(s.is_active) !== 0);
 
           setApiServices(mapped);
         } else {
@@ -132,11 +161,12 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
   );
   const selectedService = apiServices.find((s) => s.slug === selectedSlug);
 
-  // Prescription modal state — persisted so it survives a page reload
+  // Prescription modal state
   const [prescriptionOpen, setPrescriptionOpen] = useState(() => {
     if (typeof window === "undefined") return false;
     return localStorage.getItem(PRESCRIPTION_MODAL_KEY) === "true";
   });
+
   const [prescriptionImage, setPrescriptionImage] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
@@ -146,20 +176,51 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
     localStorage.setItem(PRESCRIPTION_MODAL_KEY, prescriptionOpen ? "true" : "false");
   }, [prescriptionOpen]);
 
-  const handleAddToCart = (pkg: { name: string; price: number }) => {
-    if (!selectedService) return;
-    const emergencyPrice = Math.round(pkg.price * EMERGENCY_SURCHARGE);
-    addItem({
-      serviceSlug: selectedService.slug,
-      serviceTitle: `⚡ ${selectedService.title}`,
-      serviceImage: selectedService.image,
-      packageName: `${pkg.name} (${t("emergency.tag")})`,
-      packagePrice: emergencyPrice,
-      isEmergency: true,
-    });
-    toast.success(t("emergency.addedToCart"));
-    onClose();
-    setSelectedSlug(null);
+  const handleBookNow = async (pkg: { id?: string | number; name: string; price: number }) => {
+    const auth = getMySqlAuth();
+    if (!selectedService || !auth?.user?.id) {
+      toast.error(bn ? "বুকিং করতে আগে লগইন করুন" : "Please log in to book this service");
+      return;
+    }
+    if (!bookingName.trim() || !bookingPhone.trim() || !bookingAddress.trim() || !bookingDate || !bookingTime) {
+      toast.error(bn ? "বুকিংয়ের তথ্য পূরণ করুন" : "Please complete your booking details");
+      return;
+    }
+
+    setIsBooking(true);
+    try {
+      const basePrice = Number(pkg.price || 0);
+      const surchargeAmount = Math.round(basePrice * EMERGENCY_SURCHARGE_RATE); // 30% charge
+
+      const booking = await createBooking({
+        user_id: auth.user.id,
+        service_id: selectedService.id || selectedService.service_id || null,
+        package_id: pkg.id || null,
+        service_slug: selectedService.slug,
+        service_title: selectedService.title,
+        package_name: `${pkg.name} (${t("emergency.tag")})`,
+        package_price: basePrice, // Full base price (to be paid in hand to provider)
+        customer_name: bookingName.trim(),
+        customer_phone: bookingPhone.trim(),
+        customer_address: bookingAddress.trim(),
+        booking_date: bookingDate,
+        booking_time: bookingTime,
+        status: "pending",
+        payment_status: "unpaid",
+        payment_method: "gateway",
+        platform_fee_amount: surchargeAmount, // Only 30% is paid online
+        booking_type: "emergency",
+      });
+
+      toast.success(bn ? "ShurjoPay পেজ খোলা হচ্ছে..." : "Opening ShurjoPay...");
+      const payment = await startBookingPayment(booking.id, surchargeAmount);
+      if (!payment.checkout_url) throw new Error("No payment link");
+      window.location.href = payment.checkout_url;
+    } catch (error: any) {
+      toast.error(error?.message || (bn ? "বুকিং ব্যর্থ হয়েছে" : "Booking failed"));
+    } finally {
+      setIsBooking(false);
+    }
   };
 
   const readFileAsDataUrl = (file: File) => {
@@ -168,7 +229,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
     reader.readAsDataURL(file);
   };
 
-  const handleDrop = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = useCallback((e: React.DragEvent<HTMLLabelElement>) => {
     e.preventDefault();
     setIsDragging(false);
     const file = e.dataTransfer.files?.[0];
@@ -202,7 +263,19 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
       if (!response.ok) {
         throw new Error(result.message || "Failed to scan prescription");
       }
-      console.log(result);
+
+      let meds: ScanResult[] = [];
+      if (Array.isArray(result)) {
+        meds = result;
+      } else if (Array.isArray(result?.data)) {
+        meds = result.data;
+      } else if (Array.isArray(result?.medicines)) {
+        meds = result.medicines;
+      } else if (Array.isArray(result?.results)) {
+        meds = result.results;
+      }
+
+      setScanResults(meds);
       toast.success(bn ? "প্রেসক্রিপশন স্ক্যান সম্পন্ন হয়েছে" : "Prescription scanned successfully");
     } catch (err: any) {
       toast.error(err.message || (bn ? "স্ক্যান ব্যর্থ হয়েছে" : "Scan failed"));
@@ -297,19 +370,23 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                     </div>
                   ) : (
                     <>
-                      {filteredServices.map((s) => (
-                        <button
-                          key={s.slug}
-                          onClick={() => setSelectedSlug(s.slug)}
-                          className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/50 hover:shadow-md"
-                        >
-                          <img src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${s.image}`} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
-                          <span className="text-xs font-medium text-foreground text-center leading-tight">{s.title}</span>
-                          <span className="text-[10px] text-muted-foreground">
-                            ৳{Math.round((s.packages[0]?.price || 0) * EMERGENCY_SURCHARGE).toLocaleString("bn-BD")} {t("hero.from")}
-                          </span>
-                        </button>
-                      ))}
+                      {filteredServices.map((s) => {
+                        const basePrice = s.packages[0]?.price || 0;
+                        const onlineCharge = Math.round(basePrice * EMERGENCY_SURCHARGE_RATE);
+                        return (
+                          <button
+                            key={s.slug}
+                            onClick={() => setSelectedSlug(s.slug)}
+                            className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-3 transition-all hover:border-destructive/50 hover:shadow-md"
+                          >
+                            <img src={s.image} alt={s.title} className="h-16 w-16 rounded-lg object-cover" />
+                            <span className="text-xs font-medium text-foreground text-center leading-tight">{s.title}</span>
+                            <span className="text-[10px] text-destructive font-semibold">
+                              +৳{onlineCharge.toLocaleString("bn-BD")} {bn ? "অনলাইনে" : "online charge"}
+                            </span>
+                          </button>
+                        );
+                      })}
                       {filteredServices.length === 0 && (
                         <p className="col-span-2 py-6 text-center text-xs text-muted-foreground">
                           {language === "bn" ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}
@@ -325,38 +402,81 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                   ← {t("emergency.backToServices")}
                 </button>
                 <div className="flex items-center gap-3 mb-4">
-                  <img src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${selectedService!.image}`} alt={selectedService!.title} className="h-14 w-14 rounded-lg object-cover" />
+                  <img src={selectedService!.image} alt={selectedService!.title} className="h-14 w-14 rounded-lg object-cover" />
                   <div>
                     <h3 className="text-sm font-bold text-foreground">{selectedService!.title}</h3>
                     <span className="inline-flex items-center gap-1 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
-                      <Zap className="h-3 w-3" /> {t("emergency.tag")} (+30%)
+                      <Zap className="h-3 w-3" /> {t("emergency.tag")} (+30% online)
                     </span>
+                  </div>
+                </div>
+
+                <div className="mb-4 space-y-2">
+                  <input
+                    value={bookingName}
+                    onChange={(e) => setBookingName(e.target.value)}
+                    placeholder={bn ? "আপনার নাম" : "Your name"}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-destructive/50"
+                  />
+                  <input
+                    value={bookingPhone}
+                    onChange={(e) => setBookingPhone(e.target.value)}
+                    placeholder={bn ? "মোবাইল নম্বর" : "Mobile number"}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-destructive/50"
+                  />
+                  <input
+                    value={bookingAddress}
+                    onChange={(e) => setBookingAddress(e.target.value)}
+                    placeholder={bn ? "ঠিকানা" : "Address"}
+                    className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-destructive/50"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <input
+                      type="date"
+                      value={bookingDate}
+                      onChange={(e) => setBookingDate(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-destructive/50"
+                    />
+                    <input
+                      type="time"
+                      value={bookingTime}
+                      onChange={(e) => setBookingTime(e.target.value)}
+                      className="w-full rounded-xl border border-border bg-card px-3 py-2.5 text-sm text-foreground outline-none focus:ring-1 focus:ring-destructive/50"
+                    />
                   </div>
                 </div>
 
                 <p className="mb-3 text-xs font-semibold text-foreground">{t("sd.packages")}</p>
                 <div className="space-y-2">
                   {selectedService!.packages.map((pkg: any) => {
-                    const emergencyPrice = Math.round(pkg.price * EMERGENCY_SURCHARGE);
+                    const basePrice = Number(pkg.price || 0);
+                    const onlineCharge = Math.round(basePrice * EMERGENCY_SURCHARGE_RATE);
+                    
                     return (
-                      <div key={pkg.name} className="flex items-center justify-between rounded-xl border border-border bg-card p-3">
-                        <div>
+                      <div key={pkg.name} className="flex flex-col gap-3 rounded-xl border border-border bg-card p-3">
+                        <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-foreground">{pkg.name}</p>
-                          <div className="flex items-center gap-2 mt-0.5">
-                            <span className="text-xs line-through text-muted-foreground">
-                              ৳{pkg.price.toLocaleString("bn-BD")}
-                            </span>
-                            <span className="text-sm font-bold text-destructive">
-                              ৳{emergencyPrice.toLocaleString("bn-BD")}
-                            </span>
+                          <span className="text-sm font-bold text-foreground">৳{basePrice.toLocaleString("bn-BD")}</span>
+                        </div>
+                        
+                        <div className="bg-destructive/5 p-2 rounded-lg text-xs space-y-1">
+                          <div className="flex justify-between text-muted-foreground">
+                            <span>{bn ? "প্রোভাইডারকে (হাতে হাতে)" : "To provider (in hand)"}</span>
+                            <span className="font-semibold">৳{basePrice.toLocaleString("bn-BD")}</span>
+                          </div>
+                          <div className="flex justify-between text-destructive">
+                            <span>{bn ? "অনলাইনে (৩০% চার্জ)" : "Online (30% charge)"}</span>
+                            <span className="font-bold">৳{onlineCharge.toLocaleString("bn-BD")}</span>
                           </div>
                         </div>
+
                         <button
-                          onClick={() => handleAddToCart(pkg)}
-                          className="flex items-center gap-1 rounded-lg bg-destructive px-3 py-2 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90"
+                          onClick={() => handleBookNow(pkg)}
+                          disabled={isBooking}
+                          className="flex items-center justify-center gap-1 rounded-lg bg-destructive px-3 py-2.5 text-xs font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50"
                         >
-                          <ShoppingBag className="h-3.5 w-3.5" />
-                          {t("cart.addToCart")}
+                          <CalendarCheck className="h-3.5 w-3.5" />
+                          {isBooking ? (bn ? "অপেক্ষা করুন..." : "Please wait...") : (bn ? `বুকিং নিশ্চিত করুন (৳${onlineCharge.toLocaleString("bn-BD")})` : `Book now (Pay ৳${onlineCharge.toLocaleString("bn-BD")})`)}
                         </button>
                       </div>
                     );
@@ -371,7 +491,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
     </AnimatePresence>
   );
 
-  // Prescription Check modal — separate, persisted across reload via localStorage
+  // Prescription Check modal
   const prescriptionModal = (
     <AnimatePresence>
       {prescriptionOpen && (
@@ -390,7 +510,6 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
             onClick={(e) => e.stopPropagation()}
             className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-t-2xl md:rounded-2xl bg-background shadow-2xl border border-border"
           >
-            {/* Header */}
             <div className="sticky top-0 z-10 flex items-center justify-between border-b border-border bg-destructive/10 px-5 py-4">
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive text-destructive-foreground">
@@ -409,7 +528,6 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
             </div>
 
             <div className="p-5">
-              {/* Drag & drop upload area */}
               <label
                 htmlFor="prescription-upload"
                 onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -422,11 +540,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                 }`}
               >
                 {prescriptionImage ? (
-                  <img
-                    src={prescriptionImage}
-                    alt="Prescription preview"
-                    className="max-h-56 w-full rounded-lg object-contain"
-                  />
+                  <img src={prescriptionImage} alt="Prescription preview" className="max-h-56 w-full rounded-lg object-contain" />
                 ) : (
                   <>
                     <UploadCloud className="h-8 w-8 text-muted-foreground" />
@@ -438,13 +552,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                     </p>
                   </>
                 )}
-                <input
-                  id="prescription-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileInput}
-                />
+                <input id="prescription-upload" type="file" accept="image/*" className="hidden" onChange={handleFileInput} />
               </label>
 
               {prescriptionImage && (
@@ -456,19 +564,15 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                 </button>
               )}
 
-              {/* Scan button */}
               <button
                 onClick={handleScan}
                 disabled={!prescriptionImage || isScanning}
                 className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-destructive px-4 py-3 text-sm font-semibold text-destructive-foreground transition-colors hover:bg-destructive/90 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <ScanLine className="h-4 w-4" />
-                {isScanning
-                  ? (bn ? "স্ক্যান হচ্ছে..." : "Scanning...")
-                  : (bn ? "প্রেসক্রিপশন স্ক্যান করুন" : "Scan your prescription")}
+                {isScanning ? (bn ? "স্ক্যান হচ্ছে..." : "Scanning...") : (bn ? "প্রেসক্রিপশন স্ক্যান করুন" : "Scan your prescription")}
               </button>
 
-              {/* Scan results table */}
               {scanResults && (
                 <div className="mt-4 overflow-x-auto">
                   {scanResults.length === 0 ? (

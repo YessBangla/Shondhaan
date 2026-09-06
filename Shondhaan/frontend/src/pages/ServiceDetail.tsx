@@ -499,6 +499,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
         if (!wr.ok || !wj.success) throw new Error(wj.error || "Wallet payment failed");
         walletTxId = wj.transaction_id;
       }
+      
       const booking: any = await createBooking({
         user_id: String(activeUserId),
         service_id: service.id || null,
@@ -523,7 +524,10 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
         referred_reward_amount: referralValidation?.valid ? referralValidation.referred_reward_amount : null,
         offer_id: hasActiveOffer ? offer?.id : null,
         offer_code: hasActiveOffer ? offer?.offer_code : null,
+        // ─── NEW: Determine booking type based on offer ───
+        booking_type: hasActiveOffer ? "offer" : "regular",
       });
+
       if (useWalletPayment) {
         await fetch(`${VITE_SERVICE_API_BASE_URL}/api/bookings/${booking.id}/payment-status`, { method: "PUT", headers: getServiceApiHeaders(), body: JSON.stringify({ payment_status: "paid", payment_method: "wallet", payment_transaction_id: walletTxId, wallet_cash_used: paymentAmount, wallet_coins_used: 0 }) });
         toast.success(bn ? "ওয়ালেট থেকে পেমেন্ট সফল!" : "Payment successful via wallet!");
@@ -676,6 +680,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                 )
               )}
 
+
                 <div>
                   <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "সুবিধা" : "Benefits"}</h3>
                   <div className="grid grid-cols-2 gap-2">
@@ -737,7 +742,6 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                       </span>
                     </div>
                   )}
-
                   {pkg && (
                     <div className="rounded-[10px] p-3 flex justify-between items-end text-white" style={{ background: T.primaryDark }}>
                       <div>
@@ -746,16 +750,20 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                       </div>
                       <div className="text-right">
                         <div className="flex items-center gap-1.5 justify-end">
-                          <span
-                            className="text-[10px] line-through"
-                            style={{ color: "rgba(255,255,255,0.5)" }}
-                          >
-                            ৳{pkg.price}
-                          </span>
-
-                          <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">
-                            ৳{offerDiscountedPrice}
-                          </div>
+                          {hasActiveOffer ? (
+                            <>
+                              <span className="text-[10px] line-through" style={{ color: "rgba(255,255,255,0.5)" }}>
+                                ৳{pkg.price}
+                              </span>
+                              <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">
+                                ৳{offerDiscountedPrice}
+                              </div>
+                            </>
+                          ) : (
+                            <div className="font-['JetBrains_Mono',monospace] text-[18px] font-medium">
+                              ৳{effectivePrice}
+                            </div>
+                          )}
                         </div>
 
                         {platformFee > 0 && (

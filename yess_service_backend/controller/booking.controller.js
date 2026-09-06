@@ -132,6 +132,11 @@ export const createBooking = async (req, res) => {
       wallet_cash_used,
       wallet_coins_used,
       referral_code,
+      offer_id, // (Optional, if you want to save it)
+      offer_code,
+      offer_discount_amount,
+      final_price,
+      booking_type, // ─── NEW: Destructure booking_type ───
     } = req.body;
 
     if (
@@ -210,6 +215,10 @@ export const createBooking = async (req, res) => {
 
     const finalStatus = "pending";
     const finalPaymentStatus = allowedPaymentStatuses.includes(payment_status) ? payment_status : "unpaid";
+    
+    // ─── NEW: Validate booking type ───
+    const allowedBookingTypes = ["regular", "offer", "emergency"];
+    const finalBookingType = allowedBookingTypes.includes(booking_type) ? booking_type : "regular";
 
     await pool.execute(
       `
@@ -231,6 +240,7 @@ export const createBooking = async (req, res) => {
         booking_date,
         booking_time,
         status,
+        booking_type,
         payment_status,
         platform_fee_amount,
         payment_amount,
@@ -240,9 +250,12 @@ export const createBooking = async (req, res) => {
         wallet_coins_used,
         provider_payout_status,
         referral_code,
-        referral_status
+        referral_status,
+        offer_code,
+        offer_discount_amount,
+        final_price
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         id,
@@ -262,6 +275,7 @@ export const createBooking = async (req, res) => {
         booking_date,
         booking_time,
         finalStatus,
+        finalBookingType, // ─── NEW: Insert booking_type ───
         finalPaymentStatus,
         platformFeeAmount,
         platformFeeAmount,
@@ -272,6 +286,9 @@ export const createBooking = async (req, res) => {
         "unpaid",
         referral_code ? String(referral_code).trim().toUpperCase() : null,
         referral_code ? "pending" : null,
+        offer_code || null,             // Save offer code
+        money(offer_discount_amount || 0), // Save discount
+        money(final_price || price)     // Save final price
       ]
     );
 

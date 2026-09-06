@@ -71,6 +71,12 @@ export const initServiceChatSocket = (io) => {
 
         socket.join(`service-chat:${data.conversation.id}`);
         io.to(`service-chat:${data.conversation.id}`).emit("service-chat:message:new", data);
+        if (data.automatic_reply) {
+          io.to(`service-chat:${data.conversation.id}`).emit("service-chat:message:new", {
+            conversation: data.conversation,
+            message: data.automatic_reply,
+          });
+        }
         io.to("service-chat:staff").emit("service-chat:conversation:updated", data);
         ack?.({ ok: true, data });
       } catch (error) {
@@ -90,6 +96,12 @@ export const initServiceChatSocket = (io) => {
         });
 
         io.to(`service-chat:${data.conversation.id}`).emit("service-chat:message:new", data);
+        if (data.automatic_reply) {
+          io.to(`service-chat:${data.conversation.id}`).emit("service-chat:message:new", {
+            conversation: data.conversation,
+            message: data.automatic_reply,
+          });
+        }
         io.to("service-chat:staff").emit("service-chat:conversation:updated", data);
         ack?.({ ok: true, data });
       } catch (error) {
