@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Store, ShieldCheck, RefreshCw, LogOut,
   MapPin, PhoneCall, UserRound, Send, Clock, CheckCircle2, XCircle,
   LayoutGrid, List, CreditCard, Banknote, MessageSquareWarning,
-  Tag, Percent,
+  Tag, Percent, Truck,
 } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import AddProductForm from "@/components/mart/AddProductForm";
@@ -33,6 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { getMartSocket } from "@/lib/martSocket";
 import { createMartSellerNotification } from "@/lib/martSellerNotifications";
 import { getFullImageUrl } from "@/lib/imageUrl";
+import MartFeeSettingTab from "@/components/mart/MartFeeSettingTab";
 
 const orderStatusMap: Record<string, { label: string; color: string; dot: string }> = {
   pending:    { label: "অপেক্ষমাণ",       color: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-400"  },
@@ -249,6 +250,7 @@ const MartPanel = () => {
   const [messages, setMessages] = useState<ChatConversation[]>([]);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [hasAccess, setHasAccess]     = useState(false);
+  const [isDeliveryman, setIsDeliveryman] = useState(false);
   const [loading, setLoading]         = useState(true);
   const [products, setProducts]       = useState<Product[]>([]);
   const [orders, setOrders]           = useState<Order[]>([]);
@@ -269,6 +271,7 @@ const MartPanel = () => {
   const [sellerId, setSellerId]       = useState<number | null>(null);
   const [sellerUserId, setSellerUserId] = useState<number | null>(null);
   const [seller, setSeller]           = useState<MartSeller | null>(null);
+  const sellerRef = useRef<MartSeller | null>(null);
 
   const [editingProduct, setEditingProduct] = useState<Record<string, unknown> | null>(null);
   const [expandedOrder, setExpandedOrder]   = useState<string | null>(null);
@@ -306,7 +309,12 @@ const MartPanel = () => {
 
   const checkRole = useCallback(async () => {
     if (!user) return;
-    setHasAccess(await hasStaffRoleAccess(user.id, ["mart_vendor"]));
+    const [vendorAccess, deliveryAccess] = await Promise.all([
+      hasStaffRoleAccess(user.id, ["mart_vendor"]),
+      hasStaffRoleAccess(user.id, ["mart_delivery"]),
+    ]);
+    setIsDeliveryman(deliveryAccess && !vendorAccess);
+    setHasAccess(vendorAccess || deliveryAccess);
     setLoading(false);
   }, [user]);
 
@@ -317,6 +325,7 @@ const MartPanel = () => {
       setSellerId(s.id);
       setSellerUserId(s.user_id ?? null);
       setSeller(s);
+      sellerRef.current = s;
       const data = await listMartProducts(s.id);
       setProducts(data.map(toPanelProduct) as Product[]);
       try {
@@ -399,7 +408,7 @@ const MartPanel = () => {
 
   const fetchOrders = useCallback(async (resolvedSeller?: MartSeller | null) => {
     if (!user) return;
-    const s = resolvedSeller ?? seller;
+    const s = resolvedSeller ?? sellerRef.current;
     if (!s) { toast.error(bn ? "সেলার তথ্য পাওয়া যায়নি" : "Seller not found"); return; }
     setOrdersLoading(true);
     try {
@@ -414,13 +423,13 @@ const MartPanel = () => {
     } finally {
       setOrdersLoading(false);
     }
-  }, [user, seller, bn]);
+  }, [user, bn]);
 
   useEffect(() => { checkRole(); }, [checkRole]);
   useEffect(() => {
     if (!hasAccess) return;
-    fetchProducts().then((s) => fetchOrders(s));
-  }, [hasAccess]);
+    if (!isDeliveryman) fetchProducts().then((s) => fetchOrders(s));
+  }, [hasAccess, isDeliveryman, fetchProducts, fetchOrders]);
 
   useEffect(() => { setProductPage(1); }, [searchProduct, productStockFilter]);
 
@@ -918,6 +927,7 @@ const MartPanel = () => {
     { value: "orders",         label: bn ? "অর্ডার"                 : "Orders",             icon: <ShoppingCart />, group: bn ? "অর্ডার"             : "Orders"          },
     { value: "kyc",            label: bn ? "KYC ভেরিফিকেশন"        : "KYC Verification",   icon: <ShieldCheck />,  group: bn ? "ভেরিফিকেশন"         : "Verification"    },
     { value: "store settings", label: bn ? "মার্ট ভেন্ডর প্রোফাইল" : "Mart Vendor Profile", icon: <Store />,       group: bn ? "সেটিংস"             : "store settings"  },
+    { value: "mart_fee_setting", label: bn ? "ডেলিভারি ফি সেটিং" : "Delivery Fee Setting", icon: <Truck />, group: bn ? "আর্থিক" : "Finance" },
     { value: "withdrawal-requests", label: bn ? "উত্তোলন অনুরোধ" : "Withdrawal Requests", icon: <CreditCard />, group: bn ? "আর্থিক" : "Financial" },
     { value: "logout",         label: bn ? "লগআউট"                  : "Logout",             icon: <LogOut />,       group: bn ? "অ্যাকাউন্ট"         : "Account"         },
     {
@@ -2070,6 +2080,10 @@ const MartPanel = () => {
             {/* ══════════════════════════════ STORE SETTINGS ══════════════════════════════ */}
             {activeTab === "store settings" && (
               <StoreSettingsTab seller={seller} sellerId={sellerId} bn={bn} onSaved={setSeller} />
+            )}
+
+            {activeTab === "mart_fee_setting" && user && (
+              <MartFeeSettingTab userId={sellerUserId ?? user.id} bn={bn} apiBase={API_BASE} />
             )}
 
           </div>

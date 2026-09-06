@@ -39,6 +39,7 @@ import AdminDeliveryKyc from "@/components/mart/AdminDeliveryKyc";
 import AdminMartCategories from "@/components/admin/Adminmartcategories";
 import AdminMartBanners from "@/components/mart/Adminmartbanners";
 import MartWalletManager from "@/components/mart/MartWalletManager";
+import MartFeeSettings from "@/components/mart/MartFeeSettings";
 const orderStatusMap: Record<string, { label: string; color: string }> = {
   pending: { label: "অপেক্ষমাণ", color: "bg-yellow-100 text-yellow-800" },
   confirmed: { label: "নিশ্চিত", color: "bg-blue-100 text-blue-800" },
@@ -308,6 +309,7 @@ const MartAdminPanel = () => {
     { value: "categories", label: bn ? "ক্যাটেগরি" : "Categories", icon: <FolderTree />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "banners", label: bn ? "ব্যানার" : "Banners", icon: <Image />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "coupons", label: bn ? "কুপন" : "Coupons", icon: <Tag />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
+    { value: "fee-settings", label: bn ? "ডেলিভারি/COD ফি" : "Delivery/COD Fee", icon: <Truck />, group: bn ? "CMS ম্যানেজমেন্ট" : "CMS" },
     { value: "analytics", label: bn ? "রিপোর্ট" : "Analytics", icon: <BarChart3 />, group: bn ? "পরিসংখ্যান" : "Analytics" },
 { value: "rewards", label: bn ? "মার্ট রিওয়ার্ড" : "Mart Rewards", icon: <Coins />, group: bn ? "ফাইন্যান্স" : "Finance" },
     // ── Added: same "সন্ধান মার্ট" group/items as on SuperAdminPanel ──
@@ -712,6 +714,8 @@ const MartAdminPanel = () => {
 
                 {/* Coupons */}
                 {activeTab === "coupons" && <MartCouponManager />}
+
+                {activeTab === "fee-settings" && <MartFeeSettings />}
 
                 {/* Analytics */}
                 {activeTab === "analytics" && (

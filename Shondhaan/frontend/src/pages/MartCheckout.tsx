@@ -22,11 +22,7 @@ import { addDays, format } from "date-fns";
 import { bn as bnLocale } from "date-fns/locale";
 import { validateMartCoupon } from "@/lib/martApi";
 
-const SHIPPING_FEE = 60;
-const FREE_SHIPPING_MIN = 500;
-const COURIER_FEE_MIN = 45;
-const COURIER_FEE_MAX = 70;
-const COD_SURCHARGE = 10;
+const DEFAULT_DELIVERY_FEE = 0;
 const DELIVERY_DAYS_MIN = 3;
 const DELIVERY_DAYS_MAX = 5;
 
@@ -73,6 +69,7 @@ const MartCheckout = () => {
   const [thana, setThana] = useState("");
   const [notes, setNotes] = useState("");
   const [detectingGps, setDetectingGps] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState(DEFAULT_DELIVERY_FEE);
 
   // Saved addresses
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
@@ -81,6 +78,24 @@ const MartCheckout = () => {
   const [showNewAddress, setShowNewAddress] = useState(true);
   const [saveAddress, setSaveAddress] = useState(false);
   const [addressLabel, setAddressLabel] = useState("Home");
+
+  const sellerIds = useMemo(
+    () => [...new Set(items.map((item) => item.product.vendor_id ?? item.product.seller_id).filter(Boolean).map(String))],
+    [items]
+  );
+
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (district) params.set("district", district);
+    if (sellerIds.length > 0) params.set("user_ids", sellerIds.join(","));
+    const query = params.toString() ? `?${params.toString()}` : "";
+    fetch(`${apiBase}/api/mart-fee-settings${query}`)
+      .then((response) => response.json())
+      .then((result) => {
+        if (result.success) setDeliveryFee(Math.max(0, Number(result.data?.delivery_fee ?? DEFAULT_DELIVERY_FEE)));
+      })
+      .catch(() => undefined);
+  }, [apiBase, district, sellerIds]);
 
   // Load saved addresses
   useEffect(() => {
@@ -230,14 +245,9 @@ const MartCheckout = () => {
     [couponItems]
   );
 
-  const shipping = subtotal >= FREE_SHIPPING_MIN ? 0 : SHIPPING_FEE;
-  const courierFee = items.reduce((sum, item) => {
-    const fee = Math.min(COURIER_FEE_MAX, Math.max(COURIER_FEE_MIN, Math.round(item.product.price * 0.05)));
-    return sum + fee * item.quantity;
-  }, 0);
-  const codFee = paymentMethod === "cod" ? COD_SURCHARGE : 0;
+  const shipping = deliveryFee;
   const discount = appliedCoupon?.discount || 0;
-  const total = subtotal + shipping + courierFee + codFee - discount;
+  const total = subtotal + shipping - discount;
 
   useEffect(() => {
     if (appliedCoupon) setAppliedCoupon(null);
@@ -386,8 +396,8 @@ const MartCheckout = () => {
         user_id: user.id,
         subtotal,
         shipping_fee: shipping,
-        courier_fee: courierFee,
-        cod_fee: codFee,
+        courier_fee: 0,
+        cod_fee: 0,
         discount,
         total,
         coupon_code: appliedCoupon?.code || null,
@@ -598,9 +608,7 @@ const MartCheckout = () => {
             <div className="md:col-span-2 space-y-4">
               {step === "cart" ? (
                 <>
-                  {items.map((item) => {
-                    const itemCourier = Math.min(COURIER_FEE_MAX, Math.max(COURIER_FEE_MIN, Math.round(item.product.price * 0.05)));
-                    return (
+                  {items.map((item) => (
                       <div key={item.product.id} className="flex gap-3 bg-card rounded-xl border border-border/50 p-3">
                         <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted/30 shrink-0 cursor-pointer" onClick={() => navigate(`/mart/product/${item.product.slug}`)}>
                           {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
@@ -608,7 +616,6 @@ const MartCheckout = () => {
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium line-clamp-2">{bn ? item.product.name : (item.product.name_en || item.product.name)}</h3>
                           <p className="text-primary font-bold mt-1">৳{item.product.price.toLocaleString("bn-BD")}</p>
-                          <p className="text-[10px] text-muted-foreground">{bn ? `কুরিয়ার: ৳${itemCourier}` : `Courier: ৳${itemCourier}`}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="flex items-center border border-border rounded">
                               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
@@ -620,8 +627,7 @@ const MartCheckout = () => {
                         </div>
                         <p className="text-sm font-bold shrink-0">৳{(item.product.price * item.quantity).toLocaleString("bn-BD")}</p>
                       </div>
-                    );
-                  })}
+                  ))}
 
                   {/* Estimated Delivery */}
                   <div className="bg-green-50 dark:bg-green-950/20 rounded-xl border border-green-200 dark:border-green-800 p-4 flex items-center gap-3">
@@ -821,7 +827,7 @@ const MartCheckout = () => {
                         <Banknote className="h-5 w-5 text-green-600" />
                         <div>
                           <p className="font-medium text-sm">{bn ? "ক্যাশ অন ডেলিভারি" : "Cash on Delivery"}</p>
-                          <p className="text-xs text-muted-foreground">{bn ? `পণ্য হাতে পেয়ে টাকা দিন (অতিরিক্ত ৳${COD_SURCHARGE})` : `Pay when you receive (+৳${COD_SURCHARGE} fee)`}</p>
+                          <p className="text-xs text-muted-foreground">{bn ? `পণ্য হাতে পেয়ে টাকা দিন (ডেলিভারি/COD ফি ৳${deliveryFee})` : `Pay when you receive (delivery/COD fee ৳${deliveryFee})`}</p>
                         </div>
                       </label>
                     </RadioGroup>
@@ -839,13 +845,6 @@ const MartCheckout = () => {
                   <span className="text-muted-foreground">{bn ? "শিপিং" : "Shipping"}</span>
                   {shipping === 0 ? <span className="text-green-600 font-medium">{bn ? "ফ্রি" : "Free"}</span> : <span>৳{shipping}</span>}
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">{bn ? "কুরিয়ার ফি" : "Courier Fee"}</span>
-                  <span>৳{courierFee.toLocaleString("bn-BD")}</span>
-                </div>
-                {codFee > 0 && (
-                  <div className="flex justify-between text-amber-600"><span>{bn ? "COD চার্জ" : "COD Fee"}</span><span>+৳{codFee}</span></div>
-                )}
                 {discount > 0 && (
                   <div className="flex justify-between text-green-600"><span>{bn ? "কুপন ছাড়" : "Coupon"}</span><span>-৳{discount.toLocaleString("bn-BD")}</span></div>
                 )}
@@ -857,9 +856,6 @@ const MartCheckout = () => {
                   <span>{bn ? "ডেলিভারি:" : "Delivery:"} {deliveryDateText}</span>
                 </div>
 
-                {subtotal < FREE_SHIPPING_MIN && (
-                  <p className="text-xs text-muted-foreground">💡 {bn ? `৳${FREE_SHIPPING_MIN}+ অর্ডারে ফ্রি ডেলিভারি` : `Free delivery on orders ৳${FREE_SHIPPING_MIN}+`}</p>
-                )}
               </div>
               {step === "cart" ? (
                 <Button className="w-full mt-4 h-11 font-bold text-white hover:bg-emerald-800" onClick={() => setStep("shipping")} disabled={items.length === 0}>
