@@ -62,10 +62,15 @@ const getDealImageUrl = (url?: string | null) => {
   return `${DEAL_API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
 };
 
-// ✅ Helper function to check if the icon is a URL or an emoji
-const isUrl = (str?: string | null) => {
+const isImageIcon = (str?: string | null) => {
   if (!str) return false;
-  return str.startsWith("http://") || str.startsWith("https://");
+  return (
+    str.startsWith("http://") ||
+    str.startsWith("https://") ||
+    str.startsWith("/") ||
+    str.startsWith("data:") ||
+    str.startsWith("blob:")
+  );
 };
 
 function timeAgo(dateStr: string, bn = true) {
@@ -214,9 +219,9 @@ const CategoryCardItem = ({
           <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           
 
-          {cat.icon && isUrl(cat.icon) ? (
+          {cat.icon && isImageIcon(cat.icon) ? (
             <img 
-              src={cat.icon} 
+              src={getDealImageUrl(cat.icon)} 
               alt={cat.name} 
               className="w-5 h-5 md:w-5 md:h-5 object-cover group-hover:scale-110 transition-transform duration-300" 
             />
@@ -267,9 +272,9 @@ const CategoryCardItem = ({
                     className="w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm text-foreground/80 hover:text-foreground hover:bg-gradient-to-r hover:from-blue-50/80 hover:to-emerald-50/80 transition-all duration-200 text-left group/sub border border-transparent hover:border-blue-200/40"
                   >
                     <span className="w-6 h-6 flex items-center justify-center flex-shrink-0 text-lg group-hover/sub:scale-125 transition-transform duration-200">
-                      {sub.icon && isUrl(sub.icon) ? (
+                      {sub.icon && isImageIcon(sub.icon) ? (
                         <img 
-                          src={sub.icon} 
+                          src={getDealImageUrl(sub.icon)} 
                           alt={sub.name} 
                           className="w-full h-full object-cover rounded" 
                         />

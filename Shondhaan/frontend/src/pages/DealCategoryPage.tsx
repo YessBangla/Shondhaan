@@ -19,6 +19,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { divisions as locationData } from "@/data/locations";
 import DealWatermark from "@/components/deal/DealWatermark";
 
+const DEAL_API_BASE_URL = (
+  import.meta.env.VITE_DEAL_API_BASE_URL || "VITE_DEAL_API_BASE_URL"
+).replace(/\/+$/, "");
+
+const getDealImageUrl = (url: string) => {
+  if (/^(https?:\/\/|data:|blob:)/i.test(url)) return url;
+  return `${DEAL_API_BASE_URL}${url.startsWith("/") ? url : `/${url}`}`;
+};
+
 function timeAgo(dateStr: string, bn = true) {
   const diff = Date.now() - new Date(dateStr).getTime();
   const mins = Math.floor(diff / 60000);
@@ -39,7 +48,7 @@ const CategoryIcon = ({ icon, className = "w-5 h-5" }: { icon?: string; classNam
   if (isImage) {
     return (
       <img 
-        src={icon} 
+        src={getDealImageUrl(icon)} 
         alt="Category Icon" 
         className={`${className} object-contain`}
         onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}

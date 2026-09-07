@@ -14,6 +14,7 @@ export interface DealCategory {
   sort_order: number;
   is_active: boolean;
   children?: DealCategory[];
+  parent_category?: Pick<DealCategory, "id" | "name" | "name_en" | "slug" | "icon"> | null;
 }
 
 export interface DealListing {
@@ -89,6 +90,15 @@ const normalizeCategory = (cat: any): DealCategory => ({
   children: Array.isArray(cat.children)
     ? cat.children.map(normalizeCategory)
     : undefined,
+  parent_category: cat.parent_category
+    ? {
+        id: String(cat.parent_category.id),
+        name: cat.parent_category.name || "",
+        name_en: cat.parent_category.name_en ?? null,
+        slug: cat.parent_category.slug || "",
+        icon: cat.parent_category.icon ?? null,
+      }
+    : null,
 });
 
 const normalizeImages = (images: any): string[] => {
@@ -164,9 +174,20 @@ const normalizeListing = (listing: any): DealListing => ({
           name_en: listing.category_name_en ?? null,
           slug: listing.category_slug || "",
           icon: listing.category_icon ?? null,
-          parent_id: null,
+          parent_id: listing.category_parent_id
+            ? String(listing.category_parent_id)
+            : null,
           sort_order: 0,
           is_active: true,
+          parent_category: listing.category_parent_name
+            ? {
+                id: String(listing.category_parent_id),
+                name: listing.category_parent_name,
+                name_en: listing.category_parent_name_en ?? null,
+                slug: listing.category_parent_slug || "",
+                icon: listing.category_parent_icon ?? null,
+              }
+            : null,
         }
       : null,
 });

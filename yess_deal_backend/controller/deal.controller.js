@@ -75,6 +75,18 @@ const mapListingRow = (row) => ({
         name_en: row.category_name_en,
         slug: row.category_slug,
         icon: row.category_icon,
+        parent_id: row.category_parent_id
+          ? String(row.category_parent_id)
+          : null,
+        parent_category: row.category_parent_name
+          ? {
+              id: String(row.category_parent_id),
+              name: row.category_parent_name,
+              name_en: row.category_parent_name_en,
+              slug: row.category_parent_slug,
+              icon: row.category_parent_icon,
+            }
+          : null,
       }
     : null,
 });
@@ -190,9 +202,15 @@ export const getDealListings = async (req, res) => {
         c.name_en AS category_name_en,
         c.slug AS category_slug,
         c.icon AS category_icon,
+        c.parent_id AS category_parent_id,
+        parent.name AS category_parent_name,
+        parent.name_en AS category_parent_name_en,
+        parent.slug AS category_parent_slug,
+        parent.icon AS category_parent_icon,
         img.images AS images
       FROM deal_listings l
       LEFT JOIN deal_categories c ON c.id = l.category_id
+      LEFT JOIN deal_categories parent ON parent.id = c.parent_id
       LEFT JOIN (
         SELECT 
           listing_id,
@@ -360,9 +378,15 @@ export const getDealListingById = async (req, res) => {
         c.name_en AS category_name_en,
         c.slug AS category_slug,
         c.icon AS category_icon,
+        c.parent_id AS category_parent_id,
+        parent.name AS category_parent_name,
+        parent.name_en AS category_parent_name_en,
+        parent.slug AS category_parent_slug,
+        parent.icon AS category_parent_icon,
         img.images AS images
       FROM deal_listings l
       LEFT JOIN deal_categories c ON c.id = l.category_id
+      LEFT JOIN deal_categories parent ON parent.id = c.parent_id
       LEFT JOIN (
         SELECT 
           listing_id,
