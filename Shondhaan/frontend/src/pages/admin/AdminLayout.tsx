@@ -491,13 +491,18 @@ const AdminLayout = () => {
     lastPathRef.current = location.pathname;
   }, [location.pathname, currentLabel, currentGroup, groupsInit]);
 
+  // ---> MODIFIED LOGIC HERE <---
+  // Set all groups to collapsed (true) when the app first initializes.
   useEffect(() => {
-    if (groupsInit) return;
+    if (groupsInit || filteredNav.length === 0) return;
     const initial: Record<string, boolean> = {};
-    filteredNav.forEach((g) => { if (g.label !== currentGroup) initial[g.label] = true; });
+    filteredNav.forEach((g) => { initial[g.label] = true; });
     setCollapsedGroups(initial);
     setGroupsInit(true);
-  }, [currentGroup, groupsInit, filteredNav]);
+  }, [groupsInit, filteredNav]);
+
+  const isGroupCollapsed = (groupLabel: string) =>
+    !groupsInit || Boolean(collapsedGroups[groupLabel]);
 
   const initials = useMemo(() => {
     const src = user?.user_metadata?.full_name || user?.email || "অ্যাডমিন";
@@ -533,23 +538,23 @@ const AdminLayout = () => {
       ref={sidebarNavRef}
       onKeyDown={handleSidebarKeyDown}
       aria-label="ব্যাকএন্ড নেভিগেশন"
-      className="flex-1 overflow-y-auto py-3 px-2 focus:outline-none custom-scrollbar"
+      className="flex-1 overflow-y-auto py-4 px-3 focus:outline-none custom-scrollbar space-y-1"
     >
       {!collapsed && (
-        <div className="px-1 mb-3">
+        <div className="mb-4">
           <button
             onClick={() => setPaletteOpen(true)}
-            className="w-full flex items-center gap-2 rounded-xl bg-secondary/60 hover:bg-secondary transition-colors px-3 py-2 text-[13px] text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
+            className="w-full flex items-center gap-2.5 rounded-xl bg-secondary/50 hover:bg-secondary border border-border/50 hover:border-border transition-all duration-200 px-3 py-2.5 text-[13px] text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background"
           >
             <Search className="h-4 w-4" />
             <span className="flex-1 text-left">খুঁজুন…</span>
-            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1.5 text-[10px] font-mono">⌘K</kbd>
+            <kbd className="hidden md:inline-flex items-center rounded-md border border-border bg-card px-1.5 text-[10px] font-mono text-muted-foreground">⌘K</kbd>
           </button>
         </div>
       )}
       {pinnedItems.length > 0 && !collapsed && (
-        <div className="mb-3">
-          <p className="px-3 mb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70 inline-flex items-center gap-1.5">
+        <div className="mb-4">
+          <p className="px-2 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 inline-flex items-center gap-1.5">
             <Pin className="h-3 w-3" />পিন করা
           </p>
           <ul className="space-y-1">
@@ -559,8 +564,8 @@ const AdminLayout = () => {
                   data-sidebar-link
                   data-group={item.group}
                   className={() =>
-                  `group relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
-                    isNavItemActive(item.to) ? "bg-gradient-to-r from-primary to-emerald-600 text-white shadow-md shadow-primary/25 font-semibold" : "text-foreground/75 hover:bg-secondary hover:translate-x-0.5 transition-transform"
+                  `group relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                    isNavItemActive(item.to) ? "bg-primary/10 text-primary font-semibold" : "text-muted-foreground hover:bg-secondary hover:text-foreground"
                   }`}>
                   <span className="shrink-0 [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>
                   <span className="truncate flex-1">{item.label}</span>
@@ -574,7 +579,7 @@ const AdminLayout = () => {
         </div>
       )}
       {filteredNav.map((group) => (
-        <div key={group.label} className="mb-2">
+        <div key={group.label} className="mb-1">
           {!collapsed && (
             <button
               onClick={() => {
@@ -584,33 +589,33 @@ const AdminLayout = () => {
               }}
               data-sidebar-group
               data-group={group.label}
-              aria-expanded={!collapsedGroups[group.label]}
+              aria-expanded={!isGroupCollapsed(group.label)}
               aria-controls={`sidebar-group-${group.label}`}
               className={cn(
-                "w-full flex items-center justify-between px-3 pt-3 pb-2 text-[11px] font-semibold uppercase tracking-wider hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-                group.label === currentGroup ? "text-foreground" : "text-muted-foreground/70"
+                "w-full flex items-center justify-between px-2 pt-4 pb-2 text-[10px] font-bold uppercase tracking-widest hover:text-foreground transition-colors rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+                group.label === currentGroup ? "text-foreground" : "text-muted-foreground/60"
               )}
             >
               <span className="inline-flex items-center gap-2">
                 <span className={cn("h-1.5 w-1.5 rounded-full", group.dot)} />
                 {group.label}
-                <span className="ml-1 text-[10px] font-mono text-muted-foreground/60 normal-case tracking-normal">{group.items.length}</span>
+                <span className="ml-1 text-[10px] font-mono text-muted-foreground/50 normal-case tracking-normal">{group.items.length}</span>
               </span>
-              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${collapsedGroups[group.label] ? "-rotate-90" : ""}`} />
+              <ChevronDown className={`h-3.5 w-3.5 transition-transform duration-200 ${isGroupCollapsed(group.label) ? "-rotate-90" : ""}`} />
             </button>
           )}
           {collapsed && (
-            <div className="px-2 pt-3 pb-2 flex justify-center">
+            <div className="px-2 pt-4 pb-2 flex justify-center">
               <span className={cn("h-1 w-6 rounded-full opacity-70", group.dot)} />
             </div>
           )}
           <AnimatePresence initial={false}>
-            {!collapsedGroups[group.label] && (
+            {!isGroupCollapsed(group.label) && (
               <motion.ul
                 id={`sidebar-group-${group.label}`}
                 initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }}
                 exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }}
-                className="overflow-hidden space-y-1"
+                className="overflow-hidden space-y-0.5"
               >
                 {group.items.map((item) => (
                   <li key={item.to} className="group relative">
@@ -620,10 +625,10 @@ const AdminLayout = () => {
                       data-sidebar-link
                       data-group={group.label}
                       className={() =>
-                        `relative flex items-center gap-3 rounded-xl px-3 py-2 text-[13px] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
+                        `relative flex items-center gap-3 rounded-lg px-3 py-2 text-[13px] font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60 focus-visible:ring-offset-1 focus-visible:ring-offset-background ${
                           isNavItemActive(item.to)
-                            ? `bg-gradient-to-r ${group.accent} text-white font-semibold shadow-md hover:shadow-lg hover:-translate-y-0.5`
-                            : "text-foreground/75 hover:bg-secondary hover:text-foreground hover:translate-x-0.5"
+                            ? `bg-gradient-to-r ${group.accent} text-white shadow-sm shadow-primary/20 hover:brightness-105`
+                            : "text-muted-foreground hover:text-foreground hover:bg-secondary/70"
                         } ${collapsed ? "justify-center" : ""}`
                       }
                       title={collapsed ? item.label : undefined}
@@ -652,28 +657,28 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="flex min-h-screen w-full bg-gradient-to-br from-background via-background to-muted/30">
+    <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside
-        className={`hidden md:flex flex-col transition-[width] duration-300 ease-in-out border-r border-border/40 bg-card/50 backdrop-blur-sm ${
+        className={`hidden md:flex flex-col transition-[width] duration-300 ease-in-out border-r border-border/40 bg-card/40 backdrop-blur-xl shadow-sm ${
           collapsed ? "w-[72px]" : "w-[260px]"
         }`}
       >
         <div className={`flex items-center gap-3 border-b border-border/40 px-4 h-16 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary via-emerald-500 to-emerald-600 text-white shadow-md ring-1 ring-primary/30">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-lg shadow-primary/20 ring-1 ring-white/10">
             <Sparkles className="h-4 w-4" />
           </div>
           {!collapsed && (
             <div className="min-w-0">
-              <p className="text-sm font-bold text-foreground truncate leading-tight">অ্যাডমিন প্যানেল</p>
-              <p className="text-[11px] text-muted-foreground leading-tight">Yess Workspace</p>
+              <p className="text-sm font-bold tracking-tight text-foreground truncate leading-tight">অ্যাডমিন প্যানেল</p>
+              <p className="text-[11px] text-muted-foreground/80 leading-tight">Yess Workspace</p>
             </div>
           )}
         </div>
         {SidebarBody}
-        <div className="border-t border-border/40 p-2">
+        <div className="border-t border-border/40 p-3">
           <button
             onClick={() => setCollapsed((c) => !c)}
-            className={`flex w-full items-center gap-2 rounded-xl px-3 py-2 text-[12px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors ${
+            className={`flex w-full items-center gap-2 rounded-lg px-3 py-2 text-[12px] font-semibold text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors duration-200 ${
               collapsed ? "justify-center" : ""
             }`}
           >
@@ -688,11 +693,11 @@ const AdminLayout = () => {
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setMobileOpen(false)} />
           <aside className="absolute inset-y-0 left-0 w-[80%] max-w-[300px] bg-card/95 backdrop-blur-2xl border-r border-border shadow-2xl flex flex-col">
             <div className="flex items-center justify-between border-b border-border/40 px-4 h-16">
-              <div className="flex items-center gap-2">
-                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-md"><Sparkles className="h-4 w-4" /></div>
-                <p className="text-sm font-bold">অ্যাডমিন প্যানেল</p>
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-emerald-600 text-white shadow-lg shadow-primary/20"><Sparkles className="h-4 w-4" /></div>
+                <p className="text-sm font-bold tracking-tight">অ্যাডমিন প্যানেল</p>
               </div>
-              <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary"><X className="h-4 w-4" /></button>
+              <button onClick={() => setMobileOpen(false)} className="h-8 w-8 flex items-center justify-center rounded-lg hover:bg-secondary transition-colors"><X className="h-4 w-4" /></button>
             </div>
             {SidebarBody}
           </aside>
@@ -700,22 +705,22 @@ const AdminLayout = () => {
       )}
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="sticky top-0 z-30 border-b border-border/40 bg-card/70 backdrop-blur-2xl">
-          <div className="h-[3px] w-full bg-gradient-to-r from-primary via-emerald-400 to-primary" />
+        <header className="sticky bg-userprimaryshade top-0 z-30 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+          <div className=" w-full bg-gradient-to-r from-transparent via-primary/80 to-transparent" />
 
-          <div className="flex items-center justify-between gap-3 px-4 md:px-6 py-3">
+          <div className="flex items-center justify-between gap-4 px-4 md:px-6 py-1">
             <div className="flex items-center gap-3 min-w-0 flex-1">
               <button
                 onClick={() => setMobileOpen(true)}
-                className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary"
+                className="md:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary transition-colors"
                 aria-label="মেনু খুলুন"
               >
                 <Menu className="h-5 w-5" />
               </button>
 
-              <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary/15 to-emerald-500/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4">
+              {/* <div className="hidden sm:flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shrink-0 [&>*]:h-4 [&>*]:w-4 transition-colors">
                 {currentIcon}
-              </div>
+              </div> */}
 
               <div className="min-w-0">
                 <nav aria-label="Breadcrumb" className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 leading-none mb-1">
@@ -731,7 +736,7 @@ const AdminLayout = () => {
                   <ChevRight className="h-3 w-3 opacity-50" />
                   <span className="text-foreground/80 font-medium truncate max-w-[120px] md:max-w-none">{currentLabel}</span>
                 </nav>
-                <h1 className="font-heading text-base md:text-lg font-bold text-foreground truncate leading-tight">
+                <h1 className="font-heading text-base md:text-lg font-bold text-foreground truncate leading-tight tracking-tight">
                   {currentLabel}
                 </h1>
               </div>
@@ -740,43 +745,43 @@ const AdminLayout = () => {
             <div className="flex items-center gap-1.5 md:gap-2">
               <NavLink 
                 to="/admin/accounts" 
-                className="hidden sm:flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 px-3 py-1.5 hover:ring-primary/40 hover:shadow-sm transition-all"
+                className="hidden sm:flex items-center gap-2 rounded-full bg-secondary/50 hover:bg-secondary ring-1 ring-border/50 hover:ring-border px-3 py-1.5 transition-all duration-200"
               >
                 <Wallet className="h-4 w-4 text-primary" />
-                <span className="text-xs font-bold text-foreground">
+                <span className="text-xs font-bold text-foreground tabular-nums">
                   ৳ {adminWalletBalance.toLocaleString('bn-BD', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}
                 </span>
               </NavLink>
 
-              <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title="খুঁজুন">
+              <button onClick={() => setPaletteOpen(true)} className="lg:hidden h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground transition-colors" title="খুঁজুন">
                 <Search className="h-4 w-4" />
               </button>
-              <button onClick={cycle} className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground" title={`Theme: ${mode}`}>
+              <button onClick={cycle} className="h-9 w-9 flex items-center justify-center rounded-xl hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors" title={`Theme: ${mode}`}>
                 <ThemeIcon className="h-4 w-4" />
               </button>
               <button
                 onClick={() => setLanguage(language === "bn" ? "en" : "bn")}
-                className="h-9 px-2 rounded-xl hover:bg-secondary text-[11px] font-bold text-muted-foreground inline-flex items-center gap-1"
+                className="h-9 px-2 rounded-xl hover:bg-secondary text-[11px] font-bold text-muted-foreground hover:text-foreground inline-flex items-center gap-1 transition-colors"
                 title="ভাষা"
               >
                 <Languages className="h-3.5 w-3.5" />{language.toUpperCase()}
               </button>
               <div className="hidden md:flex flex-col items-end leading-tight px-2 border-l border-border/40 ml-1">
-                <span className="text-[12px] font-semibold text-foreground">{timeStr}</span>
+                <span className="text-[12px] font-semibold text-foreground tabular-nums">{timeStr}</span>
                 <span className="text-[11px] text-muted-foreground">{dateStr}</span>
               </div>
 
               <NotificationBell />
 
-              <div className="flex items-center gap-2 rounded-full bg-gradient-to-r from-primary/10 via-emerald-500/10 to-primary/10 ring-1 ring-primary/25 pl-1 pr-2 md:pr-3 py-0.5 hover:ring-primary/40 hover:shadow-sm transition-all">
+              <div className="flex items-center gap-2 rounded-full bg-secondary/50 hover:bg-secondary ring-1 ring-border/50 hover:ring-border transition-all duration-200 pl-1 pr-2 md:pr-3 py-0.5 cursor-pointer">
                 <div className="relative">
                   <div className="h-7 w-7 rounded-full bg-gradient-to-br from-primary to-emerald-600 text-white flex items-center justify-center text-[12px] font-bold shadow-inner">
                     {initials}
                   </div>
-                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-card" />
+                  <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500 ring-2 ring-background" />
                 </div>
                 <div className="hidden xl:flex flex-col leading-tight">
-                  <span className="text-[11px] font-semibold text-foreground inline-flex items-center gap-1">
+                  <span className="text-[11px] font-semibold text-foreground inline-flex items-center gap-1 capitalize">
                     <Sparkles className="h-2.5 w-2.5 text-primary" />
                     {userRole ? userRole.replace('_', ' ') : 'Admin'}
                   </span>
@@ -788,7 +793,7 @@ const AdminLayout = () => {
 
               <button
                 onClick={async () => { await signOut(); navigate("/main-login", { replace: true }); }}
-                className="flex items-center justify-center h-9 w-9 rounded-xl border border-border/60 text-muted-foreground hover:bg-destructive hover:text-destructive-foreground hover:border-destructive transition-colors"
+                className="flex items-center justify-center h-9 w-9 rounded-xl border border-border/50 text-muted-foreground hover:bg-destructive/10 hover:text-destructive hover:border-destructive/30 transition-colors duration-200"
                 title="লগআউট"
                 aria-label="লগআউট"
               >
@@ -798,22 +803,22 @@ const AdminLayout = () => {
           </div>
         </header>
 
-        <main className="flex-1 min-w-0 bg-gradient-to-b from-transparent to-muted/20">
+        <main className="flex-1 min-w-0 bg-muted/10">
           <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
             <BackendPageHeader
               fallbackTitle={currentLabel}
               fallbackEyebrow={currentGroup}
             />
 
-            <div className="mt-4 rounded-2xl border border-border/60 bg-card/80 backdrop-blur-sm shadow-sm hover:shadow-md transition-shadow overflow-hidden">
+            <div className="mt-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
               <Suspense fallback={<div className="p-8"><PageLoader /></div>}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
                     key={location.pathname}
-                    initial={{ opacity: 0, y: 8, filter: "blur(2px)" }}
-                    animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
-                    exit={{ opacity: 0, y: -4, filter: "blur(2px)" }}
-                    transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    transition={{ duration: 0.2, ease: "easeInOut" }}
                   >
                     <Outlet />
                   </motion.div>
@@ -845,7 +850,7 @@ const AdminLayout = () => {
         {paletteOpen && (
           <motion.div
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/50 backdrop-blur-sm"
+            className="fixed inset-0 z-[100] flex items-start justify-center pt-[15vh] px-4 bg-black/40 backdrop-blur-md"
             onClick={() => setPaletteOpen(false)}
           >
             <motion.div
@@ -853,7 +858,7 @@ const AdminLayout = () => {
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.96, opacity: 0, y: -10 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
-              className="w-full max-w-xl rounded-2xl bg-card/95 backdrop-blur-2xl border border-border/60 shadow-2xl overflow-hidden ring-1 ring-black/5"
+              className="w-full max-w-xl rounded-2xl bg-card border border-border/50 shadow-2xl overflow-hidden ring-1 ring-black/5"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center gap-3 px-4 py-3.5 border-b border-border/50">
@@ -963,7 +968,7 @@ const BackendPageHeader = ({
   return (
     <div className="w-full">
       {meta.toolbar && (
-        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-3 py-2.5 shadow-sm">
+        <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm px-3 py-2.5 shadow-sm">
           {meta.toolbar}
         </div>
       )}

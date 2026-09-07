@@ -9,11 +9,11 @@ type ImageUploaderProps = {
   onChange: (url: string) => void;
   folder?: string;
   label?: string;
+  apiBaseUrl?: string;
 };
 
 // Helper to extract just the root domain so API paths are not duplicated.
-const getStaticBaseUrl = () => {
-  const apiBaseUrl = INDIVIDUAL_API_BASE_URL || "";
+const getStaticBaseUrl = (apiBaseUrl: string) => {
   try {
     // If it's a valid absolute URL, extract just the origin
     return new URL(apiBaseUrl).origin;
@@ -23,14 +23,12 @@ const getStaticBaseUrl = () => {
   }
 };
 
-const STATIC_BASE_URL = getStaticBaseUrl();
-
-const getImageSrc = (url?: string) => {
+const getImageSrc = (url: string | undefined, apiBaseUrl: string) => {
   if (!url) return "";
   if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
 
   const path = url.startsWith("/") ? url : `/${url}`;
-  return `${STATIC_BASE_URL}${path}`;
+  return `${getStaticBaseUrl(apiBaseUrl)}${path}`;
 };
 
 const ImageUploader = ({
@@ -38,6 +36,7 @@ const ImageUploader = ({
   onChange,
   folder = "common",
   label = "ছবি",
+  apiBaseUrl = INDIVIDUAL_API_BASE_URL,
 }: ImageUploaderProps) => {
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -71,7 +70,7 @@ const ImageUploader = ({
 
       // Use the full API URL for the fetch request
       const response = await fetch(
-        `${INDIVIDUAL_API_BASE_URL}/api/uploads?folder=${encodeURIComponent(folder)}`,
+        `${apiBaseUrl.replace(/\/+$/, "")}/api/uploads?folder=${encodeURIComponent(folder)}`,
         {
           method: "POST",
           headers: {
@@ -103,7 +102,7 @@ const ImageUploader = ({
     }
   };
 
-  const preview = getImageSrc(value);
+  const preview = getImageSrc(value, apiBaseUrl);
 
   return (
     <div>

@@ -389,6 +389,15 @@ const DealAdDetail = () => {
           <ChevronRight className="h-3 w-3" />
           {cat && (
             <>
+              {cat.parent_category && (
+                <>
+                  <button onClick={() => navigate(`/deal/category/${cat.parent_category.slug}`)} className="hover:text-primary transition-colors truncate flex items-center gap-1.5">
+                    <CategoryIcon icon={cat.parent_category.icon} className="w-3 h-3" />
+                    <span className="truncate">{bn ? cat.parent_category.name : (cat.parent_category.name_en || cat.parent_category.name)}</span>
+                  </button>
+                  <ChevronRight className="h-3 w-3" />
+                </>
+              )}
               <button onClick={() => navigate(`/deal/category/${cat.slug}`)} className="hover:text-primary transition-colors truncate flex items-center gap-1.5">
                 <CategoryIcon icon={cat.icon} className="w-3 h-3" />
                 <span className="truncate">{bn ? cat.name : (cat.name_en || cat.name)}</span>

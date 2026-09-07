@@ -23,6 +23,7 @@ import BulkConfirmDialog, { BulkActionTone, BulkImpactRow } from "@/components/a
 // Single source of truth for the backend base URL. Swap this (or read from
 // an environment variable if the API ever moves.
 const API_BASE = `${import.meta.env.VITE_DEAL_API_BASE_URL || ""}/api`;
+const DEAL_API_BASE_URL = (import.meta.env.VITE_DEAL_API_BASE_URL || "").replace(/\/+$/, "");
 
 async function apiFetch(path: string, options?: RequestInit) {
   const res = await fetch(`${API_BASE}${path}`, {
@@ -167,7 +168,13 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
               <Input placeholder="বাংলা নাম *" value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
               <Input placeholder="English Name" value={form.name_en} onChange={e => setForm(f => ({ ...f, name_en: e.target.value }))} />
               <Input placeholder="slug *" value={form.slug} onChange={e => setForm(f => ({ ...f, slug: e.target.value }))} />
-              <Input placeholder="আইকন (ইমোজি)" value={form.icon} onChange={e => setForm(f => ({ ...f, icon: e.target.value }))} />
+              <ImageUploader
+                value={form.icon}
+                onChange={icon => setForm(f => ({ ...f, icon }))}
+                folder="deal-categories"
+                label="ক্যাটেগরি ছবি"
+                apiBaseUrl={DEAL_API_BASE_URL}
+              />
               <Select value={form.parent_id || "root"} onValueChange={v => setForm(f => ({ ...f, parent_id: v === "root" ? "" : v }))}>
                 <SelectTrigger><SelectValue placeholder="প্যারেন্ট ক্যাটেগরি" /></SelectTrigger>
                 <SelectContent>
@@ -201,7 +208,17 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
           <tbody>
             {categories.map(cat => (
               <tr key={cat.id} className="border-t border-border/30 hover:bg-muted/30">
-                <td className="p-3 text-lg">{cat.icon || "📁"}</td>
+                <td className="p-3 text-lg">
+                  {cat.icon ? (
+                    cat.icon.startsWith("http") || cat.icon.startsWith("/") ? (
+                      <img
+                        src={cat.icon.startsWith("http") ? cat.icon : `${DEAL_API_BASE_URL}${cat.icon}`}
+                        alt={cat.name}
+                        className="h-10 w-10 rounded-md object-cover"
+                      />
+                    ) : cat.icon
+                  ) : "📁"}
+                </td>
                 <td className="p-3 font-medium text-foreground">{cat.name}</td>
                 <td className="p-3 text-muted-foreground">{cat.name_en || "—"}</td>
                 <td className="p-3 font-mono text-xs text-muted-foreground">{cat.slug}</td>

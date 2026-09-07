@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -49,6 +49,8 @@ const DealPostAd = () => {
     title: "",
     description: "",
     price: "",
+    parent_category_id: "",
+    subcategory_id: "",
     category_id: "",
     condition: "used",
     is_negotiable: true,
@@ -60,8 +62,25 @@ const DealPostAd = () => {
     imageUrls: [] as string[],
   });
 
-  const selectedCategoryName =
-    categories?.find((c) => String(c.id) === String(form.category_id))?.name || "";
+  const parentCategories = useMemo(
+    () => (categories || []).filter((category) => !category.parent_id),
+    [categories]
+  );
+
+  const subcategories = useMemo(
+    () =>
+      (categories || []).filter(
+        (category) =>
+          category.parent_id &&
+          String(category.parent_id) === String(form.parent_category_id)
+      ),
+    [categories, form.parent_category_id]
+  );
+
+  const selectedCategory = categories?.find(
+    (category) => String(category.id) === String(form.category_id)
+  );
+  const selectedCategoryName = selectedCategory?.name || "";
 
   useEffect(() => {
     if (!authLoading && !user) {
@@ -188,8 +207,12 @@ const DealPostAd = () => {
 
             <CardContent>
               <Select
-                value={form.category_id}
-                onValueChange={(v) => updateField("category_id", v)}
+                value={form.parent_category_id}
+                onValueChange={(v) => {
+                  updateField("parent_category_id", v);
+                  updateField("subcategory_id", "");
+                  updateField("category_id", v);
+                }}
               >
                 <SelectTrigger>
                   <SelectValue
@@ -198,13 +221,36 @@ const DealPostAd = () => {
                 </SelectTrigger>
 
                 <SelectContent>
-                  {categories?.map((c) => (
+                  {parentCategories.map((c) => (
                     <SelectItem key={c.id} value={String(c.id)}>
-                      {c.icon} {bn ? c.name : c.name_en || c.name}
+                      {bn ? c.name : c.name_en || c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+
+              {form.parent_category_id && subcategories.length > 0 && (
+                <Select
+                  value={form.subcategory_id}
+                  onValueChange={(v) => {
+                    updateField("subcategory_id", v);
+                    updateField("category_id", v);
+                  }}
+                >
+                  <SelectTrigger className="mt-3">
+                    <SelectValue
+                      placeholder={bn ? "সাবক্যাটাগরি বাছুন" : "Choose subcategory"}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories.map((subcategory) => (
+                      <SelectItem key={subcategory.id} value={String(subcategory.id)}>
+                        {bn ? subcategory.name : subcategory.name_en || subcategory.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </CardContent>
           </div>
 
