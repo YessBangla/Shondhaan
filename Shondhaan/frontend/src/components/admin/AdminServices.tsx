@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import { Plus, Edit2, Trash2, Save, X, ChevronDown, ChevronUp, Check, Star, Package, Eye, EyeOff } from "lucide-react";
+import { Plus, Edit2, Trash2, Save, X, ChevronDown, Check, Star, Package, Search } from "lucide-react";
 import { useCmsServices, useCmsCategories, useCmsPackages, CmsService, CmsServicePackage } from "@/hooks/useCmsData";
 import ImageUploader from "./ImageUploader";
 import { toast } from "sonner";
@@ -55,8 +55,17 @@ const AdminServices = () => {
   const [editing, setEditing] = useState<Partial<CmsService> | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [featuresText, setFeaturesText] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [showCitiesDropdown, setShowCitiesDropdown] = useState(false);
   const cityDropdownRef = useRef<HTMLDivElement>(null);
+
+  const filteredServices = services.filter(service => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return true;
+
+    return [service.title, service.title_en, service.slug, service.description]
+      .some(value => value?.toLowerCase().includes(query));
+  });
 
   useEffect(() => {
     document.body.style.overflow = editing ? "hidden" : "auto";
@@ -122,11 +131,36 @@ const AdminServices = () => {
     <div className="relative">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h3 className="font-heading text-lg font-bold text-foreground">সার্ভিস ম্যানেজমেন্ট</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">{services.length} টি সার্ভিস</p>
+        <div className="flex w-full gap-3">
+          <div>
+            <h3 className="font-heading text-lg font-bold text-foreground">সার্ভিস ম্যানেজমেন্ট</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">{services.length} টি সার্ভিস</p>
+          </div>
+          {/* Search and Services Grid */}
+          <div className="mb-4 flex w-full max-w-md items-center gap-2 rounded-lg border border-input bg-background px-3 py-2">
+            <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <input
+              id="admin-service-search"
+              type="search"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="টাইটেল, স্লাগ বা বিবরণ দিয়ে খুঁজুন..."
+              className="min-w-0 flex-1 bg-transparent text-sm outline-none"
+            />
+            {searchQuery && (
+              <button
+                type="button"
+                onClick={() => setSearchQuery("")}
+                aria-label="সার্চ পরিষ্কার করুন"
+                className="text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+
         </div>
-        <button onClick={() => startEdit()} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary/90 transition-colors shadow-sm">
+        <button onClick={() => startEdit()} className="text-nowrap flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-primary transition-colors shadow-sm">
           <Plus className="h-4 w-4" /> নতুন সার্ভিস
         </button>
       </div>
@@ -338,7 +372,7 @@ const AdminServices = () => {
               <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors">
                 বাতিল
               </button>
-              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary transition-colors disabled:opacity-50">
                 {upsert.isPending ? "সেভ হচ্ছে..." : "সেভ করুন"}
               </button>
             </div>
@@ -347,9 +381,8 @@ const AdminServices = () => {
         document.body
       )}
 
-      {/* Services Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-        {services.map(s => (
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {filteredServices.map(s => (
           <ServiceCard
             key={s.id}
             service={s}
@@ -359,6 +392,11 @@ const AdminServices = () => {
             onDelete={() => { if (confirm("মুছে ফেলবেন?")) remove.mutate(s.id); }}
           />
         ))}
+        {filteredServices.length === 0 && (
+          <p className="col-span-full py-8 text-center text-sm text-muted-foreground">
+            কোনো সার্ভিস পাওয়া যায়নি
+          </p>
+        )}
       </div>
     </div>
   );

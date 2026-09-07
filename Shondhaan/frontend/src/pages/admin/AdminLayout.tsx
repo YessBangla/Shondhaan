@@ -55,7 +55,7 @@ const NAV: NavGroup[] = [
   },
   {
     label: "সার্ভিস CMS",
-    accent: "from-sky-500 to-blue-600",
+    accent: "from-userprimary to-userprimary",
     dot: "bg-sky-500",
     items: [
       { to: "/admin/services", label: "সার্ভিস", icon: <Package className="h-4 w-4" /> },

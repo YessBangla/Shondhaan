@@ -154,7 +154,7 @@ const handleSave = () => {
               <button onClick={() => setEditing(null)} className="flex items-center gap-1.5 rounded-lg border border-border px-4 py-2 text-sm text-foreground hover:bg-secondary transition-colors">
                 বাতিল
               </button>
-              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary/90 transition-colors disabled:opacity-50">
+              <button onClick={handleSave} disabled={upsert.isPending} className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-primary transition-colors disabled:opacity-50">
                 {upsert.isPending ? "সেভ হচ্ছে..." : "সেভ করুন"}
               </button>
             </div>
@@ -164,10 +164,11 @@ const handleSave = () => {
       )}
 
       {/* Categories List */}
-      <div className="space-y-2">
-        {categories.map(c => (
+      <div className="space-y-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
+        {categories.map((c, index) => (
           <div key={c.id} className="flex items-center justify-between rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors">
             <div className="flex items-center gap-3">
+              <span>{index + 1}</span>
               {/* <div className={`h-8 w-8 rounded-lg bg-gradient-to-r ${c.color_gradient} flex items-center justify-center`}> */}
               <div className={`h-8 w-8 rounded-lg flex items-center justify-center`}>
                 {c.icon_url ? (

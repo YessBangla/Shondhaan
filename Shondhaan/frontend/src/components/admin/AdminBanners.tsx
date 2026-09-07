@@ -396,9 +396,9 @@ const AdminBanners = () => {
         </div>
       )}
 
-      <div className="space-y-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {banners.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+          <div className="col-span-full rounded-xl border border-dashed border-border bg-card p-8 text-center">
             <p className="text-sm text-muted-foreground">
               এখনো কোনো ব্যানার নেই
             </p>
@@ -413,9 +413,9 @@ const AdminBanners = () => {
           banners.map((banner) => (
             <div
               key={banner.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3"
+              className="flex h-full flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-shadow hover:shadow-md"
             >
-              <div className="flex min-w-0 items-center gap-3">
+              <div className="flex min-w-0 flex-1 flex-col gap-3 p-3">
                 {banner.image_url ? (
                   <img
                     src={
@@ -424,10 +424,10 @@ const AdminBanners = () => {
                           : `${API_BASE_URL}${banner.image_url}`
                       }
                     alt={banner.title_bn}
-                    className="h-12 w-20 rounded-lg object-cover"
+                    className="aspect-video w-full rounded-lg object-cover"
                   />
                 ) : (
-                  <div className="flex h-12 w-20 items-center justify-center rounded-lg bg-secondary text-[10px] text-muted-foreground">
+                  <div className="flex aspect-video w-full items-center justify-center rounded-lg bg-secondary text-[10px] text-muted-foreground">
                     No image
                   </div>
                 )}
@@ -444,7 +444,7 @@ const AdminBanners = () => {
                 </div>
               </div>
 
-              <div className="flex shrink-0 gap-1">
+              <div className="flex shrink-0 justify-end gap-1 border-t border-border px-3 py-2">
                 <button
                   onClick={() => toggleActive(banner)}
                   className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-secondary"
