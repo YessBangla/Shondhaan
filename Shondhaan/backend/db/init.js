@@ -318,6 +318,11 @@ export async function initDatabase() {
   );
   await ensureTableColumn(
     "wallet_deposit_requests",
+    "gateway",
+    "ALTER TABLE wallet_deposit_requests ADD COLUMN gateway VARCHAR(50) NOT NULL DEFAULT 'shurjopay' AFTER amount",
+  );
+  await ensureTableColumn(
+    "wallet_deposit_requests",
     "transaction_id",
     "ALTER TABLE wallet_deposit_requests ADD COLUMN transaction_id VARCHAR(64) NULL AFTER status",
   );
