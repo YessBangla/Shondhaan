@@ -588,7 +588,6 @@ const PanelSidebarTabs = ({
                   <h1 className="text-xl font-semibold text-gray-800 my-auto">
                     {bn ? "ড্যাশবোর্ড" : "Dashboard"}
                   </h1>
-                  <p><ReferralCode /></p>
                 </div>
                 <div className="flex gap-2">
                   <button
