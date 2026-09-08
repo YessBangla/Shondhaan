@@ -99,7 +99,7 @@ const TrackLanding = () => {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Navbar />
-      <main className="flex-1 pt-28 md:pt-32 pb-12 px-4">
+      <main className="flex-1 pt-16 md:pt-32 pb-12 px-4">
         <div className="mx-auto max-w-2xl">
           <motion.div
             initial={{ opacity: 0, y: 12 }}

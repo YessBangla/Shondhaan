@@ -40,8 +40,6 @@ import { fetchReferralSettings } from "../lib/referralSettings";
 import { useReferral } from "@/contexts/ReferalContext";
 import { updateBookingStatus as updateBackendBookingStatus } from "@/lib/bookingApi";
 import { useReferralCode } from "@/hooks/useReferralCode";
-const referralCode = useReferralCode();
-const hasReferralCode = Boolean(referralCode);
 
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -485,7 +483,7 @@ const ClientDashboard = () => {
   const [referralShareLink, setReferralShareLink] = useState<string | null>(null);
   const [reviewTarget, setReviewTarget] = useState<Booking | null>(null);
   const [rebookTarget, setRebookTarget] = useState<Booking | null>(null);
-  
+  const browser_referralCode = useReferralCode();
   const [completingId, setCompletingId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -900,7 +898,7 @@ const ClientDashboard = () => {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.5 }}
                   className="relative overflow-hidden rounded-2xl md:rounded-3xl shadow-xl border border-blue-100 bg-white"
-                >
+                  >
                   <div className="h-20 md:h-32 bg-gradient-to-r from-userprimary to-userprimaryshade relative">
                     <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
                   </div>
@@ -972,128 +970,177 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </motion.div>
-  {referralCode ? (
-    // referral code exists in cookies
-  ) : (
-    // no referral code
-  )}
 
-                {referralSettings && isEnabledFlag(referralSettings.is_enabled) && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm md:p-6"
-                    >
-                    <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-start gap-3">
-                        <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
-                          <Gift className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-slate-900">{bn ? "এই রেফারেল লিঙ্কটি শেয়ার করুন" : "Invite friends and earn rewards"}</h3>
-                          <p className="mt-1 text-sm text-slate-600">
-                            {bn ? (
-                              <>
-                                এই লিঙ্কের মাধ্যমে যেকোনো সার্ভিস বুক করলে কিংবা কোনো পণ্য অর্ডার করলে
-                                আপনি পাবেন{" "}
-                                <span className="font-bold">{referralSettings.referrer_reward_amount} {referralSettings.referrer_reward_currency}</span>{" "}
-                                এবং যিনি লিঙ্কটি ব্যবহার করবেন তিনি পাবেন{" "}
-                                <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>।
-                              </>
-                            ) : (
-                              <>
-                                When someone books a service or orders a product through your referral
-                                link, you will receive{" "}
-                                <span className="font-bold">{referralSettings.referrer_reward_amount} {referralSettings.referrer_reward_currency}</span>, and the person who uses your link will receive{" "}
-                                <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>.
-                              </>
-                            )}
-                          </p>
-                          {referralSettings.min_order_amount !== null && (
-                            <p className="mt-1 text-xs text-slate-500">
-                              {bn ? `ন্যূনতম অর্ডার: ৳${referralSettings.min_order_amount}` : `Minimum order: ৳${referralSettings.min_order_amount}`}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="relative shrink-0">
-                        {referralCode ? (
-                          <>
-                            <p className="text-sm font-semibold text-slate-700">
-                              <p>{bn ? "আপনার রেফারেল লিংক:" : "Your referral link:"}{" "}</p>
-                              <span className="text-emerald-700">{`${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`}</span>
-                            </p>
-                            <button
-                              type="button"
-                              onClick={handleReferralShare}
-                              disabled={referralSharing}
-                              className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                            >
-                              {referralSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
-                              {bn ? "শেয়ার করুন" : "Share referral link"}
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={handleReferralGenerate}
-                            disabled={referralSharing}
-                            className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                          >
-                            <Settings className="h-4 w-4" />
-                            {bn ? "রেফারাল লিঙ্ক তৈরি করুন" : "Generate Referral Link"}
-                          </button>
-                        )}
-                        {referralPopupOpen && (referralShareLink || referralStats?.code?.link) && (
-                          <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
-                            <div className="mb-3 flex items-center justify-between">
-                              <p className="text-sm font-bold text-slate-900">{bn ? "শেয়ার করুন" : "Share referral link"}</p>
-                              <button type="button" onClick={() => setReferralPopupOpen(false)} className="rounded-full p-1 text-slate-500 hover:bg-slate-100" aria-label="Close">
-                                <X className="h-4 w-4" />
-                              </button>
+                {/*  REFERRAL SECTION START */}
+                  {browser_referralCode ? (
+                    
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm md:p-6"
+                        >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+                              <Gift className="h-5 w-5" />
                             </div>
-                            <div className="grid grid-cols-5 gap-2">
-                              {[
-                                { key: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, className: "bg-[#1877F2]" },
-                                { key: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, className: "bg-[#FF0000]" },
-                                { key: "twitter", label: "Twitter", icon: <Twitter className="h-4 w-4" />, className: "bg-slate-900" },
-                                { key: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="h-4 w-4" />, className: "bg-[#25D366]" },
-                                { key: "messenger", label: "Messenger", icon: <MessageCircle className="h-4 w-4" />, className: "bg-[#0084FF]" },
-                              ].map((item) => (
-                                <button
-                                  key={item.key}
-                                  type="button"
-                                  title={item.label}
-                                  onClick={() => shareReferralTo(item.key)}
-                                  className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-110 ${item.className}`}
-                                >
-                                  {item.icon}
-                                </button>
-                              ))}
-                            </div>
-                            <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
-                              <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-600">{referralShareLink || referralStats?.code?.link}</span>
-                              <button
-                                type="button"
-                                onClick={async () => {
-                                  const link = referralShareLink || referralStats?.code?.link;
-                                  if (!link) return;
-                                  await navigator.clipboard.writeText(link);
-                                  toast.success(bn ? "লিংক কপি হয়েছে" : "Link copied");
-                                }}
-                                className="rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-700"
-                                title={bn ? "লিংক কপি করুন" : "Copy link"}
-                              >
-                                <Copy className="h-4 w-4" />
-                              </button>
+                            <div>
+                              <h3 className="font-bold text-slate-900">{bn ? "অভিনন্দন!!! আপনি একটি সক্রিয় রেফারেল কোড পেয়েছেন" : "You have an Active referral code to earn rewards"}</h3>
+                              <p className="mt-1 text-sm text-slate-600">
+                                {bn ? (
+                                  <>
+                                     যেকোনো সার্ভিস বুক করলে কিংবা কোনো পণ্য অর্ডার করলে
+                                    আপনি পাবেন{" "}
+                                    <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>।
+                                  </>
+                                ) : (
+                                  <>
+                                    When someone books a service or orders a product through your referral
+                                    link, you will receive{" "}
+                                    <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>.
+                                  </>
+                                )}
+                              </p>
+                              {referralSettings.min_order_amount !== null && (
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {bn ? `ন্যূনতম অর্ডার: ৳${referralSettings.min_order_amount}` : `Minimum order: ৳${referralSettings.min_order_amount}`}
+                                </p>
+                              )}
                             </div>
                           </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
+                          <div className="relative shrink-0">
+                              <button
+                                type="button"
+                                onClick={() => navigate("/")}
+                                className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                >
+                                <Home className="h-4 w-4" />
+                                {bn ? "এখনই কিনুন" : "Buy Now"}
+                              </button>
+                          </div>
+                        </div>
+                      </motion.div>
+                    
+                  ) : (
+                    referralSettings && isEnabledFlag(referralSettings.is_enabled) && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm md:p-6"
+                        >
+                        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                          <div className="flex items-start gap-3">
+                            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
+                              <Gift className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h3 className="font-bold text-slate-900">{bn ? "এই রেফারেল লিঙ্কটি শেয়ার করুন" : "Invite friends and earn rewards"}</h3>
+                              <p className="mt-1 text-sm text-slate-600">
+                                {bn ? (
+                                  <>
+                                    এই লিঙ্কের মাধ্যমে যেকোনো সার্ভিস বুক করলে কিংবা কোনো পণ্য অর্ডার করলে
+                                    আপনি পাবেন{" "}
+                                    <span className="font-bold">{referralSettings.referrer_reward_amount} {referralSettings.referrer_reward_currency}</span>{" "}
+                                    এবং যিনি লিঙ্কটি ব্যবহার করবেন তিনি পাবেন{" "}
+                                    <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>।
+                                  </>
+                                ) : (
+                                  <>
+                                    When someone books a service or orders a product through your referral
+                                    link, you will receive{" "}
+                                    <span className="font-bold">{referralSettings.referrer_reward_amount} {referralSettings.referrer_reward_currency}</span>, and the person who uses your link will receive{" "}
+                                    <span className="font-bold">{referralSettings.referred_reward_amount} {referralSettings.referred_reward_currency}</span>.
+                                  </>
+                                )}
+                              </p>
+                              {referralSettings.min_order_amount !== null && (
+                                <p className="mt-1 text-xs text-slate-500">
+                                  {bn ? `ন্যূনতম অর্ডার: ৳${referralSettings.min_order_amount}` : `Minimum order: ৳${referralSettings.min_order_amount}`}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          <div className="relative shrink-0">
+                            {referralCode ? (
+                              <>
+                                <p className="text-sm font-semibold text-slate-700">
+                                  <p>{bn ? "আপনার রেফারেল লিংক:" : "Your referral link:"}{" "}</p>
+                                  <span className="text-emerald-700">{`${import.meta.env.VITE_FRONTEND_URL}/?ref=${referralCode}`}</span>
+                                </p>
+                                <button
+                                  type="button"
+                                  onClick={handleReferralShare}
+                                  disabled={referralSharing}
+                                  className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                                >
+                                  {referralSharing ? <Loader2 className="h-4 w-4 animate-spin" /> : <Share2 className="h-4 w-4" />}
+                                  {bn ? "শেয়ার করুন" : "Share referral link"}
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={handleReferralGenerate}
+                                disabled={referralSharing}
+                                className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                              >
+                                <Settings className="h-4 w-4" />
+                                {bn ? "রেফারাল লিঙ্ক তৈরি করুন" : "Generate Referral Link"}
+                              </button>
+                            )}
+                            {referralPopupOpen && (referralShareLink || referralStats?.code?.link) && (
+                              <div className="absolute right-0 top-full z-30 mt-2 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+                                <div className="mb-3 flex items-center justify-between">
+                                  <p className="text-sm font-bold text-slate-900">{bn ? "শেয়ার করুন" : "Share referral link"}</p>
+                                  <button type="button" onClick={() => setReferralPopupOpen(false)} className="rounded-full p-1 text-slate-500 hover:bg-slate-100" aria-label="Close">
+                                    <X className="h-4 w-4" />
+                                  </button>
+                                </div>
+                                <div className="grid grid-cols-5 gap-2">
+                                  {[
+                                    { key: "facebook", label: "Facebook", icon: <Facebook className="h-4 w-4" />, className: "bg-[#1877F2]" },
+                                    { key: "youtube", label: "YouTube", icon: <Youtube className="h-4 w-4" />, className: "bg-[#FF0000]" },
+                                    { key: "twitter", label: "Twitter", icon: <Twitter className="h-4 w-4" />, className: "bg-slate-900" },
+                                    { key: "whatsapp", label: "WhatsApp", icon: <MessageCircle className="h-4 w-4" />, className: "bg-[#25D366]" },
+                                    { key: "messenger", label: "Messenger", icon: <MessageCircle className="h-4 w-4" />, className: "bg-[#0084FF]" },
+                                  ].map((item) => (
+                                    <button
+                                      key={item.key}
+                                      type="button"
+                                      title={item.label}
+                                      onClick={() => shareReferralTo(item.key)}
+                                      className={`flex h-10 w-10 items-center justify-center rounded-full text-white transition-transform hover:scale-110 ${item.className}`}
+                                    >
+                                      {item.icon}
+                                    </button>
+                                  ))}
+                                </div>
+                                <div className="mt-3 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+                                  <span className="min-w-0 flex-1 truncate font-mono text-xs text-slate-600">{referralShareLink || referralStats?.code?.link}</span>
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const link = referralShareLink || referralStats?.code?.link;
+                                      if (!link) return;
+                                      await navigator.clipboard.writeText(link);
+                                      toast.success(bn ? "লিংক কপি হয়েছে" : "Link copied");
+                                    }}
+                                    className="rounded-lg bg-emerald-600 p-2 text-white hover:bg-emerald-700"
+                                    title={bn ? "লিংক কপি করুন" : "Copy link"}
+                                  >
+                                    <Copy className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </motion.div>
+                    )
+                  )}
+                {/*  REFERRAL SECTION END */}
 
                 {/* Quick Stats Grid */}
                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-1 md:gap-4">

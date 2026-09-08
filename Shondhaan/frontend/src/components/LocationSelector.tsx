@@ -188,7 +188,7 @@ const LocationSelector = ({ compact = false }: LocationSelectorProps = {}) => {
             type="button"
             onClick={() => setOpen(!open)}
             aria-label={bn ? "অবস্থান নির্বাচন করুন" : "Choose location"}
-            className="press flex h-9 min-w-0 max-w-full flex-1 items-center gap-1 rounded-xl border shadow border-gray-400 bg-background/60 px-2.5 text-foreground/90 backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary active:scale-[0.97]"
+            className="press flex h-9 min-w-0 max-w-full flex-1 items-center gap-1 rounded-xl border border-gray-400 bg-background/60 px-2.5 text-foreground/90 backdrop-blur transition-colors hover:border-primary/40 hover:bg-secondary active:scale-[0.97]"
           >
             <MapPin className="h-[14px] w-[14px] shrink-0 text-foreground" strokeWidth={2.2} />
             <span className="min-w-0 flex-1 text-foreground truncate text-left text-[11.5px] font-semibold leading-none tracking-tight">
