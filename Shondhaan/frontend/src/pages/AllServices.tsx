@@ -796,7 +796,7 @@ const AllServices = () => {
   return (
     <div className="min-h-screen bg-[aliceblue]">
       <Navbar />
-      <div className="pt-[20px]" />
+      <div className="md:pt-[20px]" />
 
       <div className="app-container py-5 md:py-8">
         <div className="block gap-3">
@@ -807,7 +807,7 @@ const AllServices = () => {
             <h1 className="font-heading text-xl font-bold text-foreground md:text-2xl">{t("as.title")}</h1>
           </div>
 
-          <div className="mb-4 space-y-2.5 w-full">
+          <div className="md:mb-2 space-y-0 w-full">
             <div className="flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />

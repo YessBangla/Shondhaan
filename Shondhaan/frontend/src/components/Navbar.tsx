@@ -485,7 +485,7 @@ const handleSignOut = async () => {
           </div>
           {/* mobile navbar start */}
           <div className="relative mt-2 w-full overflow-x-auto md:hidden bg-background pr-6">
-            <ChevronRight className="h-5 w-5 absolute right-1 top-2" />
+            <ChevronRight className="h-5 w-5 absolute right-1 top-2.5" />
             <div className="flex items-stretch gap-3 justify-between bg-background px-2 py-1 border-b shadow-xl max-w-[400px] overflow-x-auto md:hidden">
 
               <LongPressTooltip label={L.join.long}>
@@ -531,14 +531,14 @@ const handleSignOut = async () => {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="center" className="bg-background border shadow-lg">
-                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/")}>
-                    <Home className="h-3 w-3 text-primary" /> {bn ? "সার্ভিস পেইজ" : "Service Page"}
+                  <DropdownMenuItem className="text-[10px] font-bold flex group items-center gap-2" onClick={() => navigate("/")}>
+                    <Home className="h-3 w-3 text-primary group-hover:text-white" /> {bn ? "সার্ভিস পেইজ" : "Service Page"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/all-services")}>
-                    <Package className="h-3 w-3 text-primary" /> {bn ? "সকল সার্ভিস" : "All Services"}
+                  <DropdownMenuItem className="text-[10px] font-bold flex group items-center gap-2" onClick={() => navigate("/all-services")}>
+                    <Package className="h-3 w-3 text-primary group-hover:text-white" /> {bn ? "সকল সার্ভিস" : "All Services"}
                   </DropdownMenuItem>
-                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/track")}>
-                    <Route className="h-3 w-3 text-primary" /> {bn ? "সকল ট্র্যাক" : "Services Track"}
+                  <DropdownMenuItem className="text-[10px] font-bold flex group items-center gap-2" onClick={() => navigate("/track")}>
+                    <Route className="h-3 w-3 text-primary group-hover:text-white" /> {bn ? "সকল ট্র্যাক" : "Services Track"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
