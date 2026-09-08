@@ -107,26 +107,26 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className={`relative overflow-hidden rounded-3xl p-6 md:p-8 text-white ${
+        className={`relative overflow-hidden border border-userprimary rounded-3xl p-6 md:p-8 text-white ${
           isDisabled
-            ? "bg-gradient-to-br from-slate-400 via-slate-500 to-slate-600"
-            : "bg-gradient-to-br from-green-500 via-blue-500 to-rose-500"
+            ? "bg-userprimaryshade"
+            : "bg-userprimaryshade"
         }`}
       >
         <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/confetti.png')] opacity-20" />
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-12 w-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center">
+            <div className="h-12 w-12 rounded-2xl bg-userprimary backdrop-blur-sm flex items-center justify-center">
               {isDisabled ? <Clock className="h-6 w-6" /> : <Gift className="h-6 w-6" />}
             </div>
             <div>
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl text-foreground font-bold">
                 {isDisabled
                   ? (bn ? "রেফারেল প্রোগ্রাম (বন্ধ)" : "Referral Program (Disabled)")
                   : (bn ? "রেফারেল প্রোগ্রাম" : "Referral Program")
                 }
               </h2>
-              <p className="text-white/80 text-sm">
+              <p className="text-foreground text-sm">
                 {isDisabled
                   ? (bn ? "সাময়িকভাবে বন্ধ আছে" : "Currently disabled")
                   : (bn ? "বন্ধুদের আমন্ত্রণ করুন, পুরস্কার অর্জন করুন" : "Invite friends, earn rewards")
@@ -163,11 +163,11 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.1 + i * 0.1 }}
-                  className="bg-white/15 backdrop-blur-sm rounded-2xl p-4"
+                  className="bg-background backdrop-blur-sm rounded-2xl shadow-sm border p-4"
                 >
-                  <p className="text-white/70 text-xs font-medium">{item.label}</p>
-                  <p className="text-2xl font-bold mt-1">{item.value}</p>
-                  <p className="text-white/60 text-[10px] mt-0.5">{item.sub}</p>
+                  <p className="text-userprimary text-xs font-medium">{item.label}</p>
+                  <p className="text-2xl text-userprimary font-bold mt-1">{item.value}</p>
+                  <p className="text-userprimary text-[10px] mt-0.5">{item.sub}</p>
                 </motion.div>
               ))}
             </div>
@@ -269,8 +269,8 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
           transition={{ delay: 0.2 }}
           className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center"
         >
-          <div className="h-16 w-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
-            <Gift className="h-8 w-8 text-amber-500" />
+          <div className="h-16 w-16 rounded-2xl bg-userprimaryshade flex items-center justify-center mx-auto mb-4">
+            <Gift className="h-8 w-8 text-userprimary" />
           </div>
           <h3 className="text-lg font-bold text-slate-900 mb-2">
             {bn ? "রেফারেল কোড তৈরি করুন" : "Generate Your Referral Code"}
@@ -283,7 +283,7 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
           <button
             onClick={handleGenerate}
             disabled={generating}
-            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-3 text-sm font-semibold text-white hover:from-amber-600 hover:to-orange-600 transition-all shadow-lg shadow-amber-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-userprimary to-green-600 px-6 py-3 text-sm font-semibold text-white hover:from-green-600 hover:to-userprimary transition-all shadow-lg shadow-green-500/25 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {generating ? (
               <RefreshCw className="h-4 w-4 animate-spin" />

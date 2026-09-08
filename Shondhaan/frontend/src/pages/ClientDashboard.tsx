@@ -39,6 +39,9 @@ import ReferralTab from "@/components/client/ReferralTab";
 import { fetchReferralSettings } from "../lib/referralSettings";
 import { useReferral } from "@/contexts/ReferalContext";
 import { updateBookingStatus as updateBackendBookingStatus } from "@/lib/bookingApi";
+import { useReferralCode } from "@/hooks/useReferralCode";
+const referralCode = useReferralCode();
+const hasReferralCode = Boolean(referralCode);
 
 const MART_API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
@@ -151,6 +154,15 @@ const normalizeProfileImageUrl = (url?: string | null) => {
   const base = (PROFILE_API_BASE || "").replace(/\/+$/, "");
   const formatted = url.startsWith("/") ? url : `/${url}`;
   return `${base}${formatted}`;
+};
+
+// MySQL tinyint(1)/boolean columns can arrive as 1, "1", true, or "true"
+// depending on the driver/serializer — normalize instead of using === true.
+const isEnabledFlag = (value: unknown): boolean => {
+  if (value === true) return true;
+  if (value === 1) return true;
+  if (typeof value === "string") return value === "1" || value.toLowerCase() === "true";
+  return false;
 };
 
 // Small helper so every authenticated fetch call includes the Bearer token
@@ -960,14 +972,19 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </motion.div>
+  {referralCode ? (
+    // referral code exists in cookies
+  ) : (
+    // no referral code
+  )}
 
-                {referralSettings && referralSettings.is_enabled === true && (
+                {referralSettings && isEnabledFlag(referralSettings.is_enabled) && (
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
                     className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm md:p-6"
-                  >
+                    >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">
