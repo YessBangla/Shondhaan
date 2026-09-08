@@ -330,7 +330,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
           {/* Left scroll button — hidden by default, visible on group hover */}
           <motion.button
             onClick={() => scroll("left")}
-            className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-blue-500 to-emerald-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex opacity-0 md:opacity-0 lg:group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300"
+            className="absolute -left-7 -md:left-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-blue-500 to-emerald-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex opacity-1 md:opacity-0 lg:group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300"
             aria-label="Scroll left">
             <ChevronLeft className="h-5 w-5" />
           </motion.button>
@@ -338,7 +338,7 @@ const CategoryBar = ({ categories = [], selectedCategoryId = "all", onCategorySe
           {/* Right scroll button — hidden by default, visible on group hover */}
           <motion.button
             onClick={() => scroll("right")}
-            className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-emerald-500 to-blue-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex opacity-0 md:opacity-0 lg:group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300"
+            className="absolute -right-7 -md:right-9 top-1/2 z-10 h-6 w-6 md:h-10 md:w-10 -translate-y-1/2 items-center justify-center rounded-full md:bg-gradient-to-br from-emerald-500 to-blue-500 text-foreground md:text-white md:shadow-lg hover:shadow-xl md:flex opacity-1 md:opacity-0 lg:group-hover:opacity-100 pointer-events-none group-hover:pointer-events-auto transition-opacity duration-300"
             aria-label="Scroll right">
             <ChevronRight className="h-5 w-5" />
           </motion.button>

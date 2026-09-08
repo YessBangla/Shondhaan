@@ -15,6 +15,7 @@ import {
   Route,
   Store,
   Crown,
+  Home,
   LayoutGrid,
   ChevronDown,
   UserPlus,
@@ -25,8 +26,10 @@ import {
   Heart,
   Sun,
   Moon,
+  ChevronRight,
   type LucideIcon,
   Plus,
+  Package,
 } from "lucide-react";
 import { useState, useEffect, useRef, useCallback, type FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -47,6 +50,13 @@ import LongPressTooltip from "@/components/LongPressTooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Input } from "@/components/ui/input";
 import { useTheme } from "@/hooks/useTheme";
+
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/components/ui/dropdown-menu";
 
 
 const API_BASE =
@@ -252,6 +262,10 @@ const handleSignOut = async () => {
   const toggleLang = () => setLanguage(language === "bn" ? "en" : "bn");
 
   const L = {
+    service: {
+      short: bn ? "সার্ভিস" : "Service",
+      long: bn ? "সার্ভিস দেখুন" : "View Service",
+    },
     request: {
       short: bn ? "রিকোয়েস্ট" : "Request",
       long: bn ? "সার্ভিস রিকোয়েস্ট করুন" : "Request a service",
@@ -470,114 +484,146 @@ const handleSignOut = async () => {
             </div>
           </div>
           {/* mobile navbar start */}
-          <div className="mt-2 flex items-stretch justify-between bg-background px-2 py-1 border-b shadow-xl">
-            <LongPressTooltip label={L.join.long}>
-              <button
-                onClick={() => navigate("/join")}
-                aria-label={L.join.long}
-                title={L.join.long}
-                className="press h-8 flex group relative gap-1 item-center justify-center rounded-xl px-2 bg-primary px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
-                >
-                {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                <Plus className="h-3 w-3 my-auto" />
-                <span className="text-[12px] my-auto font-semibold leading-none truncate max-w-full">
-                  {L.join.short}
-                </span>
-              </button>
-            </LongPressTooltip>
-            <LongPressTooltip label={L.emergency.long}>
-              <button
-                onClick={() => setEmergencyOpen(true)}
-                aria-label={L.emergency.long}
-                title={L.emergency.long}
-                className="press h-8 group relative  rounded-xl px-2 border border-orange-600 bg-gradient-to-b from-orange-600 to-destructive/40 px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
-                >
-                {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
-                  {L.emergency.short}
-                </span>
-              </button>
-            </LongPressTooltip>
+          <div className="relative mt-2 w-full overflow-x-auto md:hidden bg-background pr-6">
+            <ChevronRight className="h-5 w-5 absolute right-1 top-2" />
+            <div className="flex items-stretch gap-3 justify-between bg-background px-2 py-1 border-b shadow-xl max-w-[400px] overflow-x-auto md:hidden">
 
-            <LongPressTooltip label={L.request.long}>
-              <button
-                onClick={() => setRequestOpen(true)}
-                aria-label={L.request.long}
-                title={L.request.long}
-                className="press h-8 group relative hover:border-primary/15 bg-transparent sm:px-1 text-foreground transition-all duration-200  active:scale-[0.97]"
-                >
-                {/* <HelpCircle className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
-                  {L.request.short}
-                </span>
-              </button>
-            </LongPressTooltip>
+              <LongPressTooltip label={L.join.long}>
+                <button
+                  onClick={() => navigate("/join")}
+                  aria-label={L.join.long}
+                  title={L.join.long}
+                  className="press h-8 flex group relative gap-1 item-center justify-center rounded-xl px-2 bg-primary px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                  >
+                  {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                  <Plus className="h-3 w-3 my-auto" />
+                  <span className="text-[12px] my-auto font-semibold leading-none truncate max-w-full">
+                    {L.join.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
 
-            <LongPressTooltip label={L.track.long}>
-              <button
-                onClick={() => navigate("/track")}
-                aria-label={L.track.long}
-                title={L.track.long}
-                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
-                >
-                {/* <Route className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
-                  {L.track.short}
-                </span>
-              </button>
-            </LongPressTooltip>
+              <LongPressTooltip label={L.emergency.long}>
+                <button
+                  onClick={() => setEmergencyOpen(true)}
+                  aria-label={L.emergency.long}
+                  title={L.emergency.long}
+                  className="press h-8 group relative  rounded-xl px-2 border border-orange-600 bg-gradient-to-b from-orange-600 to-destructive/40 px-0.5 py-0 sm:px-1 text-white transition-all duration-200 active:scale-[0.97]"
+                  >
+                  {/* <Zap className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                  <span className="text-[12px] font-semibold leading-none truncate max-w-full">
+                    {L.emergency.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
 
-            <LongPressTooltip label={L.lang.long}>
-              <button 
-                onClick={toggleLang}
-                aria-label={L.lang.long}
-                title={L.lang.long}
-                className="press group relative h-8 bg-transparent sm:px-1 text-foreground transition-all duration-200 active:scale-[0.97]"
-                >
-                {/* <Globe className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
-                  {L.lang.short}
-                </span>
-              </button>
-            </LongPressTooltip>
-
-            <LongPressTooltip label={L.cart.long}>
-              <button
-                onClick={() => setIsOpen(true)}
-                aria-label={L.cart.long}
-                title={L.cart.long}
-                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
-                >
-                <span className="relative hidden flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
-                  {/* <ShoppingBag className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
-                  {totalItems > 0 && (
-                    <span className="absolute -top-1.5 -right-2 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-mobile-accent px-1 text-[9px] font-bold leading-none text-mobile-accent-foreground ring-[1.5px] ring-background">
-                      {totalItems}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    aria-label={L.service.long}
+                    title={L.service.long}
+                    className="press h-8 group relative hover:border-primary/15 bg-transparent sm:px-1 text-foreground transition-all duration-200 active:scale-[0.97]"
+                    >
+                    <span className="text-[12px] flex font-semibold leading-none truncate max-w-full">
+                      {L.service.short}
+                      <ChevronDown className="h-3 w-3" />
                     </span>
-                  )}
-                </span>
-                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
-                  {L.cart.short}
-                </span>
-              </button>
-            </LongPressTooltip>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="center" className="bg-background border shadow-lg">
+                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/")}>
+                    <Home className="h-3 w-3 text-primary" /> {bn ? "সার্ভিস পেইজ" : "Service Page"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/all-services")}>
+                    <Package className="h-3 w-3 text-primary" /> {bn ? "সকল সার্ভিস" : "All Services"}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem className="text-[10px] font-bold flex items-center gap-2" onClick={() => navigate("/track")}>
+                    <Route className="h-3 w-3 text-primary" /> {bn ? "সকল ট্র্যাক" : "Services Track"}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
 
-            <LongPressTooltip label={L.alerts.long}>
-              <button
-                onClick={() => navigate("/notifications")}
-                aria-label={L.alerts.long}
-                title={L.alerts.long}
-                className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
-                >
-                {/* <span className="hidden relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
-                  <Bell className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
-                  <span className="absolute hidden -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-destructive motion-safe:animate-pulse" />
-                </span> */}
-                <span className="text-[12px] font-semibold leading-none truncate max-w-full">
-                  {L.alerts.short}
-                </span>
-              </button>
-            </LongPressTooltip>
+              <LongPressTooltip label={L.request.long}>
+                <button
+                  onClick={() => setRequestOpen(true)}
+                  aria-label={L.request.long}
+                  title={L.request.long}
+                  className="press h-8 group relative hover:border-primary/15 bg-transparent sm:px-1 text-foreground transition-all duration-200  active:scale-[0.97]"
+                  >
+                  {/* <HelpCircle className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                  <span className="text-[12px] font-semibold leading-none truncate max-w-full">
+                    {L.request.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
+
+              <LongPressTooltip label={L.track.long}>
+                <button
+                  onClick={() => navigate("/track")}
+                  aria-label={L.track.long}
+                  title={L.track.long}
+                  className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
+                  >
+                  {/* <Route className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                  <span className="text-[9px] xs:text-[10px] font-semibold leading-none truncate max-w-full">
+                    {L.track.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
+
+              <LongPressTooltip label={L.lang.long}>
+                <button 
+                  onClick={toggleLang}
+                  aria-label={L.lang.long}
+                  title={L.lang.long}
+                  className="press group relative h-8 bg-transparent sm:px-1 text-foreground transition-all duration-200 active:scale-[0.97]"
+                  >
+                  {/* <Globe className="hidden h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                  <span className="text-[12px] font-semibold leading-none truncate max-w-full">
+                    {L.lang.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
+
+              <LongPressTooltip label={L.cart.long}>
+                <button
+                  onClick={() => setIsOpen(true)}
+                  aria-label={L.cart.long}
+                  title={L.cart.long}
+                  className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
+                  >
+                  <span className="relative hidden flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
+                    {/* <ShoppingBag className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" /> */}
+                    {totalItems > 0 && (
+                      <span className="absolute -top-1.5 -right-2 flex h-[15px] min-w-[15px] items-center justify-center rounded-full bg-mobile-accent px-1 text-[9px] font-bold leading-none text-mobile-accent-foreground ring-[1.5px] ring-background">
+                        {totalItems}
+                      </span>
+                    )}
+                  </span>
+                  <span className="text-[12px] font-semibold leading-none truncate max-w-full">
+                    {L.cart.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
+
+              <LongPressTooltip label={L.alerts.long}>
+                <button
+                  onClick={() => navigate("/notifications")}
+                  aria-label={L.alerts.long}
+                  title={L.alerts.long}
+                  className="press h-8 group relative bg-transparent text-foreground transition-all duration-200 active:scale-[0.97]"
+                  >
+                  {/* <span className="hidden relative flex h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px] items-center justify-center">
+                    <Bell className="h-4 w-4 xs:h-[17px] xs:w-[17px] sm:h-[18px] sm:w-[18px]" />
+                    <span className="absolute hidden -top-0.5 -right-0.5 h-[7px] w-[7px] rounded-full bg-destructive motion-safe:animate-pulse" />
+                  </span> */}
+                  <span className="text-[12px] font-semibold leading-none truncate max-w-full">
+                    {L.alerts.short}
+                  </span>
+                </button>
+              </LongPressTooltip>
+
+            </div>
           </div>
           {/* mobile navbar end */}
         </div>
