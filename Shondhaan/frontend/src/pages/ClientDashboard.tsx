@@ -960,6 +960,7 @@ const ClientDashboard = () => {
                     </div>
                   </div>
                 </motion.div>
+                <h1>{referralSettings}</h1>
 
                 {referralSettings && referralSettings.is_enabled === true && (
                   <motion.div
@@ -967,7 +968,7 @@ const ClientDashboard = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.15 }}
                     className="rounded-3xl border border-emerald-100 bg-gradient-to-r from-emerald-50 via-white to-blue-50 p-5 shadow-sm md:p-6"
-                  >
+                    >
                     <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
                         <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-600">

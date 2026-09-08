@@ -340,7 +340,7 @@ const EmergencyServiceModal = ({ open, onClose }: Props) => {
                 </div>
 
                 {/* Quick action buttons */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
+                <div className="hidden grid-cols-2 gap-2 mb-4">
                   <a href="" className="flex items-center gap-2 rounded-xl border border-destructive/30 bg-destructive/5 px-3 py-2.5 text-xs font-semibold text-destructive transition-colors hover:bg-destructive/10">
                     <Droplet className="h-4 w-4 shrink-0" />
                     {language === "bn" ? "এমারজেন্সি রক্ত" : "Emergency Blood"}
