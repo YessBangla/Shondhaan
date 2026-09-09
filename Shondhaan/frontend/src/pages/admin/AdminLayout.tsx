@@ -47,6 +47,7 @@ const NAV: NavGroup[] = [
       { to: "/admin/smart-dashboard", label: "স্মার্ট ড্যাশবোর্ড", icon: <Sparkles className="h-4 w-4" /> },
       { to: "/admin/analytics", label: "অ্যানালিটিক্স", icon: <BarChart3 className="h-4 w-4" /> },
       { to: "/admin/service", label: "বুকিং", icon: <Calendar className="h-4 w-4" /> },
+      { to: "/admin/provider-requests", label: "প্রোভাইডার আবেদন", icon: <ShieldCheck className="h-4 w-4" /> },
       { to: "/admin/requests", label: "সার্ভিস রিকোয়েস্ট", icon: <FileText className="h-4 w-4" /> },
       { to: "/admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> },
       { to: "/admin/approval-queue", label: "অনুমোদন কিউ", icon: <Inbox className="h-4 w-4" /> },

@@ -22,6 +22,7 @@ export const ADMIN_ACCESS_BY_ROLE: Partial<Record<RoleKey, string[] | "*">> = {
   admin: "*",
   service_admin: [
     "/admin/service",
+    "/admin/provider-requests",
     "/admin/smart-dashboard",
     "/admin/analytics",
     "/admin/bookings",

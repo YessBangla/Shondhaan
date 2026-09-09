@@ -12,6 +12,55 @@ export const pool = mysql.createPool({
 
 let platformFeeSchemaPromise = null;
 
+let providerSchemaPromise = null;
+
+export const ensureProviderSchema = () => {
+  if (!providerSchemaPromise) {
+    providerSchemaPromise = (async () => {
+      const columnsToEnsure = [
+        { name: "user_id", type: "VARCHAR(255) NULL" },
+        { name: "full_name", type: "VARCHAR(255) NULL" },
+        { name: "address", type: "LONGTEXT NULL" },
+        { name: "service_category", type: "VARCHAR(255) NULL" },
+        { name: "experience_years", type: "DECIMAL(5,2) NOT NULL DEFAULT 0" },
+        { name: "nid_front_url", type: "VARCHAR(500) NULL" },
+        { name: "nid_back_url", type: "VARCHAR(500) NULL" },
+        { name: "status", type: "VARCHAR(30) NOT NULL DEFAULT 'pending'" },
+        { name: "status_reason", type: "TEXT NULL" },
+        { name: "is_active", type: "TINYINT NOT NULL DEFAULT 0" },
+      ];
+
+      for (const column of columnsToEnsure) {
+        try {
+          await pool.query(`ALTER TABLE providers ADD COLUMN ${column.name} ${column.type}`);
+        } catch (error) {
+          if (error.errno !== 1060) {
+            console.error(`Error ensuring providers.${column.name}:`, error.message);
+          }
+        }
+      }
+
+      // Existing active provider rows predate verification statuses and are already approved.
+      await pool.query(
+        "UPDATE providers SET status = 'approved' WHERE is_active = 1 AND (status IS NULL OR status = 'pending')"
+      );
+
+      try {
+        await pool.query("CREATE UNIQUE INDEX providers_user_id_unique ON providers (user_id)");
+      } catch (error) {
+        if (![1061, 1831].includes(error.errno)) {
+          console.error("Error ensuring providers.user_id index:", error.message);
+        }
+      }
+    })().catch((error) => {
+      providerSchemaPromise = null;
+      throw error;
+    });
+  }
+
+  return providerSchemaPromise;
+};
+
 export const ensurePlatformFeeSchema = () => {
   if (!platformFeeSchemaPromise) {
     platformFeeSchemaPromise = (async () => {

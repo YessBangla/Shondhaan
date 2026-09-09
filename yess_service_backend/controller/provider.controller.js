@@ -1,13 +1,29 @@
-import { pool } from "../config/db.js";
+import { ensureProviderSchema, pool } from "../config/db.js";
 
 const PROVIDER_TABLE = "providers"; 
+
+const reviewerRoles = new Set(["admin", "service_admin", "super_admin"]);
+
+export const requireProviderReviewer = (req, res, next) => {
+  const role = req.user?.type || req.user?.role;
+  if (!reviewerRoles.has(role)) {
+    return res.status(403).json({ message: "Provider reviewer access required" });
+  }
+  next();
+};
+
+const selectProviderColumns = `
+  id, user_id, full_name, phone, email, address,
+  service_category, experience_years, nid_front_url, nid_back_url,
+  status, status_reason, created_at, updated_at
+`;
 
 
 const formatProvider = (provider) => ({
   id: provider.id,
   user_id: provider.user_id,
 
-  full_name: provider.full_name,
+  full_name: provider.full_name || provider.name,
   phone: provider.phone,
   email: provider.email,
   address: provider.address,
@@ -24,6 +40,124 @@ const formatProvider = (provider) => ({
   created_at: provider.created_at,
   updated_at: provider.updated_at,
 });
+
+export const getMyProviderApplication = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const userId = req.user?.id;
+    if (!userId) return res.status(401).json({ message: "Authenticated user is required" });
+
+    const [rows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
+      [userId]
+    );
+    return res.json({ application: rows[0] ? formatProvider(rows[0]) : null });
+  } catch (error) {
+    console.error("Get provider application error:", error);
+    return res.status(500).json({ message: "Failed to fetch provider application" });
+  }
+};
+
+export const submitProviderApplication = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const userId = req.user?.id;
+    const { full_name, phone, email, address, service_category, experience_years } = req.body;
+    const front = req.files?.nid_front?.[0];
+    const back = req.files?.nid_back?.[0];
+
+    if (!userId) return res.status(401).json({ message: "Authenticated user is required" });
+    if (!full_name || !phone || !address || !service_category) {
+      return res.status(400).json({ message: "Name, phone, address, and service category are required" });
+    }
+    if (!front || !back) return res.status(400).json({ message: "Both NID images are required" });
+
+    const years = Number(experience_years);
+    if (!Number.isFinite(years) || years < 0 || years > 60) {
+      return res.status(400).json({ message: "Experience years must be between 0 and 60" });
+    }
+
+    const [categoryRows] = await pool.execute(
+      "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+      [service_category]
+    );
+    if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+
+    const [existing] = await pool.execute(
+      `SELECT id, status FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
+      [userId]
+    );
+    if (existing[0]?.status === "approved") {
+      return res.status(409).json({ message: "This account is already an approved provider" });
+    }
+
+    const frontUrl = `/uploads/${front.filename}`;
+    const backUrl = `/uploads/${back.filename}`;
+    let providerId = existing[0]?.id;
+
+    if (existing.length) {
+      await pool.execute(
+        `UPDATE ${PROVIDER_TABLE}
+         SET full_name = ?, phone = ?, email = ?, address = ?, service_category = ?,
+             experience_years = ?, nid_front_url = ?, nid_back_url = ?, status = 'pending', status_reason = NULL
+         WHERE id = ?`,
+        [full_name.trim(), phone.trim(), email?.trim() || null, address.trim(), service_category, years, frontUrl, backUrl, providerId]
+      );
+    } else {
+      const [result] = await pool.execute(
+        `INSERT INTO ${PROVIDER_TABLE}
+         (user_id, full_name, phone, email, address, service_category, experience_years,
+          nid_front_url, nid_back_url, status, is_active)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+        [userId, full_name.trim(), phone.trim(), email?.trim() || null, address.trim(), service_category, years, frontUrl, backUrl]
+      );
+      providerId = result.insertId;
+    }
+
+    const [rows] = await pool.execute(`SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`, [providerId]);
+    return res.status(201).json({ message: "Provider verification submitted", application: formatProvider(rows[0]) });
+  } catch (error) {
+    console.error("Submit provider application error:", error);
+    return res.status(500).json({ message: "Failed to submit provider verification" });
+  }
+};
+
+export const getProviderApplications = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const status = req.query.status && req.query.status !== "all" ? req.query.status : null;
+    const values = status ? [status] : [];
+    const [rows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} ${status ? "WHERE status = ?" : ""} ORDER BY created_at DESC`,
+      values
+    );
+    return res.json({ applications: rows.map(formatProvider) });
+  } catch (error) {
+    console.error("Get provider applications error:", error);
+    return res.status(500).json({ message: "Failed to fetch provider applications" });
+  }
+};
+
+export const updateProviderApplicationStatus = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const { userId } = req.params;
+    const { status, status_reason } = req.body;
+    if (!["pending", "approved", "rejected"].includes(status)) return res.status(400).json({ message: "Invalid application status" });
+
+    const [result] = await pool.execute(
+      `UPDATE ${PROVIDER_TABLE} SET status = ?, status_reason = ?, is_active = ? WHERE user_id = ?`,
+      [status, status_reason || null, status === "approved" ? 1 : 0, userId]
+    );
+    if (!result.affectedRows) return res.status(404).json({ message: "Provider application not found" });
+
+    const [rows] = await pool.execute(`SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`, [userId]);
+    return res.json({ message: "Provider application updated", application: formatProvider(rows[0]) });
+  } catch (error) {
+    console.error("Update provider application error:", error);
+    return res.status(500).json({ message: "Failed to update provider application" });
+  }
+};
 
 export const getProviders = async (req, res) => {
   try {

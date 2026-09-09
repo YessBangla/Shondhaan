@@ -115,6 +115,7 @@ interface WorkspaceDashboardProps {
 const ROLE_ALLOWED_PATHS: Record<string, Set<string>> = {
   service_admin: new Set([
     "/admin/service",
+    "/admin/provider-requests",
     "/admin/bookings",
     "/admin/requests",
     "/admin/services",
