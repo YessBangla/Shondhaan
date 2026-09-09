@@ -41,22 +41,33 @@ function timeAgo(dateStr: string, bn = true) {
 // Helper component to render category icons whether they are URLs or emojis
 const CategoryIcon = ({ icon, className = "w-5 h-5" }: { icon?: string; className?: string }) => {
   if (!icon) return null;
-  
+
   const isImage = icon.startsWith("http") || icon.startsWith("/") || icon.startsWith("data:") || icon.startsWith("blob:");
-  
+
   if (isImage) {
     return (
-      <img 
-        src={icon} 
-        alt="Category Icon" 
+      <img
+        src={icon}
+        alt="Category Icon"
         className={`${className} object-contain`}
         onError={(e) => { (e.target as HTMLImageElement).style.visibility = 'hidden'; }}
       />
     );
   }
-  
+
   return <span className="text-base leading-none">{icon}</span>;
 };
+
+// A single compact row used for the meta strip (location / posted / views / condition)
+const StatItem = ({ icon: Icon, label, value }: { icon: any; label: string; value: React.ReactNode }) => (
+  <div className="flex items-center gap-2 min-w-0">
+    <Icon className="h-4 w-4 text-primary/70 flex-shrink-0" />
+    <div className="min-w-0 leading-tight">
+      <p className="text-[11px] text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold text-foreground truncate">{value}</p>
+    </div>
+  </div>
+);
 
 const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) => {
   const navigate = useNavigate();
@@ -80,68 +91,44 @@ const SellerProfileCard = ({ sellerId, bn }: { sellerId: string; bn: boolean }) 
     enabled: !!sellerId,
   });
 
-  if (isLoading) return <Card className="border-border/50"><CardContent className="p-4"><Skeleton className="h-16 w-full" /></CardContent></Card>;
+  if (isLoading) return <Card className="border-border/50"><CardContent className="p-4"><Skeleton className="h-14 w-full" /></CardContent></Card>;
 
   const memberDate = sellerData?.memberSince
     ? new Date(sellerData.memberSince).toLocaleDateString("bn-BD", { year: "numeric", month: "short" })
     : "";
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-      <Card className="border-border/50 overflow-hidden hover:shadow-md transition-shadow">
-        <div className="h-2 bg-gradient-to-r from-primary via-primary/70 to-primary/40" />
-        <CardContent className="p-5">
-          <div className="flex items-center gap-3 mb-4">
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.25 }}>
+      <Card className="border-border/50 overflow-hidden">
+        <CardContent className="p-4">
+          <button
+            onClick={() => navigate(`/deal/seller/${sellerId}`)}
+            className="flex items-center gap-3 w-full text-left group"
+          >
             {sellerData?.avatar ? (
-              <img src={sellerData.avatar} alt="" className="h-14 w-14 rounded-full object-cover border-2 border-primary/20 flex-shrink-0" />
+              <img src={sellerData.avatar} alt="" className="h-11 w-11 rounded-full object-cover flex-shrink-0" />
             ) : (
-              <div className="h-14 w-14 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 border-2 border-primary/20 flex items-center justify-center flex-shrink-0">
-                <User className="h-7 w-7 text-primary" />
+              <div className="h-11 w-11 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
+                <User className="h-5 w-5 text-muted-foreground" />
               </div>
             )}
             <div className="min-w-0 flex-1">
-              <p className="font-bold text-foreground truncate text-sm leading-tight">{sellerData?.name}</p>
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <CalendarDays className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">{bn ? "সদস্য" : "Member since"} {memberDate}</span>
-              </div>
+              <p className="font-semibold text-foreground truncate text-sm leading-tight group-hover:text-primary transition-colors">{sellerData?.name}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{bn ? "সদস্য" : "Since"} {memberDate} · {sellerData?.totalAds} {bn ? "বিজ্ঞাপন" : "listings"}</p>
             </div>
-          </div>
+            <ChevronRight className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+          </button>
 
-          {/* Verification Badges */}
-          <div className="flex flex-wrap gap-1.5 mb-4">
-            <Badge variant="outline" className={`text-[9px] gap-1 px-2 py-0.5 ${sellerData?.hasPhone ? "border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800" : "border-border text-muted-foreground"}`}>
-              {sellerData?.hasPhone ? <CheckCircle2 className="h-3 w-3" /> : <Phone className="h-3 w-3" />}
-              {bn ? "ফোন" : "Phone"}
-            </Badge>
-            <Badge variant="outline" className="text-[9px] gap-1 px-2 py-0.5 border-green-300 text-green-700 bg-green-50 dark:bg-green-950/20 dark:text-green-400 dark:border-green-800">
-              <CheckCircle2 className="h-3 w-3" />
-              {bn ? "ইমেইল" : "Email"}
-            </Badge>
-            {sellerData?.hasName && (
-              <Badge variant="outline" className="text-[9px] gap-1 px-2 py-0.5 border-blue-300 text-blue-700 bg-blue-50 dark:bg-blue-950/20 dark:text-blue-400 dark:border-blue-800">
-                <BadgeCheck className="h-3 w-3" />
-                {bn ? "সম্পূর্ণ" : "Complete"}
-              </Badge>
-            )}
+          <div className="flex items-center gap-3 mt-3 pt-3 border-t border-border/40 text-[11px] text-muted-foreground">
+            <span className={`flex items-center gap-1 ${sellerData?.hasPhone ? "text-foreground" : ""}`}>
+              <CheckCircle2 className={`h-3.5 w-3.5 ${sellerData?.hasPhone ? "text-primary" : "text-muted-foreground/50"}`} />
+              {bn ? "ফোন যাচাইকৃত" : "Phone verified"}
+            </span>
+            <span className="flex items-center gap-1 text-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              {bn ? "ইমেইল যাচাইকৃত" : "Email verified"}
+            </span>
           </div>
-
-          <div className="grid grid-cols-2 gap-2 mb-4">
-            <div className="rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 p-3 text-center border border-primary/10">
-              <p className="text-lg font-bold text-primary">{sellerData?.totalAds}</p>
-              <p className="text-[10px] text-muted-foreground font-medium">{bn ? "বিজ্ঞাপন" : "Ads"}</p>
-            </div>
-            <div className="rounded-lg bg-gradient-to-br from-amber-50 to-amber-50/50 p-3 text-center border border-amber-100 dark:from-amber-950/20 dark:to-amber-950/10 dark:border-amber-800">
-              <div className="flex items-center justify-center gap-0.5">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <span className="text-lg font-bold text-foreground">—</span>
-              </div>
-              <p className="text-[10px] text-muted-foreground font-medium">{bn ? "রেটিং" : "Rating"}</p>
-            </div>
-          </div>
-          <Button variant="outline" size="sm" className="w-full text-xs font-medium hover:bg-primary" onClick={() => navigate(`/deal/seller/${sellerId}`)}>
-            {bn ? "প্রোফাইল দেখুন" : "View Profile"}
-          </Button>
         </CardContent>
       </Card>
     </motion.div>
@@ -170,13 +157,14 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
   if (isLoading || !relatedAds?.length) return null;
 
   return (
-    <motion.div className="mt-12" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-      <h2 className="text-xl font-bold text-foreground mb-5 flex items-center gap-2">
-        <Package className="h-5 w-5 text-primary" />
-        {bn ? "সম্পর্কিত বিজ্ঞাপন" : "Related Ads"}
-      </h2>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {relatedAds.map((ad: any, idx) => {
+    <motion.div className="mt-10" initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-base font-bold text-foreground">
+          {bn ? "একই ক্যাটাগরিতে আরও" : "More like this"}
+        </h2>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+        {relatedAds.map((ad: any) => {
           // Safety check to handle images if they are a stringified JSON
           let img = ad.images?.[0];
           if (typeof ad.images === 'string') {
@@ -189,35 +177,22 @@ const RelatedAds = ({ categoryId, currentId, bn }: { categoryId?: string; curren
           }
 
           return (
-            <motion.div
+            <div
               key={ad.id}
-              initial={{ opacity: 0, y: 10 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.05 }}
-              whileHover={{ y: -4 }}
-              className="cursor-pointer"
+              className="cursor-pointer group"
               onClick={() => navigate(`/deal/ad/${ad.id}`)}
             >
-              <Card className="border-border/50 hover:shadow-lg transition-all overflow-hidden h-full flex flex-col">
-                {/* Added relative and w-full to ensure the container has proper dimensions */}
-                <div className="relative w-full aspect-square bg-muted overflow-hidden flex-shrink-0">
-                  {/* Restored ListingImage component to handle image URLs correctly */}
-                  <ListingImage src={img} alt={ad.title} fallbackSize="md" fit="cover" className="absolute inset-0 w-full h-full object-cover" />
-                </div>
-                <CardContent className="p-3 flex-1 flex flex-col justify-between">
-                  <div>
-                    <p className="text-sm font-bold text-primary">৳{ad.price > 0 ? Number(ad.price).toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
-                    <h3 className="text-xs text-foreground line-clamp-2 mt-1.5 leading-tight font-medium">{ad.title}</h3>
-                  </div>
-                  {ad.location_district && (
-                    <p className="text-[10px] text-muted-foreground mt-2 flex items-center gap-1 pt-2 border-t border-border/30">
-                      <MapPin className="h-3 w-3 flex-shrink-0" />{ad.location_district}
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </motion.div>
+              <div className="relative w-full aspect-square bg-muted overflow-hidden rounded-lg mb-2">
+                <ListingImage src={img} alt={ad.title} fallbackSize="md" fit="cover" className="absolute inset-0 w-full h-full object-cover transition-transform duration-200 group-hover:scale-[1.03]" />
+              </div>
+              <p className="text-sm font-bold text-primary leading-none">৳{ad.price > 0 ? Number(ad.price).toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}</p>
+              <h3 className="text-xs text-foreground line-clamp-1 mt-1.5">{ad.title}</h3>
+              {ad.location_district && (
+                <p className="text-[11px] text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <MapPin className="h-3 w-3 flex-shrink-0" />{ad.location_district}
+                </p>
+              )}
+            </div>
           );
         })}
       </div>
@@ -384,214 +359,171 @@ const DealAdDetail = () => {
       <div className="pt-[30px] md:pt-[28px]" />
       <div className="app-container py-6 md:pb-12">
         {/* Breadcrumb */}
-        <motion.div className="flex items-center gap-2 text-xs text-muted-foreground mb-6" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-          <button onClick={() => navigate("/deal")} className="hover:text-primary transition-colors">{bn ? "ডিল" : "Deal"}</button>
-          <ChevronRight className="h-3 w-3" />
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-5 overflow-x-auto whitespace-nowrap scrollbar-hide">
+          <button onClick={() => navigate("/deal")} className="hover:text-primary transition-colors flex items-center gap-1">
+            <ChevronLeft className="h-3.5 w-3.5" />{bn ? "ডিল" : "Deal"}
+          </button>
           {cat && (
             <>
               {cat.parent_category && (
                 <>
-                  <button onClick={() => navigate(`/deal/category/${cat.parent_category.slug}`)} className="hover:text-primary transition-colors truncate flex items-center gap-1.5">
+                  <span className="text-border">/</span>
+                  <button onClick={() => navigate(`/deal/category/${cat.parent_category.slug}`)} className="hover:text-primary transition-colors flex items-center gap-1">
                     <CategoryIcon icon={cat.parent_category.icon} className="w-3 h-3" />
-                    <span className="truncate">{bn ? cat.parent_category.name : (cat.parent_category.name_en || cat.parent_category.name)}</span>
+                    <span>{bn ? cat.parent_category.name : (cat.parent_category.name_en || cat.parent_category.name)}</span>
                   </button>
-                  <ChevronRight className="h-3 w-3" />
                 </>
               )}
-              <button onClick={() => navigate(`/deal/category/${cat.slug}`)} className="hover:text-primary transition-colors truncate flex items-center gap-1.5">
+              <span className="text-border">/</span>
+              <button onClick={() => navigate(`/deal/category/${cat.slug}`)} className="hover:text-primary transition-colors flex items-center gap-1">
                 <CategoryIcon icon={cat.icon} className="w-3 h-3" />
-                <span className="truncate">{bn ? cat.name : (cat.name_en || cat.name)}</span>
+                <span>{bn ? cat.name : (cat.name_en || cat.name)}</span>
               </button>
-              <ChevronRight className="h-3 w-3" />
             </>
           )}
-          <span className="text-foreground truncate font-medium">{listing.title}</span>
-        </motion.div>
+        </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
           {/* Left - Images & Details */}
-          <div className="md:col-span-2 space-y-6">
+          <div className="md:col-span-2 space-y-5">
             {/* Image Gallery */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
-              <div className="aspect-square md:aspect-video rounded-2xl overflow-hidden bg-gradient-to-br from-muted to-muted/50 mb-4 border border-border/50 shadow-sm hover:shadow-md transition-shadow">
+            <div>
+              <div className="relative aspect-square md:aspect-video rounded-xl overflow-hidden bg-muted mb-2 border border-border/50">
                 <ListingImage src={images[selectedImg]} alt={listing.title} fallbackSize="lg" fit="contain" />
+                {images.length > 1 && (
+                  <span className="absolute bottom-2 right-2 text-[11px] font-medium bg-black/60 text-white px-2 py-0.5 rounded-md">
+                    {selectedImg + 1}/{images.length}
+                  </span>
+                )}
               </div>
               {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                <div className="flex gap-1.5 overflow-x-auto pb-1 scrollbar-hide">
                   {images.map((img, i) => (
-                    <motion.button
+                    <button
                       key={i}
                       onClick={() => setSelectedImg(i)}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className={`relative flex items-center justify-center w-20 h-20 rounded-lg overflow-hidden border-2 shrink-0 transition-all ${
-                        i === selectedImg 
-                          ? "border-primary shadow-md ring-2 ring-primary/30" 
-                          : "border-border/30 hover:border-border/60"
+                      className={`relative flex items-center justify-center w-16 h-16 rounded-md overflow-hidden border shrink-0 transition-opacity ${
+                        i === selectedImg
+                          ? "border-primary opacity-100"
+                          : "border-transparent opacity-60 hover:opacity-90"
                       }`}
                     >
                       <ListingImage src={img} alt="" fallbackSize="sm" fit="cover" className="absolute inset-0 w-full h-full object-cover" />
-                    </motion.button>
+                    </button>
                   ))}
                 </div>
               )}
-            </motion.div>
+            </div>
 
             {/* Title & Price */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.1 }}>
-              <div className="flex items-start justify-between gap-3 mb-3">
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground leading-tight">{bn ? listing.title : (listing.title_en || listing.title)}</h1>
+            <div>
+              <div className="flex items-start justify-between gap-3 mb-2">
+                <h1 className="text-xl md:text-2xl font-bold text-foreground leading-snug">{bn ? listing.title : (listing.title_en || listing.title)}</h1>
                 {user && user.id === listing.user_id && (
                   <Button variant="outline" size="sm" className="shrink-0 gap-1.5" onClick={() => navigate(`/deal/edit/${listing.id}`)}>
-                    <Pencil className="h-4 w-4" /> {bn ? "সম্পাদনা" : "Edit"}
+                    <Pencil className="h-3.5 w-3.5" /> {bn ? "সম্পাদনা" : "Edit"}
                   </Button>
                 )}
               </div>
-              <div className="flex items-baseline gap-3 mb-4">
-                <p className="text-3xl md:text-4xl font-bold text-primary">
+              <div className="flex items-baseline gap-2.5 mb-4">
+                <p className="text-2xl md:text-3xl font-bold text-primary">
                   ৳{listing.price > 0 ? Number(listing.price).toLocaleString("bn-BD") : (bn ? "আলোচনা" : "Negotiable")}
                 </p>
                 {listing.is_negotiable && (
-                  <Badge variant="outline" className="text-xs font-medium border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/20 dark:text-amber-400">
-                    {bn ? "দরদাম যোগ্য" : "Negotiable"}
-                  </Badge>
+                  <span className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                    {bn ? "দরদাম যোগ্য" : "· negotiable"}
+                  </span>
                 )}
               </div>
 
-              {/* Meta Info */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-                <div className="rounded-lg bg-muted/50 p-3 border border-border/30">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">{bn ? "অবস্থান" : "Location"}</p>
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                    <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                    <span className="truncate">{listing.location_district || listing.location_division}</span>
-                  </p>
-                </div>
-                <div className="rounded-lg bg-muted/50 p-3 border border-border/30">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">{bn ? "সময়" : "Posted"}</p>
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                    <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                    {timeAgo(listing.created_at, bn)}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-muted/50 p-3 border border-border/30">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">{bn ? "দর্শন" : "Views"}</p>
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1">
-                    <Eye className="h-4 w-4 text-primary flex-shrink-0" />
-                    {listing.views_count}
-                  </p>
-                </div>
-                <div className="rounded-lg bg-muted/50 p-3 border border-border/30">
-                  <p className="text-xs text-muted-foreground font-medium mb-1">{bn ? "অবস্থা" : "Condition"}</p>
-                  <p className="text-sm font-semibold text-foreground flex items-center gap-1 capitalize">
-                    <Package className="h-4 w-4 text-primary flex-shrink-0" />
-                    {/* Updated to use product_condition based on JSON payload */}
-                    {listing.product_condition === "new" ? (bn ? "নতুন" : "New") : listing.product_condition === "used" ? (bn ? "ব্যবহৃত" : "Used") : listing.product_condition}
-                  </p>
-                </div>
+              {/* Meta strip */}
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-3 py-3.5 border-y border-border/50">
+                <StatItem icon={MapPin} label={bn ? "অবস্থান" : "Location"} value={listing.location_district || listing.location_division} />
+                <StatItem icon={Clock} label={bn ? "সময়" : "Posted"} value={timeAgo(listing.created_at, bn)} />
+                <StatItem icon={Eye} label={bn ? "দর্শন" : "Views"} value={listing.views_count} />
+                <StatItem
+                  icon={Package}
+                  label={bn ? "অবস্থা" : "Condition"}
+                  value={listing.product_condition === "new" ? (bn ? "নতুন" : "New") : listing.product_condition === "used" ? (bn ? "ব্যবহৃত" : "Used") : listing.product_condition}
+                />
               </div>
-            </motion.div>
-
-            <Separator className="my-2" />
+            </div>
 
             {/* Description */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.15 }}>
-              <h2 className="font-bold text-lg text-foreground mb-3">{bn ? "বিবরণ" : "Description"}</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line bg-muted/30 rounded-lg p-4 border border-border/30">
+            <div>
+              <h2 className="font-semibold text-sm text-foreground mb-2">{bn ? "বিবরণ" : "Description"}</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed whitespace-pre-line">
                 {listing.description || (bn ? "কোনো বিবরণ প্রদান করা হয়নি" : "No description provided")}
               </p>
-            </motion.div>
+            </div>
 
-            <Separator className="my-2" />
-
-            {/* Safety Tips */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.2 }}>
-              <Card className="border-amber-200/50 bg-gradient-to-br from-amber-50 to-amber-50/50 dark:from-amber-950/20 dark:to-amber-950/10 dark:border-amber-800/50">
-                <CardContent className="p-4">
-                  <h3 className="font-bold text-foreground flex items-center gap-2 text-sm mb-3">
-                    <Shield className="h-4 w-4 text-amber-600 dark:text-amber-400" />{bn ? "নিরাপত্তা টিপস" : "Safety Tips"}
-                  </h3>
-                  <ul className="text-xs text-muted-foreground space-y-2">
-                    <li className="flex gap-2">
-                      <span className="text-primary font-bold flex-shrink-0">•</span>
-                      <span>{bn ? "পণ্য হাতে পেয়ে দাম পরিশোধ করুন" : "Pay only after inspecting the product"}</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-primary font-bold flex-shrink-0">•</span>
-                      <span>{bn ? "অনলাইনে আগাম টাকা পাঠাবেন না" : "Never send money in advance online"}</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-primary font-bold flex-shrink-0">•</span>
-                      <span>{bn ? "নিরাপদ জায়গায় দেখা করুন" : "Meet in a safe, public place"}</span>
-                    </li>
-                    <li className="flex gap-2">
-                      <span className="text-primary font-bold flex-shrink-0">•</span>
-                      <span>{bn ? "সন্দেহজনক বিজ্ঞাপন রিপোর্ট করুন" : "Report suspicious ads immediately"}</span>
-                    </li>
-                  </ul>
-                </CardContent>
-              </Card>
-            </motion.div>
+            {/* Safety Tips — compact strip, no oversized card */}
+            <div className="rounded-lg bg-muted/40 border border-border/50 p-3.5">
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-2">
+                <Shield className="h-3.5 w-3.5 text-primary" />
+                {bn ? "নিরাপদে লেনদেন করুন" : "Trade safely"}
+              </div>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                {bn
+                  ? "পণ্য হাতে পেয়ে দাম পরিশোধ করুন। অনলাইনে আগাম টাকা পাঠাবেন না। নিরাপদ, জনবহুল জায়গায় দেখা করুন এবং সন্দেহজনক মনে হলে রিপোর্ট করুন।"
+                  : "Inspect before you pay, never send money in advance, meet in a public place, and report anything that feels off."}
+              </p>
+            </div>
           </div>
 
           {/* Right Sidebar - Seller Info & Actions */}
-          <div className="space-y-4">
+          <div className="space-y-3 md:sticky md:top-24 self-start">
             {/* Seller Profile */}
             <SellerProfileCard sellerId={listing.user_id} bn={bn} />
 
             {/* Contact */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.12 }}>
-              <Card className="border-border/50 hover:shadow-md transition-shadow">
-                <CardContent className="p-5 space-y-3">
-                  <h3 className="font-bold text-foreground text-sm">{bn ? "যোগাযোগ করুন" : "Contact Seller"}</h3>
-
-                  {!showPhone ? (
-                    <Button
-                      className="w-full gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                      onClick={() => {
-                        if (!user) {
-                          navigate("/login");
-                          toast.info(bn ? "ফোন নম্বর দেখতে লগইন করুন" : "Please login to see phone number");
-                          return;
-                        }
-                        if (!listing.hide_phone) setShowPhone(true);
-                        else toast.info(bn ? "বিক্রেতা ফোন নম্বর লুকিয়ে রেখেছেন" : "Seller has hidden phone number");
-                      }}
-                    >
-                      <Phone className="h-4 w-4" />
-                      <span>{bn ? "নাম্বার দেখুন" : "Show Phone"}</span>
-                    </Button>
-                    
-                  ) : (
-                    <a href={`tel:${listing.phone}`} className="block w-full">
-                      <Button className="w-full gap-2 bg-primary hover:bg-green-800 text-white">
-                        <Phone className="h-4 w-4" />
-                        <span className="font-mono font-semibold">{listing.phone}</span>
-                      </Button>
-                    </a>
-                  )}
+            <Card className="border-border/50">
+              <CardContent className="p-4 space-y-2.5">
+                {!showPhone ? (
                   <Button
-                    className="w-full gap-2 border-primary text-primary hover:bg-green-800"
-                    variant="outline"
-                    disabled={startConversation.isPending}
-                    onClick={handleChatClick}
+                    className="w-full gap-2"
+                    onClick={() => {
+                      if (!user) {
+                        navigate("/login");
+                        toast.info(bn ? "ফোন নম্বর দেখতে লগইন করুন" : "Please login to see phone number");
+                        return;
+                      }
+                      if (!listing.hide_phone) setShowPhone(true);
+                      else toast.info(bn ? "বিক্রেতা ফোন নম্বর লুকিয়ে রেখেছেন" : "Seller has hidden phone number");
+                    }}
                   >
-                    {startConversation.isPending ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <MessageCircle className="h-4 w-4" />
-                    )}
-                    {bn ? "মেসেজ দিন" : "Send Message"}
+                    <Phone className="h-4 w-4" />
+                    <span>{bn ? "নাম্বার দেখুন" : "Show Phone Number"}</span>
                   </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
+                ) : (
+                  <a href={`tel:${listing.phone}`} className="block w-full">
+                    <Button className="w-full gap-2">
+                      <Phone className="h-4 w-4" />
+                      <span className="font-mono font-semibold">{listing.phone}</span>
+                    </Button>
+                  </a>
+                )}
+                <Button
+                  className="w-full gap-2"
+                  variant="outline"
+                  disabled={startConversation.isPending}
+                  onClick={handleChatClick}
+                >
+                  {startConversation.isPending ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MessageCircle className="h-4 w-4" />
+                  )}
+                  {bn ? "মেসেজ দিন" : "Send Message"}
+                </Button>
+              </CardContent>
+            </Card>
 
             {/* Actions */}
-            <motion.div className="flex gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.14 }}>
+            <div className="flex gap-2">
               <Button
                 variant="outline"
-                className="flex-1 gap-2 text-sm font-medium hover:bg-red-50 hover:text-black dark:hover:bg-red-950/20 hover:border-red-200 dark:hover:border-red-800"
+                className="flex-1 gap-1.5 text-sm"
                 disabled={favoriteLoading}
                 onClick={handleToggleFavorite}
               >
@@ -600,66 +532,63 @@ const DealAdDetail = () => {
               </Button>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className="hover:bg-green-800 flex-1 gap-2 text-sm font-medium">
+                  <Button variant="outline" className="flex-1 gap-1.5 text-sm">
                     <Share2 className="h-4 w-4" />{bn ? "শেয়ার" : "Share"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-56 p-2" align="end">
-                  <div className="space-y-1">
+                <PopoverContent className="w-52 p-1.5" align="end">
+                  <div className="space-y-0.5">
                     <button
                       onClick={() => {
                         window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(window.location.href)}`, "_blank");
                       }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 w-full px-2.5 py-2 text-sm rounded-md hover:bg-muted transition-colors"
                     >
                       <Facebook className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">Facebook</span>
+                      <span>Facebook</span>
                     </button>
                     <button
                       onClick={() => {
                         window.open(`https://wa.me/?text=${encodeURIComponent(listing.title + " - ৳" + listing.price.toLocaleString("bn-BD") + " " + window.location.href)}`, "_blank");
                       }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 w-full px-2.5 py-2 text-sm rounded-md hover:bg-muted transition-colors"
                     >
                       <MessageCircle className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">WhatsApp</span>
+                      <span>WhatsApp</span>
                     </button>
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(window.location.href);
                         toast.success(bn ? "লিংক কপি হয়েছে" : "Link copied");
                       }}
-                      className="flex items-center gap-3 w-full px-3 py-2.5 text-sm rounded-lg hover:bg-muted transition-colors"
+                      className="flex items-center gap-3 w-full px-2.5 py-2 text-sm rounded-md hover:bg-muted transition-colors"
                     >
                       <Link2 className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{bn ? "লিংক কপি" : "Copy Link"}</span>
+                      <span>{bn ? "লিংক কপি" : "Copy Link"}</span>
                     </button>
                   </div>
                 </PopoverContent>
               </Popover>
-            </motion.div>
+            </div>
 
             {/* Report */}
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: 0.16 }}>
-              <Button
-                variant="ghost"
-                className="w-full text-xs text-muted-foreground hover:text-destructive hover:bg-destructive/10 gap-1.5 font-medium"
-                onClick={() => {
-                  if (!user) {
-                    navigate("/login");
-                    return;
-                  }
-                  if (user.id === listing.user_id) {
-                    toast.info(bn ? "নিজের বিজ্ঞাপন রিপোর্ট করা যায় না" : "Cannot report own ad");
-                    return;
-                  }
-                  setReportOpen(true);
-                }}
-              >
-                <AlertTriangle className="h-3.5 w-3.5" />
-                {bn ? "রিপোর্ট করুন" : "Report Ad"}
-              </Button>
-            </motion.div>
+            <button
+              className="w-full text-xs text-muted-foreground hover:text-destructive flex items-center justify-center gap-1.5 py-1 transition-colors"
+              onClick={() => {
+                if (!user) {
+                  navigate("/login");
+                  return;
+                }
+                if (user.id === listing.user_id) {
+                  toast.info(bn ? "নিজের বিজ্ঞাপন রিপোর্ট করা যায় না" : "Cannot report own ad");
+                  return;
+                }
+                setReportOpen(true);
+              }}
+            >
+              <AlertTriangle className="h-3.5 w-3.5" />
+              {bn ? "রিপোর্ট করুন" : "Report this ad"}
+            </button>
           </div>
         </div>
 

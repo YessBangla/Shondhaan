@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronLeft, User, Phone, MapPin, Calendar, Clock, Save, Loader2,
-  Star, Briefcase, TrendingUp, CheckCircle, Package, RefreshCw, Zap, Wallet, MessageSquare, MessageCircle
+  Star, Briefcase, TrendingUp, CheckCircle, Package, RefreshCw, Zap, Wallet, MessageSquare, MessageCircle,
+  Camera, IdCard, ShieldCheck
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -15,6 +16,7 @@ import BookingChatModal from "@/components/client/BookingChatModal";
 import CategoryFilterDropdown, {
   useServiceCategoryMap,
 } from "@/components/CategoryFilterDropdown";
+import { useCmsCategories } from "@/hooks/useCmsData";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import {
@@ -34,6 +36,15 @@ interface ProviderProfile {
   phone?: string;
   email?: string;
   address?: string;
+}
+
+interface ProviderApplication extends ProviderProfile {
+  service_category?: string;
+  experience_years?: number;
+  nid_front_url?: string;
+  nid_back_url?: string;
+  status?: "pending" | "approved" | "rejected" | string;
+  status_reason?: string | null;
 }
 
 const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
@@ -64,6 +75,7 @@ const getAuthHeaders = () => {
 
 const normalizeBooking = (item: any): Booking => ({
   id: String(item.id),
+  user_id: item.user_id ?? "",
   service_title: item.service_title || item.title || "",
   service_slug: item.service_slug || item.slug || "",
   package_name: item.package_name || "",
@@ -185,6 +197,24 @@ const ProviderPanel = () => {
   const [filterCategory, setFilterCategory] = useState("all");
   const [chatBooking, setChatBooking] = useState<Booking | null>(null);
   const { data: serviceCategoryMap } = useServiceCategoryMap();
+  const {
+    data: serviceCategories = [],
+    isLoading: categoriesLoading,
+    isError: categoriesError,
+  } = useCmsCategories();
+  const [providerApplication, setProviderApplication] = useState<ProviderApplication | null>(null);
+  const [applicationLoading, setApplicationLoading] = useState(true);
+  const [submittingApplication, setSubmittingApplication] = useState(false);
+  const [nidFront, setNidFront] = useState<File | null>(null);
+  const [nidBack, setNidBack] = useState<File | null>(null);
+  const [verificationForm, setVerificationForm] = useState({
+    full_name: "",
+    phone: "",
+    email: "",
+    address: "",
+    service_category: "",
+    experience_years: "0",
+  });
 
   useEffect(() => {
     if (!authLoading && !user) navigate("/main-login", { replace: true });
@@ -194,13 +224,86 @@ const ProviderPanel = () => {
     const mysqlAuth = getMySqlAuth();
     const role = mysqlAuth?.user?.type || mysqlAuth?.user?.role;
 
-    if (role === "provider" || role === "admin" || role === "super_admin") {
+    if (role === "admin" || role === "super_admin") {
       setIsProvider(true);
     } else {
+      // A provider role alone is not enough; the backend application must be approved.
       setIsProvider(false);
       setLoading(false);
     }
   }, []);
+
+  const fetchProviderApplication = useCallback(async () => {
+    if (!user) return;
+    setApplicationLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/providers/applications/me`, {
+        headers: getAuthHeaders(),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Provider verification load failed");
+      const application = data.application || null;
+      setProviderApplication(application);
+      if (application) {
+        setVerificationForm((current) => ({
+          ...current,
+          full_name: application.full_name || current.full_name,
+          phone: application.phone || current.phone,
+          email: application.email || current.email,
+          address: application.address || current.address,
+          service_category: application.service_category || current.service_category,
+          experience_years: String(application.experience_years ?? current.experience_years),
+        }));
+      }
+      const role = getMySqlAuth()?.user?.type || getMySqlAuth()?.user?.role;
+      if (role === "provider" || application?.status === "approved") {
+        setIsProvider(application?.status === "approved");
+        setLoading(false);
+      }
+    } catch (error) {
+      console.warn("Provider application fetch failed:", error);
+      setIsProvider(false);
+      setLoading(false);
+    } finally {
+      setApplicationLoading(false);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    fetchProviderApplication();
+  }, [fetchProviderApplication]);
+  const submitProviderApplication = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!nidFront || !nidBack) {
+      toast.error("NID-এর সামনে ও পেছনের ছবি দিন");
+      return;
+    }
+    setSubmittingApplication(true);
+    try {
+      const formData = new FormData();
+      Object.entries(verificationForm).forEach(([key, value]) => formData.append(key, value));
+      formData.append("nid_front", nidFront);
+      formData.append("nid_back", nidBack);
+
+      const response = await fetch(`${API_BASE_URL}/api/providers/applications`, {
+        method: "POST",
+        headers: {
+          ...(getMySqlAuth()?.token ? { Authorization: `Bearer ${getMySqlAuth()!.token}` } : {}),
+        },
+        body: formData,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(data.message || "Verification submission failed");
+      setProviderApplication(data.application);
+      setNidFront(null);
+      setNidBack(null);
+      toast.success("আপনার ভেরিফিকেশন আবেদন জমা হয়েছে। অ্যাডমিন অনুমোদনের পর আপনি প্রোভাইডার হিসেবে কাজ করতে পারবেন।");
+    } catch (error: any) {
+      toast.error(error.message || "ভেরিফিকেশন আবেদন জমা দেওয়া যায়নি");
+    } finally {
+      setSubmittingApplication(false);
+    }
+  };
 
   const fetchData = useCallback(async () => {
     if (!user) return;
@@ -365,12 +468,49 @@ const ProviderPanel = () => {
   if (!isProvider) {
     return (
       <div className="min-h-screen bg-background">
-        
-        <div className=" flex flex-col items-center justify-center min-h-[60vh] px-4">
-          <Briefcase className="h-16 w-16 text-muted-foreground mb-4" />
-          <h1 className="font-heading text-xl font-bold text-foreground mb-2">অ্যাক্সেস নেই</h1>
-          <p className="text-muted-foreground text-sm mb-4">এই পেজটি শুধুমাত্র সার্ভিস প্রদানকারীদের জন্য।</p>
-          <button onClick={() => navigate("/join")} className="rounded-lg bg-primary px-6 py-2.5 text-sm font-semibold text-white">আবেদন করুন</button>
+        <div className="mx-auto flex max-w-2xl flex-col px-4 py-10">
+          <div className="mb-6 flex items-center gap-3">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary"><ShieldCheck className="h-6 w-6" /></div>
+            <div>
+              <h1 className="font-heading text-xl font-bold text-foreground">প্রোভাইডার ভেরিফিকেশন</h1>
+              <p className="text-sm text-muted-foreground">অনুমোদনের আগে আপনার তথ্য ও NID যাচাই করা হবে।</p>
+            </div>
+          </div>
+
+          {applicationLoading ? (
+            <div className="flex justify-center py-16"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              {providerApplication?.status && (
+                <div className={`mb-5 rounded-xl border p-3 text-sm ${providerApplication.status === "rejected" ? "border-red-200 bg-red-50 text-red-800" : "border-amber-200 bg-amber-50 text-amber-800"}`}>
+                  আপনার আবেদন: <strong>{providerApplication.status === "pending" ? "পর্যালোচনাধীন" : providerApplication.status === "rejected" ? "বাতিল" : providerApplication.status}</strong>
+                  {providerApplication.status_reason && <p className="mt-1 text-xs">{providerApplication.status_reason}</p>}
+                </div>
+              )}
+              <form onSubmit={submitProviderApplication} className="space-y-4">
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-medium text-muted-foreground">পূর্ণ নাম<input required value={verificationForm.full_name} onChange={(e) => setVerificationForm({ ...verificationForm, full_name: e.target.value })} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" /></label>
+                  <label className="text-xs font-medium text-muted-foreground">ফোন<input required value={verificationForm.phone} onChange={(e) => setVerificationForm({ ...verificationForm, phone: e.target.value })} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" /></label>
+                </div>
+                <label className="block text-xs font-medium text-muted-foreground">ইমেইল<input type="email" value={verificationForm.email} onChange={(e) => setVerificationForm({ ...verificationForm, email: e.target.value })} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" /></label>
+                <label className="block text-xs font-medium text-muted-foreground">ঠিকানা<textarea required rows={3} value={verificationForm.address} onChange={(e) => setVerificationForm({ ...verificationForm, address: e.target.value })} className="mt-1.5 w-full resize-none rounded-lg border border-input bg-background px-3 py-2.5 text-sm" /></label>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <label className="text-xs font-medium text-muted-foreground">সার্ভিস ক্যাটাগরি<select required value={verificationForm.service_category} onChange={(e) => setVerificationForm({ ...verificationForm, service_category: e.target.value })} disabled={categoriesLoading || categoriesError} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm"><option value="">{categoriesLoading ? "ক্যাটাগরি লোড হচ্ছে..." : categoriesError ? "ক্যাটাগরি লোড করা যায়নি" : "ক্যাটাগরি নির্বাচন করুন"}</option>{serviceCategories.filter((category) => category.is_active).map((category) => <option key={category.id} value={category.id}>{category.name_en || category.name}</option>)}</select>{categoriesError && <span className="mt-1 block text-[11px] text-destructive">সার্ভিস ব্যাকএন্ড চালু আছে কিনা পরীক্ষা করুন।</span>}</label>
+                  <label className="text-xs font-medium text-muted-foreground">অভিজ্ঞতা (বছর)<input required min="0" max="60" type="number" value={verificationForm.experience_years} onChange={(e) => setVerificationForm({ ...verificationForm, experience_years: e.target.value })} className="mt-1.5 w-full rounded-lg border border-input bg-background px-3 py-2.5 text-sm" /></label>
+                </div>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  {[{ key: "front", label: "NID-এর সামনের ছবি", value: nidFront, set: setNidFront }, { key: "back", label: "NID-এর পেছনের ছবি", value: nidBack, set: setNidBack }].map((item) => (
+                    <label key={item.key} className="flex cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-5 text-center hover:border-primary/50">
+                      {item.value ? <IdCard className="h-8 w-8 text-primary" /> : <Camera className="h-8 w-8 text-muted-foreground" />}
+                      <span className="text-xs font-medium text-foreground">{item.value?.name || item.label}</span>
+                      <input required={!providerApplication?.nid_front_url && item.key === "front" || !providerApplication?.nid_back_url && item.key === "back"} type="file" accept="image/*" className="hidden" onChange={(e) => item.set(e.target.files?.[0] || null)} />
+                    </label>
+                  ))}
+                </div>
+                <button type="submit" disabled={submittingApplication} className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary py-3 text-sm font-semibold text-white disabled:opacity-50">{submittingApplication ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} আবেদন জমা দিন</button>
+              </form>
+            </div>
+          )}
         </div>
         <div className="h-16 md:hidden" />
       </div>
@@ -382,72 +522,13 @@ const ProviderPanel = () => {
       
       <div className="" />
 
-      <div className="mx-auto max-w-8xl p-2">
-        <button onClick={() => navigate(-1)} className="mb-4 flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-          <ChevronLeft className="h-4 w-4" /> পেছনে যান
-        </button>
-
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="font-heading text-xl md:text-2xl font-bold text-foreground flex items-center gap-2">
-              <Briefcase className="h-6 w-6 text-primary" /> প্রোভাইডার প্যানেল
-            </h1>
-            <p className="text-xs text-muted-foreground mt-0.5">স্বাগতম, {profile.display_name || "প্রোভাইডার"}</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" className="text-xs gap-1.5" onClick={() => navigate("/internal")}>
-              <MessageSquare className="h-3.5 w-3.5" /> চ্যাট হাব
-            </Button>
-            <NotificationBell />
-            <button onClick={fetchData} className="flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary">
-              <RefreshCw className="h-3.5 w-3.5" /> রিফ্রেশ
-            </button>
-          </div>
-        </div>
+      <div className="mx-auto max-w-8xl">
+       
+        
+      
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><Package className="h-5 w-5 text-primary" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{bookings.length}</p>
-                <p className="text-xs text-muted-foreground">মোট অ্যাসাইনমেন্ট</p>
-              </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-green-500/10"><CheckCircle className="h-5 w-5 text-green-600" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">{completedBookings.length}</p>
-                <p className="text-xs text-muted-foreground">সম্পন্ন</p>
-              </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10"><TrendingUp className="h-5 w-5 text-primary" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">৳{totalEarnings.toLocaleString("bn-BD")}</p>
-                <p className="text-xs text-muted-foreground">মোট আয়</p>
-              </div>
-            </div>
-          </motion.div>
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-            className="rounded-xl border border-border bg-card p-4 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-500/10"><Star className="h-5 w-5 text-yellow-600" /></div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">⭐ {avgRating}</p>
-                <p className="text-xs text-muted-foreground">গড় রেটিং</p>
-              </div>
-            </div>
-          </motion.div>
-        </div>
+
 
         <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
           <PanelSidebarTabs
@@ -641,7 +722,7 @@ const ProviderPanel = () => {
                 </div>
               );
               if (activeTab === "accounts") return (
-                <div className="p-4"><AccountsSection userId={user!.id} role="provider" /></div>
+                <div className="p-4"><AccountsSection userId={String(user!.id)} role="provider" /></div>
               );
               return null;
             }}

@@ -260,7 +260,6 @@ const DashboardBookingCard = ({
   const payableAfterService = isPayableAfterService(b);
   const totalAmount = Number(b.package_price || 0);
 
-  // Show "Mark Complete" for these statuses
   const canMarkComplete = ["confirmed", "assigned", "in_progress", "processing"].includes(b.status);
 
   return (
@@ -1330,6 +1329,10 @@ const ClientDashboard = () => {
             {/* === DEAL MESSAGES TAB === */}
             {activeTab === "deal-messages" && <DealInbox embedded />}
 
+            {/* === DEAL TABS === */}
+            {activeTab === "deal-my-ads" && <DealSection activeTab="my-ads" />}
+            {activeTab === "deal-favorites" && <DealSection activeTab="favorites" />}
+
             {/* === REQUESTS TAB === */}
             {activeTab === "requests" && <ServiceRequestsTab />}
 
@@ -1343,7 +1346,12 @@ const ClientDashboard = () => {
             )}
 
             {/* === PAYMENTS TAB === */}
-            {activeTab === "payments" && <PaymentHistoryTab />}
+            {activeTab === "payments" && (
+              <PaymentHistoryTab
+                bookings={bookings}
+                martOrders={martOrders}
+              />
+            )}
 
             {/* === REFERRAL TAB === */}
             {activeTab === "referral" && <ReferralTab />}

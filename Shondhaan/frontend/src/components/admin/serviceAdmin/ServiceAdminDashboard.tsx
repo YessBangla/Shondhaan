@@ -5,6 +5,7 @@ import {
   Wallet, Receipt, Wrench, Loader2, Inbox, Banknote
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import ProviderApprovalRequests from "@/components/super-admin/ProviderApprovalRequests";
 
 // Type definitions based on the Booking JSON
 type Booking = {
@@ -149,6 +150,10 @@ const ServiceAdminDashboard = () => {
           <StatCard icon={CheckCircle2} label="সফল পেমেন্ট" value={stats.paid} color="emerald" />
           <StatCard icon={Wallet} label="মোট রেভিনিউ" value={`৳${stats.revenue.toLocaleString('bn-BD')}`} color="indigo" />
         </div>
+
+        <section className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800">
+          <ProviderApprovalRequests />
+        </section>
 
         {/* Bookings Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">

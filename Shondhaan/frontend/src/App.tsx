@@ -77,6 +77,7 @@ const AdminSmartDashboard = lazy(() => import("./pages/admin/AdminSmartDashboard
 const AdminStaffAssignments = lazy(() => import("./pages/admin/AdminStaffAssignments"));
 const AdminStaffWorkload = lazy(() => import("./pages/admin/AdminStaffWorkload"));
 const AdminNotificationRules = lazy(() => import("./pages/admin/AdminNotificationRules"));
+const ProviderApprovalRequests = lazy(() => import("./components/super-admin/ProviderApprovalRequests"));
 import {
   AdminAnalyticsPage, AdminRequestsPage, AdminAccountsPage,
   AdminServicesPage, AdminServiceImagesPage, AdminCategoriesPage,
@@ -338,6 +339,7 @@ const App = () => {
                                     <Route path="staff-workload" element={<AdminStaffWorkload />} />
                                     <Route path="notification-rules" element={<AdminNotificationRules />} />
                                     <Route path="service" element={<ServiceAdminDashboard />} />
+                                    <Route path="provider-requests" element={<ProviderApprovalRequests />} />
                                     <Route path="service-admin/accounts" element={<AdminServiceAdminAccountsPage />} />
                                     <Route path="deal-admin/accounts" element={<AdminDealAdminAccountsPage />} />
                                     <Route path="mart-admin/accounts" element={<AdminMartAdminAccountsPage />} />

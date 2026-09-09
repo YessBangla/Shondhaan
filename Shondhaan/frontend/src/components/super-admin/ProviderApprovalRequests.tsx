@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CheckCircle2, ExternalLink, RefreshCw, ShieldCheck, XCircle } from "lucide-react";
 import { toast } from "sonner";
-import { getMySqlAuth, updateMySqlUserType } from "@/lib/mysqlAuth";
+import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -28,6 +28,8 @@ interface ProviderApplication {
   experience_years?: number | string | null;
   nid_front?: string | null;
   nid_back?: string | null;
+  nid_front_url?: string | null;
+  nid_back_url?: string | null;
   status?: ApplicationStatus | string | null;
   created_at?: string | null;
   updated_at?: string | null;
@@ -115,10 +117,6 @@ const ProviderApprovalRequests = () => {
 
     setActingUserId(String(userId));
     try {
-      if (status === "approved") {
-        await updateMySqlUserType(Number(userId), "provider");
-      }
-
       const updated = await updateApplicationStatus(userId, status);
       setApplications((current) =>
         current
@@ -196,8 +194,8 @@ const ProviderApprovalRequests = () => {
               applications.map((application) => {
                 const userId = String(application.user_id);
                 const disabled = actingUserId === userId;
-                const frontUrl = getFileUrl(application.nid_front);
-                const backUrl = getFileUrl(application.nid_back);
+                const frontUrl = getFileUrl(application.nid_front_url || application.nid_front);
+                const backUrl = getFileUrl(application.nid_back_url || application.nid_back);
                 const status = application.status || "pending";
 
                 return (

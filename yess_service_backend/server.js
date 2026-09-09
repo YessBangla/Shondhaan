@@ -40,6 +40,7 @@ import { reconcilePendingShurjopayPayments } from "./controller/shurjopay.contro
 
 import {
   ensurePlatformFeeSchema,
+  ensureProviderSchema,
 } from "./config/db.js";
 
 import {
@@ -359,6 +360,7 @@ async function startServer() {
 
     // ⭐ Initialize all database tables
     await initializeDatabase();
+    await ensureProviderSchema();
 
     await ensurePlatformFeeSchema();
 
