@@ -978,7 +978,7 @@ const handleSignOut = async () => {
   {isMartVendor
     ? (bn ? "মার্ট ড্যাশবোর্ড" : "Mart Dashboard")
     : isEmployerdashboard
-      ? (bn ? "জব ড্যাশবোর্ড" : "Job Dashboard")
+      ? (bn ? "চাকরি ড্যাশবোর্ড" : "Job Dashboard")
       : (bn ? "ড্যাশবোর্ড" : "Dashboard")}
 </button>
 

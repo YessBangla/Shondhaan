@@ -27,7 +27,7 @@ const STATIC_LABELS: Record<string, { bn: string; en: string }> = {
   orders: { bn: "অর্ডার", en: "Orders" },
   compare: { bn: "তুলনা", en: "Compare" },
   deal: { bn: "ডিল", en: "Deal" },
-  jobs: { bn: "জবস", en: "Jobs" },
+  jobs: { bn: "চাকরি", en: "Jobs" },
   faq: { bn: "FAQ", en: "FAQ" },
   about: { bn: "আমাদের সম্পর্কে", en: "About Us" },
   contact: { bn: "যোগাযোগ", en: "Contact" },

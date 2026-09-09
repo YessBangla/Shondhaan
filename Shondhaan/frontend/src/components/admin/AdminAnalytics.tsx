@@ -240,7 +240,7 @@ const AdminAnalytics = () => {
           }),
         ]);
 
-        if (!jobStatsRes.ok) throw new Error(`জব স্ট্যাটস লোড ব্যর্থ (${jobStatsRes.status})`);
+        if (!jobStatsRes.ok) throw new Error(`চাকরি স্ট্যাটস লোড ব্যর্থ (${jobStatsRes.status})`);
         const jobData: JobStatsResponse = await jobStatsRes.json();
         setPackageTransactions(jobData.packageTransactions || []);
         setJobseekerProfiles(jobData.jobseekerProfiles || []);
@@ -495,11 +495,11 @@ const AdminAnalytics = () => {
         {/* Hide other tabs completely from service_admin to save rendering power and enforce role boundaries */}
         {!isServiceAdmin && (
           <>
-            {/* ── সন্ধান জব ── */}
+            {/* ── সন্ধান চাকরি ── */}
             <TabsContent value="job" className="space-y-4">
               {jobStatsError ? (
                 <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-xs text-red-700">
-                  জব স্ট্যাটস লোড করা যায়নি: {jobStatsError}। ({JOBS_API_URL}/api/admin/job-stats থেকে ডেটা আনার চেষ্টা করা হয়েছে)
+                  চাকরি স্ট্যাটস লোড করা যায়নি: {jobStatsError}। ({JOBS_API_URL}/api/admin/job-stats থেকে ডেটা আনার চেষ্টা করা হয়েছে)
                 </div>
               ) : (
                 <>
@@ -510,7 +510,7 @@ const AdminAnalytics = () => {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <SummaryCard icon={DollarSign} label="প্যাকেজ আয়" value={`৳${toBnNum(jobStats.packageIncome)}`} color="text-primary" bgColor="bg-primary/10" />
                     <SummaryCard icon={Package} label="প্যাকেজ ক্রয়" value={toBnNum(jobStats.totalPurchases)} color="text-green-600" bgColor="bg-green-500/10" />
-                    <SummaryCard icon={UserCheck} label="জব সিকার প্রোফাইল" value={toBnNum(jobStats.jobseekerCount)} color="text-blue-600" bgColor="bg-blue-500/10" />
+                    <SummaryCard icon={UserCheck} label="চাকরি সিকার প্রোফাইল" value={toBnNum(jobStats.jobseekerCount)} color="text-blue-600" bgColor="bg-blue-500/10" />
                     <SummaryCard icon={Building2} label="নিয়োগকর্তা" value={toBnNum(jobStats.employerCount)} color="text-orange-600" bgColor="bg-orange-500/10" />
                   </div>
 

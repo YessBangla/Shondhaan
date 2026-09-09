@@ -70,7 +70,7 @@ const JobsMenuBar = ({ flushWithHeader = false }: JobsMenuBarProps) => {
   { labelBn: "চুক্তিভিত্তিক চাকরি", labelEn: "Contractual Jobs", href: "/jobs?type=contract", icon: FileText },
   { labelBn: "রিমোট / ওয়ার্ক ফ্রম হোম", labelEn: "Remote / Work from Home", href: "/jobs?type=remote", icon: Laptop },
   { labelBn: "ফ্রেশার চাকরি", labelEn: "Fresher / Entry Level", href: "/jobs?type=fresher", icon: TrendingUp },
-  { labelBn: "ফিচার্ড / হট জব", labelEn: "Featured / Hot Jobs", href: "/jobs?type=featured", icon: Award },
+  { labelBn: "ফিচার্ড / হট চাকরি", labelEn: "Featured / Hot Jobs", href: "/jobs?type=featured", icon: Award },
   { labelBn: "সরকারি চাকরি", labelEn: "Government Jobs", href: "/jobs?type=government", icon: Building2 },
 ],
     },

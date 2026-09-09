@@ -48,7 +48,7 @@ const AuthHeroPanel = () => {
       image: slideDeal,
     },
     {
-      titleBn: "ক্যারিয়ার গড়ুন সন্ধান জব এ",
+      titleBn: "ক্যারিয়ার গড়ুন সন্ধান চাকরি এ",
       titleEn: "Build Career with Shondhaan Jobs",
       subtitleBn: "ভিডিও সিভি, স্মার্ট প্রোফাইল ও সরাসরি নিয়োগদাতাদের সংযোগ।",
       subtitleEn: "Video CV, smart profiles and direct employer connections.",
@@ -83,7 +83,7 @@ const AuthHeroPanel = () => {
       icon: Briefcase,
       valueBn: "৫,০০০+",
       valueEn: "5,000+",
-      labelBn: "জব ও কোম্পানি",
+      labelBn: "চাকরি ও কোম্পানি",
       labelEn: "Jobs & Companies",
     },
   ];

@@ -757,14 +757,14 @@ const EmployerPanel = () => {
   };
 
   const deleteJob = async (jobId: string) => {
-    if (!window.confirm("আপনি কি নিশ্চিত এই জবটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে নেওয়া যাবে না।")) return;
+    if (!window.confirm("আপনি কি নিশ্চিত এই চাকরিটি মুছে ফেলতে চান? এই কাজটি আর ফিরিয়ে নেওয়া যাবে না।")) return;
     try {
       await fetchJobsJson(`/api/jobs/${jobId}`, { method: "DELETE" });
       setMyJobs(prev => prev.filter(j => j.id !== jobId));
-      toast.success("জব মুছে ফেলা হয়েছে");
+      toast.success("চাকরি মুছে ফেলা হয়েছে");
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "জব মুছতে সমস্যা হয়েছে");
+      toast.error(err.message || "চাকরি মুছতে সমস্যা হয়েছে");
     }
   };
 
@@ -775,10 +775,10 @@ const EmployerPanel = () => {
         body: JSON.stringify({ reason }),
       });
       fetchMyJobs();
-      toast.success("জব ক্লোজ হয়েছে");
+      toast.success("চাকরি ক্লোজ হয়েছে");
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "জব ক্লোজ করতে সমস্যা হয়েছে");
+      toast.error(err.message || "চাকরি ক্লোজ করতে সমস্যা হয়েছে");
     }
   };
 
@@ -786,10 +786,10 @@ const EmployerPanel = () => {
     try {
       await fetchJobsJson(`/api/jobs/${jobId}/reopen`, { method: "PATCH" });
       fetchMyJobs();
-      toast.success("জব রিওপেন হয়েছে");
+      toast.success("চাকরি রিওপেন হয়েছে");
     } catch (err: any) {
       console.error(err);
-      toast.error(err.message || "জব রিওপেন করতে সমস্যা হয়েছে");
+      toast.error(err.message || "চাকরি রিওপেন করতে সমস্যা হয়েছে");
     }
   };
 
@@ -848,7 +848,7 @@ const EmployerPanel = () => {
           deadline: editJobForm.deadline || null,
         }),
       });
-      toast.success("জব আপডেট হয়েছে");
+      toast.success("চাকরি আপডেট হয়েছে");
       setEditJobForm(null);
       fetchMyJobs();
     } catch (err: any) {
@@ -1350,7 +1350,7 @@ const EmployerPanel = () => {
                       </Button>
                       {!isClosed && job.status === "approved" && (
                         <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => closeJob(job.id, "নিয়োগ সম্পন্ন")}>
-                          <Lock className="h-3 w-3 mr-1" /> জব ক্লোজ করুন
+                          <Lock className="h-3 w-3 mr-1" /> চাকরি ক্লোজ করুন
                         </Button>
                       )}
                       {isClosed && (
@@ -1369,7 +1369,7 @@ const EmployerPanel = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-lg font-bold flex items-center gap-2"><TrendingUp className="h-5 w-5 text-primary" /> হায়ারিং পাইপলাইন</h2>
-            <p className="text-xs text-muted-foreground">BDJobs-স্টাইল: আবেদন → শর্টলিস্ট → ইন্টারভিউ → স্কোর → নিয়োগ → জব ক্লোজ</p>
+            <p className="text-xs text-muted-foreground">BDJobs-স্টাইল: আবেদন → শর্টলিস্ট → ইন্টারভিউ → স্কোর → নিয়োগ → চাকরি ক্লোজ</p>
 
             <div className="flex flex-col sm:flex-row gap-2">
               <select className="h-9 rounded-md border border-input bg-background px-3 text-xs flex-1" value={pipelineJob} onChange={e => setPipelineJob(e.target.value)}>
@@ -1959,7 +1959,7 @@ const EmployerPanel = () => {
       case "packages":
         return (
           <div className="space-y-4">
-            <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> জব পোস্টিং প্যাকেজ</h2>
+            <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> চাকরি পোস্টিং প্যাকেজ</h2>
             <p className="text-xs text-muted-foreground">আপনার প্রয়োজন অনুযায়ী সঠিক প্ল্যান নির্বাচন করুন</p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -1977,7 +1977,7 @@ const EmployerPanel = () => {
                     </div>
                     <p className="text-3xl font-extrabold text-primary">
                       ৳{Number(pkg.price).toLocaleString("bn-BD")}
-                      {pkg.price > 0 && <span className="text-xs font-normal text-muted-foreground">+ভ্যাট/প্রতি জব</span>}
+                      {pkg.price > 0 && <span className="text-xs font-normal text-muted-foreground">+ভ্যাট/প্রতি চাকরি</span>}
                     </p>
                     <div className="border-t my-3" />
                     <p className="text-xs text-muted-foreground mb-1">{pkg.duration_days} দিন ভিজিবিলিটি</p>
@@ -1990,7 +1990,7 @@ const EmployerPanel = () => {
                       ))}
                     </ul>
                     {pkg.max_jobs_per_year && (
-                      <p className="text-[10px] text-muted-foreground mb-3 border-t pt-2">📌 বছরে সর্বোচ্চ {pkg.max_jobs_per_year}টি জব</p>
+                      <p className="text-[10px] text-muted-foreground mb-3 border-t pt-2">📌 বছরে সর্বোচ্চ {pkg.max_jobs_per_year}টি চাকরি</p>
                     )}
                     <Button className="w-full" variant={isRecommended ? "default" : "outline"} size="sm" onClick={() => selectPackageAndPost(pkg)}>
                       নির্বাচন করুন
@@ -2031,7 +2031,7 @@ const EmployerPanel = () => {
           <DialogHeader>
             <DialogTitle>প্যাকেজ নির্বাচন করুন</DialogTitle>
             <DialogDescription>
-              জব পোস্ট করার আগে আপনার প্রয়োজন অনুযায়ী একটি প্যাকেজ বেছে নিন
+              চাকরি পোস্ট করার আগে আপনার প্রয়োজন অনুযায়ী একটি প্যাকেজ বেছে নিন
             </DialogDescription>
           </DialogHeader>
           {packages.length === 0 ? (
@@ -2103,7 +2103,7 @@ const EmployerPanel = () => {
                   <span className="font-bold text-sm">প্রিপেইড</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  {prepaidLoading ? "শুরপে পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে..." : "ShurjoPay দিয়ে এখনই কার্ড/মোবাইল ব্যাংকিং দিয়ে পেমেন্ট করুন এবং সাথে সাথে জব পোস্ট করুন।"}
+                  {prepaidLoading ? "শুরপে পেমেন্ট পেজে নিয়ে যাওয়া হচ্ছে..." : "ShurjoPay দিয়ে এখনই কার্ড/মোবাইল ব্যাংকিং দিয়ে পেমেন্ট করুন এবং সাথে সাথে চাকরি পোস্ট করুন।"}
                 </p>
               </button>
 
@@ -2119,7 +2119,7 @@ const EmployerPanel = () => {
                   <span className="font-bold text-sm">পোস্টপেইড</span>
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                  এখন পেমেন্ট না করেই জব পোস্ট করুন — পরে ইনভয়েসের মাধ্যমে বিল পরিশোধ করুন।
+                  এখন পেমেন্ট না করেই চাকরি পোস্ট করুন — পরে ইনভয়েসের মাধ্যমে বিল পরিশোধ করুন।
                 </p>
               </button>
             </div>
@@ -2194,7 +2194,7 @@ const EmployerPanel = () => {
       {/* Edit Job Modal */}
       <Dialog open={!!editJobForm} onOpenChange={() => setEditJobForm(null)}>
         <DialogContent className="max-w-md" aria-describedby={undefined}>
-          <DialogHeader><DialogTitle>জব সম্পাদনা করুন</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle>চাকরি এডিট করুন</DialogTitle></DialogHeader>
           {editJobForm && (
             <div className="space-y-3">
               <div>
