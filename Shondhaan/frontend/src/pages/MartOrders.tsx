@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Package, ChevronRight, ArrowLeft, Clock, CheckCircle2, Truck, XCircle, MapPin, CreditCard, Box, RotateCcw, FileText, Calendar, AlertTriangle, ExternalLink, Share2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { jsPDF } from "jspdf";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -139,49 +140,135 @@ const OrderTracker = ({ status, bn }: { status: string; bn: boolean }) => {
 };
 
 // ── Invoice generator ────────────────────────────────────────────────────────
-const generateInvoice = (order: MartOrder, bn: boolean) => {
-  const lines = [
-    `==============================`,
-    bn ? `ইনভয়েস - সন্ধান মার্ট` : `INVOICE - Yess Mart`,
-    `==============================`,
-    ``,
-    `${bn ? "অর্ডার নম্বর" : "Order #"}: ${order.order_number}`,
-    `${bn ? "তারিখ" : "Date"}: ${new Date(order.created_at).toLocaleDateString("bn-BD")}`,
-    `${bn ? "গ্রাহক" : "Customer"}: ${order.customer_name}`,
-    `${bn ? "ফোন" : "Phone"}: ${order.customer_phone}`,
-    `${bn ? "ঠিকানা" : "Address"}: ${order.shipping_address}`,
-    ``,
-    `------------------------------`,
-    `${bn ? "পণ্য" : "Item"}`.padEnd(25) + `${bn ? "মোট" : "Total"}`,
-    `------------------------------`,
-  ];
+const escapeInvoiceHtml = (value: string | number) => String(value).replace(/[&<>"']/g, (character) => ({
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  "\"": "&quot;",
+  "'": "&#39;",
+}[character] as string));
 
-  order.items?.forEach((item) => {
-    lines.push(`${item.product_name.slice(0, 22).padEnd(22)} x${item.quantity}  ৳${(item.unit_price * item.quantity).toLocaleString("bn-BD")}`);
-  });
+const generateInvoice = async (order: MartOrder, bn: boolean) => {
+  const html2pdf = (await import("html2pdf.js")).default;
+  const logoUrl = "/fullLogo.png";
+  let logoSource = logoUrl;
+  try {
+    const logoResponse = await fetch(logoUrl);
+    if (!logoResponse.ok) throw new Error(`Logo request failed: ${logoResponse.status}`);
+    const logoBlob = await logoResponse.blob();
+    logoSource = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result));
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(logoBlob);
+    });
+  } catch (error) {
+    console.error("Invoice logo load error:", error);
+  }
+  const label = (english: string, bangla: string) => bn ? bangla : english;
+  const money = (amount: number) => `৳${amount.toLocaleString("bn-BD")}`;
+  const payment = order.payment_method === "cod" ? label("COD", "ক্যাশ অন ডেলিভারি") : order.payment_method.toUpperCase();
+  const paymentStatus = order.payment_status === "paid" ? label("Paid", "পরিশোধিত") : label("Unpaid", "অপরিশোধিত");
+  const items = order.items?.map((item) => `
+    <tr>
+      <td>${escapeInvoiceHtml(item.product_name)}</td>
+      <td class="number">${item.quantity}</td>
+      <td class="number">${money(item.unit_price)}</td>
+      <td class="number">${money(item.unit_price * item.quantity)}</td>
+    </tr>
+  `).join("") || "";
+  const optionalTotals = [
+    (order.shipping_fee ?? 0) > 0 ? `<div><span>${label("Delivery Fee", "ডেলিভারি ফি")}</span><span>${money(order.shipping_fee || 0)}</span></div>` : "",
+    (order.discount ?? 0) > 0 ? `<div class="discount"><span>${label("Discount", "ডিসকাউন্ট")}</span><span>-${money(order.discount || 0)}</span></div>` : "",
+  ].join("");
 
-  lines.push(`------------------------------`);
-  lines.push(`${(bn ? "সাবটোটাল" : "Subtotal").padEnd(25)} ৳${(order.subtotal || 0).toLocaleString("bn-BD")}`);
-  if ((order.shipping_fee ?? 0) > 0)
-    lines.push(`${(bn ? "ডেলিভারি ফি" : "Delivery").padEnd(25)} ৳${(order.shipping_fee || 0).toLocaleString("bn-BD")}`);
-  if ((order.discount ?? 0) > 0)
-    lines.push(`${(bn ? "ডিসকাউন্ট" : "Discount").padEnd(25)} -৳${(order.discount || 0).toLocaleString("bn-BD")}`);
-  lines.push(`==============================`);
-  lines.push(`${(bn ? "মোট" : "TOTAL").padEnd(25)} ৳${order.total.toLocaleString("bn-BD")}`);
-  lines.push(`==============================`);
-  lines.push(``);
-  lines.push(`${bn ? "পেমেন্ট" : "Payment"}: ${order.payment_method === "cod" ? (bn ? "ক্যাশ অন ডেলিভারি" : "COD") : order.payment_method.toUpperCase()}`);
-  lines.push(`${bn ? "স্ট্যাটাস" : "Status"}: ${order.payment_status === "paid" ? (bn ? "পরিশোধিত" : "Paid") : (bn ? "অপরিশোধিত" : "Unpaid")}`);
-  lines.push(``);
-  lines.push(bn ? "ধন্যবাদ আপনার ক্রয়ের জন্য!" : "Thank you for your purchase!");
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText = "position:fixed;left:-99999px;top:0;background:white;";
+  wrapper.innerHTML = `
+    <style>
+      .invoice-pdf { position:relative; width:210mm; height:297mm; overflow:hidden; box-sizing:border-box; padding:18mm; background:#fff; color:#172033; font-family:'Hind Siliguri','Noto Sans Bengali','Segoe UI',Tahoma,sans-serif; }
+      .invoice-pdf * { box-sizing:border-box; }
+      .invoice-watermark { position:absolute; z-index:0; top:50%; left:50%; width:125mm; height:31.25mm; transform:translate(-50%,-50%); }
+      .invoice-content { position:relative; z-index:1; }
+      .invoice-header { display:flex; align-items:center; gap:5mm; padding-bottom:7mm; border-bottom:2px solid #16834b; }
+      .invoice-header-logo { width:42mm; height:10.5mm; flex:none; }
+      .invoice-header h1 { margin:0; color:#126b3e; font-size:22pt; line-height:1.15; }
+      .invoice-header p { margin:2mm 0 0; color:#64748b; font-size:10pt; }
+      .invoice-meta { display:grid; grid-template-columns:1fr 1fr; gap:2mm 12mm; margin:8mm 0; font-size:10pt; }
+      .invoice-meta div { display:flex; gap:2mm; overflow-wrap:anywhere; }
+      .invoice-meta strong { color:#64748b; min-width:27mm; }
+      .invoice-table { width:100%; border-collapse:collapse; font-size:10pt; }
+      .invoice-table th { padding:3mm; background:#eaf7ef; color:#126b3e; text-align:left; }
+      .invoice-table td { padding:3mm; border-bottom:1px solid #e2e8f0; }
+      .invoice-table .number { text-align:right; white-space:nowrap; }
+      .invoice-totals { width:72mm; margin:7mm 0 0 auto; font-size:10pt; }
+      .invoice-totals div { display:flex; justify-content:space-between; padding:1.5mm 0; gap:6mm; }
+      .invoice-totals .discount { color:#16834b; }
+      .invoice-totals .grand-total { margin-top:2mm; padding-top:3mm; border-top:2px solid #16834b; color:#126b3e; font-size:13pt; font-weight:700; }
+      .invoice-footer { margin-top:18mm; padding-top:5mm; border-top:1px solid #cbd5e1; color:#64748b; text-align:center; font-size:9pt; }
+    </style>
+    <div class="invoice-pdf">
+      <div class="invoice-watermark" aria-hidden="true"></div>
+      <div class="invoice-content">
+        <header class="invoice-header">
+          <div class="invoice-header-logo" aria-hidden="true"></div>
+          <div>
+            <h1>${label("Shondhaan Mart Invoice", "সন্ধান মার্ট ইনভয়েস")}</h1>
+            <p>${label("Order summary", "অর্ডারের সারাংশ")}</p>
+          </div>
+        </header>
+        <section class="invoice-meta">
+          <div><strong>${label("Order #", "অর্ডার নম্বর")}</strong><span>${escapeInvoiceHtml(order.order_number)}</span></div>
+          <div><strong>${label("Date", "তারিখ")}</strong><span>${escapeInvoiceHtml(new Date(order.created_at).toLocaleDateString("bn-BD"))}</span></div>
+          <div><strong>${label("Customer", "গ্রাহক")}</strong><span>${escapeInvoiceHtml(order.customer_name)}</span></div>
+          <div><strong>${label("Phone", "ফোন")}</strong><span>${escapeInvoiceHtml(order.customer_phone)}</span></div>
+          <div><strong>${label("Address", "ঠিকানা")}</strong><span>${escapeInvoiceHtml(order.shipping_address)}</span></div>
+          <div><strong>${label("Payment", "পেমেন্ট")}</strong><span>${escapeInvoiceHtml(payment)} (${escapeInvoiceHtml(paymentStatus)})</span></div>
+        </section>
+        <table class="invoice-table">
+          <thead><tr><th>${label("Item", "পণ্য")}</th><th class="number">${label("Qty", "পরিমাণ")}</th><th class="number">${label("Unit Price", "একক মূল্য")}</th><th class="number">${label("Total", "মোট")}</th></tr></thead>
+          <tbody>${items}</tbody>
+        </table>
+        <section class="invoice-totals">
+          <div><span>${label("Subtotal", "সাবটোটাল")}</span><span>${money(order.subtotal || 0)}</span></div>
+          ${optionalTotals}
+          <div class="grand-total"><span>${label("Total", "মোট")}</span><span>${money(order.total)}</span></div>
+        </section>
+        <footer class="invoice-footer">${label("Thank you for your purchase!", "আপনার ক্রয়ের জন্য ধন্যবাদ!")}</footer>
+      </div>
+    </div>
+  `;
+document.body.appendChild(wrapper);
 
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement("a");
-  a.href     = url;
-  a.download = `invoice-${order.order_number}.txt`;
-  a.click();
-  URL.revokeObjectURL(url);
+  try {
+    const pdf = await html2pdf()
+      .set({
+        margin: 0,
+        filename: `invoice-${order.order_number}.pdf`,
+        image: { type: "jpeg", quality: 0.95 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        // @ts-expect-error html2pdf.js supports pagebreak; types are incomplete
+        pagebreak: { mode: ["avoid-all"] },
+      })
+      .from(wrapper.querySelector(".invoice-pdf") as HTMLElement)
+      .toPdf()
+      .get("pdf");
+
+    while (pdf.getNumberOfPages() > 1) {
+      pdf.deletePage(pdf.getNumberOfPages());
+    }
+    pdf.setPage(1);
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+    pdf.addImage(logoSource, "PNG", 18, 20.65, 42, 10.5, "shondhaan-header", "FAST");
+    pdf.setGState(new pdf.GState({ opacity: 0.075 }));
+    pdf.addImage(logoSource, "PNG", (pageWidth - 125) / 2, (pageHeight - 31.25) / 2, 125, 31.25, "shondhaan-watermark", "FAST");
+    pdf.setGState(new pdf.GState({ opacity: 1 }));
+    pdf.save(`invoice-${order.order_number}.pdf`);
+  } finally {
+    wrapper.remove();
+  }
 };
 
 // ── Component ────────────────────────────────────────────────────────────────
@@ -414,7 +501,7 @@ const MartOrders = () => {
                       {(order.items?.length || 0) > 3 && (
                         <span className="text-xs text-muted-foreground">+{(order.items?.length || 0) - 3} {bn ? "আরো" : "more"}</span>
                       )}
-                      <ChevronRight className={`h-4 w-4 ml-auto text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`} />
+                      <ChevronRight className={`h-6 w-6 ml-auto text-muted-foreground transition-transform ${expanded ? "rotate-90" : ""}`} />
                     </div>
                   </button>
 
@@ -550,7 +637,7 @@ const MartOrders = () => {
                             {canCancel(order.status) && (
                               <Button
                                 variant="outline" size="sm"
-                                className="gap-1.5 text-xs text-red-600 hover:text-red-700 border-red-200 hover:border-red-300"
+                                className="gap-1.5 text-xs text-red-600 hover:text-red-700 border-red-200 hover:bg-red-200 hover:border-red-300"
                                 onClick={() => { setDialogMode("cancel"); setDialogOrderId(order.id); setReason(""); }}
                               >
                                 <XCircle className="h-3.5 w-3.5" />
