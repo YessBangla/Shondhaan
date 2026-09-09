@@ -2,6 +2,18 @@ const express = require("express");
 const pool = require("../db");
 
 const router = express.Router();
+const resolveVendorUserIds = async (productIds = []) => {
+  const ids = [...new Set((Array.isArray(productIds) ? productIds : [productIds])
+    .map((id) => Number(id)).filter((id) => Number.isInteger(id) && id > 0))];
+  if (ids.length === 0) return [];
+
+  const [rows] = await pool.query(
+    "SELECT DISTINCT s.user_id FROM products p INNER JOIN sellers s ON s.id = p.seller_id WHERE p.id IN (?) AND s.user_id IS NOT NULL",
+    [ids]
+  );
+  return rows.map((row) => String(row.user_id)).filter(Boolean);
+};
+
 const readDeliveryFee = async (district = "", userIds = []) => {
   const ids = [...new Set((Array.isArray(userIds) ? userIds : [userIds])
     .map((id) => String(id || "").trim()).filter(Boolean))];
@@ -34,8 +46,11 @@ router.get("/", async (req, res) => {
     const userId = String(req.query.user_id || "").trim();
     const district = String(req.query.district || "").trim();
     const userIds = String(req.query.user_ids || "").split(",").map((id) => id.trim()).filter(Boolean);
-    if (district && userIds.length > 0 && !userId) {
-      return res.json({ success: true, data: { delivery_fee: await readDeliveryFee(district, userIds) } });
+    const productIds = String(req.query.product_ids || "").split(",").map((id) => id.trim()).filter(Boolean);
+    if (district && !userId) {
+      const resolvedFromProducts = await resolveVendorUserIds(productIds);
+      const resolvedUserIds = resolvedFromProducts.length > 0 ? resolvedFromProducts : userIds;
+      return res.json({ success: true, data: { delivery_fee: await readDeliveryFee(district, resolvedUserIds) } });
     }
     const query = userId
       ? "SELECT * FROM mart_fee_settings WHERE user_id = ? ORDER BY id ASC"
@@ -96,4 +111,4 @@ router.put("/", async (req, res) => {
   }
 });
 
-module.exports = { router, readDeliveryFee };
+module.exports = { router, readDeliveryFee, resolveVendorUserIds };
