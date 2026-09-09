@@ -3,7 +3,7 @@ const axios = require("axios");
 const pool = require("../db");
 const { generateInvoiceNumber } = require("../utils/invoiceNumber");
 const { getBackendBaseUrl } = require("../utils/baseUrl");
-const { readDeliveryFee } = require("./martFeeSettings");
+const { readDeliveryFee, resolveVendorUserIds } = require("./martFeeSettings");
 
 const router = express.Router();
 
@@ -507,9 +507,11 @@ router.post("/", async (req, res) => {
       verifiedDiscount = calculateCouponDiscount(coupon, eligibleSubtotal);
     }
 
-    const sellerIds = items
+    let sellerIds = items
       .map((item) => item.vendor_id ?? item.seller_id)
       .filter((id) => id !== null && id !== undefined && String(id).trim() !== "");
+    const resolvedFromProducts = await resolveVendorUserIds(items.map((item) => item.product_id));
+    if (resolvedFromProducts.length > 0) sellerIds = resolvedFromProducts;
     const deliveryFee = await readDeliveryFee(shipping_district, sellerIds);
     const verifiedTotal = Number(subtotal || 0) + deliveryFee - verifiedDiscount;
 

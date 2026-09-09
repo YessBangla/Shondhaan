@@ -83,11 +83,16 @@ const MartCheckout = () => {
     () => [...new Set(items.map((item) => item.product.vendor_id ?? item.product.seller_id).filter(Boolean).map(String))],
     [items]
   );
+  const productIds = useMemo(
+    () => [...new Set(items.map((item) => String(item.product.id)).filter(Boolean))],
+    [items]
+  );
 
   useEffect(() => {
     const params = new URLSearchParams();
     if (district) params.set("district", district);
     if (sellerIds.length > 0) params.set("user_ids", sellerIds.join(","));
+    if (productIds.length > 0) params.set("product_ids", productIds.join(","));
     const query = params.toString() ? `?${params.toString()}` : "";
     fetch(`${apiBase}/api/mart-fee-settings${query}`)
       .then((response) => response.json())
@@ -95,7 +100,7 @@ const MartCheckout = () => {
         if (result.success) setDeliveryFee(Math.max(0, Number(result.data?.delivery_fee ?? DEFAULT_DELIVERY_FEE)));
       })
       .catch(() => undefined);
-  }, [apiBase, district, sellerIds]);
+  }, [apiBase, district, productIds, sellerIds]);
 
   // Load saved addresses
   useEffect(() => {

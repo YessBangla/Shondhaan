@@ -4,10 +4,12 @@ const pool = require("../db");
 // Enforce the free/paid product limit when a seller creates a new product.
 const { requireProductAllowance } = require("./martPackages");
 
+const normalizeUploadUrl = (value) => String(value || "").trim().replace(/^https?:\/\/[^/]+(?=\/uploads\/)/i, "");
+
 const normalizeGalleryUrls = (value) => {
   if (Array.isArray(value)) {
     return value
-      .map((url) => String(url || "").trim())
+      .map(normalizeUploadUrl)
       .filter(Boolean)
       .slice(0, 4);
   }
@@ -31,6 +33,7 @@ const serializeGalleryUrls = (value) => JSON.stringify(normalizeGalleryUrls(valu
 
 const normalizeProductRow = (row) => ({
   ...row,
+  image_url: normalizeUploadUrl(row.image_url),
   gallery_urls: normalizeGalleryUrls(row.gallery_urls),
 });
 

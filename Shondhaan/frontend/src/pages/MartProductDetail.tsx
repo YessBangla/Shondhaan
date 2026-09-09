@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { addDays, format } from "date-fns";
 import { bn as bnLocale } from "date-fns/locale";
 import { haptic } from "@/lib/haptics";
+import { getFullImageUrl } from "@/lib/imageUrl";
 import { useSEO } from "@/hooks/useSEO";
 
 const FREE_SHIPPING_MIN = 50000;
@@ -46,8 +47,24 @@ type ProductReviewStats = {
   avgRating: number;
 };
 
+type VendorFeeSetting = {
+  selected_areas?: string[] | string | null;
+  area_fee?: number | string;
+  other_area_fee?: number | string;
+};
+
 type ProductDetailTab = "description" | "reviews" | "qa" | "shipping";
 const PRODUCT_DETAIL_TABS = new Set<ProductDetailTab>(["description", "reviews", "qa", "shipping"]);
+
+const readSelectedAreas = (value: VendorFeeSetting["selected_areas"]) => {
+  if (Array.isArray(value)) return value.map(String).filter(Boolean);
+  try {
+    const parsed = JSON.parse(value || "[]");
+    return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+};
 
 const MartProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
@@ -66,6 +83,7 @@ const MartProductDetail = () => {
   const [chatOpen, setChatOpen] = useState(false);
   const [liveReviewStats, setLiveReviewStats] = useState<ProductReviewStats | null>(null);
   const [activeTab, setActiveTab] = useState<ProductDetailTab>("description");
+  const [vendorFeeSettings, setVendorFeeSettings] = useState<VendorFeeSetting[]>([]);
 
   const requireAuthForPurchase = (action: () => void) => {
     if (!user) {
@@ -77,7 +95,7 @@ const MartProductDetail = () => {
   };
 
   const productName = product ? (bn ? product.name : product.name_en || product.name) : "";
-  const productImage = product?.image_url || undefined;
+  const productImage = getFullImageUrl(product?.image_url);
   const productPrice = product?.price ? Number(product.price) : null;
   const productDesc = product
     ? bn
@@ -120,6 +138,26 @@ const MartProductDetail = () => {
     (bn ? "সন্ধান মার্ট বিক্রেতা" : "Yess Mart Seller");
 
   const vendorVerified = product?.seller_verified === 1 || product?.seller_verified === true;
+
+  useEffect(() => {
+    if (!product?.vendor_id) {
+      setVendorFeeSettings([]);
+      return;
+    }
+
+    fetch(`${MART_API_BASE}/api/mart-fee-settings?user_id=${encodeURIComponent(String(product.vendor_id))}`)
+      .then((response) => response.json())
+      .then((result) => setVendorFeeSettings(result.success && Array.isArray(result.data) ? result.data : []))
+      .catch(() => setVendorFeeSettings([]));
+  }, [product?.vendor_id]);
+
+  const vendorAreaSetting = vendorFeeSettings.find((setting) => readSelectedAreas(setting.selected_areas).length > 0);
+  const vendorDeliveryAreas = vendorFeeSettings.flatMap((setting) => {
+    const fee = Number(setting.area_fee || 0);
+    return readSelectedAreas(setting.selected_areas).map((district) => ({ district, fee }));
+  });
+  const vendorAreaFee = Number(vendorAreaSetting?.area_fee || 0);
+  const vendorOtherAreaFee = Number(vendorAreaSetting?.other_area_fee || 0);
 
   const isMysqlProduct = Boolean(slug?.startsWith("mysql-product-"));
 
@@ -259,7 +297,7 @@ const MartProductDetail = () => {
     ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
     : 0;
 
-  const allImages = [product.image_url, ...(product.gallery_urls || [])].filter(Boolean) as string[];
+  const allImages = [productImage, ...(product.gallery_urls || []).map(getFullImageUrl)].filter(Boolean);
   const wishlistProductId = String(slug?.startsWith("mysql-product-") ? slug.replace("mysql-product-", "") : product.id);
   const wishlisted = isInWishlist(wishlistProductId);
   const handleToggleWishlist = () => toggleWishlist({ ...product, id: wishlistProductId });
@@ -412,7 +450,7 @@ const MartProductDetail = () => {
       className="flex items-center gap-1 hover:text-primary"
       iconClassName="h-3.5 w-3.5"
     />
-    <ARProductPreview productName={productTitle} imageUrl={product.image_url} />
+    <ARProductPreview productName={productTitle} imageUrl={productImage} />
   </div>
 </div>
 
@@ -580,13 +618,27 @@ const MartProductDetail = () => {
                 <Separator className="bg-gray-100" />
                 <div className="space-y-2 text-xs text-gray-600">
                   <div className="flex justify-between">
-                    <span>{bn ? "ঢাকার ভেতর" : "Inside Dhaka"}</span>
-                    <span className="font-medium">৳60 · 2-3 {bn ? "দিন" : "days"}</span>
+                    <span>{bn ? "নির্বাচিত এলাকার ভিতরে" : "Inside selected areas"}</span>
+                    <span className="font-medium">
+                      {vendorDeliveryAreas.length > 0
+                        ? `৳${vendorAreaFee.toLocaleString()} · 2-3 ${bn ? "দিন" : "days"}`
+                        : (bn ? "এলাকা নির্ধারিত নয়" : "Areas not configured")}
+                    </span>
                   </div>
                   <div className="flex justify-between">
-                    <span>{bn ? "ঢাকার বাইরে" : "Outside Dhaka"}</span>
-                    <span className="font-medium">৳120 · 3-5 {bn ? "দিন" : "days"}</span>
+                    <span>{bn ? "নির্বাচিত এলাকার বাইরে" : "Outside selected areas"}</span>
+                    <span className="font-medium">
+                      {vendorDeliveryAreas.length > 0
+                        ? `৳${vendorOtherAreaFee.toLocaleString()} · 3-5 ${bn ? "দিন" : "days"}`
+                        : (bn ? "এলাকা নির্ধারিত নয়" : "Areas not configured")}
+                    </span>
                   </div>
+                  {vendorDeliveryAreas.length > 0 && (
+                    <div className="rounded-sm bg-gray-50 p-2 text-[11px] text-gray-500">
+                      <p className="mb-1 font-medium text-gray-700">{bn ? "বিক্রেতার ডেলিভারি এলাকা" : "Seller delivery areas"}</p>
+                      <p>{vendorDeliveryAreas.map(({ district }) => district).join(", ")}</p>
+                    </div>
+                  )}
                   {freeShipping && (
                     <div className="flex justify-between text-green-600 font-medium">
                       <span>{bn ? "৳৫০০+ অর্ডার" : "Orders ৳500+"}</span>
@@ -733,8 +785,18 @@ const MartProductDetail = () => {
               <TabsContent value="shipping">
                 <div className="max-w-md space-y-0 divide-y divide-gray-100">
                   {[
-                    { label: bn ? "ঢাকার ভেতর" : "Inside Dhaka", value: `৳60 · 2-3 ${bn ? "দিন" : "days"}` },
-                    { label: bn ? "ঢাকার বাইরে" : "Outside Dhaka", value: `৳120 · 3-5 ${bn ? "দিন" : "days"}` },
+                    {
+                      label: bn ? "নির্বাচিত এলাকার ভিতরে" : "Inside selected areas",
+                      value: vendorDeliveryAreas.length > 0
+                        ? `৳${vendorAreaFee.toLocaleString()} · 2-3 ${bn ? "দিন" : "days"}`
+                        : (bn ? "এলাকা নির্ধারিত নয়" : "Areas not configured"),
+                    },
+                    {
+                      label: bn ? "নির্বাচিত এলাকার বাইরে" : "Outside selected areas",
+                      value: vendorDeliveryAreas.length > 0
+                        ? `৳${vendorOtherAreaFee.toLocaleString()} · 3-5 ${bn ? "দিন" : "days"}`
+                        : (bn ? "এলাকা নির্ধারিত নয়" : "Areas not configured"),
+                    },
                     // { label: bn ? "কুরিয়ার ফি" : "Courier Fee (per item)", value: `৳${COURIER_FEE_MIN}-৳${COURIER_FEE_MAX}` },
                     // { label: bn ? "৳৫০০+ অর্ডারে" : "Orders ৳500+", value: bn ? "ফ্রি ডেলিভারি ✓" : "Free Delivery ✓", highlight: true },
                   ].map(({ label, value, highlight }) => (
@@ -743,6 +805,12 @@ const MartProductDetail = () => {
                       <span className={`font-medium ${highlight ? "text-green-600" : "text-gray-800"}`}>{value}</span>
                     </div>
                   ))}
+                  {vendorDeliveryAreas.length > 0 && (
+                    <div className="py-3 text-sm">
+                      <span className="text-gray-500">{bn ? "বিক্রেতার নির্বাচিত এলাকা" : "Seller-selected areas"}</span>
+                      <p className="mt-1 text-gray-800">{vendorDeliveryAreas.map(({ district }) => district).join(", ")}</p>
+                    </div>
+                  )}
                 </div>
               </TabsContent>
             </div>
@@ -826,7 +894,7 @@ const MartProductDetail = () => {
           onOpenChange={setChatOpen}
           productId={product.id}
           productName={bn ? product.name : (product.name_en || product.name)}
-          productImage={product.image_url}
+          productImage={productImage}
           productPrice={product.price}
           sellerId={String(product.vendor_id)}
         />

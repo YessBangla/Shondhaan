@@ -1,4 +1,8 @@
-const MART_API_BASE = import.meta.env.VITE_MART_API_BASE_URL || "";
+const MART_API_BASE =
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_URL ||
+  import.meta.env.VITE_API_BASE ||
+  "";
 
 export const getFullImageUrl = (path?: string | null): string => {
   if (!path) return "";
