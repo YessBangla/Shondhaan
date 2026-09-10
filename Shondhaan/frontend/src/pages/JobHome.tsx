@@ -40,6 +40,12 @@ const DIRECT_JOB_TYPE_VALUES = [
   "temporary",
 ];
 
+const formatDeadline = (deadline: string | null) => {
+  if (!deadline) return "";
+  const date = new Date(deadline);
+  return Number.isNaN(date.getTime()) ? "" : format(date, "dd MMM");
+};
+
 const JobHome = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
@@ -259,7 +265,7 @@ const JobHome = () => {
                         <p className="text-xs text-muted-foreground mt-0.5">{job.company_name}</p>
                       </div>
                       <div className="text-right shrink-0">
-                        <p className="text-xs text-red-600 font-bold">{job.deadline ? format(new Date(job.deadline), "dd MMM") : ""}</p>
+                        <p className="text-xs text-red-600 font-bold">{formatDeadline(job.deadline)}</p>
                         <p className="text-[10px] text-red-400">{bn ? "শেষ তারিখ" : "Deadline"}</p>
                       </div>
                     </Link>

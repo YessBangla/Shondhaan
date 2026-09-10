@@ -1,4 +1,5 @@
-import { useState, useCallback, lazy, Suspense } from "react";
+import { Component, useState, useCallback, lazy as reactLazy, Suspense } from "react";
+import type { ComponentType, ErrorInfo, ReactNode } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -62,6 +63,61 @@ import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
 import MartAdminPanel from "@/components/mart/MartAdminPanel";
 import { captureReferralCodeFromUrl } from "@/lib/referralCookie";
+
+const CHUNK_RELOAD_KEY = "shondhaan-chunk-reload";
+
+function lazy<T extends ComponentType<any>>(load: () => Promise<{ default: T }>) {
+  return reactLazy(async () => {
+    try {
+      const module = await load();
+      sessionStorage.removeItem(CHUNK_RELOAD_KEY);
+      return module;
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      const isChunkFailure = /chunk|import|module|fetch/i.test(message);
+      const alreadyRetried = sessionStorage.getItem(CHUNK_RELOAD_KEY) === "1";
+
+      if (isChunkFailure && !alreadyRetried) {
+        sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
+        window.location.reload();
+      }
+
+      throw error;
+    }
+  });
+}
+
+class AppErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error("Application render error:", error, errorInfo);
+  }
+
+  render() {
+    if (!this.state.hasError) return this.props.children;
+
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background px-6 text-center">
+        <div className="max-w-md space-y-4">
+          <h1 className="text-xl font-semibold text-foreground">This page could not be loaded</h1>
+          <p className="text-sm text-muted-foreground">Please reload the page and try again.</p>
+          <button
+            type="button"
+            className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground"
+            onClick={() => window.location.reload()}
+          >
+            Reload page
+          </button>
+        </div>
+      </div>
+    );
+  }
+}
 
 const Index = lazy(() => import("./pages/Index"));
 const ServiceDetail = lazy(() => import("./pages/ServiceDetail"));
@@ -275,9 +331,10 @@ const App = () => {
                             <MobileLayerDebugOverlay />
                             {splashDone && <DesktopMegaMenu />}
                             <GlobalLanguageSwitcher />
-                            <Suspense fallback={<PageLoader />}>
-                              <PageTransition>
-                                <Routes>
+                            <AppErrorBoundary>
+                              <Suspense fallback={<PageLoader />}>
+                                <PageTransition>
+                                  <Routes>
                                   <Route path="/" element={<Index />} />
                                   <Route path="/service/:slug" element={<ServiceDetail />} />
                                   <Route path="/all-services" element={<AllServices />} />
@@ -415,9 +472,10 @@ const App = () => {
                                   <Route path="/payment-cancel" element={<PaymentCancel />} />
                                   <Route path="/payment-failed" element={<PaymentFailed />} />
                                   <Route path="*" element={<NotFound />} />
-                                </Routes>
-                              </PageTransition>
-                            </Suspense>
+                                  </Routes>
+                                </PageTransition>
+                              </Suspense>
+                            </AppErrorBoundary>
                             <MobileBottomNav />
                           </LocationProvider>
                         </MartCompareProvider>

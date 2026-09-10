@@ -347,7 +347,7 @@ const HeroSection = () => {
 
   const heroTitle =
     (bn ? activeHeroBanner?.title_bn : activeHeroBanner?.title_en || activeHeroBanner?.title_bn) ||
-    (bn ? "আপনার সার্ভিসর অংশীদার" : "Your Service Partner");
+    (bn ? "আপনার সার্ভিসের অংশীদার" : "Your Service Partner");
 
   const heroSubtitle =
     (bn ? activeHeroBanner?.subtitle_bn : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
