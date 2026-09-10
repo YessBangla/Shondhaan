@@ -18,11 +18,18 @@ interface JobCardProps {
 function getDeadlineUrgency(deadline: string | null) {
   if (!deadline) return null;
   const d = new Date(deadline);
+  if (Number.isNaN(d.getTime())) return null;
   if (isPast(d)) return "expired";
   const days = differenceInDays(d, new Date());
   if (days <= 3) return "urgent";
   if (days <= 7) return "soon";
   return null;
+}
+
+function formatDeadline(deadline: string | null) {
+  if (!deadline) return null;
+  const date = new Date(deadline);
+  return Number.isNaN(date.getTime()) ? null : format(date, "dd MMM yyyy");
 }
 
 // Strips HTML tags (description is stored as rich-text HTML from the job
@@ -135,13 +142,13 @@ const education = job.education_subject || null;
         </div>
 
         {/* Deadline */}
-        {job.deadline && (
+        {formatDeadline(job.deadline) && (
           <div className="mt-2.5 flex justify-end">
             <div className="flex items-center gap-1.5 text-xs text-gray-700">
               <span className="font-medium">Deadline:</span>
               <Calendar className="h-3.5 w-3.5" />
               <span className="font-medium">
-                {format(new Date(job.deadline), "dd MMM yyyy")}
+                {formatDeadline(job.deadline)}
               </span>
             </div>
           </div>

@@ -1,11 +1,13 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronLeft, Search, User, Phone, MapPin, Calendar, Clock,
   Plus, RefreshCw, FileText, ClipboardList, Headphones, Loader2,
   Zap, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart,
-  AlertCircle, CheckCircle, Circle
+  AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X,
+  type LucideIcon,
+  UserRound
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -13,8 +15,15 @@ import { toast } from "sonner";
 import AccountsSection from "@/components/AccountsSection";
 import NotificationBell from "@/components/NotificationBell";
 import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import CategoryFilterDropdown, { useServiceCategoryMap } from "@/components/CategoryFilterDropdown";
+import { useCmsCategories } from "@/hooks/useCmsData";
+import { useForm } from "react-hook-form";
 import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { useLanguage } from "@/contexts/LanguageContext";
 import {
   assignBookingProvider,
   createBooking,
@@ -113,6 +122,66 @@ const normalizeUserToProfile = (item: any): Profile => ({
   address: item.address ?? item.location ?? null,
 });
 
+type ProviderFormValues = {
+  full_name: string;
+  phone: string;
+  email: string;
+  address: string;
+  service_category: string;
+  experience_years: number;
+};
+
+const NidUpload = ({
+  label,
+  file,
+  onFileChange,
+  preview,
+}: {
+  label: string;
+  file: File | null;
+  onFileChange: (file: File | null) => void;
+  preview: string | null;
+}) => {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <div className="flex flex-col items-center gap-2">
+      <p className="text-sm font-medium text-foreground">{label}</p>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="relative flex h-32 w-full items-center justify-center overflow-hidden rounded-xl border-2 border-dashed border-border bg-muted/30"
+      >
+        {preview ? (
+          <img src={preview} alt={label} className="h-full w-full object-contain" />
+        ) : (
+          <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
+            <Camera className="h-4 w-4" />
+            <span className="text-xs">ছবি আপলোড করুন</span>
+          </div>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => onFileChange(event.target.files?.[0] ?? null)}
+      />
+      {file && <span className="max-w-full truncate text-[10px] text-muted-foreground">{file.name}</span>}
+    </div>
+  );
+};
+
+const SectionHeading = ({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) => (
+  <div className="flex items-center gap-2 mb-4">
+    <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+    <h2 className="text-sm font-semibold text-foreground tracking-wide">{children}</h2>
+  </div>
+);
+
 const CallCenterPanel = () => {
   const navigate = useNavigate();
   const mysqlAuth = getMySqlAuth();
@@ -134,6 +203,32 @@ const CallCenterPanel = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [reqStatusFilter, setReqStatusFilter] = useState("all");
   const { data: serviceCategoryMap } = useServiceCategoryMap();
+  const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
+  const form = useForm<ProviderFormValues>({
+    defaultValues: {
+      full_name: "",
+      phone: "",
+      email: "",
+      address: "",
+      service_category: "",
+      experience_years: 0,
+    },
+  });
+  const [nidFront, setNidFront] = useState<File | null>(null);
+  const [nidBack, setNidBack] = useState<File | null>(null);
+  const [frontPreview, setFrontPreview] = useState<string | null>(null);
+  const [backPreview, setBackPreview] = useState<string | null>(null);
+
+  const handleFileChange = (side: "front" | "back") => (file: File | null) => {
+    const preview = file ? URL.createObjectURL(file) : null;
+    if (side === "front") {
+      setNidFront(file);
+      setFrontPreview(preview);
+    } else {
+      setNidBack(file);
+      setBackPreview(preview);
+    }
+  };
 
   // Services & Packages states
   const [services, setServices] = useState<any[]>([]);
@@ -479,6 +574,7 @@ const CallCenterPanel = () => {
     setPackageSearch("");
     fetchData();
   };
+  
 
   const statusFilteredBookings = filterStatus === "all"
     ? bookings
@@ -528,6 +624,9 @@ const CallCenterPanel = () => {
     );
   }
 
+  const { language } = useLanguage();
+  const bn = language === "bn";
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="mx-auto max-w-full">
@@ -536,6 +635,7 @@ const CallCenterPanel = () => {
             items={[
               { value: "search", label: "কাস্টমার সার্চ", icon: <Search className="h-4 w-4" />, group: "সার্চ" },
               { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
+              { value: "create-provider", label: "প্রোভাইডার রেজিস্ট্রেশন", icon: <Plus className="h-4 w-4" /> },
               { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
               { value: "requests", label: "সার্ভিস অনুরোধ", icon: <FileText className="h-4 w-4" /> },
               { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
@@ -1123,6 +1223,194 @@ const CallCenterPanel = () => {
                   </div>
                 );
 
+                /* ─────────────────────────────────────────────
+                 TAB: NEW PROVIDER REGISTRATOIN
+              ───────────────────────────────────────────── */
+              if (activeTab === "create-provider")
+                return (
+                  <div className="p-6 bg-white">
+                    <div className="flex items-center justify-between mb-5">
+                      <h3 className="text-lg font-semibold text-slate-900 mb-5">নতুন প্রোভাইডার রেজিস্ট্রেশন করুন</h3>
+                      <button
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                      >
+                        
+                      </button>
+                    </div>
+                    <div className="w-full py-8 md:py-2 mb-8">
+                      <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.1 }}
+                        className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 md:p-8"
+                        >
+                        <Form {...form}>
+                          <form className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
+                              {/* Left column: personal + work info */}
+                              <div className="space-y-8">
+                                <div>
+                                  <SectionHeading icon={UserRound}>
+                                    {bn ? "ব্যক্তিগত তথ্য" : "Personal Information"}
+                                  </SectionHeading>
+
+                                  <div className="space-y-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="full_name"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "পুরো নাম" : "Full Name"} *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder={bn ? "আপনার পুরো নাম" : "Your full name"} {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="phone"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "ফোন নম্বর" : "Phone"} *</FormLabel>
+                                          <FormControl>
+                                            <Input placeholder="01XXXXXXXXX" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="email"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "ইমেইল (অপশনাল)" : "Email (optional)"}</FormLabel>
+                                          <FormControl>
+                                            <Input type="email" placeholder={bn ? "আপনার ইমেইল" : "Your email"} {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+
+                                    <FormField
+                                      control={form.control}
+                                      name="address"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "ঠিকানা" : "Address"} *</FormLabel>
+                                          <FormControl>
+                                            <Textarea rows={2} placeholder={bn ? "আপনার বর্তমান ঠিকানা" : "Your current address"} {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="pt-6 border-t border-border/60">
+                                  <SectionHeading icon={Briefcase}>
+                                    {bn ? "কাজের তথ্য" : "Work Information"}
+                                  </SectionHeading>
+
+                                  <div className="space-y-4">
+                                    <FormField
+                                      control={form.control}
+                                      name="service_category"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "সার্ভিসর ক্যাটেগরি" : "Service Category"} *</FormLabel>
+                                          <Select onValueChange={field.onChange} value={field.value}>
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue placeholder={bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select category"} />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              {serviceCategories.filter((category) => category.is_active).map((category) => (
+                                                <SelectItem key={category.id} value={category.id}>
+                                                  {bn ? category.name : category.name_en || category.name}
+                                                </SelectItem>
+                                              ))}
+                                            </SelectContent>
+                                          </Select>
+                                          {categoriesError && <p className="text-sm font-medium text-destructive">{bn ? "ক্যাটেগরি লোড করা যায়নি" : "Could not load service categories"}</p>}
+                                          {categoriesLoading && <p className="text-sm text-muted-foreground">{bn ? "ক্যাটেগরি লোড হচ্ছে..." : "Loading categories..."}</p>}
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                    <FormField
+                                      control={form.control}
+                                      name="experience_years"
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>{bn ? "অভিজ্ঞতা (বছর)" : "Experience (years)"}</FormLabel>
+                                          <FormControl>
+                                            <Input type="number" min={0} max={50} placeholder="0" {...field} />
+                                          </FormControl>
+                                          <FormMessage />
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Right column: NID upload + submit, sticky on desktop */}
+                              <div className="md:sticky md:top-24 md:self-start">
+                                <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
+                                  <SectionHeading icon={IdCard}>
+                                    {bn ? "জাতীয় পরিচয়পত্র (NID)" : "National ID (NID)"} *
+                                  </SectionHeading>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <NidUpload
+                                      label={bn ? "সামনের পাশ" : "Front Side"}
+                                      file={nidFront}
+                                      onFileChange={handleFileChange("front")}
+                                      preview={frontPreview}
+                                    />
+                                    <NidUpload
+                                      label={bn ? "পেছনের পাশ" : "Back Side"}
+                                      file={nidBack}
+                                      onFileChange={handleFileChange("back")}
+                                      preview={backPreview}
+                                    />
+                                  </div>
+                                  <p className="mt-2 text-[11px] text-muted-foreground text-center">
+                                    {bn ? "সর্বোচ্চ ৫MB, JPG/PNG ফরম্যাট" : "Max 5MB, JPG/PNG format"}
+                                  </p>
+                                </div>
+
+                                <Button
+                                  type="submit"
+                                  disabled={submitting}
+                                  className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99] mt-6 bg-userprimary text-white "
+                                >
+                                  <Send className="h-4 w-4" />
+                                  {submitting
+                                    ? (bn ? "জমা দেওয়া হচ্ছে..." : "Submitting...")
+                                    : (bn ? "আবেদন জমা দিন" : "Submit Application")}
+                                </Button>
+
+                                <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
+                                  {bn
+                                    ? "জমা দেওয়ার মাধ্যমে আপনি আমাদের শর্তাবলীতে সম্মত হচ্ছেন।"
+                                    : "By submitting, you agree to our terms and application review process."}
+                                </p>
+                              </div>
+                            </div>
+                          </form>
+                        </Form>
+                      </motion.div>
+                    </div>
+                  </div>
+                );
 
               /* ─────────────────────────────────────────────
                  TAB: SERVICE REQUESTS
