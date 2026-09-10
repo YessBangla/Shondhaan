@@ -3,12 +3,11 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
-import { Send, X, Camera, UserRound, Briefcase, IdCard, Sparkles } from "lucide-react";
+import { Send, X, Camera, UserRound, Briefcase, IdCard, Sparkles, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { supabase } from "@/integrations/supabase/client";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -16,23 +15,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useSEO } from "@/hooks/useSEO";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
-import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
+import { useCmsCategories } from "@/hooks/useCmsData";
+import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 
-const SERVICE_API_BASE_URL = INDIVIDUAL_API_BASE_URL;
-
-const categories = [
-  { value: "ac-service", bn: "এসি সার্ভিস", en: "AC Service" },
-  { value: "cleaning", bn: "ক্লিনিং", en: "Cleaning" },
-  { value: "electrical", bn: "ইলেকট্রিক্যাল", en: "Electrical" },
-  { value: "plumbing", bn: "প্লাম্বিং", en: "Plumbing" },
-  { value: "painting", bn: "পেইন্টিং", en: "Painting" },
-  { value: "appliance-repair", bn: "অ্যাপ্লায়েন্স রিপেয়ার", en: "Appliance Repair" },
-  { value: "beauty-salon", bn: "বিউটি ও সেলুন", en: "Beauty & Salon" },
-  { value: "pest-control", bn: "পেস্ট কন্ট্রোল", en: "Pest Control" },
-  { value: "shifting", bn: "শিফটিং", en: "Shifting" },
-  { value: "driver", bn: "ড্রাইভার", en: "Driver" },
-  { value: "other", bn: "অন্যান্য", en: "Other" },
-];
+const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
 
 const joinSchema = z.object({
   full_name: z.string().trim().min(1, "Name is required").max(100),
@@ -45,7 +31,7 @@ const joinSchema = z.object({
 
 type JoinForm = z.infer<typeof joinSchema>;
 
-const SectionHeading = ({ icon: Icon, children }: { icon: any; children: React.ReactNode }) => (
+const SectionHeading = ({ icon: Icon, children }: { icon: LucideIcon; children: React.ReactNode }) => (
   <div className="flex items-center gap-2 mb-4">
     <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
       <Icon className="h-3.5 w-3.5" />
@@ -123,6 +109,7 @@ const NidUpload = ({
 const JoinUs = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
+  const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
   const [submitting, setSubmitting] = useState(false);
   const [nidFront, setNidFront] = useState<File | null>(null);
   const [nidBack, setNidBack] = useState<File | null>(null);
@@ -160,18 +147,6 @@ const JoinUs = () => {
     }
   };
 
-  const uploadFile = async (file: File, prefix: string): Promise<string> => {
-    const ext = file.name.split(".").pop() || "jpg";
-    const path = `${prefix}/${crypto.randomUUID()}.${ext}`;
-    const { error } = await supabase.storage.from("applications").upload(path, file, {
-      cacheControl: "3600",
-      upsert: false,
-    });
-    if (error) throw error;
-    // Return path (admins will use authenticated URL to view)
-    return path;
-  };
-
   const onSubmit = async (data: JoinForm) => {
     if (!nidFront || !nidBack) {
       toast.error(bn ? "এনআইডির দুই পাশের ছবি আপলোড করুন" : "Please upload both sides of NID");
@@ -180,23 +155,28 @@ const JoinUs = () => {
 
     setSubmitting(true);
     try {
-      const [frontPath, backPath] = await Promise.all([
-        uploadFile(nidFront, "nid-front"),
-        uploadFile(nidBack, "nid-back"),
-      ]);
+      const auth = getMySqlAuth();
+      if (!auth?.token) {
+        throw new Error(bn ? "আবেদন করতে আগে লগইন করুন" : "Please log in before submitting an application");
+      }
 
-      const { error } = await supabase.from("job_applications" as any).insert({
-        full_name: data.full_name,
-        phone: data.phone,
-        email: data.email || null,
-        address: data.address,
-        service_category: data.service_category,
-        experience_years: data.experience_years || 0,
-        nid_front_url: frontPath,
-        nid_back_url: backPath,
-      } as any);
+      const formData = new FormData();
+      formData.append("full_name", data.full_name);
+      formData.append("phone", data.phone);
+      formData.append("email", data.email || "");
+      formData.append("address", data.address);
+      formData.append("service_category", data.service_category);
+      formData.append("experience_years", String(data.experience_years ?? 0));
+      formData.append("nid_front", nidFront);
+      formData.append("nid_back", nidBack);
 
-      if (error) throw error;
+      const response = await fetch(`${API_BASE_URL}/api/providers/applications`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${auth.token}` },
+        body: formData,
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || "Failed to submit application");
 
       toast.success(bn ? "আপনার আবেদন সফলভাবে জমা হয়েছে!" : "Your application has been submitted!");
       form.reset();
@@ -204,8 +184,9 @@ const JoinUs = () => {
       setNidBack(null);
       setFrontPreview(null);
       setBackPreview(null);
-    } catch (err: any) {
-      toast.error(bn ? "আবেদন জমা দিতে সমস্যা হয়েছে" : "Failed to submit application");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "";
+      toast.error(message || (bn ? "আবেদন জমা দিতে সমস্যা হয়েছে" : "Failed to submit application"));
     } finally {
       setSubmitting(false);
     }
@@ -335,13 +316,15 @@ const JoinUs = () => {
                                 </SelectTrigger>
                               </FormControl>
                               <SelectContent>
-                                {categories.map((c) => (
-                                  <SelectItem key={c.value} value={c.value}>
-                                    {bn ? c.bn : c.en}
+                                {serviceCategories.filter((category) => category.is_active).map((category) => (
+                                  <SelectItem key={category.id} value={category.id}>
+                                    {bn ? category.name : category.name_en || category.name}
                                   </SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
+                            {categoriesError && <p className="text-sm font-medium text-destructive">{bn ? "ক্যাটেগরি লোড করা যায়নি" : "Could not load service categories"}</p>}
+                            {categoriesLoading && <p className="text-sm text-muted-foreground">{bn ? "ক্যাটেগরি লোড হচ্ছে..." : "Loading categories..."}</p>}
                             <FormMessage />
                           </FormItem>
                         )}

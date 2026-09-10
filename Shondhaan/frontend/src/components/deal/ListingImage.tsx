@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import yessDealLogo from "@/assets/yess-deal-logo.png";
+import yessDealLogo from "../../../public/fullLogo.png";
 
 interface Props {
   src?: string | null;
@@ -70,14 +70,14 @@ export default function ListingImage({
         src={yessDealLogo}
         alt=""
         aria-hidden="true"
-        className={`pointer-events-none absolute ${wmCls} w-auto opacity-60 mix-blend-multiply drop-shadow-md z-10`}
+        className={`pointer-events-none absolute ${wmCls} w-auto  mix-blend-multiply drop-shadow-md z-10`}
       />
     );
 
   if (!showImg) {
     return (
       <div
-        className={`${className} relative flex items-center justify-center bg-muted ${sizeClass}`}
+        className={`${className} relative flex items-center justify-center bg-white ${sizeClass}`}
       >
         📦
         <Watermark />
