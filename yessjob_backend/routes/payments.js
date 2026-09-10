@@ -28,7 +28,21 @@ const pool = mysql.createPool({
 if (!process.env.FRONTEND_URL) {
   console.warn("⚠️ FRONTEND_URL is not set in the backend environment");
 }
-const FRONTEND_URL = (process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || "").replace(/\/+$/, "");
+const configuredFrontendUrls = String(
+  process.env.FRONTEND_URL || process.env.FRONTEND_BASE_URL || ""
+)
+  .split(",")
+  .map((url) => url.trim())
+  .filter(Boolean);
+const FRONTEND_URL =
+  configuredFrontendUrls.find((url) => {
+    try {
+      const parsed = new URL(url);
+      return parsed.protocol === "http:" || parsed.protocol === "https:";
+    } catch {
+      return false;
+    }
+  })?.replace(/\/+$/, "") || "https://shondhaan.com";
 
 // -----------------------------------------------------------------------
 // Initiate: create a ShurjoPay session for a job package and hand the
@@ -85,8 +99,10 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT * FROM payment_transactions WHERE order_id = ? LIMIT 1`,
-      [orderId]
+      `SELECT * FROM payment_transactions
+       WHERE order_id = ? OR sp_order_id = ?
+       ORDER BY id DESC LIMIT 1`,
+      [orderId, orderId]
     );
     const txn = rows[0];
 
@@ -104,7 +120,7 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
       );
       const enrolledPackageId = enrolledRows[0]?.id;
       const suffix = enrolledPackageId ? `&enrolled_package_id=${enrolledPackageId}` : "";
-      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}${suffix}`);
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${txn.order_id}${suffix}`);
     }
 
     const spOrderIdToVerify = txn.sp_order_id || orderId;
@@ -117,7 +133,7 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
       `UPDATE payment_transactions
        SET status = ?, raw_response = ?, sp_order_id = COALESCE(sp_order_id, ?)
        WHERE order_id = ?`,
-      [isSuccess ? "success" : "failed", JSON.stringify(verification), record?.order_id || null, orderId]
+      [isSuccess ? "success" : "failed", JSON.stringify(verification), record?.order_id || null, txn.order_id]
     );
 
     if (isSuccess) {
@@ -140,7 +156,7 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
       }
 
       const suffix = enrolledPackageId ? `&enrolled_package_id=${enrolledPackageId}` : "";
-      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${orderId}${suffix}`);
+      return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${txn.order_id}${suffix}`);
     }
     return res.redirect(`${FRONTEND_URL}/employer/packages?payment=failed&order_id=${orderId}`);
   } catch (err) {
