@@ -1,7 +1,6 @@
 import { useParams, useNavigate, Link } from "react-router-dom";
 import ListingImage from "@/components/deal/ListingImage";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useLanguage } from "@/contexts/LanguageContext";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -12,7 +11,67 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ChevronLeft, User, CalendarDays, Package, MapPin, Tag, Eye } from "lucide-react";
 import { motion } from "framer-motion";
-import type { DealListing } from "@/hooks/useDealData";
+import { type DealListing } from "@/hooks/useDealData";
+
+const DEAL_API_BASE_URL = (import.meta.env.VITE_DEAL_API_BASE_URL || "").replace(/\/+$/, "");
+
+type SellerProfile = {
+  name: string;
+  address: string;
+  createdAt: string;
+  phoneAvailable: boolean;
+};
+
+type DealListingRow = Partial<DealListing> & {
+  id: string | number;
+  user_id: string | number;
+  seller_name?: string | null;
+  address?: string | null;
+  category_name?: string | null;
+  category_name_en?: string | null;
+  category_slug?: string | null;
+  category_icon?: string | null;
+  category_parent_id?: string | number | null;
+  product_condition?: string | null;
+};
+
+const normalizeImages = (images: unknown): string[] => {
+  if (Array.isArray(images)) return images.filter(Boolean).map(String);
+  if (typeof images !== "string") return [];
+  try {
+    const parsed = JSON.parse(images);
+    return Array.isArray(parsed) ? parsed.filter(Boolean).map(String) : [];
+  } catch {
+    return images.split(",").map((image) => image.trim()).filter(Boolean);
+  }
+};
+
+const normalizeListing = (listing: DealListingRow): DealListingRow => ({
+  ...listing,
+  id: String(listing.id),
+  user_id: String(listing.user_id),
+  category_id: listing.category_id ? String(listing.category_id) : null,
+  price: Number(listing.price || 0),
+  images: normalizeImages(listing.images),
+  is_negotiable: Boolean(listing.is_negotiable),
+  hide_phone: Boolean(listing.hide_phone),
+  is_featured: Boolean(listing.is_featured),
+  views_count: Number(listing.views_count || 0),
+  inquiries_count: Number(listing.inquiries_count || 0),
+  condition: listing.condition || listing.product_condition || "used",
+  deal_categories: listing.category_name
+    ? {
+        id: String(listing.category_id || ""),
+        name: listing.category_name,
+        name_en: listing.category_name_en || null,
+        slug: listing.category_slug || "",
+        icon: listing.category_icon || null,
+        parent_id: listing.category_parent_id ? String(listing.category_parent_id) : null,
+        sort_order: 0,
+        is_active: true,
+      }
+    : null,
+});
 
 const DealSellerProfile = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -20,40 +79,36 @@ const DealSellerProfile = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
 
-  const { data: seller, isLoading: sellerLoading } = useQuery({
+  const { data: seller, isLoading: sellerLoading } = useQuery<SellerProfile>({
     queryKey: ["deal-seller-full", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("display_name, avatar_url, created_at, address")
-        .eq("user_id", userId!)
-        .single();
-      if (error) throw error;
-      return data;
+      const response = await fetch(`${DEAL_API_BASE_URL}/api/deal/listings?user_id=${encodeURIComponent(userId!)}`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || "Failed to load seller profile");
+      const listings = (Array.isArray(payload.data) ? payload.data as DealListingRow[] : []).map(normalizeListing);
+      const firstListing = listings[0];
+      return {
+        name: firstListing?.seller_name || (bn ? "ব্যবহারকারী" : "User"),
+        address: firstListing?.address || firstListing?.location_district || firstListing?.location_division || "",
+        createdAt: firstListing?.created_at || "",
+        phoneAvailable: listings.some((listing) => Boolean(listing.phone)),
+      };
     },
     enabled: !!userId,
   });
-
   const { data: listings, isLoading: listingsLoading } = useQuery({
     queryKey: ["deal-seller-listings", userId],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("deal_listings")
-        .select("*, deal_categories(*)")
-        .eq("user_id", userId!)
-        .eq("status", "active")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []).map((d: any) => ({
-        ...d,
-        images: Array.isArray(d.images) ? d.images : [],
-      })) as DealListing[];
+      const response = await fetch(`${DEAL_API_BASE_URL}/api/deal/listings?user_id=${encodeURIComponent(userId!)}&status=active`);
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload.message || "Failed to load seller listings");
+      return (Array.isArray(payload.data) ? payload.data as DealListingRow[] : []).map(normalizeListing);
     },
     enabled: !!userId,
   });
 
-  const memberSince = seller?.created_at
-    ? new Date(seller.created_at).toLocaleDateString("bn-BD", { year: "numeric", month: "long" })
+  const memberSince = seller?.createdAt
+    ? new Date(seller.createdAt).toLocaleDateString("bn-BD", { year: "numeric", month: "long" })
     : "";
 
   return (
@@ -75,7 +130,7 @@ const DealSellerProfile = () => {
               <Skeleton className="h-20 w-20 rounded-full" />
             ) : (
               <Avatar className="h-20 w-20 border-4 border-background shadow-md">
-                <AvatarImage src={seller?.avatar_url || undefined} />
+                <AvatarImage src={undefined} />
                 <AvatarFallback className="text-2xl bg-primary/10 text-primary">
                   <User className="h-8 w-8" />
                 </AvatarFallback>
@@ -86,7 +141,7 @@ const DealSellerProfile = () => {
                 <Skeleton className="h-6 w-40 mb-2" />
               ) : (
                 <h1 className="text-xl font-bold text-foreground">
-                  {seller?.display_name || (bn ? "ব্যবহারকারী" : "User")}
+                  {seller?.name || (bn ? "ব্যবহারকারী" : "User")}
                 </h1>
               )}
               <div className="flex flex-wrap justify-center sm:justify-start gap-3 mt-1 text-sm text-muted-foreground">

@@ -512,7 +512,6 @@ const DealAllAds = () => {
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
-
           <SelectContent>
             <SelectItem value="all">{bn ? "সকল" : "All"}</SelectItem>
             <SelectItem value="new">{bn ? "নতুন" : "New"}</SelectItem>
@@ -1243,7 +1242,7 @@ function ListingListItem({
       onClick={onClick}
     >
       <CardContent className="p-3 flex gap-3">
-        <div className="w-32 h-24 rounded-lg overflow-hidden bg-muted shrink-0">
+        <div className="w-32 h-24 rounded-lg overflow-hidden shrink-0">
           <ListingImage src={img} alt={listing.title} fallbackSize="sm" />
         </div>
 

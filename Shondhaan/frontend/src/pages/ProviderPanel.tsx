@@ -542,12 +542,7 @@ const ProviderPanel = () => {
             defaultValue="bookings"
             panelTitle="প্রোভাইডার"
             panelIcon={<Briefcase className="h-4 w-4" />}
-            hero={{
-              title: "আপনার সার্ভিস ম্যানেজমেন্ট",
-              subtitle: "অ্যাসাইন বুকিং দেখুন, কাজ সম্পন্ন করুন এবং রিয়েল-টাইম আয় ট্র্যাক করুন।",
-              badge: { label: "প্রোভাইডার প্যানেল" },
-              gradient: "from-emerald-500 via-green-600 to-teal-700",
-            }}
+          
           >
             {(activeTab) => {
               if (activeTab === "bookings") return (
@@ -596,11 +591,11 @@ const ProviderPanel = () => {
                             <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {b.booking_time}</span>
                             <span className="flex items-center gap-1 col-span-2"><MapPin className="h-3 w-3 shrink-0" /> {b.customer_address}</span>
                           </div>
-                          <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border">
+                          {/* <div className="flex items-center gap-2 mt-2 pt-2 border-t border-border">
                             <button onClick={() => setChatBooking(b)} className="flex items-center gap-1 text-[11px] text-primary font-medium hover:underline">
                               <MessageCircle className="h-3 w-3" /> চ্যাট করুন
                             </button>
-                          </div>
+                          </div> */}
                         </motion.div>
                       );
                     })}

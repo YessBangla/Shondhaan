@@ -105,9 +105,9 @@ const DealInbox = ({ embedded = false }: DealInboxProps) => {
   return (
     <div className={embedded ? "w-full" : "min-h-screen bg-background"}>
       {!embedded && <Navbar />}
-      {!embedded && <div className="pt-[44px] md:pt-[68px]" />}
+      {!embedded && <div className="pt-[24px] md:pt-[48px]" />}
 
-      <div className={embedded ? "w-full" : "max-w-3xl mx-auto px-4 py-6 pb-28 md:pb-10"}>
+      <div className={embedded ? "w-full" : "max-w-6xl mx-auto"}>
         <div className="space-y-5">
           <div className="flex items-start sm:items-center justify-between gap-4">
             <div className="flex items-center gap-3.5">
