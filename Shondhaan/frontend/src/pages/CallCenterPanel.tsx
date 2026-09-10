@@ -7,7 +7,9 @@ import {
   Zap, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart,
   AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X,
   type LucideIcon,
-  UserRound
+  UserRound,
+  UserPlus,
+  Users
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -635,7 +637,8 @@ const CallCenterPanel = () => {
             items={[
               { value: "search", label: "কাস্টমার সার্চ", icon: <Search className="h-4 w-4" />, group: "সার্চ" },
               { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
-              { value: "create-provider", label: "প্রোভাইডার রেজিস্ট্রেশন", icon: <Plus className="h-4 w-4" /> },
+              { value: "create-provider", label: "প্রোভাইডার রেজিস্ট্রেশন", icon: <UserPlus className="h-4 w-4" /> },
+              { value: "all-providers", label: "সকল প্রোভাইডার", icon: <Users className="h-4 w-4" /> },
               { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
               { value: "requests", label: "সার্ভিস অনুরোধ", icon: <FileText className="h-4 w-4" /> },
               { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
@@ -1228,13 +1231,14 @@ const CallCenterPanel = () => {
               ───────────────────────────────────────────── */
               if (activeTab === "create-provider")
                 return (
-                  <div className="p-6 bg-white">
+                  <div className="p-6 bg-background">
                     <div className="flex items-center justify-between mb-5">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-5">নতুন প্রোভাইডার রেজিস্ট্রেশন করুন</h3>
+                      <h3 className="text-lg font-semibold text-slate-900 mb-5 flex gap-2"><UserPlus className="h-5 w-5 text-userprimary my-auto"/> নতুন প্রোভাইডার রেজিস্ট্রেশন করুন</h3>
                       <button
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
-                      >
-                        
+                        className="w-auto group flex items-center justify-center gap-2 px-3 py-1 bg-userprimaryshade text-foreground text-sm font-medium rounded-full hover:bg-userprimary hover:text-white border border-userprimary disabled:opacity-50 transition-colors"
+                        >
+                        <Users className="h-5 w-5 group-hover:text-white text-userprimary my-auto"/>
+                        {bn ? "সকল প্রোভাইডার" : "All Providers"}
                       </button>
                     </div>
                     <div className="w-full py-8 md:py-2 mb-8">
@@ -1409,6 +1413,16 @@ const CallCenterPanel = () => {
                         </Form>
                       </motion.div>
                     </div>
+                  </div>
+                );
+
+              /* ─────────────────────────────────────────────
+                 TAB: ALL PROVIDERS
+              ───────────────────────────────────────────── */
+              if (activeTab === "all-providers")
+                return (
+                  <div className="p-6 bg-background">
+
                   </div>
                 );
 
