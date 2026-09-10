@@ -61,7 +61,7 @@ const PLATFORMS: Platform[] = [
     key: "jobs",
     path: "/jobs",
     icon: Briefcase,
-    titleBn: "জবস",
+    titleBn: "চাকরি",
     titleEn: "Jobs",
     subtitleBn: "চাকরি খুঁজুন",
     subtitleEn: "Find Jobs",

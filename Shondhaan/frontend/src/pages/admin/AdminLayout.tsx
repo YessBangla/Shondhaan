@@ -112,7 +112,7 @@ const NAV: NavGroup[] = [
     items: [{ to: "/admin/mart-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
   },
   {
-    label: "জবস অ্যাডমিন - একাউন্টস",
+    label: "চাকরি অ্যাডমিন - একাউন্টস",
     accent: "from-blue-500 to-indigo-600",
     dot: "bg-blue-500",
     items: [{ to: "/admin/job-admin/accounts", label: "একাউন্টস", icon: <Wallet className="h-4 w-4" /> }],
@@ -376,7 +376,7 @@ const AdminLayout = () => {
       s: { to: "/admin/services", label: "সার্ভিস" },
       m: { to: "/admin/mart-overview", label: "মার্ট" },
       l: { to: "/admin/deal-overview", label: "ডিল" },
-      j: { to: "/admin/job-listings", label: "জবস" },
+      j: { to: "/admin/job-listings", label: "চাকরি" },
       n: { to: "/admin/notifications", label: "নোটিফিকেশন" },
       p: { to: "/admin/permissions", label: "পারমিশন" },
       t: { to: "/admin/staff-assignments", label: "স্টাফ অ্যাসাইনমেন্ট" },

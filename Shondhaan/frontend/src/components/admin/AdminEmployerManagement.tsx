@@ -269,7 +269,7 @@ const AdminEmployerManagement = () => {
       {/* Job Packages Management (backed by Express /api/packages) */}
       <div className="space-y-4 border-t pt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> জব পোস্টিং প্যাকেজ</h2>
+          <h2 className="text-lg font-bold flex items-center gap-2"><Package className="h-5 w-5 text-primary" /> চাকরি পোস্টিং প্যাকেজ</h2>
           <Button size="sm" onClick={openNewPackageForm}>নতুন প্যাকেজ</Button>
         </div>
         <div className="space-y-2">
@@ -349,7 +349,7 @@ const AdminEmployerManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="text-xs font-medium mb-1 block">বছরে সর্বোচ্চ জব</label>
+                  <label className="text-xs font-medium mb-1 block">বছরে সর্বোচ্চ চাকরি</label>
                   <Input type="number" value={packageForm.max_jobs_per_year ?? ""} onChange={e => setPackageForm((p: any) => ({ ...p, max_jobs_per_year: e.target.value ? e.target.value : null }))} placeholder="No limit" />
                 </div>
               </div>

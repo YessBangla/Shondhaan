@@ -91,7 +91,7 @@ const KeyboardShortcuts = () => {
                 ["g h", bn ? "হোম" : "Home"],
                 ["g m", bn ? "মার্ট" : "Mart"],
                 ["g d", bn ? "ডিল" : "Deal"],
-                ["g j", bn ? "জবস" : "Jobs"],
+                ["g j", bn ? "চাকরি" : "Jobs"],
                 ["g b", bn ? "বুকিং" : "Bookings"],
                 ["g p", bn ? "প্রোফাইল" : "Profile"],
                 ["g a", bn ? "সব সার্ভিস" : "All services"],

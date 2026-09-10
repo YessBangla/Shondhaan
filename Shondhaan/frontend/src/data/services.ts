@@ -981,10 +981,10 @@ export const allServices: ServiceData[] = [
 
   // --- Employment ---
   { slug: "job-placement", title: "চাকরি প্রদান", titleEn: "Job Placement", description: "যোগ্য কর্মী নিয়োগ ও চাকরি প্রাপ্তিতে সহায়তা। কর্পোরেট ও ব্যক্তিগত।", image: "/placeholder.svg", rating: 4.5, totalReviews: 420, totalOrders: 2200, packages: [
-    { name: "বেসিক সার্চ", price: 2000, originalPrice: 3500, features: ["CV তৈরি", "জব মেচিং", "৫টি ইন্টারভিউ কল"] },
+    { name: "বেসিক সার্চ", price: 2000, originalPrice: 3500, features: ["CV তৈরি", "চাকরি মেচিং", "৫টি ইন্টারভিউ কল"] },
     { name: "প্রিমিয়াম", price: 5000, originalPrice: 8000, features: ["কাস্টম CV", "কোম্পানি রেফারেল", "ইন্টারভিউ কোচিং"] },
     { name: "এক্সিকিউটিভ", price: 15000, originalPrice: 22000, features: ["হেডহান্টিং", "স্যালারি নেগোসিয়েশন", "ক্যারিয়ার কনসাল্টিং"] },
-  ], reviews: [{ name: "সাইফুল ইসলাম", rating: 5, date: "১৩ মার্চ ২০২৬", comment: "২ সপ্তাহের মধ্যে ভালো চাকরি পেয়েছি।" }], features: ["জব মেচিং", "CV তৈরি", "ইন্টারভিউ কোচিং", "ক্যারিয়ার গাইডেন্স"], availableCities: ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট"] },
+  ], reviews: [{ name: "সাইফুল ইসলাম", rating: 5, date: "১৩ মার্চ ২০২৬", comment: "২ সপ্তাহের মধ্যে ভালো চাকরি পেয়েছি।" }], features: ["চাকরি মেচিং", "CV তৈরি", "ইন্টারভিউ কোচিং", "ক্যারিয়ার গাইডেন্স"], availableCities: ["ঢাকা", "চট্টগ্রাম", "রাজশাহী", "খুলনা", "সিলেট"] },
   { slug: "overseas-job", title: "বিদেশে চাকরি", titleEn: "Overseas Job", description: "বিদেশে কাজের সুযোগ। ভিসা প্রসেসিং, এজেন্সি সাপোর্ট ও ট্রেনিং।", image: "/placeholder.svg", rating: 4.4, totalReviews: 350, totalOrders: 1500, packages: [
     { name: "কনসালটেশন", price: 5000, originalPrice: 8000, features: ["দেশ ও কাজ নির্বাচন", "ডকুমেন্ট চেক", "গাইডেন্স"] },
     { name: "ভিসা প্রসেসিং", price: 25000, originalPrice: 40000, features: ["ভিসা অ্যাপ্লিকেশন", "ডকুমেন্ট তৈরি", "ইন্টারভিউ প্রস্তুতি"] },

@@ -160,7 +160,7 @@ if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWit
     },
     {
       key: "jobs",
-      labelBn: "জবস",
+      labelBn: "চাকরি",
       labelEn: "Jobs",
       icon: Briefcase,
       children: [

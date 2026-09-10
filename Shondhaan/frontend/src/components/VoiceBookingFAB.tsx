@@ -69,7 +69,7 @@ const VoiceBookingFAB = () => {
     const navMap: Array<{ keys: string[]; path: string; label: string }> = [
       { keys: ["মার্ট", "mart", "shop", "কেনা"], path: "/mart/home", label: bn ? "মার্ট" : "Mart" },
       { keys: ["ডিল", "deal", "বিক্রয়", "sell", "buy"], path: "/deal", label: bn ? "ডিল" : "Deal" },
-      { keys: ["জব", "চাকরি", "job", "career"], path: "/jobs", label: bn ? "জবস" : "Jobs" },
+      { keys: ["চাকরি", "চাকরি", "job", "career"], path: "/jobs", label: bn ? "চাকরি" : "Jobs" },
       { keys: ["বুকিং", "booking", "অর্ডার", "order"], path: "/bookings", label: bn ? "বুকিং" : "Bookings" },
       { keys: ["প্রোফাইল", "profile", "একাউন্ট", "account"], path: "/profile", label: bn ? "প্রোফাইল" : "Profile" },
       { keys: ["হোম", "home", "প্রথম"], path: "/", label: bn ? "হোম" : "Home" },

@@ -181,7 +181,7 @@ const PLATFORM_CARDS = [
   {
     to: "/jobs",
     labelBn: "চাকরির সূযোগ", labelEn: "Job Opportunities",
-    smlabelBn: "জব", smlabelEn: "Jobs",
+    smlabelBn: "চাকরি", smlabelEn: "Jobs",
     descBn: "দক্ষ পেশাদাররা", descEn: "Skilled professionals",
     Icon: Briefcase,
     imgIcon: "images/modules_logo/job.png",

@@ -217,7 +217,7 @@ const AdminPackages = () => {
 
   const handleDelete = async (id?: number) => {
     if (!id) return;
-    const yes = confirm("এই প্যাকেজ মুছে ফেলবেন? (যদি কোনো জব এই প্যাকেজ ব্যবহার করে থাকে, তাহলে মুছা যাবে না — এক্ষেত্রে Inactive করুন)");
+    const yes = confirm("এই প্যাকেজ মুছে ফেলবেন? (যদি কোনো চাকরি এই প্যাকেজ ব্যবহার করে থাকে, তাহলে মুছা যাবে না — এক্ষেত্রে Inactive করুন)");
     if (!yes) return;
 
     try {
@@ -257,9 +257,9 @@ const AdminPackages = () => {
     <div className="rounded-xl border border-border bg-card">
       <div className="flex items-center justify-between border-b border-border p-3">
         <div>
-          <p className="text-xs font-semibold text-foreground">জব প্যাকেজসমূহ ({packageCount})</p>
+          <p className="text-xs font-semibold text-foreground">চাকরি প্যাকেজসমূহ ({packageCount})</p>
           <p className="mt-0.5 text-[10px] text-muted-foreground">
-            এমপ্লয়ার জব পোস্ট করার সময় যে প্যাকেজগুলো বেছে নিতে পারবে, সেগুলো এখান থেকে তৈরি ও নিয়ন্ত্রণ করুন
+            এমপ্লয়ার চাকরি পোস্ট করার সময় যে প্যাকেজগুলো বেছে নিতে পারবে, সেগুলো এখান থেকে তৈরি ও নিয়ন্ত্রণ করুন
           </p>
         </div>
         <button
@@ -327,7 +327,7 @@ const AdminPackages = () => {
             </div>
 
             <div>
-              <FieldLabel label="মেয়াদ (দিন)" required hint="জব কতদিন visible থাকবে। Example: 30" />
+              <FieldLabel label="মেয়াদ (দিন)" required hint="চাকরি কতদিন visible থাকবে। Example: 30" />
               <input
                 type="number"
                 min="1"

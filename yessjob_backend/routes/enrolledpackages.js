@@ -220,7 +220,7 @@ router.patch("/:id/cancel", requireAuth, async (req, res) => {
     const enrollment = rows[0];
     if (!enrollment) return res.status(404).json({ message: "এনরোলমেন্ট পাওয়া যায়নি" });
     if (enrollment.jobs_used > 0) {
-      return res.status(409).json({ message: "এই প্যাকেজ দিয়ে ইতিমধ্যে জব পোস্ট করা হয়েছে, তাই বাতিল করা যাবে না" });
+      return res.status(409).json({ message: "এই প্যাকেজ দিয়ে ইতিমধ্যে চাকরি পোস্ট করা হয়েছে, তাই বাতিল করা যাবে না" });
     }
 
     await pool.query(`UPDATE enrolled_packages SET status = 'cancelled' WHERE id = ?`, [req.params.id]);
