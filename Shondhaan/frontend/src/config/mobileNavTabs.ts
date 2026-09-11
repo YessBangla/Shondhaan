@@ -34,7 +34,7 @@ import {
 export type MobileNavAction =
   | { kind: "navigate"; to: string }
   | { kind: "navigate-auth"; authedTo: string; guestTo: string }
-  | { kind: "modal"; modal: "search" | "track" | "qr" | "more" | "request" };
+  | { kind: "modal"; modal: "search" | "track" | "qr" | "more" | "request" | "service-chat" };
 
 export type BadgeKey = "bookings" | "chat" | "cart" | "notifications";
 
@@ -97,7 +97,7 @@ export const MOBILE_NAV_TABS: MobileNavTabConfig[] = [
     icon: MessageSquare,
     label: { bn: "চ্যাট", en: "Chat" },
     describe: { bn: "মেসেজ ও চ্যাট খুলুন", en: "Open messages and chat" },
-    action: { kind: "navigate-auth", authedTo: "/messages", guestTo: "/login" },
+    action: { kind: "modal", modal: "service-chat" },
     badge: "chat",
   },
   {
