@@ -1702,10 +1702,9 @@ const CallCenterPanel = () => {
                         <button
                           type="button"
                           onClick={() => setActiveTab("create-provider")}
-                          disabled={allProvidersLoading}
                           className="inline-flex items-center gap-2 rounded-lg border border-userprimary bg-userprimary px-3 py-2 text-xs font-medium text-white hover:bg-userprimaryshade hover:text-black disabled:opacity-50"
                         >
-                          <UserPlus className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
+                          <UserPlus className={`h-3.5 w-3.5`} />
                           {bn ? "নতুন যোগ করুন" : "Add New"}
                         </button>
                       </div>
@@ -1764,7 +1763,17 @@ const CallCenterPanel = () => {
                                       <p className="text-xs text-slate-500">{provider.area || "—"}</p>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} বছর</td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.nid_front_url || provider.nid_back_url ? "দেওয়া হয়েছে" : "দেওয়া হয়নি"}</td>
+                                   <td>
+                                    <span className={`whitespace-nowrap px-3 rounded-full text-[12px] py-1 border ${
+                                            provider.nid_front_url || provider.nid_back_url
+                                                ? "border-userprimary bg-userprimaryshade text-userprimary font-bold"
+                                                : "border-red-500 bg-red-100 text-red-700 font-medium"
+                                        } text-slate-700`}>
+                                        {provider.nid_front_url || provider.nid_back_url
+                                            ? "দেওয়া হয়েছে"
+                                            : "দেওয়া হয়নি"}
+                                        </span>
+                                    </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{provider.created_at ? new Date(provider.created_at).toLocaleDateString("bn-BD") : "—"}</td>
                                     <td className="px-4 py-3">
                                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${
