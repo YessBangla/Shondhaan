@@ -194,6 +194,7 @@ export const getProviders = async (req, res) => {
       status = "approved",
       service_category,
       search,
+      user_ids,
     } = req.query;
 
     let query = `SELECT ${selectProviderColumns}, district AS provider_district FROM ${PROVIDER_TABLE} WHERE 1 = 1`;
@@ -210,19 +211,37 @@ export const getProviders = async (req, res) => {
       values.push(service_category);
     }
 
-    if (search) {
-      query += `
-        AND (
-          full_name LIKE ?
-          OR phone LIKE ?
-          OR email LIKE ?
-          OR address LIKE ?
-          OR service_category LIKE ?
-        )
-      `;
+    const matchingUserIds = String(user_ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 500);
 
-      const like = `%${search}%`;
-      values.push(like, like, like, like, like);
+    if (search || matchingUserIds.length) {
+      const searchConditions = [];
+      const searchValues = [];
+
+      if (search) {
+        searchConditions.push(
+          "full_name LIKE ?",
+          "phone LIKE ?",
+          "email LIKE ?",
+          "address LIKE ?",
+          "service_category LIKE ?"
+        );
+        const like = `%${search}%`;
+        searchValues.push(like, like, like, like, like);
+      }
+
+      if (matchingUserIds.length) {
+        searchConditions.push(`user_id IN (${matchingUserIds.map(() => "?").join(", ")})`);
+        searchValues.push(...matchingUserIds);
+      }
+
+      query += `
+        AND (${searchConditions.join(" OR ")})
+      `;
+      values.push(...searchValues);
     }
 
     query += `

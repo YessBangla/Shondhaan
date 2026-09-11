@@ -225,6 +225,7 @@ const CallCenterPanel = () => {
   const [allProviders, setAllProviders] = useState<Provider[]>([]);
   const [allProvidersPage, setAllProvidersPage] = useState(1);
   const [allProvidersLoading, setAllProvidersLoading] = useState(false);
+  const [allProvidersSearch, setAllProvidersSearch] = useState("");
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [labTests, setLabTests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -372,19 +373,24 @@ const CallCenterPanel = () => {
   const loadAllProviders = useCallback(async () => {
     setAllProvidersLoading(true);
     try {
-      const [response, usersResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/providers?status=all`, {
-          headers: getAuthHeaders(),
-          credentials: "include",
-        }),
-        fetch(`${CENTRAL_API_URL}/api/admin/users`, {
-          headers: getAuthHeaders(),
-          credentials: "include",
-        }),
-      ]);
+      const search = allProvidersSearch.trim();
+      const usersResponse = await fetch(
+        `${CENTRAL_API_URL}/api/admin/users${search ? `?search=${encodeURIComponent(search)}` : ""}`,
+        { headers: getAuthHeaders(), credentials: "include" }
+      );
+      const usersPayload = await usersResponse.json().catch(() => ({}));
+      const matchingUsers = extractArray<any>(usersPayload);
+      const matchingUserIds = matchingUsers.map((user) => String(user.id)).filter(Boolean);
+      const providerParams = new URLSearchParams({ status: "all" });
+      if (search) providerParams.set("search", search);
+      if (matchingUserIds.length) providerParams.set("user_ids", matchingUserIds.join(","));
+
+      const response = await fetch(`${API_BASE_URL}/api/providers?${providerParams.toString()}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
 
       const payload = await response.json().catch(() => ({}));
-      const usersPayload = await usersResponse.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(payload?.message || "Failed to fetch all providers");
@@ -420,7 +426,15 @@ const CallCenterPanel = () => {
     } finally {
       setAllProvidersLoading(false);
     }
-  }, []);
+  }, [allProvidersSearch]);
+
+  useEffect(() => {
+    if (!isCallCenter) return;
+    const timer = window.setTimeout(() => {
+      loadAllProviders();
+    }, 350);
+    return () => window.clearTimeout(timer);
+  }, [allProvidersSearch, isCallCenter, loadAllProviders]);
 
   useEffect(() => {
     checkRole();
@@ -429,9 +443,8 @@ const CallCenterPanel = () => {
     if (isCallCenter) {
       fetchData();
       fetchServicesAndPackages();
-      loadAllProviders();
     }
-  }, [isCallCenter, fetchData, fetchServicesAndPackages, loadAllProviders]);
+  }, [isCallCenter, fetchData, fetchServicesAndPackages]);
 
   const searchCustomer = useCallback(async () => {
     if (!searchQuery.trim()) {
@@ -1708,6 +1721,19 @@ const CallCenterPanel = () => {
                           {bn ? "নতুন যোগ করুন" : "Add New"}
                         </button>
                       </div>
+                    </div>
+
+                    <div className="relative mb-4 max-w-xl">
+                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                      <Input
+                        value={allProvidersSearch}
+                        onChange={(event) => {
+                          setAllProvidersSearch(event.target.value);
+                          setAllProvidersPage(1);
+                        }}
+                        placeholder={bn ? "নাম, ফোন, ইমেইল বা Shondhaan-ID দিয়ে খুঁজুন" : "Search by name, phone, email or Shondhaan-ID"}
+                        className="h-10 bg-white pl-9"
+                      />
                     </div>
 
                     {allProvidersLoading ? (
