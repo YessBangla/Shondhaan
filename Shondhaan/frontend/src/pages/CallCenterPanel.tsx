@@ -908,12 +908,12 @@ const CallCenterPanel = () => {
           <PanelSidebarTabs
             items={[
               { value: "search", label: bn ? "কাস্টমার সার্চ" : "Customer Search", icon: <Search className="h-4 w-4" />, group: bn ? "সার্চ" : "Search" },
-              { value: "new-booking", label: bn ? "নতুন বুকিং" : "New Booking", icon: <Plus className="h-4 w-4" /> },
+              { value: "new-booking", label: bn ? "নতুন সার্ভিস বুকিং" : "New Service Booking", icon: <Plus className="h-4 w-4" /> },
               { value: "create-provider", label: bn ? "প্রোভাইডার রেজিস্ট্রেশন" : "Provider Registration", icon: <UserPlus className="h-4 w-4" /> },
               { value: "all-providers", label: bn ? "সকল প্রোভাইডার" : "All Providers", icon: <Users className="h-4 w-4" /> },
-              { value: "bookings", label: bn ? "সব বুকিং" : "All Bookings", icon: <ClipboardList className="h-4 w-4" />, group: bn ? "ম্যানেজমেন্ট" : "Management" },
-              { value: "requests", label: bn ? "সার্ভিস অনুরোধ" : "Service Requests", icon: <FileText className="h-4 w-4" /> },
-              { value: "service-messages", label: bn ? "বার্তা" : "Messages", icon: <MessageSquare className="h-4 w-4" /> },
+              { value: "bookings", label: bn ? "সকল বুকিং" : "All Bookings", icon: <ClipboardList className="h-4 w-4" />, group: bn ? "ম্যানেজমেন্ট" : "Management" },
+              { value: "requests", label: bn ? "সার্ভিস রিকোয়েস্ট" : "Service Requests", icon: <FileText className="h-4 w-4" /> },
+              { value: "service-messages", label: bn ? "কাস্টমার মেসেজ" : "Messages", icon: <MessageSquare className="h-4 w-4" /> },
             ]}
             defaultValue="search"
       
@@ -940,9 +940,9 @@ const CallCenterPanel = () => {
                       <button
                         onClick={searchCustomer}
                         disabled={searching}
-                        className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                        className="px-4 py-2 bg-userprimaryshade text-userprimary border border-userprimary text-sm font-medium rounded-lg hover:bg-userprimary hover:text-white disabled:opacity-50 transition-colors"
                       >
-                        {bn ? "অনুসন্ধান" : "Search"}
+                        {bn ? "সার্চ করুন" : "Search"}
                       </button>
                     </div>
 

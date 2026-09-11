@@ -233,7 +233,7 @@ const emitChatUpdate = (req, payload) => {
   io.to("service-chat:staff").emit("service-chat:conversation:updated", payload);
 };
 
-const AUTOMATIC_REPLY = "Thanks for your message. We are getting back to you soon.";
+const AUTOMATIC_REPLY = "Shondhaan-এ মেসেজ করার জন্য ধন্যবাদ। আপনার মেসেজটি আমরা পেয়েছি। আমাদের প্রতিনিধি যত দ্রুত সম্ভব আপনার সাথে যোগাযোগ করবেন। আপনি চাইলে আপনার প্রয়োজনীয় সার্ভিস/পণ্যের নাম এবং এলাকা সহ আপনার নাম ও মোবাইল নাম্বার লিখে পাঠাতে পারেন। এতে আমরা আপনাকে আরও দ্রুত সাহায্য করতে পারব। ধন্যবাদ — Shondhaan-এর সাথে থাকার জন্য।";
 
 const addAutomaticReply = async (conversationId) => {
   const [recentReplies] = await pool.query(
@@ -241,7 +241,7 @@ const addAutomaticReply = async (conversationId) => {
      FROM service_chat_messages
      WHERE conversation_id = ?
        AND sender_role = 'staff'
-       AND sender_name = 'Service Support'
+       AND sender_name = 'Shondhaan Support'
        AND body = ?
        AND created_at >= (NOW() - INTERVAL 24 HOUR)
      LIMIT 1`,
@@ -256,7 +256,7 @@ const addAutomaticReply = async (conversationId) => {
     `INSERT INTO service_chat_messages (
       id, conversation_id, sender_role, sender_id, sender_name, body,
       read_by_staff, read_by_customer
-    ) VALUES (?, ?, 'staff', NULL, 'Service Support', ?, 1, 0)`,
+    ) VALUES (?, ?, 'staff', NULL, 'Shondhaan Support', ?, 1, 0)`,
     [messageId, conversationId, AUTOMATIC_REPLY]
   );
 
@@ -309,7 +309,7 @@ export const createConversationRecord = async ({
       finalName,
       finalEmail,
       clean(user_phone || user?.mobile) || null,
-      clean(subject, "Service support") || "Service support",
+      clean(subject, "Shondhaan support") || "Shondhaan support",
       body,
     ]
   );
