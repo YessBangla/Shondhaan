@@ -41,9 +41,34 @@ type Booking = BookingRecord;
 interface Provider {
   id: string | number;
   user_id: string | number;
+  shondhaan_id?: string | null;
+  profile_image?: string | null;
+  name?: string | null;
   full_name: string;
   phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  division?: string | null;
+  district?: string | null;
+  provider_district?: string | null;
+  raw_provider_district?: string | null;
+  thana?: string[] | null;
+  area?: string | null;
+  services?: string[] | null;
+    service_names?: string[] | null;
   service_category?: string | null;
+  experience_years?: number | null;
+  nid_front_url?: string | null;
+  nid_back_url?: string | null;
+  status?: string | null;
+  status_reason?: string | null;
+  rating?: number | null;
+  total_reviews?: number | null;
+  total_jobs?: number | null;
+  image_url?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface ServiceRequest {
@@ -347,18 +372,46 @@ const CallCenterPanel = () => {
   const loadAllProviders = useCallback(async () => {
     setAllProvidersLoading(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/providers?status=all`, {
-        headers: getAuthHeaders(),
-        credentials: "include",
-      });
+      const [response, usersResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/api/providers?status=all`, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        }),
+        fetch(`${CENTRAL_API_URL}/api/admin/users`, {
+          headers: getAuthHeaders(),
+          credentials: "include",
+        }),
+      ]);
 
       const payload = await response.json().catch(() => ({}));
+      const usersPayload = await usersResponse.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error(payload?.message || "Failed to fetch all providers");
       }
 
-      setAllProviders(extractArray<Provider>(payload));
+      const userMap = new Map(
+        extractArray<any>(usersPayload).map((user) => [String(user.id), user])
+      );
+      const parseThana = (value: unknown): string[] => {
+        if (Array.isArray(value)) return value.map(String).filter(Boolean);
+        if (!value) return [];
+        try {
+          const parsed = JSON.parse(String(value));
+          return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [String(parsed)];
+        } catch {
+          return String(value).split(",").map((item) => item.trim()).filter(Boolean);
+        }
+      };
+      setAllProviders(extractArray<Provider>(payload).map((provider: any) => ({
+        ...provider,
+        provider_district: provider.raw_provider_district ?? provider.provider_district ?? provider.district ?? provider.location_district ?? "",
+        district: provider.raw_provider_district ?? provider.provider_district ?? provider.district ?? provider.location_district ?? "",
+        thana: parseThana(provider.thana ?? provider.thanas ?? provider.location_thana),
+        area: provider.area ?? provider.detail_area ?? provider.location_area ?? "",
+        shondhaan_id: userMap.get(String(provider.user_id))?.shondhaan_id || null,
+        profile_image: userMap.get(String(provider.user_id))?.profile_image || provider.image_url || null,
+      })));
       setAllProvidersPage(1);
     } catch (error: any) {
       console.error("Failed to fetch all providers list:", error);
@@ -1351,9 +1404,11 @@ const CallCenterPanel = () => {
                     <div className="flex items-center justify-between mb-5">
                       <h3 className="text-lg font-semibold text-slate-900 mb-5 flex gap-2"><UserPlus className="h-5 w-5 text-userprimary my-auto"/> নতুন প্রোভাইডার রেজিস্ট্রেশন করুন</h3>
                       <button
+                        type="button"
+                        onClick={() => setActiveTab("all-providers")}
                         className="w-auto group flex items-center justify-center gap-2 px-3 py-1 bg-userprimaryshade text-foreground text-sm font-medium rounded-full hover:bg-userprimary hover:text-white border border-userprimary disabled:opacity-50 transition-colors"
                         >
-                        <Users className="h-5 w-5 group-hover:text-white text-userprimary my-auto"/>
+                        <Users className="h-4 w-4 group-hover:text-white text-userprimary my-auto"/>
                         {bn ? "সকল প্রোভাইডার" : "All Providers"}
                       </button>
                     </div>
@@ -1618,6 +1673,14 @@ const CallCenterPanel = () => {
                 const totalPages = Math.max(1, Math.ceil(allProviders.length / 10));
                 const startIndex = (allProvidersPage - 1) * 10;
                 const paginatedProviders = allProviders.slice(startIndex, startIndex + 10);
+                const getCategoryName = (categoryId: string) => {
+                  const category = serviceCategories.find((item) => String(item.id) === String(categoryId));
+                  return category ? (bn ? category.name : category.name_en || category.name) : categoryId;
+                };
+                const getProfileImageUrl = (image?: string | null) => {
+                  if (!image) return "";
+                  return /^https?:\/\//i.test(image) ? image : `${CENTRAL_API_URL}${image.startsWith("/") ? image : `/${image}`}`;
+                };
 
                 return (
                   <div className="p-6 bg-background">
@@ -1626,15 +1689,26 @@ const CallCenterPanel = () => {
                         <h3 className="text-lg font-semibold text-slate-900">সকল প্রোভাইডার</h3>
                         <p className="text-xs text-slate-500">{allProviders.length}টি প্রোফাইল</p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={loadAllProviders}
-                        disabled={allProvidersLoading}
-                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        <RefreshCw className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
-                        রিফ্রেশ
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={loadAllProviders}
+                          disabled={allProvidersLoading}
+                          className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                        >
+                          <RefreshCw className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
+                          {bn ? "রিফ্রেশ" : "Refresh"}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("create-provider")}
+                          disabled={allProvidersLoading}
+                          className="inline-flex items-center gap-2 rounded-lg border border-userprimary bg-userprimary px-3 py-2 text-xs font-medium text-white hover:bg-userprimaryshade hover:text-black disabled:opacity-50"
+                        >
+                          <UserPlus className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
+                          {bn ? "নতুন যোগ করুন" : "Add New"}
+                        </button>
+                      </div>
                     </div>
 
                     {allProvidersLoading ? (
@@ -1652,33 +1726,46 @@ const CallCenterPanel = () => {
                       <>
                         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                           <div className="overflow-x-auto">
-                            <table className="min-w-full text-left text-sm">
+                            <table className="w-full text-left text-sm">
                               <thead className="bg-slate-50 text-slate-600">
                                 <tr>
-                                  <th className="px-4 py-3 font-medium">নাম</th>
-                                  <th className="px-4 py-3 font-medium">ফোন</th>
-                                  <th className="px-4 py-3 font-medium">ইমেইল</th>
+                                  <th className="px-4 py-3 font-medium">প্রোফাইল</th>
                                   <th className="px-4 py-3 font-medium">সার্ভিস</th>
+                                  <th className="px-4 py-3 font-medium">সার্ভিস এরিয়া</th>
+                                  <th className="px-4 py-3 font-medium">অভিজ্ঞতা</th>
+                                  <th className="px-4 py-3 font-medium">NID</th>
+                                  <th className="px-4 py-3 font-medium">তৈরির সময়</th>
                                   <th className="px-4 py-3 font-medium">স্ট্যাটাস</th>
-                                  <th className="px-4 py-3 font-medium">যোগদান</th>
+                                  <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]">অ্যাকশন</th>
                                 </tr>
                               </thead>
                               <tbody>
                                 {paginatedProviders.map((provider) => (
                                   <tr key={provider.id || `${provider.user_id}-${provider.full_name}`} className="border-t border-slate-200 hover:bg-slate-50/80">
-                                    <td className="px-4 py-3">
-                                      <div className="min-w-[180px]">
-                                        <p className="font-medium text-slate-900">{provider.full_name || "Unknown Provider"}</p>
-                                        <p className="text-[11px] text-slate-500">User ID: {provider.user_id || "—"}</p>
+                                    <td className="min-w-[260px] px-4 py-3">
+                                      <div className="flex items-center gap-3">
+                                        {provider.profile_image || provider.image_url ? (
+                                          <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt={provider.full_name || "Provider"} className="h-11 w-11 rounded-full object-cover" />
+                                        ) : (
+                                          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">{(provider.full_name || "P").charAt(0)}</div>
+                                        )}
+                                        <div className="min-w-0">
+                                          <p className="truncate font-semibold text-slate-900">{provider.full_name || provider.name || "—"}</p>
+                                          <p className="truncate text-xs text-slate-500">{provider.email || "—"}</p>
+                                          <p className="truncate text-xs text-slate-500">{provider.phone || "—"}</p>
+                                          <p className="truncate text-xs text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan-ID"} : {provider.shondhaan_id || "—"}</p>
+                                        </div>
                                       </div>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-700">{provider.phone || "—"}</td>
-                                    <td className="px-4 py-3 text-slate-700">{provider.email || "—"}</td>
-                                    <td className="px-4 py-3 text-slate-700">
-                                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
-                                        {provider.service_category || "—"}
-                                      </span>
+                                    <td className="min-w-[210px] px-4 py-3"><div className="flex flex-wrap gap-1">{provider.service_names?.length ? provider.service_names.map((serviceName) => <span key={serviceName} className="rounded-full bg-userprimaryshade px-2 py-1 text-[11px] border border-userprimary font-bold text-userprimary">{serviceName}</span>) : <span>—</span>}</div></td>
+                                    <td className="min-w-[190px] px-4 py-3 text-slate-700">
+                                      <p className="font-medium">{provider.raw_provider_district || provider.provider_district || provider.district || "—"}</p>
+                                      <div className="flex flex-wrap gap-1">{provider.thana?.length ? provider.thana.map((thana) => <span key={thana} className="text-xs text-slate-500">{thana}</span>) : <span className="text-xs text-slate-500">—</span>}</div>
+                                      <p className="text-xs text-slate-500">{provider.area || "—"}</p>
                                     </td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} বছর</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.nid_front_url || provider.nid_back_url ? "দেওয়া হয়েছে" : "দেওয়া হয়নি"}</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-slate-600">{provider.created_at ? new Date(provider.created_at).toLocaleDateString("bn-BD") : "—"}</td>
                                     <td className="px-4 py-3">
                                       <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${
                                         provider.status === "approved"
@@ -1692,9 +1779,7 @@ const CallCenterPanel = () => {
                                         {provider.status || "pending"}
                                       </span>
                                     </td>
-                                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
-                                      {provider.created_at ? new Date(provider.created_at).toLocaleDateString("bn-BD") : "—"}
-                                    </td>
+                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">Open</button></td>
                                   </tr>
                                 ))}
                               </tbody>

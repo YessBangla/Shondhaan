@@ -18,7 +18,8 @@ const selectProviderColumns = `
   division, district, thana, area,
   services,
   service_category, experience_years, nid_front_url, nid_back_url,
-  status, status_reason, created_at, updated_at
+  status, status_reason, rating, total_reviews, total_jobs, image_url, is_active,
+  created_at, updated_at
 `;
 
 const parseArrayValue = (value) => {
@@ -42,6 +43,8 @@ const formatProvider = (provider) => ({
   address: provider.address,
   division: provider.division,
   district: provider.district,
+  provider_district: provider.district,
+  raw_provider_district: provider.district,
   thana: parseArrayValue(provider.thana),
   area: provider.area,
   services: (() => {
@@ -54,6 +57,11 @@ const formatProvider = (provider) => ({
 
   service_category: provider.service_category,
   experience_years: Number(provider.experience_years || 0),
+  rating: Number(provider.rating || 0),
+  total_reviews: Number(provider.total_reviews || 0),
+  total_jobs: Number(provider.total_jobs || 0),
+  image_url: provider.image_url,
+  is_active: Boolean(provider.is_active),
 
   nid_front_url: provider.nid_front_url,
   nid_back_url: provider.nid_back_url,
@@ -188,25 +196,7 @@ export const getProviders = async (req, res) => {
       search,
     } = req.query;
 
-    let query = `
-      SELECT
-        id,
-        user_id,
-        full_name,
-        phone,
-        email,
-        address,
-        service_category,
-        experience_years,
-        nid_front_url,
-        nid_back_url,
-        status,
-        status_reason,
-        created_at,
-        updated_at
-      FROM ${PROVIDER_TABLE}
-      WHERE 1 = 1
-    `;
+    let query = `SELECT ${selectProviderColumns}, district AS provider_district FROM ${PROVIDER_TABLE} WHERE 1 = 1`;
 
     const values = [];
 
@@ -241,8 +231,24 @@ export const getProviders = async (req, res) => {
 
     const [rows] = await pool.execute(query, values);
 
+const getServiceNames = async (providers) => {
+  const [categoryRows] = await pool.execute(
+    "SELECT id, name, name_en FROM service_categories"
+  );
+  const categoryMap = new Map(
+    categoryRows.map((category) => [String(category.id), category])
+  );
+
+  return providers.map((provider) => ({
+    ...formatProvider(provider),
+    service_names: parseArrayValue(provider.services).map((serviceId) => {
+      const category = categoryMap.get(String(serviceId));
+      return category?.name_en || category?.name || String(serviceId);
+    }),
+  }));
+};
     return res.json({
-      data: rows.map(formatProvider),
+      data: await getServiceNames(rows),
     });
   } catch (error) {
     console.error("Get providers error:", error);

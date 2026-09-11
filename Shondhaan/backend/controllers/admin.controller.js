@@ -56,7 +56,9 @@ export const listUsers = async (req, res) => {
     const search = req.query.search;
     
     // 2. Base query - ✅ Added shondhaan_id to SELECT
-    let query = "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users";
+    let query = `SELECT u.id, u.shondhaan_id, u.name, u.mobile, u.address, u.email, u.type,
+      u.email_verified, u.created_at, u.updated_at, up.profile_image
+      FROM users u LEFT JOIN user_profiles up ON up.user_id = u.id`;
     let params = [];
 
     // 3. If a search term exists, add a WHERE clause to filter results
