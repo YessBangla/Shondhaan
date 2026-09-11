@@ -650,7 +650,7 @@ const PanelSidebarTabs = ({
                 transition={{ duration: 0.2, ease: [0.22, 1, 0.36, 1] }}
                 className={isFullViewport ? "h-full min-h-0" : "space-y-6"}
               >
-                {children(activeTab, setActiveTabState)}
+                {children(activeTab, handleSelect)}
               </motion.div>
             </AnimatePresence>
           </div>

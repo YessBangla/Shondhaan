@@ -92,22 +92,27 @@ interface Profile {
 }
 
 const bookingStatusOptions = [
-  { value: "pending", label: "অপেক্ষমাণ", className: "bg-amber-50 text-amber-700 border border-amber-200" },
-  { value: "confirmed", label: "নিশ্চিত", className: "bg-blue-50 text-blue-700 border border-blue-200" },
-  { value: "assigned", label: "অ্যাসাইনড", className: "bg-purple-50 text-purple-700 border border-purple-200" },
-  { value: "completed", label: "সম্পন্ন", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  { value: "cancelled", label: "বাতিল", className: "bg-slate-100 text-slate-700 border border-slate-200" },
+  { value: "pending", labelBn: "অপেক্ষমাণ", labelEn: "Pending", className: "bg-amber-50 text-amber-700 border border-amber-200" },
+  { value: "confirmed", labelBn: "নিশ্চিত", labelEn: "Confirmed", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  { value: "assigned", labelBn: "অ্যাসাইনড", labelEn: "Assigned", className: "bg-purple-50 text-purple-700 border border-purple-200" },
+  { value: "completed", labelBn: "সম্পন্ন", labelEn: "Completed", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  { value: "cancelled", labelBn: "বাতিল", labelEn: "Cancelled", className: "bg-slate-100 text-slate-700 border border-slate-200" },
 ];
 
 const requestStatusOptions = [
-  { value: "pending", label: "অপেক্ষমাণ", className: "bg-amber-50 text-amber-700 border border-amber-200" },
-  { value: "contacted", label: "যোগাযোগ হয়েছে", className: "bg-blue-50 text-blue-700 border border-blue-200" },
-  { value: "resolved", label: "সমাধান হয়েছে", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
-  { value: "rejected", label: "বাতিল", className: "bg-slate-100 text-slate-700 border border-slate-200" },
+  { value: "pending", labelBn: "অপেক্ষমাণ", labelEn: "Pending", className: "bg-amber-50 text-amber-700 border border-amber-200" },
+  { value: "contacted", labelBn: "যোগাযোগ হয়েছে", labelEn: "Contacted", className: "bg-blue-50 text-blue-700 border border-blue-200" },
+  { value: "resolved", labelBn: "সমাধান হয়েছে", labelEn: "Resolved", className: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+  { value: "rejected", labelBn: "বাতিল", labelEn: "Rejected", className: "bg-slate-100 text-slate-700 border border-slate-200" },
 ];
 
 const API_BASE_URL = INDIVIDUAL_API_BASE_URL.replace(/\/+$/, "");
 const CENTRAL_API_URL = CENTRAL_API_BASE_URL.replace(/\/+$/, "");
+
+const getProviderAssetUrl = (value?: string | null) => {
+  if (!value) return "";
+  return /^https?:\/\//i.test(value) ? value : `${API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+};
 
 const getAuthHeaders = () => {
   const auth = getMySqlAuth();
@@ -172,6 +177,8 @@ const NidUpload = ({
   preview: string | null;
 }) => {
   const inputRef = useRef<HTMLInputElement>(null);
+  const { language } = useLanguage();
+  const bn = language === "bn";
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -186,7 +193,7 @@ const NidUpload = ({
         ) : (
           <div className="flex flex-col items-center gap-1.5 text-muted-foreground">
             <Camera className="h-4 w-4" />
-            <span className="text-xs">ছবি আপলোড করুন</span>
+            <span className="text-xs">{bn ? "ছবি আপলোড করুন" : "Upload image"}</span>
           </div>
         )}
       </button>
@@ -212,6 +219,8 @@ const SectionHeading = ({ icon: Icon, children }: { icon: LucideIcon; children: 
 );
 
 const CallCenterPanel = () => {
+  const { language } = useLanguage();
+  const bn = language === "bn";
   const navigate = useNavigate();
   const mysqlAuth = getMySqlAuth();
   const mysqlUser = mysqlAuth?.user;
@@ -226,6 +235,7 @@ const CallCenterPanel = () => {
   const [allProvidersPage, setAllProvidersPage] = useState(1);
   const [allProvidersLoading, setAllProvidersLoading] = useState(false);
   const [allProvidersSearch, setAllProvidersSearch] = useState("");
+  const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [labTests, setLabTests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -267,6 +277,42 @@ const CallCenterPanel = () => {
       setNidBack(file);
       setBackPreview(preview);
     }
+  };
+
+  const resetProviderForm = () => {
+    setEditingProvider(null);
+    form.reset({ full_name: "", phone: "", email: "", address: "", service_category: [], experience_years: 0 });
+    setNidFront(null);
+    setNidBack(null);
+    setFrontPreview(null);
+    setBackPreview(null);
+    setServiceArea({ division: "", district: "", thana: [], area: "" });
+  };
+
+  const openProviderEditor = (provider: Provider, setActiveTab: (tab: string) => void) => {
+    const serviceIds = Array.isArray(provider.services) && provider.services.length
+      ? provider.services.map(String)
+      : provider.service_category ? [String(provider.service_category)] : [];
+    setEditingProvider(provider);
+    form.reset({
+      full_name: provider.full_name || provider.name || "",
+      phone: provider.phone || "",
+      email: provider.email || "",
+      address: provider.address || "",
+      service_category: serviceIds,
+      experience_years: Number(provider.experience_years || 0),
+    });
+    setNidFront(null);
+    setNidBack(null);
+    setFrontPreview(getProviderAssetUrl(provider.nid_front_url));
+    setBackPreview(getProviderAssetUrl(provider.nid_back_url));
+    setServiceArea({
+      division: provider.division || "",
+      district: provider.district || provider.provider_district || "",
+      thana: provider.thana || [],
+      area: provider.area || "",
+    });
+    setActiveTab("create-provider");
   };
 
   // Services & Packages states
@@ -351,7 +397,7 @@ const CallCenterPanel = () => {
       setLabTests(labRows || []);
     } catch (error: any) {
       console.error("Call center data load error:", error);
-      toast.error(error?.message || "Failed to load call center data");
+      toast.error(error?.message || (bn ? "কল সেন্টারের তথ্য লোড করা যায়নি" : "Failed to load call center data"));
     } finally {
       setLoading(false);
     }
@@ -421,7 +467,7 @@ const CallCenterPanel = () => {
       setAllProvidersPage(1);
     } catch (error: any) {
       console.error("Failed to fetch all providers list:", error);
-      toast.error(error?.message || "Failed to load provider directory");
+      toast.error(error?.message || (bn ? "প্রোভাইডার তালিকা লোড করা যায়নি" : "Failed to load provider directory"));
       setAllProviders([]);
     } finally {
       setAllProvidersLoading(false);
@@ -491,7 +537,7 @@ const CallCenterPanel = () => {
       const updated = await updateBackendBookingStatus(id, status);
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...updated } : b)));
     } catch (error: any) {
-      toast.error(error?.message || "Booking status update failed");
+      toast.error(error?.message || (bn ? "বুকিং স্ট্যাটাস আপডেট ব্যর্থ হয়েছে" : "Booking status update failed"));
     } finally {
       setUpdatingId(null);
     }
@@ -502,9 +548,9 @@ const CallCenterPanel = () => {
     try {
       const updated = await assignBookingProvider(id, providerId || null);
       setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...updated } : b)));
-      toast.success(providerId ? "Provider assigned" : "Provider removed");
+      toast.success(providerId ? (bn ? "প্রোভাইডার নির্ধারণ করা হয়েছে" : "Provider assigned") : (bn ? "প্রোভাইডার সরানো হয়েছে" : "Provider removed"));
     } catch (error: any) {
-      toast.error(error?.message || "Provider assign failed");
+      toast.error(error?.message || (bn ? "প্রোভাইডার নির্ধারণ ব্যর্থ হয়েছে" : "Provider assign failed"));
     } finally {
       setUpdatingId(null);
     }
@@ -520,11 +566,11 @@ const CallCenterPanel = () => {
         body: JSON.stringify({ status }),
       });
       if (!response.ok) {
-        throw new Error("Request status update failed");
+        throw new Error(bn ? "অনুরোধের স্ট্যাটাস আপডেট ব্যর্থ হয়েছে" : "Request status update failed");
       }
       setRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status } : request)));
     } catch (error: any) {
-      toast.error(error?.message || "Request status update failed");
+      toast.error(error?.message || (bn ? "অনুরোধের স্ট্যাটাস আপডেট ব্যর্থ হয়েছে" : "Request status update failed"));
     } finally {
       setUpdatingId(null);
     }
@@ -555,14 +601,14 @@ const CallCenterPanel = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.message || "Failed to send OTP");
+        throw new Error(data?.message || (bn ? "OTP পাঠাতে ব্যর্থ" : "Failed to send OTP"));
       }
 
-      toast.success("OTP এবং পাসওয়ার্ড পাঠানো হয়েছে। গ্রাহকের ইমেইল চেক করুন।");
+      toast.success(bn ? "OTP এবং পাসওয়ার্ড পাঠানো হয়েছে। গ্রাহকের ইমেইল চেক করুন।" : "OTP and password sent. Please check the customer's email.");
       setRegisterStep("otp");
     } catch (error: any) {
       console.error("[handleRequestOtp] Error:", error);
-      toast.error(error?.message || "OTP পাঠাতে ব্যর্থ");
+      toast.error(error?.message || (bn ? "OTP পাঠাতে ব্যর্থ" : "Failed to send OTP"));
     } finally {
       setRegistering(false);
     }
@@ -570,7 +616,7 @@ const CallCenterPanel = () => {
 
   const handleVerifyOtp = async () => {
     if (!otpInput || otpInput.length !== 6) {
-      toast.error("৬ সংখ্যার OTP দিন");
+      toast.error(bn ? "৬ সংখ্যার OTP দিন" : "Enter the 6-digit OTP");
       return;
     }
     setRegistering(true);
@@ -587,12 +633,12 @@ const CallCenterPanel = () => {
 
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data?.message || "Invalid OTP");
+        throw new Error(data?.message || (bn ? "ভুল OTP" : "Invalid OTP"));
       }
 
       const createdUser = data.user;
       if (!createdUser || !createdUser.id) {
-        throw new Error("User verified, but failed to get User ID.");
+        throw new Error(bn ? "ব্যবহারকারী যাচাই হয়েছে, কিন্তু আইডি পাওয়া যায়নি।" : "User verified, but failed to get User ID.");
       }
 
       setNewBooking((prev) => ({
@@ -603,14 +649,14 @@ const CallCenterPanel = () => {
         customer_address: createdUser.address || newUser.address,
       }));
 
-      toast.success("গ্রাহক সফলভাবে ভেরিফাই হয়েছে");
+      toast.success(bn ? "গ্রাহক সফলভাবে ভেরিফাই হয়েছে" : "Customer verified successfully");
       setShowRegisterUser(false);
       setRegisterStep("details");
       setOtpInput("");
       setNewUser({ name: "", phone: "", email: "", address: "", password: "CallCenter123@" });
     } catch (error: any) {
       console.error("[handleVerifyOtp] Error:", error);
-      toast.error(error?.message || "OTP যাচাই ব্যর্থ");
+      toast.error(error?.message || (bn ? "OTP যাচাই ব্যর্থ" : "OTP verification failed"));
     } finally {
       setRegistering(false);
     }
@@ -673,9 +719,9 @@ const CallCenterPanel = () => {
 
       await Swal.fire({
         icon: "success",
-        title: "সফলভাবে তৈরি হয়েছে",
-        text: "প্রোভাইডার সফলভাবে রেজিস্টার হয়েছে।",
-        confirmButtonText: "ঠিক আছে",
+        title: bn ? "সফলভাবে তৈরি হয়েছে" : "Created Successfully",
+        text: bn ? "প্রোভাইডার সফলভাবে রেজিস্টার হয়েছে।" : "Provider registered successfully.",
+        confirmButtonText: bn ? "ঠিক আছে" : "OK",
       });
       form.reset();
       setNidFront(null);
@@ -687,7 +733,55 @@ const CallCenterPanel = () => {
       setActiveTab("all-providers");
     } catch (error: any) {
       console.error("Create provider error:", error);
-      toast.error(error?.message || "প্রোভাইডার তৈরি করা যায়নি");
+      toast.error(error?.message || (bn ? "প্রোভাইডার তৈরি করা যায়নি" : "Provider could not be created"));
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleUpdateProvider = async (
+    values: ProviderFormValues,
+    setActiveTab: (tab: string) => void,
+  ) => {
+    if (!editingProvider) return;
+    setSubmitting(true);
+    try {
+      const providerFormData = new FormData();
+      providerFormData.append("full_name", values.full_name.trim());
+      providerFormData.append("phone", values.phone.trim());
+      providerFormData.append("email", values.email.trim());
+      providerFormData.append("address", values.address.trim());
+      providerFormData.append("service_category", values.service_category[0] || "");
+      providerFormData.append("services", JSON.stringify(values.service_category));
+      providerFormData.append("experience_years", String(values.experience_years || 0));
+      providerFormData.append("division", serviceArea.division);
+      providerFormData.append("district", serviceArea.district);
+      providerFormData.append("thana", JSON.stringify(serviceArea.thana));
+      providerFormData.append("area", serviceArea.area);
+      if (nidFront) providerFormData.append("nid_front", nidFront);
+      if (nidBack) providerFormData.append("nid_back", nidBack);
+
+      const response = await fetch(`${API_BASE_URL}/api/providers/call-center/${editingProvider.id}`, {
+        method: "PATCH",
+        headers: mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {},
+        credentials: "include",
+        body: providerFormData,
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.message || "Provider could not be updated");
+
+      await Swal.fire({
+        icon: "success",
+        title: bn ? "সফলভাবে আপডেট হয়েছে" : "Provider updated",
+        text: bn ? "প্রোভাইডারের তথ্য সফলভাবে আপডেট হয়েছে।" : "Provider information was updated successfully.",
+        confirmButtonText: bn ? "ঠিক আছে" : "OK",
+      });
+      resetProviderForm();
+      await loadAllProviders();
+      setActiveTab("all-providers");
+    } catch (error: any) {
+      console.error("Update provider error:", error);
+      toast.error(error?.message || (bn ? "প্রোভাইডার আপডেট করা যায়নি" : "Provider could not be updated"));
     } finally {
       setSubmitting(false);
     }
@@ -696,16 +790,16 @@ const CallCenterPanel = () => {
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBooking.service_title || !newBooking.customer_name || !newBooking.customer_phone || !newBooking.booking_date || !newBooking.booking_time) {
-      toast.error("সব তথ্য পূরণ করুন");
+      toast.error(bn ? "সব তথ্য পূরণ করুন" : "Please complete all required fields");
       return;
     }
     if (!newBooking.user_id) {
-      toast.error("কাস্টমার সিলেক্ট করুন");
+      toast.error(bn ? "কাস্টমার সিলেক্ট করুন" : "Select a customer");
       return;
     }
 
     if (!activeUserId) {
-      toast.error("অপারেটর আইডি পাওয়া যায়নি, আবার লগইন করুন");
+      toast.error(bn ? "অপারেটর আইডি পাওয়া যায়নি, আবার লগইন করুন" : "Operator ID not found. Please log in again.");
       return;
     }
 
@@ -733,11 +827,11 @@ const CallCenterPanel = () => {
       } as any);
     } catch (error: any) {
       setSubmitting(false);
-      toast.error(error?.message || "Booking create failed");
+      toast.error(error?.message || (bn ? "বুকিং তৈরি ব্যর্থ হয়েছে" : "Booking create failed"));
       return;
     }
     setSubmitting(false);
-    toast.success("বুকিং তৈরি হয়েছে");
+    toast.success(bn ? "বুকিং তৈরি হয়েছে" : "Booking created successfully");
     setShowNewBooking(false);
     setNewBooking({
       service_id: "",
@@ -794,13 +888,13 @@ const CallCenterPanel = () => {
           <div className="w-12 h-12 rounded-full bg-slate-200 flex items-center justify-center mb-6">
             <Headphones className="h-6 w-6 text-slate-600" />
           </div>
-          <h1 className="font-semibold text-lg text-slate-900 mb-2">অ্যাক্সেস সীমিত</h1>
-          <p className="text-slate-600 text-sm mb-6 text-center max-w-xs">এই বৈশিষ্ট্য শুধুমাত্র কল সেন্টার অপারেটরদের জন্য উপলব্ধ।</p>
+          <h1 className="font-semibold text-lg text-slate-900 mb-2">{bn ? "অ্যাক্সেস সীমিত" : "Access Restricted"}</h1>
+          <p className="text-slate-600 text-sm mb-6 text-center max-w-xs">{bn ? "এই বৈশিষ্ট্য শুধুমাত্র কল সেন্টার অপারেটরদের জন্য উপলব্ধ।" : "This feature is available only to call center operators."}</p>
           <button
             onClick={() => navigate("/")}
             className="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 transition-colors"
           >
-            হোমপেজে ফিরুন
+            {bn ? "হোমপেজে ফিরুন" : "Return Home"}
           </button>
         </div>
         <div className="h-16 md:hidden" />
@@ -808,22 +902,19 @@ const CallCenterPanel = () => {
     );
   }
 
-  const { language } = useLanguage();
-  const bn = language === "bn";
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
       <div className="mx-auto max-w-full">
         <div className="rounded-xl border border-slate-200 bg-white shadow-sm overflow-hidden">
           <PanelSidebarTabs
             items={[
-              { value: "search", label: "কাস্টমার সার্চ", icon: <Search className="h-4 w-4" />, group: "সার্চ" },
-              { value: "new-booking", label: "নতুন বুকিং", icon: <Plus className="h-4 w-4" /> },
-              { value: "create-provider", label: "প্রোভাইডার রেজিস্ট্রেশন", icon: <UserPlus className="h-4 w-4" /> },
-              { value: "all-providers", label: "সকল প্রোভাইডার", icon: <Users className="h-4 w-4" /> },
-              { value: "bookings", label: "সব বুকিং", icon: <ClipboardList className="h-4 w-4" />, group: "ম্যানেজমেন্ট" },
-              { value: "requests", label: "সার্ভিস অনুরোধ", icon: <FileText className="h-4 w-4" /> },
-              { value: "service-messages", label: "বার্তা", icon: <MessageSquare className="h-4 w-4" /> },
+              { value: "search", label: bn ? "কাস্টমার সার্চ" : "Customer Search", icon: <Search className="h-4 w-4" />, group: bn ? "সার্চ" : "Search" },
+              { value: "new-booking", label: bn ? "নতুন বুকিং" : "New Booking", icon: <Plus className="h-4 w-4" /> },
+              { value: "create-provider", label: bn ? "প্রোভাইডার রেজিস্ট্রেশন" : "Provider Registration", icon: <UserPlus className="h-4 w-4" /> },
+              { value: "all-providers", label: bn ? "সকল প্রোভাইডার" : "All Providers", icon: <Users className="h-4 w-4" /> },
+              { value: "bookings", label: bn ? "সব বুকিং" : "All Bookings", icon: <ClipboardList className="h-4 w-4" />, group: bn ? "ম্যানেজমেন্ট" : "Management" },
+              { value: "requests", label: bn ? "সার্ভিস অনুরোধ" : "Service Requests", icon: <FileText className="h-4 w-4" /> },
+              { value: "service-messages", label: bn ? "বার্তা" : "Messages", icon: <MessageSquare className="h-4 w-4" /> },
             ]}
             defaultValue="search"
       
@@ -842,7 +933,7 @@ const CallCenterPanel = () => {
                           type="text"
                           value={searchQuery}
                           onChange={(e) => setSearchQuery(e.target.value)}
-                          placeholder="ফোন নম্বর বা নাম দিয়ে অনুসন্ধান করুন..."
+                          placeholder={bn ? "ফোন নম্বর বা নাম দিয়ে অনুসন্ধান করুন..." : "Search by phone number or name..."}
                           className="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 focus:border-slate-900 transition-all"
                         />
                         {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 animate-spin text-slate-400" />}
@@ -852,13 +943,13 @@ const CallCenterPanel = () => {
                         disabled={searching}
                         className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
                       >
-                        অনুসন্ধান
+                        {bn ? "অনুসন্ধান" : "Search"}
                       </button>
                     </div>
 
                     {searchResults.length > 0 && (
                       <div className="space-y-3">
-                        <p className="text-xs text-slate-500 font-medium">{searchResults.length}টি ফলাফল পাওয়া গেছে</p>
+                        <p className="text-xs text-slate-500 font-medium">{searchResults.length} {bn ? "টি ফলাফল পাওয়া গেছে" : "results found"}</p>
                         {searchResults.map((p) => {
                           const customerBookings = bookings.filter((b) => b.user_id === p.user_id);
                           return (
@@ -883,13 +974,13 @@ const CallCenterPanel = () => {
                               </div>
                               {customerBookings.length > 0 && (
                                 <div className="border-t border-slate-200 pt-3 space-y-2">
-                                  <p className="text-[11px] text-slate-600 font-semibold uppercase tracking-wider">বুকিং ({customerBookings.length})</p>
+                                  <p className="text-[11px] text-slate-600 font-semibold uppercase tracking-wider">{bn ? "বুকিং" : "Bookings"} ({customerBookings.length})</p>
                                   {customerBookings.slice(0, 3).map((b) => {
                                     const s = bookingStatusOptions.find((o) => o.value === b.status) || bookingStatusOptions[0];
                                     return (
                                       <div key={b.id} className="flex items-center justify-between text-xs gap-2">
                                         <span className="text-slate-700 truncate">{b.service_title} — {b.package_name}</span>
-                                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shrink-0 ${s.className}`}>{s.label}</span>
+                                        <span className={`rounded-full px-2 py-0.5 text-[11px] font-medium whitespace-nowrap shrink-0 ${s.className}`}>{bn ? s.labelBn : s.labelEn}</span>
                                       </div>
                                     );
                                   })}
@@ -903,7 +994,7 @@ const CallCenterPanel = () => {
 
                     {searchQuery && searchResults.length === 0 && !searching && (
                       <div className="text-center py-8">
-                        <p className="text-sm text-slate-500">কোনো গ্রাহক পাওয়া যায়নি</p>
+                        <p className="text-sm text-slate-500">{bn ? "কোনো গ্রাহক পাওয়া যায়নি" : "No customer found"}</p>
                       </div>
                     )}
                   </div>
@@ -927,7 +1018,7 @@ const CallCenterPanel = () => {
                         </div>
                         <div className="text-left">
                           <p className="text-lg font-bold text-slate-900">{bookings.filter((b) => b.is_emergency).length}</p>
-                          <p className="text-xs font-medium text-red-600">জরুরী বুকিং</p>
+                          <p className="text-xs font-medium text-red-600">{bn ? "জরুরী বুকিং" : "Emergency Booking"}</p>
                         </div>
                       </button>
                     )}
@@ -940,7 +1031,7 @@ const CallCenterPanel = () => {
                           className={`rounded-lg border p-3 text-left transition-all ${filterStatus === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
                         >
                           <p className="text-lg font-semibold text-slate-900">{bookings.filter((b) => b.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{s.label}</p>
+                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
                         </button>
                       ))}
                     </div>
@@ -964,7 +1055,7 @@ const CallCenterPanel = () => {
                       {sortedBookings.length === 0 ? (
                         <div className="text-center py-8">
                           <Circle className="h-8 w-8 mx-auto text-slate-300 mb-3 opacity-50" />
-                          <p className="text-sm text-slate-500">কোনো বুকিং নেই</p>
+                          <p className="text-sm text-slate-500">{bn ? "কোনো বুকিং নেই" : "No bookings found"}</p>
                         </div>
                       ) : (
                         sortedBookings.map((b, i) => {
@@ -998,7 +1089,7 @@ const CallCenterPanel = () => {
                                 >
                                   {bookingStatusOptions.map((o) => (
                                     <option key={o.value} value={o.value}>
-                                      {o.label}
+                                      {bn ? o.labelBn : o.labelEn}
                                     </option>
                                   ))}
                                 </select>
@@ -1010,7 +1101,7 @@ const CallCenterPanel = () => {
                                 disabled={updatingId === b.id}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-50 transition-all"
                               >
-                                <option value="">সার্ভিস প্রদানকারী নির্ধারণ করুন</option>
+                                <option value="">{bn ? "সার্ভিস প্রদানকারী নির্ধারণ করুন" : "Assign a service provider"}</option>
                                 {providers.map((provider) => (
                                   <option key={provider.id} value={provider.id}>
                                     {provider.full_name || provider.name || provider.shop_name || `প্রদানকারী ${provider.id}`}
@@ -1055,12 +1146,12 @@ const CallCenterPanel = () => {
               if (activeTab === "new-booking")
                 return (
                   <div className="p-6 bg-white">
-                    <h3 className="text-lg font-semibold text-slate-900 mb-5">নতুন বুকিং তৈরি করুন</h3>
+                    <h3 className="text-lg font-semibold text-slate-900 mb-5">{bn ? "নতুন বুকিং তৈরি করুন" : "Create New Booking"}</h3>
 
                     {/* Step 1: Customer Selection / Registration */}
                     <div className="mb-5 p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
-                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">ধাপ ১: গ্রাহক নির্বাচন করুন</p>
+                        <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider">{bn ? "ধাপ ১: গ্রাহক নির্বাচন করুন" : "Step 1: Select Customer"}</p>
                         {!newBooking.user_id && (
                           <button
                             type="button"
@@ -1080,7 +1171,7 @@ const CallCenterPanel = () => {
                           <div className="relative flex gap-2">
                             <input
                               type="text"
-                              placeholder="ফোন বা নাম দিয়ে সার্চ করুন..."
+                              placeholder={bn ? "ফোন বা নাম দিয়ে সার্চ করুন..." : "Search by phone or name..."}
                               value={searchQuery}
                               onChange={(e) => setSearchQuery(e.target.value)}
                               className="flex-1 rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
@@ -1104,7 +1195,7 @@ const CallCenterPanel = () => {
                                     }));
                                     setSearchQuery("");
                                     setSearchResults([]);
-                                    toast.success(`${p.display_name} নির্বাচিত হয়েছে`);
+      toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
                                   }}
                                   className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
                                 >
@@ -1135,35 +1226,35 @@ const CallCenterPanel = () => {
                                 type="text"
                                 value={newUser.name}
                                 onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-                                placeholder="গ্রাহকের নাম"
+                                placeholder={bn ? "গ্রাহকের নাম" : "Customer name"}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <input
                                 type="tel"
                                 value={newUser.phone}
                                 onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
-                                placeholder="ফোন নম্বর"
+                                placeholder={bn ? "ফোন নম্বর" : "Phone number"}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <input
                                 type="email"
                                 value={newUser.email}
                                 onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
-                                placeholder="ইমেইল (OTP এখানে যাবে)"
+                                placeholder={bn ? "ইমেইল (OTP এখানে যাবে)" : "Email (OTP will be sent here)"}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <input
                                 type="text"
                                 value={newUser.address}
                                 onChange={(e) => setNewUser({ ...newUser, address: e.target.value })}
-                                placeholder="ঠিকানা"
+                                placeholder={bn ? "ঠিকানা" : "Address"}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <input
                                 type="text"
                                 value={newUser.password}
                                 onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-                                placeholder="পাসওয়ার্ড"
+                                placeholder={bn ? "পাসওয়ার্ড" : "Password"}
                                 className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <button
@@ -1175,23 +1266,23 @@ const CallCenterPanel = () => {
                                 {registering ? (
                                   <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    OTP পাঠানো হচ্ছে...
+                                    {bn ? "OTP পাঠানো হচ্ছে..." : "Sending OTP..."}
                                   </>
                                 ) : (
-                                  "OTP এবং পাসওয়ার্ড পাঠান"
+                                  bn ? "OTP এবং পাসওয়ার্ড পাঠান" : "Send OTP and Password"
                                 )}
                               </button>
                             </>
                           ) : (
                             <>
                               <p className="text-xs text-slate-600 text-center mb-1">
-                                <span className="font-medium">{newUser.email}</span>-এ OTP পাঠানো হয়েছে
+                                {bn ? <><span className="font-medium">{newUser.email}</span>-এ OTP পাঠানো হয়েছে</> : <>OTP sent to <span className="font-medium">{newUser.email}</span></>}
                               </p>
                               <input
                                 type="text"
                                 value={otpInput}
                                 onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                                placeholder="৬ সংখ্যার OTP দিন"
+                                placeholder={bn ? "৬ সংখ্যার OTP দিন" : "Enter 6-digit OTP"}
                                 className="w-full text-center tracking-[0.5em] rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                               />
                               <button
@@ -1203,10 +1294,10 @@ const CallCenterPanel = () => {
                                 {registering ? (
                                   <>
                                     <Loader2 className="h-4 w-4 animate-spin" />
-                                    যাচাই হচ্ছে...
+                                    {bn ? "যাচাই হচ্ছে..." : "Verifying..."}
                                   </>
                                 ) : (
-                                  "ভেরিফাই এবং সিলেক্ট করুন"
+                                  bn ? "ভেরিফাই এবং সিলেক্ট করুন" : "Verify and Select"
                                 )}
                               </button>
                               <button
@@ -1214,7 +1305,7 @@ const CallCenterPanel = () => {
                                 onClick={() => setRegisterStep("details")}
                                 className="w-full text-xs text-slate-500 hover:text-slate-700 pt-1"
                               >
-                                ← বিস্তারিত পরিবর্তন করুন
+                                {bn ? "← বিস্তারিত পরিবর্তন করুন" : "← Edit Details"}
                               </button>
                             </>
                           )}
@@ -1225,7 +1316,7 @@ const CallCenterPanel = () => {
                         <div className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-lg p-2.5 mt-2">
                           <p className="text-xs font-medium text-emerald-700 flex items-center gap-1.5">
                             <CheckCircle className="h-4 w-4" />
-                            গ্রাহক নির্বাচিত: {newBooking.customer_name}
+                            {bn ? "গ্রাহক নির্বাচিত" : "Customer selected"}: {newBooking.customer_name}
                           </p>
                           <button
                             type="button"
@@ -1235,7 +1326,7 @@ const CallCenterPanel = () => {
                             }}
                             className="text-xs text-red-500 hover:text-red-600 font-medium"
                           >
-                            পরিবর্তন করুন
+                            {bn ? "পরিবর্তন করুন" : "Change"}
                           </button>
                         </div>
                       )}
@@ -1247,13 +1338,13 @@ const CallCenterPanel = () => {
                         <input
                           value={newBooking.customer_name}
                           onChange={(e) => setNewBooking({ ...newBooking, customer_name: e.target.value })}
-                          placeholder="গ্রাহকের নাম"
+                          placeholder={bn ? "গ্রাহকের নাম" : "Customer name"}
                           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                         />
                         <input
                           value={newBooking.customer_phone}
                           onChange={(e) => setNewBooking({ ...newBooking, customer_phone: e.target.value })}
-                          placeholder="ফোন নম্বর"
+                          placeholder={bn ? "ফোন নম্বর" : "Phone number"}
                           className="rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                         />
 
@@ -1262,7 +1353,7 @@ const CallCenterPanel = () => {
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                           <input
                             type="text"
-                            placeholder="সার্ভিস সার্চ করুন..."
+                            placeholder={bn ? "সার্ভিস সার্চ করুন..." : "Search services..."}
                             value={newBooking.service_id ? newBooking.service_title : serviceSearch}
                             onChange={(e) => {
                               setServiceSearch(e.target.value);
@@ -1304,7 +1395,7 @@ const CallCenterPanel = () => {
                                   </button>
                                 ))}
                               {services.filter((s) => (s.title || s.name || "").toLowerCase().includes(serviceSearch.toLowerCase())).length === 0 && (
-                                <p className="px-3 py-2 text-xs text-slate-500">কোনো সার্ভিস পাওয়া যায়নি</p>
+                                <p className="px-3 py-2 text-xs text-slate-500">{bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services found"}</p>
                               )}
                             </div>
                           )}
@@ -1315,7 +1406,7 @@ const CallCenterPanel = () => {
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                           <input
                             type="text"
-                            placeholder={newBooking.service_id ? "প্যাকেজ সার্চ করুন..." : "প্রথমে সার্ভিস নির্বাচন করুন"}
+                            placeholder={newBooking.service_id ? (bn ? "প্যাকেজ সার্চ করুন..." : "Search packages...") : (bn ? "প্রথমে সার্ভিস নির্বাচন করুন" : "Select a service first")}
                             disabled={!newBooking.service_id}
                             value={newBooking.package_id ? `${newBooking.package_name} - ৳${newBooking.package_price}` : packageSearch}
                             onChange={(e) => {
@@ -1353,7 +1444,7 @@ const CallCenterPanel = () => {
                                   </button>
                                 ))}
                               {filteredPackages.filter((p) => (p.name || p.title || "").toLowerCase().includes(packageSearch.toLowerCase())).length === 0 && (
-                                <p className="px-3 py-2 text-xs text-slate-500">কোনো প্যাকেজ পাওয়া যায়নি</p>
+                                <p className="px-3 py-2 text-xs text-slate-500">{bn ? "কোনো প্যাকেজ পাওয়া যায়নি" : "No packages found"}</p>
                               )}
                             </div>
                           )}
@@ -1376,7 +1467,7 @@ const CallCenterPanel = () => {
                       <input
                         value={newBooking.customer_address}
                         onChange={(e) => setNewBooking({ ...newBooking, customer_address: e.target.value })}
-                        placeholder="ঠিকানা"
+                        placeholder={bn ? "ঠিকানা" : "Address"}
                         className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/20 transition-all"
                       />
 
@@ -1387,7 +1478,7 @@ const CallCenterPanel = () => {
                           onChange={(e) => setNewBooking({ ...newBooking, is_emergency: e.target.checked })}
                           className="h-4 w-4 rounded border-slate-300 text-red-600 focus:ring-red-500"
                         />
-                        <span className="text-sm text-red-600 font-medium">জরুরী বুকিং</span>
+                        <span className="text-sm text-red-600 font-medium">{bn ? "জরুরী বুকিং" : "Emergency Booking"}</span>
                       </label>
 
                       <button
@@ -1401,7 +1492,7 @@ const CallCenterPanel = () => {
                             তৈরি হচ্ছে...
                           </>
                         ) : (
-                          "বুকিং তৈরি করুন"
+                          bn ? "বুকিং তৈরি করুন" : "Create Booking"
                         )}
                       </button>
                     </form>
@@ -1414,11 +1505,11 @@ const CallCenterPanel = () => {
               if (activeTab === "create-provider")
                 return (
                   <div className="p-6 bg-background">
-                    <div className="flex items-center justify-between mb-5">
-                      <h3 className="text-lg font-semibold text-slate-900 mb-5 flex gap-2"><UserPlus className="h-5 w-5 text-userprimary my-auto"/> নতুন প্রোভাইডার রেজিস্ট্রেশন করুন</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-slate-900 mb-5 flex gap-2"><UserPlus className="h-5 w-5 text-userprimary my-auto"/> {editingProvider ? (bn ? "প্রোভাইডার তথ্য সম্পাদনা" : "Edit Provider") : (bn ? "নতুন প্রোভাইডার রেজিস্ট্রেশন করুন" : "New Provider Registration")}</h3>
                       <button
                         type="button"
-                        onClick={() => setActiveTab("all-providers")}
+                        onClick={() => { resetProviderForm(); setActiveTab("all-providers"); }}
                         className="w-auto group flex items-center justify-center gap-2 px-3 py-1 bg-userprimaryshade text-foreground text-sm font-medium rounded-full hover:bg-userprimary hover:text-white border border-userprimary disabled:opacity-50 transition-colors"
                         >
                         <Users className="h-4 w-4 group-hover:text-white text-userprimary my-auto"/>
@@ -1433,7 +1524,7 @@ const CallCenterPanel = () => {
                         className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 md:p-8"
                         >
                         <Form {...form}>
-                          <form className="space-y-6" onSubmit={form.handleSubmit((values) => handleCreateProvider(values, setActiveTab))}>
+                          <form className="space-y-6" onSubmit={form.handleSubmit((values) => editingProvider ? handleUpdateProvider(values, setActiveTab) : handleCreateProvider(values, setActiveTab))}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
                               {/* Left column: personal + work info */}
                               <div className="space-y-8">
@@ -1633,7 +1724,7 @@ const CallCenterPanel = () => {
 
                                 <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
                                   <SectionHeading icon={IdCard}>
-                                    {bn ? "জাতীয় পরিচয়পত্র (NID)" : "National ID (NID)"} *
+                                    {bn ? "জাতীয় পরিচয়পত্র (NID)" : "National ID (NID)"} {editingProvider ? "" : "*"}
                                   </SectionHeading>
                                   <div className="grid grid-cols-2 gap-3">
                                     <NidUpload
@@ -1661,8 +1752,8 @@ const CallCenterPanel = () => {
                                   >
                                   <Send className="h-4 w-4" />
                                   {submitting
-                                    ? (bn ? "ক্রিয়েট করা হচ্ছে..." : "Creating...")
-                                    : (bn ? "ক্রিয়েট করুন" : "Create Provider")}
+                                    ? (editingProvider ? (bn ? "আপডেট হচ্ছে..." : "Updating...") : (bn ? "তৈরি হচ্ছে..." : "Creating..."))
+                                    : (editingProvider ? (bn ? "আপডেট করুন" : "Update Provider") : (bn ? "তৈরি করুন" : "Create Provider"))}
                                 </Button>
 
                                 <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
@@ -1697,71 +1788,76 @@ const CallCenterPanel = () => {
 
                 return (
                   <div className="p-6 bg-background">
-                    <div className="mb-4 flex items-center justify-between gap-3">
-                      <div>
-                        <h3 className="text-lg font-semibold text-slate-900">সকল প্রোভাইডার</h3>
-                        <p className="text-xs text-slate-500">{allProviders.length}টি প্রোফাইল</p>
+                    <div className="mb-4 w-full flex items-center justify-between gap-3">
+                      <div className="w-full flex gap-3">
+                        <div className="w-auto flex gap-3">
+                            <Users className="my-auto text-userprimary" />
+                          <div>
+                            <h3 className="text-lg font-semibold text-slate-900 text-nowrap">{bn ? "সকল প্রোভাইডার" : "All Providers"}</h3>
+                            <p className="text-xs text-slate-500">{allProviders.length} {bn ? "টি প্রোফাইল" : "profiles"}</p>
+                          </div>
+                        </div>
+                        <div className="relative my-auto w-full">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            value={allProvidersSearch}
+                            onChange={(event) => {
+                              setAllProvidersSearch(event.target.value);
+                              setAllProvidersPage(1);
+                            }}
+                            placeholder={bn ? "নাম, ফোন, ইমেইল বা Shondhaan-ID দিয়ে খুঁজুন" : "Search by name, phone, email or Shondhaan-ID"}
+                            className="h-10 bg-white pl-9"
+                          />
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex justify-end w-full gap-2">
                         <button
                           type="button"
                           onClick={loadAllProviders}
                           disabled={allProvidersLoading}
                           className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
-                        >
+                          >
                           <RefreshCw className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
                           {bn ? "রিফ্রেশ" : "Refresh"}
                         </button>
                         <button
                           type="button"
-                          onClick={() => setActiveTab("create-provider")}
+                          onClick={() => { resetProviderForm(); setActiveTab("create-provider"); }}
                           className="inline-flex items-center gap-2 rounded-lg border border-userprimary bg-userprimary px-3 py-2 text-xs font-medium text-white hover:bg-userprimaryshade hover:text-black disabled:opacity-50"
-                        >
+                          >
                           <UserPlus className={`h-3.5 w-3.5`} />
                           {bn ? "নতুন যোগ করুন" : "Add New"}
                         </button>
                       </div>
                     </div>
 
-                    <div className="relative mb-4 max-w-xl">
-                      <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-                      <Input
-                        value={allProvidersSearch}
-                        onChange={(event) => {
-                          setAllProvidersSearch(event.target.value);
-                          setAllProvidersPage(1);
-                        }}
-                        placeholder={bn ? "নাম, ফোন, ইমেইল বা Shondhaan-ID দিয়ে খুঁজুন" : "Search by name, phone, email or Shondhaan-ID"}
-                        className="h-10 bg-white pl-9"
-                      />
-                    </div>
 
                     {allProvidersLoading ? (
                       <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-slate-200 bg-white">
                         <div className="flex items-center gap-2 text-sm text-slate-500">
                           <Loader2 className="h-4 w-4 animate-spin" />
-                          লোড হচ্ছে...
+                          {bn ? "লোড হচ্ছে..." : "Loading..."}
                         </div>
                       </div>
                     ) : paginatedProviders.length === 0 ? (
                       <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
-                        কোন প্রোভাইডার নেই
+                        {bn ? "কোন প্রোভাইডার নেই" : "No providers found"}
                       </div>
                     ) : (
                       <>
                         <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
                           <div className="overflow-x-auto">
                             <table className="w-full text-left text-sm">
-                              <thead className="bg-slate-50 text-slate-600">
+                              <thead className="bg-userprimaryshade text-slate-600">
                                 <tr>
-                                  <th className="px-4 py-3 font-medium">প্রোফাইল</th>
-                                  <th className="px-4 py-3 font-medium">সার্ভিস</th>
-                                  <th className="px-4 py-3 font-medium">সার্ভিস এরিয়া</th>
-                                  <th className="px-4 py-3 font-medium">অভিজ্ঞতা</th>
-                                  <th className="px-4 py-3 font-medium">NID</th>
-                                  <th className="px-4 py-3 font-medium">তৈরির সময়</th>
-                                  <th className="px-4 py-3 font-medium">স্ট্যাটাস</th>
-                                  <th className="sticky right-0 z-10 bg-slate-50 px-4 py-3 font-medium shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]">অ্যাকশন</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "প্রোফাইল" : "Profile"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "সার্ভিস" : "Service"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "সার্ভিস এরিয়া" : "Service Area"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "অভিজ্ঞতা" : "Experience"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "এন-আই-ডি" : "NID"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "রেজিস্ট্রেশন ডেইট" : "Registration Date"}</th>
+                                  <th className="px-4 py-3 font-bold">{bn ? "স্ট্যাটাস" : "Status"}</th>
+                                  <th className="sticky right-0 z-10 bg-userprimaryshade px-4 py-3 font-bold">{bn ? "অ্যাকশন" : "Action"}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1788,7 +1884,7 @@ const CallCenterPanel = () => {
                                       <div className="flex flex-wrap gap-1">{provider.thana?.length ? provider.thana.map((thana) => <span key={thana} className="text-xs text-slate-500">{thana}</span>) : <span className="text-xs text-slate-500">—</span>}</div>
                                       <p className="text-xs text-slate-500">{provider.area || "—"}</p>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} বছর</td>
+                                    <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} {bn ? "বছর" : "years"}</td>
                                    <td>
                                     <span className={`whitespace-nowrap px-3 rounded-full text-[12px] py-1 border ${
                                             provider.nid_front_url || provider.nid_back_url
@@ -1796,8 +1892,8 @@ const CallCenterPanel = () => {
                                                 : "border-red-500 bg-red-100 text-red-700 font-medium"
                                         } text-slate-700`}>
                                         {provider.nid_front_url || provider.nid_back_url
-                                            ? "দেওয়া হয়েছে"
-                                            : "দেওয়া হয়নি"}
+                                            ? (bn ? "দেওয়া হয়েছে" : "Submitted")
+                                            : (bn ? "দেওয়া হয়নি" : "Not submitted")}
                                         </span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-600">{provider.created_at ? new Date(provider.created_at).toLocaleDateString("bn-BD") : "—"}</td>
@@ -1814,7 +1910,7 @@ const CallCenterPanel = () => {
                                         {provider.status || "pending"}
                                       </span>
                                     </td>
-                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">Open</button></td>
+                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" onClick={() => openProviderEditor(provider, setActiveTab)} className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">{bn ? "খুলুন" : "Open"}</button></td>
                                   </tr>
                                 ))}
                               </tbody>
@@ -1830,7 +1926,7 @@ const CallCenterPanel = () => {
                               disabled={allProvidersPage === 1}
                               className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                             >
-                              পূর্ববর্তী
+                              {bn ? "পূর্ববর্তী" : "Previous"}
                             </button>
 
                             {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
@@ -1854,7 +1950,7 @@ const CallCenterPanel = () => {
                               disabled={allProvidersPage === totalPages}
                               className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
                             >
-                              পরবর্তী
+                              {bn ? "পরবর্তী" : "Next"}
                             </button>
                           </div>
                         )}
@@ -1871,11 +1967,11 @@ const CallCenterPanel = () => {
                 return (
                   <div className="p-6">
                     <div className="flex items-center justify-between mb-5">
-                      <h3 className="text-lg font-semibold text-slate-900">সার্ভিস অনুরোধ</h3>
+                      <h3 className="text-lg font-semibold text-slate-900">{bn ? "সার্ভিস অনুরোধ" : "Service Requests"}</h3>
                       <button
                         onClick={fetchData}
                         className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                        title="রিফ্রেশ"
+                        title={bn ? "রিফ্রেশ" : "Refresh"}
                       >
                         <RefreshCw className="h-4 w-4 text-slate-600" />
                       </button>
@@ -1888,7 +1984,7 @@ const CallCenterPanel = () => {
                         className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === "all" ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 bg-white hover:border-slate-300"}`}
                       >
                         <p className="text-lg font-semibold">{requests.length}</p>
-                        <p className="text-[11px] font-medium">সব</p>
+                        <p className="text-[11px] font-medium">{bn ? "সব" : "All"}</p>
                       </button>
                       {requestStatusOptions.map((s) => (
                         <button
@@ -1897,7 +1993,7 @@ const CallCenterPanel = () => {
                           className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
                         >
                           <p className="text-lg font-semibold text-slate-900">{requests.filter((r) => r.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{s.label}</p>
+                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
                         </button>
                       ))}
                     </div>
@@ -1907,7 +2003,7 @@ const CallCenterPanel = () => {
                       {filteredRequests.length === 0 ? (
                         <div className="text-center py-12">
                           <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-                          <p className="text-sm text-slate-500">কোনো সার্ভিস অনুরোধ নেই</p>
+                          <p className="text-sm text-slate-500">{bn ? "কোনো সার্ভিস অনুরোধ নেই" : "No service requests found"}</p>
                         </div>
                       ) : (
                         filteredRequests.map((req, i) => {
@@ -1939,7 +2035,7 @@ const CallCenterPanel = () => {
                                 >
                                   {requestStatusOptions.map((o) => (
                                     <option key={o.value} value={o.value}>
-                                      {o.label}
+                                      {bn ? o.labelBn : o.labelEn}
                                     </option>
                                   ))}
                                 </select>

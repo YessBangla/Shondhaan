@@ -1,7 +1,21 @@
 import { ensureProviderSchema, pool } from "../config/db.js";
 import { randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const PROVIDER_TABLE = "providers"; 
+const providerNidUrl = (filename) => `/uploads/providers/nid/${filename}`;
+
+const removeStoredFile = async (fileUrl) => {
+  if (!fileUrl || !String(fileUrl).startsWith("/uploads/")) return;
+  try {
+    await fs.unlink(path.join(process.cwd(), String(fileUrl).slice(1)));
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error("Could not remove replaced provider file:", error.message);
+    }
+  }
+};
 
 const reviewerRoles = new Set(["admin", "service_admin", "super_admin"]);
 
@@ -119,8 +133,8 @@ export const submitProviderApplication = async (req, res) => {
       return res.status(409).json({ message: "This account is already an approved provider" });
     }
 
-    const frontUrl = front ? `/uploads/${front.filename}` : null;
-    const backUrl = back ? `/uploads/${back.filename}` : null;
+    const frontUrl = front ? providerNidUrl(front.filename) : null;
+    const backUrl = back ? providerNidUrl(back.filename) : null;
     const providerName = full_name?.trim() || "Provider";
     let providerId = existing[0]?.id;
 
@@ -502,7 +516,7 @@ export const createCallCenterProvider = async (req, res) => {
       [providerId, user_id, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
         division?.trim() || null, district?.trim() || null, JSON.stringify(thanaValues), area?.trim() || null,
         services || JSON.stringify(service_category ? [service_category] : []), service_category || null, normalizedYears,
-        front ? `/uploads/${front.filename}` : null, back ? `/uploads/${back.filename}` : null]
+        front ? providerNidUrl(front.filename) : null, back ? providerNidUrl(back.filename) : null]
     );
 
     const [rows] = await pool.execute(`SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`, [providerId]);
@@ -510,5 +524,94 @@ export const createCallCenterProvider = async (req, res) => {
   } catch (error) {
     console.error("Create call center provider error:", error);
     return res.status(500).json({ message: "Failed to create provider" });
+  }
+};
+
+export const updateCallCenterProvider = async (req, res) => {
+  const uploadedFiles = [
+    req.files?.nid_front?.[0],
+    req.files?.nid_back?.[0],
+  ].filter(Boolean);
+
+  try {
+    await ensureProviderSchema();
+    const { id } = req.params;
+    const {
+      full_name, phone, email, address, service_category,
+      experience_years, division, district, thana, area, services,
+    } = req.body;
+    const front = req.files?.nid_front?.[0];
+    const back = req.files?.nid_back?.[0];
+    const years = Number(experience_years);
+    let thanaValues = [];
+
+    try {
+      const parsedThana = JSON.parse(thana || "[]");
+      thanaValues = Array.isArray(parsedThana) ? parsedThana : [];
+    } catch {
+      thanaValues = thana ? [thana] : [];
+    }
+
+    const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
+    if (service_category) {
+      const [categoryRows] = await pool.execute(
+        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+        [service_category]
+      );
+      if (!categoryRows.length) {
+        await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+        return res.status(400).json({ message: "Select an active service category" });
+      }
+    }
+
+    const [existingRows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const existing = existingRows[0];
+    if (!existing) {
+      await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const frontUrl = front ? providerNidUrl(front.filename) : existing.nid_front_url;
+    const backUrl = back ? providerNidUrl(back.filename) : existing.nid_back_url;
+    await pool.execute(
+      `UPDATE ${PROVIDER_TABLE}
+       SET name = ?, full_name = ?, phone = ?, email = ?, address = ?,
+           division = ?, district = ?, thana = ?, area = ?, services = ?,
+           service_category = ?, experience_years = ?, nid_front_url = ?, nid_back_url = ?
+       WHERE id = ?`,
+      [
+        full_name?.trim() || "Provider",
+        full_name?.trim() || "Provider",
+        phone?.trim() || null,
+        email?.trim() || null,
+        address?.trim() || null,
+        division?.trim() || null,
+        district?.trim() || null,
+        JSON.stringify(thanaValues),
+        area?.trim() || null,
+        services || JSON.stringify(service_category ? [service_category] : []),
+        service_category || null,
+        normalizedYears,
+        frontUrl,
+        backUrl,
+        id,
+      ]
+    );
+
+    if (front) await removeStoredFile(existing.nid_front_url);
+    if (back) await removeStoredFile(existing.nid_back_url);
+
+    const [rows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    return res.json({ message: "Provider updated successfully", application: formatProvider(rows[0]) });
+  } catch (error) {
+    await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+    console.error("Update call center provider error:", error);
+    return res.status(500).json({ message: "Failed to update provider" });
   }
 };
