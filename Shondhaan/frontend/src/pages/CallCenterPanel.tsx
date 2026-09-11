@@ -668,15 +668,14 @@ const CallCenterPanel = () => {
   ) => {
     setSubmitting(true);
     try {
-      const timestamp = Date.now();
-      const email = values.email.trim() || `provider${timestamp}@provider.shondhaan.local`;
+      const email = values.email.trim();
       const userResponse = await fetch(`${CENTRAL_API_URL}/api/admin/users/provider`, {
         method: "POST",
         headers: getAuthHeaders(),
         credentials: "include",
         body: JSON.stringify({
           name: values.full_name.trim() || "Provider",
-          mobile: values.phone.trim() || `provider${timestamp}`,
+          mobile: values.phone.trim() || `provider${Date.now()}`,
           address: values.address.trim() || null,
           email,
           password: "shondhaan134",
@@ -692,7 +691,7 @@ const CallCenterPanel = () => {
       providerFormData.append("user_id", String(userPayload.user.id));
       providerFormData.append("full_name", values.full_name.trim());
       providerFormData.append("phone", values.phone.trim());
-      providerFormData.append("email", email);
+      providerFormData.append("email", userPayload.user.email || email);
       providerFormData.append("address", values.address.trim());
       providerFormData.append("service_category", values.service_category[0] || "");
       providerFormData.append("services", JSON.stringify(values.service_category));
@@ -1910,7 +1909,7 @@ const CallCenterPanel = () => {
                                         {provider.status || "pending"}
                                       </span>
                                     </td>
-                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" onClick={() => openProviderEditor(provider, setActiveTab)} className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">{bn ? "খুলুন" : "Open"}</button></td>
+                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" onClick={() => openProviderEditor(provider, setActiveTab)} className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">{bn ? "ওপেন" : "Open"}</button></td>
                                   </tr>
                                 ))}
                               </tbody>
