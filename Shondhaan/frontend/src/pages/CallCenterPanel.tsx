@@ -14,9 +14,11 @@ import {
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
 import { toast } from "sonner";
+import Swal from "sweetalert2";
 import AccountsSection from "@/components/AccountsSection";
 import NotificationBell from "@/components/NotificationBell";
 import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
+import ServiceAreaLocationSelector, { type ServiceAreaLocation } from "@/components/call-center/ServiceAreaLocationSelector";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -129,7 +131,7 @@ type ProviderFormValues = {
   phone: string;
   email: string;
   address: string;
-  service_category: string;
+  service_category: string[];
   experience_years: number;
 };
 
@@ -195,6 +197,9 @@ const CallCenterPanel = () => {
   // Data states
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [allProviders, setAllProviders] = useState<Provider[]>([]);
+  const [allProvidersPage, setAllProvidersPage] = useState(1);
+  const [allProvidersLoading, setAllProvidersLoading] = useState(false);
   const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [labTests, setLabTests] = useState<any[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -212,7 +217,7 @@ const CallCenterPanel = () => {
       phone: "",
       email: "",
       address: "",
-      service_category: "",
+      service_category: [],
       experience_years: 0,
     },
   });
@@ -220,6 +225,12 @@ const CallCenterPanel = () => {
   const [nidBack, setNidBack] = useState<File | null>(null);
   const [frontPreview, setFrontPreview] = useState<string | null>(null);
   const [backPreview, setBackPreview] = useState<string | null>(null);
+  const [serviceArea, setServiceArea] = useState<ServiceAreaLocation>({
+    division: "",
+    district: "",
+    thana: [],
+    area: "",
+  });
 
   const handleFileChange = (side: "front" | "back") => (file: File | null) => {
     const preview = file ? URL.createObjectURL(file) : null;
@@ -272,6 +283,8 @@ const CallCenterPanel = () => {
   // Service & Package Search states
   const [serviceSearch, setServiceSearch] = useState("");
   const [packageSearch, setPackageSearch] = useState("");
+  const [serviceCategorySearch, setServiceCategorySearch] = useState("");
+  const [showServiceCategoryDropdown, setShowServiceCategoryDropdown] = useState(false);
   const [showServiceDropdown, setShowServiceDropdown] = useState(false);
   const [showPackageDropdown, setShowPackageDropdown] = useState(false);
 
@@ -331,6 +344,31 @@ const CallCenterPanel = () => {
     }
   }, []);
 
+  const loadAllProviders = useCallback(async () => {
+    setAllProvidersLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/providers?status=all`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+
+      const payload = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(payload?.message || "Failed to fetch all providers");
+      }
+
+      setAllProviders(extractArray<Provider>(payload));
+      setAllProvidersPage(1);
+    } catch (error: any) {
+      console.error("Failed to fetch all providers list:", error);
+      toast.error(error?.message || "Failed to load provider directory");
+      setAllProviders([]);
+    } finally {
+      setAllProvidersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     checkRole();
   }, [checkRole]);
@@ -338,8 +376,9 @@ const CallCenterPanel = () => {
     if (isCallCenter) {
       fetchData();
       fetchServicesAndPackages();
+      loadAllProviders();
     }
-  }, [isCallCenter, fetchData, fetchServicesAndPackages]);
+  }, [isCallCenter, fetchData, fetchServicesAndPackages, loadAllProviders]);
 
   const searchCustomer = useCallback(async () => {
     if (!searchQuery.trim()) {
@@ -511,6 +550,83 @@ const CallCenterPanel = () => {
     }
   };
 
+  const handleCreateProvider = async (
+    values: ProviderFormValues,
+    setActiveTab: (tab: string) => void,
+  ) => {
+    setSubmitting(true);
+    try {
+      const timestamp = Date.now();
+      const email = values.email.trim() || `provider${timestamp}@provider.shondhaan.local`;
+      const userResponse = await fetch(`${CENTRAL_API_URL}/api/admin/users/provider`, {
+        method: "POST",
+        headers: getAuthHeaders(),
+        credentials: "include",
+        body: JSON.stringify({
+          name: values.full_name.trim() || "Provider",
+          mobile: values.phone.trim() || `provider${timestamp}`,
+          address: values.address.trim() || null,
+          email,
+          password: "shondhaan134",
+          type: "provider",
+        }),
+      });
+      const userPayload = await userResponse.json().catch(() => ({}));
+      if (!userResponse.ok || !userPayload?.user?.id) {
+        throw new Error(userPayload?.message || "Provider user could not be created");
+      }
+
+      const providerFormData = new FormData();
+      providerFormData.append("user_id", String(userPayload.user.id));
+      providerFormData.append("full_name", values.full_name.trim());
+      providerFormData.append("phone", values.phone.trim());
+      providerFormData.append("email", email);
+      providerFormData.append("address", values.address.trim());
+      providerFormData.append("service_category", values.service_category[0] || "");
+      providerFormData.append("services", JSON.stringify(values.service_category));
+      providerFormData.append("experience_years", String(values.experience_years || 0));
+      providerFormData.append("division", serviceArea.division);
+      providerFormData.append("district", serviceArea.district);
+      providerFormData.append("thana", JSON.stringify(serviceArea.thana));
+      providerFormData.append("area", serviceArea.area);
+      if (nidFront) providerFormData.append("nid_front", nidFront);
+      if (nidBack) providerFormData.append("nid_back", nidBack);
+
+      const providerResponse = await fetch(`${API_BASE_URL}/api/providers/call-center`, {
+        method: "POST",
+        headers: mysqlAuth?.token
+          ? { Authorization: `Bearer ${mysqlAuth.token}` }
+          : {},
+        credentials: "include",
+        body: providerFormData,
+      });
+      const providerPayload = await providerResponse.json().catch(() => ({}));
+      if (!providerResponse.ok) {
+        throw new Error(providerPayload?.message || "Provider record could not be created");
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: "সফলভাবে তৈরি হয়েছে",
+        text: "প্রোভাইডার সফলভাবে রেজিস্টার হয়েছে।",
+        confirmButtonText: "ঠিক আছে",
+      });
+      form.reset();
+      setNidFront(null);
+      setNidBack(null);
+      setFrontPreview(null);
+      setBackPreview(null);
+      setServiceArea({ division: "", district: "", thana: [], area: "" });
+      await loadAllProviders();
+      setActiveTab("all-providers");
+    } catch (error: any) {
+      console.error("Create provider error:", error);
+      toast.error(error?.message || "প্রোভাইডার তৈরি করা যায়নি");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBooking.service_title || !newBooking.customer_name || !newBooking.customer_phone || !newBooking.booking_date || !newBooking.booking_time) {
@@ -646,7 +762,7 @@ const CallCenterPanel = () => {
             defaultValue="search"
       
           >
-            {(activeTab) => {
+            {(activeTab, setActiveTab) => {
               /* ─────────────────────────────────────────────
                  TAB: SEARCH
               ───────────────────────────────────────────── */
@@ -1249,7 +1365,7 @@ const CallCenterPanel = () => {
                         className="rounded-2xl border border-border/60 bg-card shadow-sm p-5 md:p-8"
                         >
                         <Form {...form}>
-                          <form className="space-y-6">
+                          <form className="space-y-6" onSubmit={form.handleSubmit((values) => handleCreateProvider(values, setActiveTab))}>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-10">
                               {/* Left column: personal + work info */}
                               <div className="space-y-8">
@@ -1266,7 +1382,7 @@ const CallCenterPanel = () => {
                                         <FormItem>
                                           <FormLabel>{bn ? "পুরো নাম" : "Full Name"} *</FormLabel>
                                           <FormControl>
-                                            <Input placeholder={bn ? "আপনার পুরো নাম" : "Your full name"} {...field} />
+                                            <Input placeholder={bn ? "পুরো নাম" : "Full name"} {...field} />
                                           </FormControl>
                                           <FormMessage />
                                         </FormItem>
@@ -1328,21 +1444,92 @@ const CallCenterPanel = () => {
                                       name="service_category"
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{bn ? "সার্ভিসর ক্যাটেগরি" : "Service Category"} *</FormLabel>
-                                          <Select onValueChange={field.onChange} value={field.value}>
-                                            <FormControl>
-                                              <SelectTrigger>
-                                                <SelectValue placeholder={bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select category"} />
-                                              </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                              {serviceCategories.filter((category) => category.is_active).map((category) => (
-                                                <SelectItem key={category.id} value={category.id}>
-                                                  {bn ? category.name : category.name_en || category.name}
-                                                </SelectItem>
-                                              ))}
-                                            </SelectContent>
-                                          </Select>
+                                          <FormLabel>{bn ? "সার্ভিস ক্যাটেগরি" : "Service Categories"}</FormLabel>
+                                          <div className="relative">
+                                            <div
+                                              role="button"
+                                              tabIndex={0}
+                                              onClick={() => setShowServiceCategoryDropdown((open) => !open)}
+                                              onKeyDown={(event) => {
+                                                if (event.key === "Enter" || event.key === " ") {
+                                                  event.preventDefault();
+                                                  setShowServiceCategoryDropdown((open) => !open);
+                                                }
+                                              }}
+                                              className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-left"
+                                            >
+                                              <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
+                                                {field.value.map((categoryId) => {
+                                                  const category = serviceCategories.find((item) => item.id === categoryId);
+                                                  if (!category) return null;
+                                                  return (
+                                                    <span key={category.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                                                      {bn ? category.name : category.name_en || category.name}
+                                                      <button
+                                                        type="button"
+                                                        aria-label={`Remove ${category.name}`}
+                                                        onClick={(event) => {
+                                                          event.stopPropagation();
+                                                          field.onChange(field.value.filter((id) => id !== category.id));
+                                                        }}
+                                                        className="rounded-full text-slate-500 hover:text-slate-900"
+                                                      >
+                                                        <X className="h-3 w-3" />
+                                                      </button>
+                                                    </span>
+                                                  );
+                                                })}
+                                                {!field.value.length && (
+                                                  <span className="text-muted-foreground">
+                                                    {bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select categories"}
+                                                  </span>
+                                                )}
+                                              </div>
+                                              <span className="shrink-0 text-muted-foreground">▾</span>
+                                            </div>
+                                            {showServiceCategoryDropdown && (
+                                              <div className="absolute z-30 mt-1 w-full rounded-md border bg-white p-1 shadow-lg">
+                                                <Input
+                                                  autoFocus
+                                                  value={serviceCategorySearch}
+                                                  onChange={(event) => setServiceCategorySearch(event.target.value)}
+                                                  onClick={(event) => event.stopPropagation()}
+                                                  placeholder={bn ? "ক্যাটেগরি খুঁজুন..." : "Search categories..."}
+                                                  className="mb-1 h-9"
+                                                />
+                                                <div className="max-h-52 overflow-y-auto">
+                                                {serviceCategories
+                                                  .filter((category) => category.is_active)
+                                                  .filter((category) => {
+                                                    const query = serviceCategorySearch.trim().toLowerCase();
+                                                    return !query || category.name.toLowerCase().includes(query) || (category.name_en || "").toLowerCase().includes(query);
+                                                  })
+                                                  .map((category) => {
+                                                  const selected = field.value.includes(category.id);
+                                                  return (
+                                                    <label
+                                                      key={category.id}
+                                                      onClick={(event) => event.stopPropagation()}
+                                                      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-slate-50"
+                                                    >
+                                                      <input
+                                                        type="checkbox"
+                                                        checked={selected}
+                                                        onChange={() => field.onChange(
+                                                          selected
+                                                            ? field.value.filter((id) => id !== category.id)
+                                                            : [...field.value, category.id]
+                                                        )}
+                                                        className="h-4 w-4 rounded border-slate-300"
+                                                      />
+                                                      <span>{bn ? category.name : category.name_en || category.name}</span>
+                                                    </label>
+                                                  );
+                                                  })}
+                                                </div>
+                                              </div>
+                                            )}
+                                          </div>
                                           {categoriesError && <p className="text-sm font-medium text-destructive">{bn ? "ক্যাটেগরি লোড করা যায়নি" : "Could not load service categories"}</p>}
                                           {categoriesLoading && <p className="text-sm text-muted-foreground">{bn ? "ক্যাটেগরি লোড হচ্ছে..." : "Loading categories..."}</p>}
                                           <FormMessage />
@@ -1368,6 +1555,14 @@ const CallCenterPanel = () => {
 
                               {/* Right column: NID upload + submit, sticky on desktop */}
                               <div className="md:sticky md:top-24 md:self-start">
+                                <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5 mb-6">
+                                  <ServiceAreaLocationSelector
+                                    value={serviceArea}
+                                    onChange={setServiceArea}
+                                  />
+                                  
+                                </div>
+
                                 <div className="rounded-xl border border-border/60 bg-muted/20 p-4 md:p-5">
                                   <SectionHeading icon={IdCard}>
                                     {bn ? "জাতীয় পরিচয়পত্র (NID)" : "National ID (NID)"} *
@@ -1395,11 +1590,11 @@ const CallCenterPanel = () => {
                                   type="submit"
                                   disabled={submitting}
                                   className="w-full gap-2 h-12 text-base font-semibold shadow-md shadow-primary/20 transition-all hover:scale-[1.01] active:scale-[0.99] mt-6 bg-userprimary text-white "
-                                >
+                                  >
                                   <Send className="h-4 w-4" />
                                   {submitting
-                                    ? (bn ? "জমা দেওয়া হচ্ছে..." : "Submitting...")
-                                    : (bn ? "আবেদন জমা দিন" : "Submit Application")}
+                                    ? (bn ? "ক্রিয়েট করা হচ্ছে..." : "Creating...")
+                                    : (bn ? "ক্রিয়েট করুন" : "Create Provider")}
                                 </Button>
 
                                 <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
@@ -1419,12 +1614,135 @@ const CallCenterPanel = () => {
               /* ─────────────────────────────────────────────
                  TAB: ALL PROVIDERS
               ───────────────────────────────────────────── */
-              if (activeTab === "all-providers")
+              if (activeTab === "all-providers") {
+                const totalPages = Math.max(1, Math.ceil(allProviders.length / 10));
+                const startIndex = (allProvidersPage - 1) * 10;
+                const paginatedProviders = allProviders.slice(startIndex, startIndex + 10);
+
                 return (
                   <div className="p-6 bg-background">
+                    <div className="mb-4 flex items-center justify-between gap-3">
+                      <div>
+                        <h3 className="text-lg font-semibold text-slate-900">সকল প্রোভাইডার</h3>
+                        <p className="text-xs text-slate-500">{allProviders.length}টি প্রোফাইল</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={loadAllProviders}
+                        disabled={allProvidersLoading}
+                        className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+                      >
+                        <RefreshCw className={`h-3.5 w-3.5 ${allProvidersLoading ? "animate-spin" : ""}`} />
+                        রিফ্রেশ
+                      </button>
+                    </div>
 
+                    {allProvidersLoading ? (
+                      <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-slate-200 bg-white">
+                        <div className="flex items-center gap-2 text-sm text-slate-500">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          লোড হচ্ছে...
+                        </div>
+                      </div>
+                    ) : paginatedProviders.length === 0 ? (
+                      <div className="rounded-xl border border-dashed border-slate-200 bg-white p-8 text-center text-sm text-slate-500">
+                        কোন প্রোভাইডার নেই
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                          <div className="overflow-x-auto">
+                            <table className="min-w-full text-left text-sm">
+                              <thead className="bg-slate-50 text-slate-600">
+                                <tr>
+                                  <th className="px-4 py-3 font-medium">নাম</th>
+                                  <th className="px-4 py-3 font-medium">ফোন</th>
+                                  <th className="px-4 py-3 font-medium">ইমেইল</th>
+                                  <th className="px-4 py-3 font-medium">সার্ভিস</th>
+                                  <th className="px-4 py-3 font-medium">স্ট্যাটাস</th>
+                                  <th className="px-4 py-3 font-medium">যোগদান</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {paginatedProviders.map((provider) => (
+                                  <tr key={provider.id || `${provider.user_id}-${provider.full_name}`} className="border-t border-slate-200 hover:bg-slate-50/80">
+                                    <td className="px-4 py-3">
+                                      <div className="min-w-[180px]">
+                                        <p className="font-medium text-slate-900">{provider.full_name || "Unknown Provider"}</p>
+                                        <p className="text-[11px] text-slate-500">User ID: {provider.user_id || "—"}</p>
+                                      </div>
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-700">{provider.phone || "—"}</td>
+                                    <td className="px-4 py-3 text-slate-700">{provider.email || "—"}</td>
+                                    <td className="px-4 py-3 text-slate-700">
+                                      <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-700">
+                                        {provider.service_category || "—"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3">
+                                      <span className={`inline-flex rounded-full px-2.5 py-1 text-[11px] font-medium ${
+                                        provider.status === "approved"
+                                          ? "bg-emerald-100 text-emerald-700"
+                                          : provider.status === "pending"
+                                            ? "bg-amber-100 text-amber-700"
+                                            : provider.status === "rejected"
+                                              ? "bg-rose-100 text-rose-700"
+                                              : "bg-slate-100 text-slate-700"
+                                      }`}>
+                                        {provider.status || "pending"}
+                                      </span>
+                                    </td>
+                                    <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                                      {provider.created_at ? new Date(provider.created_at).toLocaleDateString("bn-BD") : "—"}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+
+                        {totalPages > 1 && (
+                          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setAllProvidersPage((page) => Math.max(1, page - 1))}
+                              disabled={allProvidersPage === 1}
+                              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              পূর্ববর্তী
+                            </button>
+
+                            {Array.from({ length: totalPages }, (_, index) => index + 1).map((page) => (
+                              <button
+                                key={page}
+                                type="button"
+                                onClick={() => setAllProvidersPage(page)}
+                                className={`h-8 min-w-8 rounded-lg px-2 text-sm font-medium transition-colors ${
+                                  allProvidersPage === page
+                                    ? "bg-slate-900 text-white"
+                                    : "border border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                                }`}
+                              >
+                                {page}
+                              </button>
+                            ))}
+
+                            <button
+                              type="button"
+                              onClick={() => setAllProvidersPage((page) => Math.min(totalPages, page + 1))}
+                              disabled={allProvidersPage === totalPages}
+                              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
+                            >
+                              পরবর্তী
+                            </button>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </div>
                 );
+              }
 
               /* ─────────────────────────────────────────────
                  TAB: SERVICE REQUESTS

@@ -12,6 +12,7 @@ import {
 const router = Router();
 
 router.post("/users", requireSuperAdmin, createUser);
+router.post("/users/provider", requireAdminOrCallCenter, createUser);
 router.get("/users", requireAdminOrCallCenter, listUsers);
 router.get("/me/access", requireAdminPanelAccess, getMyAdminAccess);
 router.get("/roles", requireSuperAdmin, getRoles);

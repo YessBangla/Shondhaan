@@ -19,9 +19,15 @@ export const ensureProviderSchema = () => {
     providerSchemaPromise = (async () => {
       const columnsToEnsure = [
         { name: "user_id", type: "VARCHAR(255) NULL" },
+        { name: "name", type: "VARCHAR(255) NULL" },
+        { name: "division", type: "VARCHAR(255) NULL" },
+        { name: "district", type: "VARCHAR(255) NULL" },
+        { name: "thana", type: "VARCHAR(255) NULL" },
+        { name: "area", type: "VARCHAR(255) NULL" },
         { name: "full_name", type: "VARCHAR(255) NULL" },
         { name: "address", type: "LONGTEXT NULL" },
         { name: "service_category", type: "VARCHAR(255) NULL" },
+        { name: "services", type: "TEXT NULL" },
         { name: "experience_years", type: "DECIMAL(5,2) NOT NULL DEFAULT 0" },
         { name: "nid_front_url", type: "VARCHAR(500) NULL" },
         { name: "nid_back_url", type: "VARCHAR(500) NULL" },
@@ -38,6 +44,18 @@ export const ensureProviderSchema = () => {
             console.error(`Error ensuring providers.${column.name}:`, error.message);
           }
         }
+      }
+
+      try {
+        await pool.query("ALTER TABLE providers MODIFY COLUMN services TEXT NULL");
+      } catch (error) {
+        console.error("Error ensuring providers.services type:", error.message);
+      }
+
+      try {
+        await pool.query("ALTER TABLE providers MODIFY COLUMN thana TEXT NULL");
+      } catch (error) {
+        console.error("Error ensuring providers.thana type:", error.message);
       }
 
       // Existing active provider rows predate verification statuses and are already approved.
