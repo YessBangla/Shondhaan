@@ -74,7 +74,16 @@ router.post("/shurjopay/initiate", requireAuth, async (req, res) => {
     }
 
     const record = paymentRecordFrom(spResponse);
-    const sp_order_id = record.sp_order_id || record.order_id || order_id;
+    // Keep the precise order ID sent to ShurjoPay.  ShurjoPay prepends the
+    // merchant prefix (for example, `SPORD-...`) and returns that same value
+    // to our callback.  Falling back to our unprefixed internal ID makes the
+    // callback impossible to match when the initiate response omits order_id.
+    const sp_order_id =
+      spResponse.sp_order_id ||
+      spResponse.customer_order_id ||
+      record.sp_order_id ||
+      record.order_id ||
+      order_id;
 
     await pool.query(
       `INSERT INTO payment_transactions
@@ -94,17 +103,57 @@ router.post("/shurjopay/initiate", requireAuth, async (req, res) => {
 // Verify: ShurjoPay redirects the customer's browser here after completing
 // payment. This is a GET (browser navigation), so no auth header is present.
 // -----------------------------------------------------------------------
-router.get("/shurjopay/verify/:orderId", async (req, res) => {
-  const { orderId } = req.params;
+function callbackOrderId(req) {
+  const rawOrderId = String(
+    req.params.orderId ||
+      req.query.order_id ||
+      req.query.sp_order_id ||
+      req.query.merchant_order_id ||
+      ""
+  ).trim();
+
+  // Recover callbacks created by the earlier URL format:
+  // `...?order_id=ORD-... ?order_id=<gateway-id>`. Express treats the
+  // second question mark as part of the first value, while our internal
+  // order ID is the portion before it.
+  return rawOrderId.split("?")[0].trim();
+}
+
+function orderIdCandidates(orderId) {
+  const candidates = new Set([orderId]);
+  const prefix = String(process.env.SURJOPAY_MERCHANT_PREFIX || "").trim();
+
+  // Be backward-compatible with rows created before we began saving the
+  // gateway order ID.  Only remove the configured prefix, never arbitrary
+  // characters from an order ID.
+  if (prefix && orderId.startsWith(prefix)) {
+    candidates.add(orderId.slice(prefix.length));
+  }
+
+  return [...candidates].filter(Boolean);
+}
+
+async function findTransactionByCallbackOrderId(orderId) {
+  const candidates = orderIdCandidates(orderId);
+  const placeholders = candidates.map(() => "?").join(", ");
+  const [rows] = await pool.query(
+    `SELECT * FROM payment_transactions
+     WHERE order_id IN (${placeholders}) OR sp_order_id IN (${placeholders})
+     ORDER BY id DESC LIMIT 1`,
+    [...candidates, ...candidates]
+  );
+  return rows[0];
+}
+
+async function verifyCallback(req, res) {
+  const orderId = callbackOrderId(req);
+
+  if (!orderId) {
+    return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error&reason=missing_order_id`);
+  }
 
   try {
-    const [rows] = await pool.query(
-      `SELECT * FROM payment_transactions
-       WHERE order_id = ? OR sp_order_id = ?
-       ORDER BY id DESC LIMIT 1`,
-      [orderId, orderId]
-    );
-    const txn = rows[0];
+    const txn = await findTransactionByCallbackOrderId(orderId);
 
     if (!txn) {
       return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error&reason=not_found`);
@@ -123,7 +172,11 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
       return res.redirect(`${FRONTEND_URL}/jobs/post?package_id=${txn.package_id}&payment_type=prepaid&order_id=${txn.order_id}${suffix}`);
     }
 
-    const spOrderIdToVerify = txn.sp_order_id || orderId;
+    // Prefer the callback's gateway ID when it includes the configured
+    // prefix. This also repairs payments whose old DB row saved only ORD-….
+    const prefix = String(process.env.SURJOPAY_MERCHANT_PREFIX || "").trim();
+    const spOrderIdToVerify =
+      prefix && orderId.startsWith(prefix) ? orderId : txn.sp_order_id || orderId;
     const verification = await verifyShurjoPayPayment(spOrderIdToVerify);
 
     const record = Array.isArray(verification) ? verification[0] : paymentRecordFrom(verification);
@@ -163,24 +216,40 @@ router.get("/shurjopay/verify/:orderId", async (req, res) => {
     console.error(`GET /api/payments/shurjopay/verify/${orderId} failed:`, err);
     return res.redirect(`${FRONTEND_URL}/employer/packages?payment=error`);
   }
-});
+}
+
+// Prefer the path form generated for new payments; keep the query-only form
+// so payments started with the earlier callback URL can still be recovered.
+router.get("/shurjopay/verify", verifyCallback);
+router.get("/shurjopay/verify/:orderId", verifyCallback);
 
 // -----------------------------------------------------------------------
 // Cancel: customer backed out of ShurjoPay checkout before paying.
 // -----------------------------------------------------------------------
-router.get("/shurjopay/cancel/:orderId", async (req, res) => {
-  const { orderId } = req.params;
+async function cancelCallback(req, res) {
+  const orderId = callbackOrderId(req);
+
+  if (!orderId) {
+    return res.redirect(`${FRONTEND_URL}/employer/packages?payment=cancelled`);
+  }
 
   try {
+    const candidates = orderIdCandidates(orderId);
+    const placeholders = candidates.map(() => "?").join(", ");
     await pool.query(
-      `UPDATE payment_transactions SET status = 'cancelled' WHERE order_id = ? AND status IN ('initiated','pending')`,
-      [orderId]
+      `UPDATE payment_transactions SET status = 'cancelled'
+       WHERE (order_id IN (${placeholders}) OR sp_order_id IN (${placeholders}))
+         AND status IN ('initiated','pending')`,
+      [...candidates, ...candidates]
     );
   } catch (err) {
     console.error(`GET /api/payments/shurjopay/cancel/${orderId} failed:`, err);
   }
 
   return res.redirect(`${FRONTEND_URL}/employer/packages?payment=cancelled&order_id=${orderId}`);
-});
+}
+
+router.get("/shurjopay/cancel", cancelCallback);
+router.get("/shurjopay/cancel/:orderId", cancelCallback);
 
 module.exports = router;
