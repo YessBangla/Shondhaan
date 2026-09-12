@@ -110,25 +110,27 @@ const CartSidebar = () => {
               ))}
             </div>
 
-            <div className="border-t border-border px-4 py-4 space-y-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+            <div className="border-t border-border px-4 py-4 space-y-3 pb-[calc(1rem+76px+env(safe-area-inset-bottom,0px))] md:pb-[max(1rem,env(safe-area-inset-bottom))]">
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium text-muted-foreground">{t("cart.total")}</span>
                 <span className="text-lg font-bold text-foreground">
                   ৳{totalAmount.toLocaleString("bn-BD")}
                 </span>
               </div>
-              <button
-                onClick={handleCheckout}
-                className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-800 active:scale-[0.98]"
-              >
-                {t("cart.checkout")}
-              </button>
-              <button
-                onClick={() => { haptic("warning"); clearCart(); }}
-                className="w-full rounded-lg border border-gray-500 py-2.5 text-sm font-medium text-black transition-colors hover:bg-secondary"
-              >
-                {t("cart.clear")}
-              </button>
+              <div className="flex gap-2">
+                <button
+                  onClick={handleCheckout}
+                  className="w-full rounded-lg bg-primary py-3 text-sm font-semibold text-white transition-all hover:bg-emerald-800 active:scale-[0.98]"
+                  >
+                  {t("cart.checkout")}
+                </button>
+                <button
+                  onClick={() => { haptic("warning"); clearCart(); }}
+                  className="w-full rounded-lg border border-gray-500 py-2.5 text-sm font-medium text-black transition-colors hover:bg-secondary"
+                >
+                  {t("cart.clear")}
+                </button>
+              </div>
             </div>
           </>
         )}

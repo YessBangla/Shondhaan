@@ -10,37 +10,53 @@ export const createUser = async (req, res) => {
   try {
     console.log("Create user request:", { name: req.body.name, email: req.body.email, type: req.body.type, auth: req.auth?.type });
     const name = String(req.body.name || "").trim();
-    const email = normalizeEmail(req.body.email || "");
+    const suppliedEmail = String(req.body.email || "").trim();
+    const emailProvided = Boolean(suppliedEmail);
+    const email = normalizeEmail(suppliedEmail);
     const mobile = normalizeMobile(req.body.mobile || "");
     const password = String(req.body.password || "");
     const type = String(req.body.type || "user").trim();
+    const providerWithoutEmail = type === "provider" && !emailProvided;
 
-    if (!name || !email || !mobile || password.length < 6) {
+    if (!name || (!email && !providerWithoutEmail) || !mobile || password.length < 6) {
       return res.status(400).json({ message: "Name, mobile, email and 6+ character password are required" });
     }
     if (!ALLOWED_ROLES.has(type)) {
       return res.status(400).json({ message: `Valid type is required. Got: ${type}. Allowed: ${Array.from(ALLOWED_ROLES).join(", ")}` });
     }
 
+    const insertEmail = providerWithoutEmail
+      ? `nomail_placeholder_${Date.now()}@provider.shondhaan.local`
+      : email;
     const [existing] = await pool.execute(
       "SELECT id FROM users WHERE email = ? OR mobile = ? LIMIT 1",
-      [email, mobile],
+      [insertEmail, mobile],
     );
     if (existing.length) {
       return res.status(409).json({ message: "A user already exists with this email or mobile" });
     }
 
     const passwordHash = await hashPassword(password);
-    console.log("Inserting user:", { name, mobile, email, type });
-    await pool.execute(
+    console.log("Inserting user:", { name, mobile, email: insertEmail, type });
+    const [insertResult] = await pool.execute(
       "INSERT INTO users (name, mobile, address, email, password, type, email_verified) VALUES (?, ?, NULL, ?, ?, ?, 1)",
-      [name, mobile, email, passwordHash, type],
+      [name, mobile, insertEmail, passwordHash, type],
     );
+
+    const createdUserId = insertResult.insertId;
+    if (providerWithoutEmail) {
+      const [createdRows] = await pool.execute(
+        "SELECT shondhaan_id FROM users WHERE id = ? LIMIT 1",
+        [createdUserId],
+      );
+      const generatedEmail = `nomail@gmail.com_${createdRows[0]?.shondhaan_id || createdUserId}`;
+      await pool.execute("UPDATE users SET email = ? WHERE id = ?", [generatedEmail, createdUserId]);
+    }
 
     // ✅ Added shondhaan_id to SELECT
     const [rows] = await pool.execute(
-      "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE email = ? LIMIT 1",
-      [email],
+      "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+      [createdUserId],
     );
     console.log("User created successfully:", rows[0]);
     res.status(201).json({ user: safeAdminUser(rows[0]) });
@@ -56,7 +72,9 @@ export const listUsers = async (req, res) => {
     const search = req.query.search;
     
     // 2. Base query - ✅ Added shondhaan_id to SELECT
-    let query = "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users";
+    let query = `SELECT u.id, u.shondhaan_id, u.name, u.mobile, u.address, u.email, u.type,
+      u.email_verified, u.created_at, u.updated_at, up.profile_image
+      FROM users u LEFT JOIN user_profiles up ON up.user_id = u.id`;
     let params = [];
 
     // 3. If a search term exists, add a WHERE clause to filter results

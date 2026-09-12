@@ -15,6 +15,7 @@ import { getMySqlAuth } from "@/lib/mysqlAuth";
 import { cn } from "@/lib/utils";
 
 const CONVERSATION_KEY = "yess_service_chat_conversation_id";
+export const SERVICE_CHAT_OPEN_EVENT = "shondhaan:open-service-chat";
 
 type Ack = {
   ok: boolean;
@@ -103,6 +104,12 @@ const ServiceChatFloatingButton = () => {
       socket.off("service-chat:message:new", onMessage);
     };
   }, [conversationId]);
+
+  useEffect(() => {
+    const openChat = () => setOpen(true);
+    window.addEventListener(SERVICE_CHAT_OPEN_EVENT, openChat);
+    return () => window.removeEventListener(SERVICE_CHAT_OPEN_EVENT, openChat);
+  }, []);
 
   const rememberConversation = (id: string) => {
     setConversationId(id);

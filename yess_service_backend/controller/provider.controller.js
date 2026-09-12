@@ -1,6 +1,21 @@
 import { ensureProviderSchema, pool } from "../config/db.js";
+import { randomUUID } from "node:crypto";
+import fs from "node:fs/promises";
+import path from "node:path";
 
 const PROVIDER_TABLE = "providers"; 
+const providerNidUrl = (filename) => `/uploads/providers/nid/${filename}`;
+
+const removeStoredFile = async (fileUrl) => {
+  if (!fileUrl || !String(fileUrl).startsWith("/uploads/")) return;
+  try {
+    await fs.unlink(path.join(process.cwd(), String(fileUrl).slice(1)));
+  } catch (error) {
+    if (error.code !== "ENOENT") {
+      console.error("Could not remove replaced provider file:", error.message);
+    }
+  }
+};
 
 const reviewerRoles = new Set(["admin", "service_admin", "super_admin"]);
 
@@ -13,11 +28,24 @@ export const requireProviderReviewer = (req, res, next) => {
 };
 
 const selectProviderColumns = `
-  id, user_id, full_name, phone, email, address,
+  id, user_id, name, full_name, phone, email, address,
+  division, district, thana, area,
+  services,
   service_category, experience_years, nid_front_url, nid_back_url,
-  status, status_reason, created_at, updated_at
+  status, status_reason, rating, total_reviews, total_jobs, image_url, is_active,
+  created_at, updated_at
 `;
 
+const parseArrayValue = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [String(parsed)];
+  } catch {
+    return [String(value)];
+  }
+};
 
 const formatProvider = (provider) => ({
   id: provider.id,
@@ -27,9 +55,27 @@ const formatProvider = (provider) => ({
   phone: provider.phone,
   email: provider.email,
   address: provider.address,
+  division: provider.division,
+  district: provider.district,
+  provider_district: provider.district,
+  raw_provider_district: provider.district,
+  thana: parseArrayValue(provider.thana),
+  area: provider.area,
+  services: (() => {
+    try {
+      return provider.services ? JSON.parse(provider.services) : [];
+    } catch {
+      return provider.services ? [provider.services] : [];
+    }
+  })(),
 
   service_category: provider.service_category,
   experience_years: Number(provider.experience_years || 0),
+  rating: Number(provider.rating || 0),
+  total_reviews: Number(provider.total_reviews || 0),
+  total_jobs: Number(provider.total_jobs || 0),
+  image_url: provider.image_url,
+  is_active: Boolean(provider.is_active),
 
   nid_front_url: provider.nid_front_url,
   nid_back_url: provider.nid_back_url,
@@ -67,21 +113,17 @@ export const submitProviderApplication = async (req, res) => {
     const back = req.files?.nid_back?.[0];
 
     if (!userId) return res.status(401).json({ message: "Authenticated user is required" });
-    if (!full_name || !phone || !address || !service_category) {
-      return res.status(400).json({ message: "Name, phone, address, and service category are required" });
-    }
-    if (!front || !back) return res.status(400).json({ message: "Both NID images are required" });
 
     const years = Number(experience_years);
-    if (!Number.isFinite(years) || years < 0 || years > 60) {
-      return res.status(400).json({ message: "Experience years must be between 0 and 60" });
-    }
+    const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
-    const [categoryRows] = await pool.execute(
-      "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
-      [service_category]
-    );
-    if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+    if (service_category) {
+      const [categoryRows] = await pool.execute(
+        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+        [service_category]
+      );
+      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+    }
 
     const [existing] = await pool.execute(
       `SELECT id, status FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
@@ -91,25 +133,26 @@ export const submitProviderApplication = async (req, res) => {
       return res.status(409).json({ message: "This account is already an approved provider" });
     }
 
-    const frontUrl = `/uploads/${front.filename}`;
-    const backUrl = `/uploads/${back.filename}`;
+    const frontUrl = front ? providerNidUrl(front.filename) : null;
+    const backUrl = back ? providerNidUrl(back.filename) : null;
+    const providerName = full_name?.trim() || "Provider";
     let providerId = existing[0]?.id;
 
     if (existing.length) {
       await pool.execute(
         `UPDATE ${PROVIDER_TABLE}
-         SET full_name = ?, phone = ?, email = ?, address = ?, service_category = ?,
+         SET name = ?, full_name = ?, phone = ?, email = ?, address = ?, service_category = ?,
              experience_years = ?, nid_front_url = ?, nid_back_url = ?, status = 'pending', status_reason = NULL
          WHERE id = ?`,
-        [full_name.trim(), phone.trim(), email?.trim() || null, address.trim(), service_category, years, frontUrl, backUrl, providerId]
+        [providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null, service_category || null, normalizedYears, frontUrl, backUrl, providerId]
       );
     } else {
       const [result] = await pool.execute(
         `INSERT INTO ${PROVIDER_TABLE}
-         (user_id, full_name, phone, email, address, service_category, experience_years,
+         (user_id, name, full_name, phone, email, address, service_category, experience_years,
           nid_front_url, nid_back_url, status, is_active)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
-        [userId, full_name.trim(), phone.trim(), email?.trim() || null, address.trim(), service_category, years, frontUrl, backUrl]
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', 0)`,
+        [userId, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null, service_category || null, normalizedYears, frontUrl, backUrl]
       );
       providerId = result.insertId;
     }
@@ -165,27 +208,10 @@ export const getProviders = async (req, res) => {
       status = "approved",
       service_category,
       search,
+      user_ids,
     } = req.query;
 
-    let query = `
-      SELECT
-        id,
-        user_id,
-        full_name,
-        phone,
-        email,
-        address,
-        service_category,
-        experience_years,
-        nid_front_url,
-        nid_back_url,
-        status,
-        status_reason,
-        created_at,
-        updated_at
-      FROM ${PROVIDER_TABLE}
-      WHERE 1 = 1
-    `;
+    let query = `SELECT ${selectProviderColumns}, district AS provider_district FROM ${PROVIDER_TABLE} WHERE 1 = 1`;
 
     const values = [];
 
@@ -199,19 +225,37 @@ export const getProviders = async (req, res) => {
       values.push(service_category);
     }
 
-    if (search) {
-      query += `
-        AND (
-          full_name LIKE ?
-          OR phone LIKE ?
-          OR email LIKE ?
-          OR address LIKE ?
-          OR service_category LIKE ?
-        )
-      `;
+    const matchingUserIds = String(user_ids || "")
+      .split(",")
+      .map((id) => id.trim())
+      .filter(Boolean)
+      .slice(0, 500);
 
-      const like = `%${search}%`;
-      values.push(like, like, like, like, like);
+    if (search || matchingUserIds.length) {
+      const searchConditions = [];
+      const searchValues = [];
+
+      if (search) {
+        searchConditions.push(
+          "full_name LIKE ?",
+          "phone LIKE ?",
+          "email LIKE ?",
+          "address LIKE ?",
+          "service_category LIKE ?"
+        );
+        const like = `%${search}%`;
+        searchValues.push(like, like, like, like, like);
+      }
+
+      if (matchingUserIds.length) {
+        searchConditions.push(`user_id IN (${matchingUserIds.map(() => "?").join(", ")})`);
+        searchValues.push(...matchingUserIds);
+      }
+
+      query += `
+        AND (${searchConditions.join(" OR ")})
+      `;
+      values.push(...searchValues);
     }
 
     query += `
@@ -220,8 +264,24 @@ export const getProviders = async (req, res) => {
 
     const [rows] = await pool.execute(query, values);
 
+const getServiceNames = async (providers) => {
+  const [categoryRows] = await pool.execute(
+    "SELECT id, name, name_en FROM service_categories"
+  );
+  const categoryMap = new Map(
+    categoryRows.map((category) => [String(category.id), category])
+  );
+
+  return providers.map((provider) => ({
+    ...formatProvider(provider),
+    service_names: parseArrayValue(provider.services).map((serviceId) => {
+      const category = categoryMap.get(String(serviceId));
+      return category?.name_en || category?.name || String(serviceId);
+    }),
+  }));
+};
     return res.json({
-      data: rows.map(formatProvider),
+      data: await getServiceNames(rows),
     });
   } catch (error) {
     console.error("Get providers error:", error);
@@ -408,5 +468,150 @@ export const updateProviderStatus = async (req, res) => {
       message: "Failed to update provider status",
       error: error.message,
     });
+  }
+};
+
+export const createCallCenterProvider = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const {
+      user_id, full_name, phone, email, address, service_category,
+      experience_years, division, district, thana, area, services,
+    } = req.body;
+    const front = req.files?.nid_front?.[0];
+    const back = req.files?.nid_back?.[0];
+    const years = Number(experience_years);
+    let thanaValues = [];
+    try {
+      const parsedThana = JSON.parse(thana || "[]");
+      thanaValues = Array.isArray(parsedThana) ? parsedThana : [];
+    } catch {
+      thanaValues = thana ? [thana] : [];
+    }
+
+    if (!user_id) return res.status(400).json({ message: "Provider user is required" });
+    const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
+
+    if (service_category) {
+      const [categoryRows] = await pool.execute(
+        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+        [service_category]
+      );
+      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+    }
+
+    const [existing] = await pool.execute(
+      `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
+      [user_id]
+    );
+    if (existing.length) return res.status(409).json({ message: "This user already has a provider record" });
+
+    const providerId = randomUUID();
+    const providerName = full_name?.trim() || "Provider";
+    await pool.execute(
+      `INSERT INTO ${PROVIDER_TABLE}
+       (id, user_id, name, full_name, phone, email, address, division, district, thana, area,
+        services, service_category, experience_years, nid_front_url, nid_back_url, status, is_active)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 1)`,
+      [providerId, user_id, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
+        division?.trim() || null, district?.trim() || null, JSON.stringify(thanaValues), area?.trim() || null,
+        services || JSON.stringify(service_category ? [service_category] : []), service_category || null, normalizedYears,
+        front ? providerNidUrl(front.filename) : null, back ? providerNidUrl(back.filename) : null]
+    );
+
+    const [rows] = await pool.execute(`SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`, [providerId]);
+    return res.status(201).json({ message: "Provider created successfully", application: formatProvider(rows[0]) });
+  } catch (error) {
+    console.error("Create call center provider error:", error);
+    return res.status(500).json({ message: "Failed to create provider" });
+  }
+};
+
+export const updateCallCenterProvider = async (req, res) => {
+  const uploadedFiles = [
+    req.files?.nid_front?.[0],
+    req.files?.nid_back?.[0],
+  ].filter(Boolean);
+
+  try {
+    await ensureProviderSchema();
+    const { id } = req.params;
+    const {
+      full_name, phone, email, address, service_category,
+      experience_years, division, district, thana, area, services,
+    } = req.body;
+    const front = req.files?.nid_front?.[0];
+    const back = req.files?.nid_back?.[0];
+    const years = Number(experience_years);
+    let thanaValues = [];
+
+    try {
+      const parsedThana = JSON.parse(thana || "[]");
+      thanaValues = Array.isArray(parsedThana) ? parsedThana : [];
+    } catch {
+      thanaValues = thana ? [thana] : [];
+    }
+
+    const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
+    if (service_category) {
+      const [categoryRows] = await pool.execute(
+        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+        [service_category]
+      );
+      if (!categoryRows.length) {
+        await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+        return res.status(400).json({ message: "Select an active service category" });
+      }
+    }
+
+    const [existingRows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const existing = existingRows[0];
+    if (!existing) {
+      await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    const frontUrl = front ? providerNidUrl(front.filename) : existing.nid_front_url;
+    const backUrl = back ? providerNidUrl(back.filename) : existing.nid_back_url;
+    await pool.execute(
+      `UPDATE ${PROVIDER_TABLE}
+       SET name = ?, full_name = ?, phone = ?, email = ?, address = ?,
+           division = ?, district = ?, thana = ?, area = ?, services = ?,
+           service_category = ?, experience_years = ?, nid_front_url = ?, nid_back_url = ?
+       WHERE id = ?`,
+      [
+        full_name?.trim() || "Provider",
+        full_name?.trim() || "Provider",
+        phone?.trim() || null,
+        email?.trim() || null,
+        address?.trim() || null,
+        division?.trim() || null,
+        district?.trim() || null,
+        JSON.stringify(thanaValues),
+        area?.trim() || null,
+        services || JSON.stringify(service_category ? [service_category] : []),
+        service_category || null,
+        normalizedYears,
+        frontUrl,
+        backUrl,
+        id,
+      ]
+    );
+
+    if (front) await removeStoredFile(existing.nid_front_url);
+    if (back) await removeStoredFile(existing.nid_back_url);
+
+    const [rows] = await pool.execute(
+      `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    return res.json({ message: "Provider updated successfully", application: formatProvider(rows[0]) });
+  } catch (error) {
+    await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+    console.error("Update call center provider error:", error);
+    return res.status(500).json({ message: "Failed to update provider" });
   }
 };

@@ -29,6 +29,7 @@ export function safeAdminUser(row) {
     shop_name: row.shop_name || null,
     shop_type: row.shop_type || null,
     email_verified: Boolean(row.email_verified),
+    profile_image: row.profile_image || null,
     created_at: row.created_at,
     updated_at: row.updated_at,
   };

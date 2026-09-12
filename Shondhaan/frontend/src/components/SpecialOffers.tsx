@@ -403,14 +403,16 @@ const SpecialOffers = () => {
                       </div>
                     ) : null}
 
-                    <div className="flex items-center justify-between gap-2 pt-2 mt-auto border-t border-border/50">
+                    <div className="block md:flex items-center justify-between gap-2 pt-2 mt-auto border-t border-border/50">
                       <OfferCountdown deadline={getOfferDeadline(offer, `${activeTab}-${i}`)} bn={bn} />
                       <motion.span
-                        className="flex items-center gap-1 text-xs md:text-sm font-bold text-primary group-hover:gap-2 transition-all whitespace-nowrap"
+                        className="flex items-center gap-1 py-2 md:py-0 mt-2 md:mt-0 text-xs md:text-sm font-bold text-white md:text-primary bg-primary md:bg-transparent rounded-lg group-hover:gap-2 transition-all whitespace-nowrap"
                         whileHover={{ x: 4 }}
                       >
-                        {bn ? "বুক করুন" : "Book Now"}
-                        <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        <span className="mx-auto flex">
+                          {bn ? "বুক করুন" : "Book Now"}
+                          <ArrowRight className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                        </span>
                       </motion.span>
                     </div>
                   </div>

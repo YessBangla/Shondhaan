@@ -7,7 +7,7 @@ export const initializeDatabase = async () => {
     // 1. Create service_categories table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS service_categories (
-        id VARCHAR(36) PRIMARY KEY,
+        id INT AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         name_en VARCHAR(255),
         icon_url VARCHAR(500),
@@ -25,6 +25,13 @@ export const initializeDatabase = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log("✅ service_categories table ready");
+
+    // Keep existing installations compatible with the category controller.
+    try {
+      await pool.query("ALTER TABLE service_categories ADD COLUMN slug VARCHAR(255) NULL AFTER name_en");
+    } catch (error) {
+      if (error.errno !== 1060) console.error("⚠️ service_categories.slug:", error.message);
+    }
 
     // 2. Create services table
     await pool.query(`
@@ -85,6 +92,11 @@ export const initializeDatabase = async () => {
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE,
         phone VARCHAR(20),
+        division VARCHAR(255),
+        district VARCHAR(255),
+        thana TEXT,
+        area VARCHAR(255),
+        services TEXT,
         bio LONGTEXT,
         rating DECIMAL(3,2) DEFAULT 4.5,
         total_reviews INT DEFAULT 0,

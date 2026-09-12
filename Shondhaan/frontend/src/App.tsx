@@ -58,6 +58,7 @@ import VoiceCartActionsManager from "@/components/VoiceCartActionsManager";
 import DynamicIslandActivity from "@/components/DynamicIslandActivity";
 import WhatsAppFloatingButton from "@/components/WhatsAppFloatingButton";
 import MobileBottomNav from "@/components/MobileBottomNav";
+import ServiceChatFloatingButton from "@/components/ServiceChatFloatingButton";
 import FabStackPreview from "@/components/FabStackPreview";
 import MobileFabHub from "@/components/MobileFabHub";
 import MobileLayerDebugOverlay from "@/components/MobileLayerDebugOverlay";
@@ -477,6 +478,7 @@ const App = () => {
                               </Suspense>
                             </AppErrorBoundary>
                             <MobileBottomNav />
+                            <ServiceChatFloatingButton />
                           </LocationProvider>
                         </MartCompareProvider>
                       </MartWishlistProvider>

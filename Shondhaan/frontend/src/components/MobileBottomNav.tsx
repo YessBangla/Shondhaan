@@ -24,6 +24,7 @@ import {
   type MobileNavTabConfig,
   type BadgeKey,
 } from "@/config/mobileNavTabs";
+import { SERVICE_CHAT_OPEN_EVENT } from "@/components/ServiceChatFloatingButton";
 
 const MobileBottomNav = () => {
   const navigate = useNavigate();
@@ -159,6 +160,7 @@ const MobileBottomNav = () => {
         case "qr": setQrOpen(true); break;
         case "more": setMoreOpen(true); break;
         case "request": setRequestOpen(true); break;
+        case "service-chat": window.dispatchEvent(new Event(SERVICE_CHAT_OPEN_EVENT)); break;
       }
     }
   };
@@ -392,6 +394,7 @@ const [pressedCard, setPressedCard] = useState<string | null>(null);
           </motion.div>
         )}
       </AnimatePresence>
+      
       <AnimatePresence>
         {moreOpen && (
           <>

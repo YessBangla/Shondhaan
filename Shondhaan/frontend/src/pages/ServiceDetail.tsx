@@ -615,14 +615,14 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
             {/* Overview */}
             {activeTab === "overview" && (
               <motion.div key="ov" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-5">
-                {service.description && <p className="leading-[1.65] text-[12.5px]" style={{ color: T.inkSoft }}>{service.description}</p>}
+                {service.description && <p className="leading-[1.65] text-[12.5px] md:text-[14px]" style={{ color: T.inkSoft }}>{service.description}</p>}
 
                 {features.length > 0 && (
                   <div>
-                    <h3 className=" font-medium text-[14px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
+                    <h3 className=" font-medium text-[14px] md:text-[16px] mb-2" style={{ color: T.ink, letterSpacing: "-0.01em" }}>{bn ? "বৈশিষ্ট্য" : "Features"}</h3>
                     <div className="flex flex-wrap gap-1.5">
                       {features.map((f) => (
-                        <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
+                        <span key={f} className="inline-flex items-center gap-1 rounded-full px-2 py-1 text-[12px] md:text-[14px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
                           <CheckCircle2 className="h-2.5 w-2.5" style={{ color: T.primary }} /> {f}
                         </span>
                       ))}
@@ -655,21 +655,21 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                         const disc = p.original_price ? Math.round(((p.original_price - p.price) / p.original_price) * 100) : 0;
                         return (
                           <button key={p.id || p.name} onClick={() => setSelectedPackage(i)} className="relative text-left border rounded-[10px] p-3 cursor-pointer transition-all duration-200" style={{ borderColor: sel ? T.primary : T.line, background: sel ? `linear-gradient(180deg,#fff,${T.primaryTint} 220%)` : T.card, boxShadow: sel ? `0 4px 12px hsl(var(--primary) / 0.1)` : "none", transform: sel ? "translateY(-1px)" : "none" }}>
-                            {sel && <span className="absolute -top-[7px] left-2.5 rounded-full px-2 py-[2px] text-[8px] font-semibold text-white" style={{ background: T.primary }}>{bn ? "নির্বাচিত" : "Selected"}</span>}
-                            {disc > 0 && <span className="absolute -top-[7px] right-2.5 rounded-full px-1.5 py-[2px] text-[8px] font-semibold text-white" style={{ background: T.brass }}>-{disc}%</span>}
+                            {sel && <span className="absolute -top-[10px] left-2.5 rounded-full px-2 py-[2px] text-[10px] font-semibold text-white" style={{ background: T.primary }}>{bn ? "নির্বাচিত" : "Selected"}</span>}
+                            {disc > 0 && <span className="absolute -top-[10px] right-2.5 rounded-full px-1.5 py-[2px] text-[10px] font-semibold text-white" style={{ background: T.brass }}>-{disc}%</span>}
                             <h4 className="text-[13px] font-semibold" style={{ color: T.ink }}>{p.name}</h4>
                             <div className="mt-0.5 flex items-baseline gap-1">
-                              <span className="font-['JetBrains_Mono',monospace] text-[15px] font-medium" style={{ color: T.primaryDark }}>৳{p.price}</span>
-                              {p.original_price && <span className="text-[10px] line-through" style={{ color: T.muted }}>৳{p.original_price}</span>}
+                              <span className="text-[15px] font-medium" style={{ color: T.primaryDark }}>৳{p.price}</span>
+                              {p.original_price && <span className="text-[10px] md:text-[12px] line-through" style={{ color: T.muted }}>৳{p.original_price}</span>}
                             </div>
                             {Array.isArray(p.features) && p.features.length > 0 && (
                               <ul className="mt-2 space-y-0.5 pt-2" style={{ borderTop: `1px dashed ${T.line}` }}>
                                 {p.features.slice(0, 3).map((f: string) => (
                                   <li key={f} className="flex items-start gap-1 text-[10px]" style={{ color: T.inkSoft }}>
-                                    <span style={{ color: T.primary, fontWeight: 700, fontSize: "9px" }}>✓</span> {f}
+                                    <span style={{ color: T.primary, fontWeight: 700, fontSize: "14px" }}>✓</span> {f}
                                   </li>
                                 ))}
-                                {p.features.length > 3 && <li className="text-[9px] font-medium" style={{ color: T.primary }}>+{p.features.length - 3} {bn ? "আরও" : "more"}</li>}
+                                {p.features.length > 3 && <li className="text-[9px] md:text-[12px] font-medium" style={{ color: T.primary }}>+{p.features.length - 3} {bn ? "আরও" : "more"}</li>}
                               </ul>
                             )}
                           </button>
@@ -687,11 +687,11 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                     {benefits.map((b, i) => (
                       <div key={i} className="flex items-start gap-2 border rounded-[10px] p-2.5" style={{ borderColor: T.line, background: T.card }}>
                         <div className="w-6 h-6 rounded-[7px] shrink-0 flex items-center justify-center" style={{ background: T.brassTint }}>
-                          <b.icon className="w-3 h-3" style={{ color: T.brassDark }} />
+                          <b.icon className="w-4 h-4" style={{ color: T.brassDark }} />
                         </div>
                         <div className="min-w-0">
-                          <h5 className="text-[12px] font-semibold leading-tight" style={{ color: T.ink }}>{b.title}</h5>
-                          <p className="text-[10px] mt-0.5 leading-[1.4]" style={{ color: T.muted }}>{b.desc}</p>
+                          <h5 className="text-[12px] md:text-[14px] font-semibold leading-tight" style={{ color: T.ink }}>{b.title}</h5>
+                          <p className="text-[10px] md:text-[12px] mt-0.5 leading-[1.4]" style={{ color: T.muted }}>{b.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -703,7 +703,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   {cities.length > 0 ? (
                     <div className="flex flex-wrap gap-1.5">
                       {cities.map((c) => (
-                        <span key={c} className="inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-[10px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
+                        <span key={c} className="inline-flex items-center gap-0.5 rounded-full px-2 py-1 text-[10px] md:text-[14px] font-medium" style={{ background: T.primaryTint, color: T.primaryDark }}>
                           <MapPin className="h-2.5 w-2.5" /> {c}
                         </span>
                       ))}
@@ -711,7 +711,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                   ) : (
                     <div className="flex items-center gap-1.5 rounded-[10px] border p-2.5" style={{ borderColor: T.line, background: T.card }}>
                       <CheckCircle2 className="h-3 w-3 shrink-0" style={{ color: T.primary }} />
-                      <span className="text-[10px]" style={{ color: T.inkSoft }}>{bn ? "সারাদেশে পরিষেবা উপলব্ধ" : "Available nationwide"}</span>
+                      <span className="text-[10px] md:text-[12px]" style={{ color: T.inkSoft }}>{bn ? "সারাদেশে পরিষেবা উপলব্ধ" : "Available nationwide"}</span>
                     </div>
                   )}
                 </div>

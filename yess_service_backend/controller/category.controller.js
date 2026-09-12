@@ -106,11 +106,21 @@ export const createCategory = async (req, res) => {
       slug ||
       name.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
-    // Generate UUID in Node to avoid MySQL dialect differences (e.g., UUID() not supported)
-    const { randomUUID } = await import("crypto");
-    const id = randomUUID();
+    // Existing installations may still have a VARCHAR primary key from the
+    // previous UUID schema. Supplying the next numeric id works with both
+    // VARCHAR and INT columns while the schema migration is completed.
+    const [nextIdRows] = await db.query(`
+      SELECT COALESCE(MAX(
+        CASE
+          WHEN CAST(id AS CHAR) REGEXP '^[0-9]+$' THEN CAST(id AS UNSIGNED)
+          ELSE 0
+        END
+      ), 0) + 1 AS next_id
+      FROM service_categories
+    `);
+    const nextId = Number(nextIdRows[0]?.next_id || 1);
 
-    await db.query(
+    const [result] = await db.query(
       `INSERT INTO service_categories (
         id,
         name,
@@ -127,7 +137,7 @@ export const createCategory = async (req, res) => {
         created_at
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
       [
-        id,
+        nextId,
         name,
         name_en || null,
         finalSlug,
@@ -142,9 +152,15 @@ export const createCategory = async (req, res) => {
       ]
     );
 
+    const [rows] = await db.query(
+      `SELECT * FROM service_categories WHERE id = ? LIMIT 1`,
+      [result.insertId || nextId]
+    );
+
     res.status(201).json({
       success: true,
       message: "Category created successfully",
+      data: rows[0] || { id: result.insertId || nextId, name, name_en: name_en || null, slug: finalSlug },
     });
   } catch (error) {
     console.error("Create Category Error:", error);
