@@ -139,6 +139,10 @@ function isSuccessfulPayment(record) {
 
 /**
  * Initiate a ShurjoPay checkout session for a job package.
+ *
+ * Keep our internal order ID in the path. ShurjoPay appends its own
+ * `?order_id=...` to return URLs, so including an order_id query parameter
+ * ourselves produces a malformed URL with two question marks.
  */
 async function initiateShurjoPayCheckout({
   amount,
@@ -162,8 +166,19 @@ async function initiateShurjoPayCheckout({
   const customerOrderId = `${prefix}${orderId}`;
 
   const base = (process.env.BACKEND_URL || "").replace(/\/+$/, "");
-  const finalReturnUrl = returnUrl || `${base}/api/payments/shurjopay/verify/${encodeURIComponent(orderId)}`;
-  const finalCancelUrl = cancelUrl || `${base}/api/payments/shurjopay/cancel/${encodeURIComponent(orderId)}`;
+  if (!base) {
+    throw new Error("BACKEND_URL must be set to the public yessjob backend URL");
+  }
+
+  const finalReturnUrl =
+    returnUrl || `${base}/api/payments/shurjopay/verify/${encodeURIComponent(orderId)}`;
+  const finalCancelUrl =
+    cancelUrl || `${base}/api/payments/shurjopay/cancel/${encodeURIComponent(orderId)}`;
+
+  if (DEBUG) {
+    console.log("=== ShurjoPay callback URLs being sent ===");
+    console.log({ finalReturnUrl, finalCancelUrl });
+  }
 
   const paymentPayload = {
     prefix,

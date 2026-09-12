@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import Navbar from "@/components/Navbar";
 import JobsMenuBar from "@/components/jobs/JobsMenuBar";
@@ -500,9 +500,11 @@ const JobPostForm = () => {
   const { language } = useLanguage();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const bn = language === "bn";
   const postJob = usePostJob();
   const { generateDescription, loading: aiLoading } = useAITools();
+  const enrolledPackageId = Number(searchParams.get("enrolled_package_id")) || null;
 
   // Fetch categories from the backend so this dropdown always matches
   // job_categories in the DB (same pattern as JobHome.tsx). Falls back to
@@ -708,6 +710,10 @@ const JobPostForm = () => {
       educationSubject === "Others" ? (otherSubject || null) : (educationSubject || null);
 
     await postJob.mutateAsync({
+      // Present only after a successful prepaid payment. The backend verifies
+      // that this package enrollment belongs to the signed-in employer before
+      // consuming one job-post credit.
+      enrolled_package_id: enrolledPackageId,
       title,
       company_name: companyName,
       description,
