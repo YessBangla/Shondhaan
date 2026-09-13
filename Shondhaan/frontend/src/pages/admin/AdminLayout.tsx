@@ -660,7 +660,7 @@ const AdminLayout = () => {
   return (
     <div className="flex min-h-screen w-full bg-background text-foreground">
       <aside
-        className={`hidden md:flex flex-col transition-[width] duration-300 ease-in-out border-r border-border/40 bg-card/40 backdrop-blur-xl shadow-sm ${
+        className={`hidden md:flex sticky top-0 h-screen flex-col transition-[width] duration-300 ease-in-out border-r border-border/40 bg-card/40 backdrop-blur-xl shadow-sm ${
           collapsed ? "w-[72px]" : "w-[260px]"
         }`}
       >
@@ -805,13 +805,13 @@ const AdminLayout = () => {
         </header>
 
         <main className="flex-1 min-w-0 bg-muted/10">
-          <div className="mx-auto w-full max-w-[1440px] p-4 md:p-6">
+          <div className="mx-auto p-1">
             <BackendPageHeader
               fallbackTitle={currentLabel}
               fallbackEyebrow={currentGroup}
             />
 
-            <div className="mt-4 rounded-2xl border border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
+            <div className=" p-2 rounded-2xl border border-border/50 bg-card shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden">
               <Suspense fallback={<div className="p-8"><PageLoader /></div>}>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
