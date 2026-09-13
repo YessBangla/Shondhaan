@@ -196,6 +196,7 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
 
   /* Form */
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
+  const [datePopoverOpen, setDatePopoverOpen] = useState(false);
   const [bookingTime, setBookingTime] = useState("");
   const [bookingName, setBookingName] = useState(mysqlAuth?.user?.name || "");
   const [bookingPhone, setBookingPhone] = useState(mysqlAuth?.user?.mobile || "");
@@ -452,7 +453,7 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
             {/* Date (Calendar Popover) */}
             <div>
               <label className="text-[10px] font-semibold block mb-1" style={{ color: TK.inkSoft }}>{bn ? "ভিজিটের তারিখ" : "Visit date"}</label>
-              <Popover>
+              <Popover open={datePopoverOpen} onOpenChange={setDatePopoverOpen}>
                 <PopoverTrigger asChild>
                   <button type="button" className="w-full flex items-center gap-1.5 rounded-[7px] border bg-white px-2.5 py-2 text-[11px] text-left cursor-pointer transition-colors" style={{ borderColor: TK.line, color: bookingDate ? TK.ink : TK.muted }}>
                     <CalendarIcon className="h-3 w-3" style={{ color: TK.brass }} />
@@ -460,7 +461,7 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
                   </button>
                 </PopoverTrigger>
                 <PopoverContent className="z-[10000] w-auto p-0" align="start">
-                  <Calendar mode="single" selected={bookingDate} onSelect={setBookingDate} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} initialFocus />
+                  <Calendar mode="single" selected={bookingDate} onSelect={(date) => { setBookingDate(date); if (date) setDatePopoverOpen(false); }} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} initialFocus />
                 </PopoverContent>
               </Popover>
             </div>
