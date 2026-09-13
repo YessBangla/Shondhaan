@@ -11,6 +11,7 @@ import referralSettlementRoutes from "./routes/referralSettlement.routes.js";
 import referralAdminRoutes from "./routes/referralAdmin.routes.js";
 import paymentGatewayRoutes from "./routes/paymentGateway.routes.js";
 import passwordResetRouter from "./routes/passwordReset.js";
+import suggestionCategoryRoutes from "./routes/suggestionCategory.routes.js";
 
 const app = express();
 
@@ -36,4 +37,5 @@ app.use("/api/users", userRoutes);
 app.use("/api/wallet", walletRoutes);
 app.use("/api/payment-gateways", paymentGatewayRoutes);
 app.use("/api/auth", passwordResetRouter);
+app.use("/api/suggestion-categories", suggestionCategoryRoutes);
 export default app;

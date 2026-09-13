@@ -32,7 +32,7 @@ const selectProviderColumns = `
   division, district, thana, area,
   services,
   service_category, experience_years, nid_front_url, nid_back_url,
-  status, status_reason, rating, total_reviews, total_jobs, image_url, is_active,
+  status, status_reason, is_active,
   created_at, updated_at
 `;
 
@@ -71,10 +71,10 @@ const formatProvider = (provider) => ({
 
   service_category: provider.service_category,
   experience_years: Number(provider.experience_years || 0),
-  rating: Number(provider.rating || 0),
-  total_reviews: Number(provider.total_reviews || 0),
-  total_jobs: Number(provider.total_jobs || 0),
-  image_url: provider.image_url,
+  // rating: Number(provider.rating || 0),
+  // total_reviews: Number(provider.total_reviews || 0),
+  // total_jobs: Number(provider.total_jobs || 0),
+  // image_url: provider.image_url,
   is_active: Boolean(provider.is_active),
 
   nid_front_url: provider.nid_front_url,

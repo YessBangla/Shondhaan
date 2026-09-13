@@ -1,4 +1,4 @@
-import dealDb from "../config.js";
+import dealDb, { centralDb } from "../config.js";
 
 export const getDealCategories = async (req, res) => {
   try {
@@ -145,6 +145,15 @@ export const createDealCategory = async (req, res) => {
         is_active ? 1 : 0,
       ]
     );
+
+    const englishCategoryName = name_en?.trim();
+    if (englishCategoryName) {
+      await centralDb.query(
+        `INSERT IGNORE INTO suggestion_categories (category_name, source)
+         VALUES (?, 'deal')`,
+        [englishCategoryName]
+      );
+    }
 
     res.status(201).json({
       success: true,

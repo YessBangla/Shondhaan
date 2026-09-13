@@ -498,6 +498,17 @@ export async function initDatabase() {
 
   console.log("Created users shondhaan_id trigger");
 
+    // ─── Suggestion Categories table ─────────────────────────────────
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS suggestion_categories (
+      id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+      category_name VARCHAR(255) NOT NULL,
+      source ENUM('service', 'deal') NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE KEY unique_category_source (category_name, source)
+    )
+  `);
+
   // ─── Payment gateways ───────────────────────────────────────────
   await ensurePaymentGatewaysTable();
 //-------------------------forget password -------------------------------------------

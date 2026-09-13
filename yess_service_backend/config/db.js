@@ -10,6 +10,13 @@ export const pool = mysql.createPool({
   database: process.env.DB_NAME,
 });
 
+export const centralPool = mysql.createPool({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.MAIN_DB_NAME || "shondhaan_db",
+});
+
 let platformFeeSchemaPromise = null;
 
 let providerSchemaPromise = null;
