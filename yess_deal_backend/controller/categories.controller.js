@@ -87,8 +87,6 @@ export const getDealCategoryTree = async (req, res) => {
   }
 };
 
-
-
 export const createDealCategory = async (req, res) => {
   try {
     const {
