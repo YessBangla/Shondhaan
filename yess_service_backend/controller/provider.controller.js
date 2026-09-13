@@ -1,5 +1,4 @@
 import { ensureProviderSchema, pool } from "../config/db.js";
-import { randomUUID } from "node:crypto";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -18,6 +17,7 @@ const removeStoredFile = async (fileUrl) => {
 };
 
 const reviewerRoles = new Set(["admin", "service_admin", "super_admin"]);
+const callCenterProviderManagerRoles = new Set(["call_center", "admin", "service_admin", "super_admin"]);
 
 export const requireProviderReviewer = (req, res, next) => {
   const role = req.user?.type || req.user?.role;
@@ -506,18 +506,18 @@ export const createCallCenterProvider = async (req, res) => {
     );
     if (existing.length) return res.status(409).json({ message: "This user already has a provider record" });
 
-    const providerId = randomUUID();
     const providerName = full_name?.trim() || "Provider";
-    await pool.execute(
+    const [result] = await pool.execute(
       `INSERT INTO ${PROVIDER_TABLE}
-       (id, user_id, name, full_name, phone, email, address, division, district, thana, area,
+       (user_id, name, full_name, phone, email, address, division, district, thana, area,
         services, service_category, experience_years, nid_front_url, nid_back_url, status, is_active)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 1)`,
-      [providerId, user_id, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 1)`,
+      [user_id, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
         division?.trim() || null, district?.trim() || null, JSON.stringify(thanaValues), area?.trim() || null,
         services || JSON.stringify(service_category ? [service_category] : []), service_category || null, normalizedYears,
         front ? providerNidUrl(front.filename) : null, back ? providerNidUrl(back.filename) : null]
     );
+    const providerId = result.insertId;
 
     const [rows] = await pool.execute(`SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`, [providerId]);
     return res.status(201).json({ message: "Provider created successfully", application: formatProvider(rows[0]) });
@@ -525,6 +525,14 @@ export const createCallCenterProvider = async (req, res) => {
     console.error("Create call center provider error:", error);
     return res.status(500).json({ message: "Failed to create provider" });
   }
+};
+
+export const requireCallCenterProviderManager = (req, res, next) => {
+  const role = req.user?.type || req.user?.role;
+  if (!callCenterProviderManagerRoles.has(role)) {
+    return res.status(403).json({ message: "Provider management access required" });
+  }
+  next();
 };
 
 export const updateCallCenterProvider = async (req, res) => {
@@ -613,5 +621,38 @@ export const updateCallCenterProvider = async (req, res) => {
     await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
     console.error("Update call center provider error:", error);
     return res.status(500).json({ message: "Failed to update provider" });
+  }
+};
+
+export const deleteCallCenterProvider = async (req, res) => {
+  try {
+    await ensureProviderSchema();
+    const { id } = req.params;
+    const [rows] = await pool.execute(
+      `SELECT id, user_id, nid_front_url, nid_back_url FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
+      [id]
+    );
+    const provider = rows[0];
+
+    if (!provider) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    await pool.execute("UPDATE bookings SET provider_id = NULL WHERE provider_id = ?", [id]);
+    const [result] = await pool.execute(`DELETE FROM ${PROVIDER_TABLE} WHERE id = ?`, [id]);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Provider not found" });
+    }
+
+    await Promise.all([
+      removeStoredFile(provider.nid_front_url),
+      removeStoredFile(provider.nid_back_url),
+    ]);
+
+    return res.json({ message: "Provider deleted successfully", user_id: provider.user_id });
+  } catch (error) {
+    console.error("Delete call center provider error:", error);
+    return res.status(500).json({ message: "Failed to delete provider" });
   }
 };

@@ -9,7 +9,8 @@ import {
   type LucideIcon,
   UserRound,
   UserPlus,
-  Users
+  Users,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -786,6 +787,66 @@ const CallCenterPanel = () => {
     }
   };
 
+  const handleDeleteProvider = async (provider: Provider) => {
+    const confirmation = await Swal.fire({
+      icon: "warning",
+      title: bn ? "প্রোভাইডার মুছে ফেলবেন?" : "Delete provider?",
+      text: bn
+        ? "এই প্রোভাইডার এবং তার Shondhaan ইউজার অ্যাকাউন্ট স্থায়ীভাবে মুছে যাবে।"
+        : "This provider and the linked Shondhaan user account will be permanently deleted.",
+      showCancelButton: true,
+      confirmButtonColor: "#dc2626",
+      cancelButtonColor: "#64748b",
+      confirmButtonText: bn ? "হ্যাঁ, মুছে ফেলুন" : "Yes, delete",
+      cancelButtonText: bn ? "বাতিল" : "Cancel",
+    });
+
+    if (!confirmation.isConfirmed) return;
+
+    setSubmitting(true);
+    try {
+      const providerResponse = await fetch(
+        `${API_BASE_URL}/api/providers/call-center/${encodeURIComponent(String(provider.id))}`,
+        {
+          method: "DELETE",
+          headers: mysqlAuth?.token ? { Authorization: `Bearer ${mysqlAuth.token}` } : {},
+          credentials: "include",
+        },
+      );
+      const providerPayload = await providerResponse.json().catch(() => ({}));
+      if (!providerResponse.ok) {
+        throw new Error(providerPayload?.message || "Provider could not be deleted");
+      }
+
+      const userResponse = await fetch(
+        `${CENTRAL_API_URL}/api/admin/users/${encodeURIComponent(String(providerPayload?.user_id || provider.user_id))}/provider`,
+        {
+          method: "DELETE",
+          headers: getAuthHeaders(),
+          credentials: "include",
+        },
+      );
+      const userPayload = await userResponse.json().catch(() => ({}));
+      if (!userResponse.ok) {
+        throw new Error(userPayload?.message || "Linked Shondhaan user could not be deleted");
+      }
+
+      await Swal.fire({
+        icon: "success",
+        title: bn ? "মুছে ফেলা হয়েছে" : "Deleted successfully",
+        text: bn ? "প্রোভাইডার এবং ইউজার অ্যাকাউন্ট মুছে ফেলা হয়েছে।" : "The provider and linked user account were deleted.",
+        confirmButtonText: bn ? "ঠিক আছে" : "OK",
+      });
+      await loadAllProviders();
+    } catch (error: any) {
+      console.error("Delete provider error:", error);
+      toast.error(error?.message || (bn ? "প্রোভাইডার মুছে ফেলা যায়নি" : "Provider could not be deleted"));
+      await loadAllProviders();
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleCreateBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBooking.service_title || !newBooking.customer_name || !newBooking.customer_phone || !newBooking.booking_date || !newBooking.booking_time) {
@@ -1194,7 +1255,7 @@ const CallCenterPanel = () => {
                                     }));
                                     setSearchQuery("");
                                     setSearchResults([]);
-      toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
+                                    toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
                                   }}
                                   className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
                                 >
@@ -1909,7 +1970,20 @@ const CallCenterPanel = () => {
                                         {provider.status || "pending"}
                                       </span>
                                     </td>
-                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]"><button type="button" onClick={() => openProviderEditor(provider, setActiveTab)} className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">{bn ? "ওপেন" : "Open"}</button></td>
+                                    <td className="sticky right-0 z-10 bg-white px-4 py-3 shadow-[-6px_0_8px_-8px_rgba(15,23,42,0.45)]">
+                                      <div className="flex items-center gap-2">
+                                        <button type="button" onClick={() => openProviderEditor(provider, setActiveTab)} className="rounded-lg bg-userprimary px-3 py-1.5 text-xs font-medium text-white hover:bg-red-800">{bn ? "ওপেন" : "Open"}</button>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleDeleteProvider(provider)}
+                                          disabled={submitting}
+                                          title={bn ? "মুছে ফেলুন" : "Delete"}
+                                          className="inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 p-2 text-red-600 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </button>
+                                      </div>
+                                    </td>
                                   </tr>
                                 ))}
                               </tbody>
