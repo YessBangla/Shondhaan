@@ -454,12 +454,12 @@ const BookingModal = ({ service, bn, onClose }: { service: ApiService; bn: boole
               <label className="text-[10px] font-semibold block mb-1" style={{ color: TK.inkSoft }}>{bn ? "ভিজিটের তারিখ" : "Visit date"}</label>
               <Popover>
                 <PopoverTrigger asChild>
-                  <button className="w-full flex items-center gap-1.5 rounded-[7px] border bg-white px-2.5 py-2 text-[11px] text-left cursor-pointer transition-colors" style={{ borderColor: TK.line, color: bookingDate ? TK.ink : TK.muted }}>
+                  <button type="button" className="w-full flex items-center gap-1.5 rounded-[7px] border bg-white px-2.5 py-2 text-[11px] text-left cursor-pointer transition-colors" style={{ borderColor: TK.line, color: bookingDate ? TK.ink : TK.muted }}>
                     <CalendarIcon className="h-3 w-3" style={{ color: TK.brass }} />
                     {bookingDate ? format(bookingDate, "EEE, dd MMM") : (bn ? "তারিখ বেছে নিন" : "Pick date")}
                   </button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="z-[10000] w-auto p-0" align="start">
                   <Calendar mode="single" selected={bookingDate} onSelect={setBookingDate} disabled={(d) => d < new Date(new Date().setHours(0, 0, 0, 0))} initialFocus />
                 </PopoverContent>
               </Popover>
