@@ -1,4 +1,4 @@
-import { pool as db } from "../config/db.js";
+import { centralPool, pool as db } from "../config/db.js";
 
 
 
@@ -151,6 +151,15 @@ export const createCategory = async (req, res) => {
         is_active !== undefined ? is_active : true,
       ]
     );
+
+    const englishCategoryName = name_en?.trim();
+    if (englishCategoryName) {
+      await centralPool.query(
+        `INSERT IGNORE INTO suggestion_categories (category_name, source)
+         VALUES (?, 'service')`,
+        [englishCategoryName]
+      );
+    }
 
     const [rows] = await db.query(
       `SELECT * FROM service_categories WHERE id = ? LIMIT 1`,
