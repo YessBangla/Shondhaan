@@ -119,12 +119,12 @@ const ServiceAdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-950 dark:to-slate-900 p-2">
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-4xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-50">
               সার্ভিস বুকিং ম্যানেজমেন্ট
             </h1>
             <p className="text-sm text-slate-500 dark:text-slate-400 mt-2">

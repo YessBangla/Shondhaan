@@ -431,15 +431,38 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
 
   const [bookingDate, setBookingDate] = useState<Date | undefined>();
   const [bookingTime, setBookingTime] = useState("");
-  const [bookingName, setBookingName] = useState("");
-  const [bookingPhone, setBookingPhone] = useState("");
-  const [bookingAddress, setBookingAddress] = useState("");
+  const [bookingName, setBookingName] = useState(mysqlAuth?.user?.name || "");
+  const [bookingPhone, setBookingPhone] = useState((mysqlAuth?.user?.mobile || "").replace(/\D/g, "").slice(0, 11));
+  const [bookingAddress, setBookingAddress] = useState(mysqlAuth?.user?.address || "");
   const [submitting, setSubmitting] = useState(false);
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [activeTab, setActiveTab] = useState<"overview" | "reviews">("overview");
   const [useWalletPayment, setUseWalletPayment] = useState(false);
   const { data: walletData } = useUserWallet(activeUserId);
   const walletBalance = Number(walletData?.cash_balance || 0);
+
+  useEffect(() => {
+    if (!activeUserId) return;
+
+    const loadUserProfile = async () => {
+      try {
+        const response = await fetch(`${VITE_API_BASE_URL}/api/users/me/profile`, {
+          credentials: "include",
+          headers: getServiceApiHeaders(),
+        });
+        if (!response.ok) return;
+
+        const profile = await response.json();
+        setBookingName((current) => current || profile.name || "");
+        setBookingPhone((current) => current || String(profile.mobile || profile.phone || "").replace(/\D/g, "").slice(0, 11));
+        setBookingAddress((current) => current || profile.address || "");
+      } catch {
+        // Cached auth details remain available if the profile request fails.
+      }
+    };
+
+    loadUserProfile();
+  }, [activeUserId]);
 
   const [searchParams] = useSearchParams();
   const [referralCode, setReferralCode] = useState("");
@@ -849,7 +872,7 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                               type="text"
                               inputMode="numeric"
                               value={bookingPhone}
-                              onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 100))}
+                              onChange={(e) => setBookingPhone(e.target.value.replace(/[^0-9]/g, "").slice(0, 11))}
                               onKeyDown={(e) => {
                                 const allowed = ["Backspace","Delete","ArrowLeft","ArrowRight","Tab","Home","End"];
                                 if (allowed.includes(e.key)) return;
@@ -857,12 +880,12 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                                 if (!/^\d$/.test(e.key)) e.preventDefault();
                               }}
                               onPaste={(e) => {
-                                const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 100);
+                                const paste = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 11);
                                 e.preventDefault();
                                 setBookingPhone(paste);
                               }}
                               placeholder="01XXXXXXXXX"
-                              maxLength={100}
+                              maxLength={11}
                               className="w-full rounded-lg border border-input bg-background pl-7 pr-2 py-2 text-xs outline-none focus:ring-1 focus:ring-ring"
                             />
                           </div>
@@ -884,7 +907,6 @@ const CmsServiceDetail = ({ service, packages, selectedPackage, setSelectedPacka
                       </motion.div>
                     )}
                   </AnimatePresence>
-
                   {/* CTA Buttons */}
                   <button onClick={handleDirectBooking} disabled={submitting} className="w-full flex items-center justify-center gap-1.5 rounded-[7px] py-2.5 text-[11px] font-semibold text-white cursor-pointer transition-all duration-150 disabled:opacity-60" style={{ background: T.primary, boxShadow: "0 4px 12px hsl(var(--primary) / 0.2)" }}>
                     {submitting ? (
