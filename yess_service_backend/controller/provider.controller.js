@@ -71,10 +71,10 @@ const formatProvider = (provider) => ({
 
   service_category: provider.service_category,
   experience_years: Number(provider.experience_years || 0),
-  // rating: Number(provider.rating || 0),
-  // total_reviews: Number(provider.total_reviews || 0),
-  // total_jobs: Number(provider.total_jobs || 0),
-  // image_url: provider.image_url,
+  rating: 0,
+  total_reviews: 0,
+  total_jobs: 0,
+  image_url: null,
   is_active: Boolean(provider.is_active),
 
   nid_front_url: provider.nid_front_url,
@@ -489,7 +489,6 @@ export const createCallCenterProvider = async (req, res) => {
       thanaValues = thana ? [thana] : [];
     }
 
-    if (!user_id) return res.status(400).json({ message: "Provider user is required" });
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
     if (service_category) {
@@ -500,11 +499,13 @@ export const createCallCenterProvider = async (req, res) => {
       if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
     }
 
-    const [existing] = await pool.execute(
-      `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
-      [user_id]
-    );
-    if (existing.length) return res.status(409).json({ message: "This user already has a provider record" });
+    if (user_id) {
+      const [existing] = await pool.execute(
+        `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
+        [user_id]
+      );
+      if (existing.length) return res.status(409).json({ message: "This user already has a provider record" });
+    }
 
     const providerName = full_name?.trim() || "Provider";
     const [result] = await pool.execute(
@@ -512,7 +513,7 @@ export const createCallCenterProvider = async (req, res) => {
        (user_id, name, full_name, phone, email, address, division, district, thana, area,
         services, service_category, experience_years, nid_front_url, nid_back_url, status, is_active)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', 1)`,
-      [user_id, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
+      [user_id || null, providerName, providerName, phone?.trim() || null, email?.trim() || null, address?.trim() || null,
         division?.trim() || null, district?.trim() || null, JSON.stringify(thanaValues), area?.trim() || null,
         services || JSON.stringify(service_category ? [service_category] : []), service_category || null, normalizedYears,
         front ? providerNidUrl(front.filename) : null, back ? providerNidUrl(back.filename) : null]
@@ -545,7 +546,7 @@ export const updateCallCenterProvider = async (req, res) => {
     await ensureProviderSchema();
     const { id } = req.params;
     const {
-      full_name, phone, email, address, service_category,
+      user_id, full_name, phone, email, address, service_category,
       experience_years, division, district, thana, area, services,
     } = req.body;
     const front = req.files?.nid_front?.[0];
@@ -582,13 +583,24 @@ export const updateCallCenterProvider = async (req, res) => {
       return res.status(404).json({ message: "Provider not found" });
     }
 
+    if (user_id && String(user_id) !== String(existing.user_id || "")) {
+      const [linkedRows] = await pool.execute(
+        `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? AND id <> ? LIMIT 1`,
+        [user_id, id]
+      );
+      if (linkedRows.length) {
+        await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
+        return res.status(409).json({ message: "This user already has a provider record" });
+      }
+    }
+
     const frontUrl = front ? providerNidUrl(front.filename) : existing.nid_front_url;
     const backUrl = back ? providerNidUrl(back.filename) : existing.nid_back_url;
     await pool.execute(
       `UPDATE ${PROVIDER_TABLE}
        SET name = ?, full_name = ?, phone = ?, email = ?, address = ?,
            division = ?, district = ?, thana = ?, area = ?, services = ?,
-           service_category = ?, experience_years = ?, nid_front_url = ?, nid_back_url = ?
+           service_category = ?, experience_years = ?, nid_front_url = ?, nid_back_url = ?, user_id = ?
        WHERE id = ?`,
       [
         full_name?.trim() || "Provider",
@@ -605,6 +617,7 @@ export const updateCallCenterProvider = async (req, res) => {
         normalizedYears,
         frontUrl,
         backUrl,
+        user_id || existing.user_id || null,
         id,
       ]
     );

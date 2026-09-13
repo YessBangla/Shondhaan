@@ -22,6 +22,7 @@ interface SearchableLocationSelectProps {
   placeholder: string;
   disabled?: boolean;
   multiple?: boolean;
+  selectAllLabel?: string;
   onChange: (value: string | string[]) => void;
   onClear: () => void;
 }
@@ -32,6 +33,7 @@ const SearchableLocationSelect = ({
   placeholder,
   disabled = false,
   multiple = false,
+  selectAllLabel,
   onChange,
   onClear,
 }: SearchableLocationSelectProps) => {
@@ -42,6 +44,8 @@ const SearchableLocationSelect = ({
   const filteredOptions = options.filter((option) =>
     `${option.label} ${option.searchText || ""}`.toLowerCase().includes(search.trim().toLowerCase())
   );
+  const allOptionValues = options.map((option) => option.value);
+  const allOptionsSelected = allOptionValues.length > 0 && allOptionValues.every((optionValue) => selectedValues.includes(optionValue));
 
   return (
     <div className="relative">
@@ -93,6 +97,22 @@ const SearchableLocationSelect = ({
             className="mb-1 h-9"
           />
           <div className="max-h-52 overflow-y-auto">
+            {multiple && selectAllLabel && filteredOptions.length === options.length && (
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onChange(allOptionsSelected ? [] : allOptionValues);
+                  setSearch("");
+                }}
+                className="mb-1 flex w-full items-center justify-between rounded-sm px-2 py-2 text-left text-sm font-medium text-slate-800 hover:bg-slate-50"
+              >
+                <span>{selectAllLabel}</span>
+                <span className="text-xs text-muted-foreground">
+                  {allOptionsSelected ? "Selected" : `${selectedValues.length}/${allOptionValues.length}`}
+                </span>
+              </button>
+            )}
             {filteredOptions.length ? filteredOptions.map((option) => (
               <button
                 key={option.value}
@@ -178,6 +198,7 @@ const ServiceAreaLocationSelector = ({
           placeholder={bn ? "এলাকা নির্বাচন করুন" : "Select Area"}
           disabled={!value.district}
           multiple
+          selectAllLabel={bn ? "সব থানা / এলাকা" : "All Thana / Area"}
           onChange={(thana) => onChange({ ...value, thana: thana as string[], area: "" })}
           onClear={() => onChange({ ...value, thana: [], area: "" })}
         />
