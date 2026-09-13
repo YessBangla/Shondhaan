@@ -141,3 +141,27 @@ export const updateUserType = async (req, res) => {
     res.status(500).json({ message: "Could not update user type" });
   }
 };
+
+export const deleteProviderUser = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ message: "Valid provider user id is required" });
+    }
+
+    // Remove optional profile data first for older schemas without ON DELETE CASCADE.
+    await pool.execute("DELETE FROM user_profiles WHERE user_id = ?", [id]);
+
+    const [result] = await pool.execute(
+      "DELETE FROM users WHERE id = ? AND type = 'provider'",
+      [id],
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "Provider user not found" });
+    }
+    return res.json({ message: "Provider user deleted successfully", user_id: id });
+  } catch (error) {
+    console.error("Delete provider user error:", error);
+    return res.status(500).json({ message: "Could not delete provider user" });
+  }
+};

@@ -88,7 +88,7 @@ export const initializeDatabase = async () => {
     // 4. Create providers table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS providers (
-        id VARCHAR(36) PRIMARY KEY,
+        id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         email VARCHAR(255) UNIQUE,
         phone VARCHAR(20),
@@ -136,7 +136,7 @@ await pool.query(`
     platform_fee_amount DECIMAL(10,2) DEFAULT 0,
     payment_amount DECIMAL(10,2) DEFAULT 0,
     payment_verified_at TIMESTAMP NULL,
-    provider_id VARCHAR(36),
+    provider_id INT,
     assigned_to VARCHAR(255),
     cancel_reason TEXT,
     note TEXT,

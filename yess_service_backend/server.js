@@ -77,7 +77,6 @@ process.on("uncaughtException", (err) => {
 // App
 
 const app = express();
-
 const allowedOrigins = [
   ...(process.env.CORS_ORIGIN || "https://shondhaan.com").split(","),
   ...(process.env.FRONTEND_URL || "https://shondhaan.com").split(","),
@@ -85,6 +84,12 @@ const allowedOrigins = [
 ]
   .map((origin) => origin.trim())
   .filter(Boolean)
+  // auto-add the www / non-www counterpart for every origin
+  .flatMap((origin) =>
+    origin.includes("://www.")
+      ? [origin, origin.replace("://www.", "://")]
+      : [origin, origin.replace("://", "://www.")]
+  )
   .filter((origin, index, arr) => arr.indexOf(origin) === index);
 
 console.log("✅ Allowed CORS origins:", allowedOrigins);

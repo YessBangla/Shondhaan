@@ -70,6 +70,15 @@ export const ensureProviderSchema = () => {
           console.error("Error ensuring providers.user_id index:", error.message);
         }
       }
+
+      // A freshly emptied providers table should start assigning IDs from 1.
+      // MySQL will still continue from MAX(id) + 1 when existing rows remain.
+      const [providerCountRows] = await pool.query(
+        "SELECT COUNT(*) AS total FROM providers"
+      );
+      if (Number(providerCountRows[0]?.total || 0) === 0) {
+        await pool.query("ALTER TABLE providers AUTO_INCREMENT = 1");
+      }
     })().catch((error) => {
       providerSchemaPromise = null;
       throw error;
@@ -103,7 +112,7 @@ export const ensurePlatformFeeSchema = () => {
         { name: "platform_fee_amount", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "payment_status" },
         { name: "payment_amount", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "platform_fee_amount" },
         { name: "payment_verified_at", type: "TIMESTAMP NULL", after: "payment_amount" },
-        { name: "provider_id", type: "VARCHAR(36) NULL", after: "payment_verified_at" },
+        { name: "provider_id", type: "INT NULL", after: "payment_verified_at" },
         { name: "assigned_to", type: "VARCHAR(255) NULL", after: "provider_id" },
         { name: "cancel_reason", type: "TEXT NULL", after: "assigned_to" },
         { name: "note", type: "TEXT NULL", after: "cancel_reason" },
