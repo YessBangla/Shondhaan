@@ -123,9 +123,16 @@ export const ensurePlatformFeeSchema = () => {
         { name: "assigned_to", type: "VARCHAR(255) NULL", after: "provider_id" },
         { name: "cancel_reason", type: "TEXT NULL", after: "assigned_to" },
         { name: "note", type: "TEXT NULL", after: "cancel_reason" },
-        { name: "referral_code", type: "VARCHAR(16) NULL", after: "note" },
+        { name: "payment_method", type: "VARCHAR(30) NOT NULL DEFAULT 'gateway'", after: "note" },
+        { name: "wallet_cash_used", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "payment_method" },
+        { name: "wallet_coins_used", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "wallet_cash_used" },
+        { name: "provider_payout_status", type: "VARCHAR(30) NOT NULL DEFAULT 'unpaid'", after: "wallet_coins_used" },
+        { name: "referral_code", type: "VARCHAR(16) NULL", after: "provider_payout_status" },
         { name: "referral_id", type: "INT NULL", after: "referral_code" },
         { name: "referral_status", type: "VARCHAR(50) NULL", after: "referral_id" },
+        { name: "offer_code", type: "VARCHAR(100) NULL", after: "referral_status" },
+        { name: "offer_discount_amount", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "offer_code" },
+        { name: "final_price", type: "DECIMAL(10,2) NOT NULL DEFAULT 0.00", after: "offer_discount_amount" },
       ];
 
       for (const col of columnsToEnsure) {
