@@ -7,6 +7,9 @@ const API_BASE =
   (import.meta as any).env?.VITE_API_BASE ||
   "";
 
+const resolveImageUrl = (url: string) =>
+  /^(https?:|blob:|data:)/i.test(url) ? url : `${API_BASE}${url}`;
+
 interface Category {
   id: number;
   name: string;
@@ -103,7 +106,10 @@ const AdminMartCategories = () => {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(`${API_BASE}/api/upload`, { method: "POST", body: formData });
+      const res = await fetch(`${API_BASE}/api/upload?folder=mart-category`, {
+        method: "POST",
+        body: formData,
+      });
       const json = await res.json();
       if (json.success && json.url) {
         setImageUrl(json.url);
@@ -242,7 +248,7 @@ const AdminMartCategories = () => {
         </div>
         <button
           onClick={() => { resetForm(); setShowForm(true); }}
-          className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 transition-colors"
+          className="flex items-center gap-1.5 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary transition-colors"
         >
           <Plus className="h-4 w-4" />
           Add Category
@@ -324,7 +330,7 @@ const AdminMartCategories = () => {
               >
                 {previewUrl ? (
                   <>
-                    <img src={previewUrl} alt="preview" className="w-full h-full object-cover" />
+                    <img src={resolveImageUrl(previewUrl)} alt="preview" className="w-full h-full object-cover" />
                     <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                       <span className="text-white text-[12px] font-semibold">Change Image</span>
                     </div>
@@ -373,7 +379,7 @@ const AdminMartCategories = () => {
             <button
               onClick={handleSave}
               disabled={saving || uploading}
-              className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+              className="flex items-center gap-2 bg-primary text-white px-5 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary disabled:opacity-60 transition-colors"
             >
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
               {editId ? "Update Category" : "Save Category"}
@@ -409,7 +415,11 @@ const AdminMartCategories = () => {
               <div className="aspect-square bg-muted relative overflow-hidden">
                 {cat.image_url ? (
                   <img
-                    src={cat.image_url}
+                    src={
+                      cat.image_url.startsWith("http")
+                        ? cat.image_url
+                        : `${API_BASE}${cat.image_url}`
+                    }
                     alt={cat.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                   />
@@ -495,7 +505,7 @@ const AdminMartCategories = () => {
               <button
                 onClick={handleSubSave}
                 disabled={subSaving}
-                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary/90 disabled:opacity-60 transition-colors"
+                className="flex items-center gap-2 bg-primary text-white px-4 py-2 rounded-xl text-[13px] font-semibold hover:bg-primary disabled:opacity-60 transition-colors"
               >
                 {subSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
                 {subEditId ? "Update" : "Add"}

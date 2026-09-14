@@ -45,7 +45,11 @@ import { toPublicProduct } from "@/lib/martApi";
 
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL ||
-  import.meta.env.VITE_API_BASE;
+  import.meta.env.VITE_API_BASE ||
+  "";
+
+const resolveMediaUrl = (url: string) =>
+  /^(https?:|blob:|data:)/i.test(url) ? url : `${API_BASE}${url}`;
 
 interface ActiveCoupon {
   id: number;
@@ -224,7 +228,7 @@ const CategoryCarousel = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4 px-0.5">
         <h2 className="text-[15px] md:text-[16px] font-bold text-foreground">
-          {bn ? "আমাদের ক্যাটাগরি" : "Our Categories"}
+          {bn ? "প্রোডাক্ট ক্যাটাগরি" : "Product Categories"}
         </h2>
         <button
           onClick={() => navigate("/mart/category/all")}
@@ -253,8 +257,16 @@ const CategoryCarousel = ({
           {categories.map((cat: any) => {
             // Prefer image_url (full category illustration), then icon_url, then emoji fallback
             const imgSrc = cat.image_url || cat.icon_url || null;
-            const isHttpImg = imgSrc && imgSrc.startsWith("http");
-            const isEmojiIcon = imgSrc && !imgSrc.startsWith("http");
+            const isCategoryImage = Boolean(cat.image_url);
+            const isHttpImg = Boolean(
+              isCategoryImage || (imgSrc && imgSrc.startsWith("http"))
+            );
+            const imageSrc = isHttpImg
+              ? imgSrc?.startsWith("http")
+                ? imgSrc
+                : `${API_BASE}${imgSrc}`
+              : null;
+            const isEmojiIcon = Boolean(imgSrc && !isHttpImg);
             const fallbackEmoji = getCategoryIcon(cat.name || "");
 
             return (
@@ -265,12 +277,12 @@ const CategoryCarousel = ({
               >
                 {/* Circular illustrated avatar */}
                 <div
-                  className="h-[76px] w-[76px] rounded-full flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
+                  className="h-[76px] w-[76px] flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
                   // style={{ background: getCategoryColor(cat.name || "") }}
-                >
+                  >
                   {isHttpImg ? (
                     <img
-                      src={imgSrc}
+                      src={imageSrc || ""}
                       className="h-full w-full object-cover"
                       alt={cat.name}
                       onError={(e) => {
@@ -1039,7 +1051,9 @@ const MartHome = () => {
                       className="h-14 relative overflow-hidden"
                       style={{ background: getCategoryColor(shop.shop_type || shop.shop_name || "") }}
                     >
-                      {shop.banner_url && <img src={shop.banner_url} alt="" className="w-full h-full object-cover" />}
+                      {shop.banner_url && (
+                        <img src={resolveMediaUrl(shop.banner_url)} alt="" className="w-full h-full object-cover" />
+                      )}
                     </div>
                     <div className="px-3 pb-3 -mt-5 relative">
                       <div
@@ -1047,7 +1061,11 @@ const MartHome = () => {
                         style={{ background: getCategoryColor(shop.shop_type || shop.shop_name || "") }}
                       >
                         {shop.profile_image_url ? (
-                          <img src={shop.profile_image_url} alt={shop.shop_name || shop.seller_name} className="w-full h-full object-cover" />
+                          <img
+                            src={resolveMediaUrl(shop.profile_image_url)}
+                            alt={shop.shop_name || shop.seller_name}
+                            className="w-full h-full object-cover"
+                          />
                         ) : (
                           <span>{getCategoryIcon(shop.shop_type || shop.shop_name || "")}</span>
                         )}

@@ -424,97 +424,96 @@ const MartProductDetail = () => {
           <div className="grid lg:grid-cols-[380px_1fr_280px]">
 
             {/* ── Left: Image Gallery ── */}
-            {/* ── Left: Image Gallery ── */}
-<div className="p-4 border-r border-gray-100">
-  {/* Main image */}
-  <div className="relative aspect-square overflow-hidden border border-gray-200 rounded bg-gray-50 group">
-    {allImages[selectedImage] ? (
-      <PinchZoomImage
-        src={allImages[selectedImage]}
-        alt={product.name}
-        className="block w-full h-full object-contain"
-      />
-    ) : (
-      <div className="w-full h-full flex items-center justify-center">
-        <ShoppingCart className="h-16 w-16 text-gray-300" />
-      </div>
-    )}
-    {hasDiscount && (
-      <div className="absolute top-2 left-2 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-sm">
-        -{discount}%
-      </div>
-    )}
-    {/* Wishlist heart */}
-    <button
-      onClick={handleToggleWishlist}
-      className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center bg-white rounded-full shadow border border-gray-100 hover:border-primary transition-colors"
-    >
-      <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
-    </button>
+            <div className="p-4 border-r border-gray-100">
+              {/* Main image */}
+              <div className="relative aspect-square overflow-hidden border border-gray-200 rounded bg-gray-50 group">
+                {allImages[selectedImage] ? (
+                  <img
+                    src={allImages[selectedImage]}
+                    alt={product.name}
+                    className="block w-auto mx-auto h-full object-contain"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <ShoppingCart className="h-16 w-16 text-gray-300" />
+                  </div>
+                )}
+                {hasDiscount && (
+                  <div className="absolute top-2 left-2 bg-primary text-white text-[11px] font-bold px-2 py-0.5 rounded-sm">
+                    -{discount}%
+                  </div>
+                )}
+                {/* Wishlist heart */}
+                <button
+                  onClick={handleToggleWishlist}
+                  className="absolute top-2 right-2 h-8 w-8 flex items-center justify-center bg-white rounded-full shadow border border-gray-100 hover:border-primary transition-colors"
+                >
+                  <Heart className={`h-4 w-4 ${wishlisted ? "fill-red-500 text-red-500" : "text-gray-400"}`} />
+                </button>
 
-    {/* Prev/Next arrows when multiple images */}
-    {allImages.length > 1 && (
-      <>
-        <button
-          onClick={() => setSelectedImage((i) => (i - 1 + allImages.length) % allImages.length)}
-          className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center bg-white/80 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-colors"
-          aria-label="Previous image"
-        >
-          <ChevronLeft className="h-4 w-4 text-gray-600" />
-        </button>
-        <button
-          onClick={() => setSelectedImage((i) => (i + 1) % allImages.length)}
-          className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center bg-white/80 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-colors"
-          aria-label="Next image"
-        >
-          <ChevronRight className="h-4 w-4 text-gray-600" />
-        </button>
-      </>
-    )}
-  </div>
+                {/* Prev/Next arrows when multiple images */}
+                {allImages.length > 1 && (
+                  <>
+                    <button
+                      onClick={() => setSelectedImage((i) => (i - 1 + allImages.length) % allImages.length)}
+                      className="absolute left-2 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center bg-white/80 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-colors"
+                      aria-label="Previous image"
+                    >
+                      <ChevronLeft className="h-4 w-4 text-gray-600" />
+                    </button>
+                    <button
+                      onClick={() => setSelectedImage((i) => (i + 1) % allImages.length)}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-7 w-7 flex items-center justify-center bg-white/80 hover:bg-white rounded-full border border-gray-200 shadow-sm transition-colors"
+                      aria-label="Next image"
+                    >
+                      <ChevronRight className="h-4 w-4 text-gray-600" />
+                    </button>
+                  </>
+                )}
+              </div>
 
-  {/* Thumbnail strip — always shown, dots fallback when 1 image */}
-  {allImages.length > 1 ? (
-    <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
-      {allImages.map((img, i) => (
-        <button
-          key={i}
-          onClick={() => setSelectedImage(i)}
-          className={`h-[60px] w-[60px] shrink-0 border-2 rounded bg-gray-50 overflow-hidden transition-all ${
-            i === selectedImage
-              ? "border-primary shadow-sm scale-105"
-              : "border-gray-200 hover:border-primary/50"
-          }`}
-        >
-          <img src={img} alt={`${product.name} image ${i + 1}`} className="w-full h-full object-contain" />
-        </button>
-      ))}
-    </div>
-  ) : (
-    /* Single-image dot indicator */
-    <div className="mt-3 flex justify-center">
-      <span className="h-1.5 w-4 bg-primary rounded-full" />
-    </div>
-  )}
+              {/* Thumbnail strip — always shown, dots fallback when 1 image */}
+              {allImages.length > 1 ? (
+                <div className="mt-3 flex gap-2 overflow-x-auto pb-1 scrollbar-none">
+                  {allImages.map((img, i) => (
+                    <button
+                      key={i}
+                      onClick={() => setSelectedImage(i)}
+                      className={`h-[60px] w-[60px] shrink-0 border-2 rounded bg-gray-50 overflow-hidden transition-all ${
+                        i === selectedImage
+                          ? "border-primary shadow-sm scale-105"
+                          : "border-gray-200 hover:border-primary/50"
+                      }`}
+                    >
+                      <img src={img} alt={`${product.name} image ${i + 1}`} className="w-full h-full object-contain" />
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                /* Single-image dot indicator */
+                <div className="mt-3 flex justify-center">
+                  <span className="h-1.5 w-4 bg-primary rounded-full" />
+                </div>
+              )}
 
-  {/* Image count badge */}
-  {allImages.length > 1 && (
-    <p className="mt-1.5 text-center text-[11px] text-gray-400">
-      {selectedImage + 1} / {allImages.length}
-    </p>
-  )}
+              {/* Image count badge */}
+              {allImages.length > 1 && (
+                <p className="mt-1.5 text-center text-[11px] text-gray-400">
+                  {selectedImage + 1} / {allImages.length}
+                </p>
+              )}
 
-  {/* Action links below image */}
-  <div className="mt-3 flex items-center gap-3 justify-center text-xs text-gray-500">
-    <ShareButton
-      url={productUrl}
-      title={productTitle}
-      className="flex items-center gap-1 hover:text-primary"
-      iconClassName="h-3.5 w-3.5"
-    />
-    <ARProductPreview productName={productTitle} imageUrl={productImage} />
-  </div>
-</div>
+              {/* Action links below image */}
+              <div className="mt-3 flex items-center gap-3 justify-center text-xs text-gray-500">
+                <ShareButton
+                  url={productUrl}
+                  title={productTitle}
+                  className="flex items-center gap-1 hover:text-primary"
+                  iconClassName="h-3.5 w-3.5"
+                />
+                <ARProductPreview productName={productTitle} imageUrl={productImage} />
+              </div>
+            </div>
 
             {/* ── Middle: Product Info ── */}
             <div className="p-4 lg:p-5 border-r border-gray-100 space-y-4">
@@ -798,7 +797,7 @@ const MartProductDetail = () => {
               <div className="flex-1 min-w-0">
                 <p className="text-xs font-semibold truncate">{vendorDisplayName}</p>
               </div>
-<button onClick={() => navigate(`/mart/store/${product.seller_slug || product.vendor_id}`)} className="text-[11px] border border-primary text-primary px-2 py-1 rounded-sm shrink-0">{bn ? "স্টোর" : "Store"}</button>
+              <button onClick={() => navigate(`/mart/store/${product.seller_slug || product.vendor_id}`)} className="text-[11px] border border-primary text-primary px-2 py-1 rounded-sm shrink-0">{bn ? "স্টোর" : "Store"}</button>
             </div>
             {/* Delivery row */}
             <div className="flex items-center gap-3 bg-gray-50 rounded-sm p-3">
@@ -813,7 +812,7 @@ const MartProductDetail = () => {
 
         {/* ── Tabs section ── */}
         <div id="product-tabs-section" className="bg-white rounded-sm shadow-sm overflow-hidden">
-  <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             {/* Daraz-style tab bar: orange underline active */}
             <div className="border-b border-gray-200 px-4">
               <TabsList className="flex h-auto gap-0 bg-transparent rounded-none p-0">

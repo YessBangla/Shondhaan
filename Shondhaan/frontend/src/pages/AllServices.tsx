@@ -1038,7 +1038,7 @@ const CmsServiceCard = ({ service, title, onClick, onBook }: {
       role="button" tabIndex={0} onClick={onClick}
       onKeyDown={(e) => { if (e.key === "Enter") onClick(); }}
       whileHover={{ y: -2 }}
-      className="group relative cursor-pointer overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
+      className="group relative flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-border bg-card text-left transition-shadow hover:shadow-md"
     >
       <div className="relative aspect-[4/3] overflow-hidden yess-wm">
         <img
@@ -1065,7 +1065,7 @@ const CmsServiceCard = ({ service, title, onClick, onBook }: {
         </div>
       </div>
 
-      <div className="p-2.5">
+      <div className="flex flex-1 flex-col p-2.5">
         <h3 className="line-clamp-2 text-xs font-semibold leading-snug text-foreground group-hover:text-primary">
           {title}
         </h3>
@@ -1087,7 +1087,7 @@ const CmsServiceCard = ({ service, title, onClick, onBook }: {
         <button
           type="button"
           onClick={handleBookClick}
-          className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-[10px] text-[10px] font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-emerald-600 cursor-pointer"
+          className="mt-auto flex w-full items-center justify-center gap-1.5 rounded-lg bg-primary py-[10px] text-[10px] font-semibold text-white shadow-sm shadow-primary/20 transition-colors hover:bg-emerald-600 cursor-pointer"
         >
           <CalendarCheck className="h-3 w-3" />
           {bn ? "বুক করুন" : "Book Now"}
