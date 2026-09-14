@@ -467,7 +467,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
       {showHeader && (
         <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between mb-6">
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">{bn ? "আমার প্রোফাইল" : "My Profile"}</h1>
-          {!editMode && !isMartVendor && (
+          {!editMode && (
             <button
               onClick={() => setEditMode(true)}
               className="flex items-center gap-2 px-4 py-1 md:py-2 rounded-lg bg-primary text-white hover:bg-emerald-600 transition"
@@ -503,7 +503,7 @@ const saveCentralProfile = async (payload: Record<string, unknown>) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-2xl font-bold text-foreground mb-1">{displayName || (bn ? "ব্যবহারকারী" : "User")}</h2>
-              {!showHeader && !editMode && !isMartVendor && (
+              {!showHeader && !editMode && (
                 <button
                   onClick={() => setEditMode(true)}
                   className="rounded-full md:bg-userprimary text-foreground md:flex px-2 py-1 md:gap-1 md:text-white text-xs font-semibold md:hover:bg-emerald-600 transition"

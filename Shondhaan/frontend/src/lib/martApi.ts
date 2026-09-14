@@ -37,6 +37,41 @@ export interface MartSeller {
   kyc_admin_message?: string | null;
 }
 
+export interface MartProductVariant {
+  unit: string;
+  sale_price: number;
+  original_price: number | null;
+  stock: number;
+}
+
+function normalizeProductVariants(value: MartProduct["unit_prices"]): MartProductVariant[] {
+  let entries: unknown = value;
+  if (typeof entries === "string") {
+    try {
+      entries = JSON.parse(entries);
+    } catch {
+      return [];
+    }
+  }
+  if (!Array.isArray(entries)) return [];
+
+  return entries.map((entry) => {
+    const variant = entry as Record<string, unknown>;
+    const salePrice = Number(variant.sale_price);
+    const legacyPrice = Number(variant.price);
+    const resolvedPrice = salePrice === 0 && Number.isFinite(legacyPrice) && legacyPrice > 0
+      ? legacyPrice
+      : Number.isFinite(salePrice) ? salePrice : legacyPrice;
+
+    return {
+      unit: String(variant.unit ?? variant.label ?? ""),
+      sale_price: Number.isFinite(resolvedPrice) ? resolvedPrice : 0,
+      original_price: variant.original_price == null ? null : Number(variant.original_price),
+      stock: Number(variant.stock ?? 0),
+    };
+  });
+}
+
 export interface MartProduct {
   id: number;
   seller_id: number | null;
@@ -50,6 +85,7 @@ export interface MartProduct {
   description: string | null;
   sale_price: number;
   original_price: number | null;
+  unit_prices?: MartProductVariant[] | string | null;
   stock: number;
   status: "active" | "inactive";
   unit: string | null;
@@ -146,6 +182,7 @@ export function toPanelProduct(product: MartProduct) {
     name: product.name_bn,
     price: Number(product.sale_price || 0),
     original_price: product.original_price == null ? null : Number(product.original_price),
+    unit_prices: normalizeProductVariants(product.unit_prices),
     total_sold: Number(product.sold_count ?? product.sold_qty ?? 0),
     is_active: product.status === "active",
     is_featured: Boolean(product.featured),

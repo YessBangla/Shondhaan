@@ -130,6 +130,12 @@ export async function initDatabase() {
   `);
 
   // ─── Categories table ─────────────────────────────────────────────
+  // Product areas keep their categories separate so Mart and Jobs can
+  // manage identical names/slugs without sharing records.
+ 
+
+ 
+
   // await pool.query(`
   //   CREATE TABLE IF NOT EXISTS categories (
   //     id VARCHAR(100) PRIMARY KEY,

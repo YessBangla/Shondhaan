@@ -731,7 +731,7 @@ const MartPanel = () => {
       await updateMartProduct(id, {
         image: product.image_url, name_bn: product.name, name_en: product.name_en,
         gallery_urls: product.gallery_urls || [], description: product.description || null,
-        sale_price: product.price, original_price: product.original_price, stock: product.stock || 0,
+        unit_prices: product.unit_prices || [],
         status: !current ? "active" : "inactive", unit: product.unit,
         featured: product.is_featured ? 1 : 0, sold_qty: product.total_sold || 0,
         discount: product.discount || 0, is_freedelivery: product.is_freedelivery ? 1 : 0,

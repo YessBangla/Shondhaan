@@ -16,10 +16,7 @@ async function createProductsTable() {
       slug VARCHAR(255) NULL,
       description TEXT NULL,
 
-      sale_price DECIMAL(10,2) NOT NULL DEFAULT 0.00,
-      original_price DECIMAL(10,2) NULL,
-
-      stock INT NOT NULL DEFAULT 0,
+      unit_prices JSON NULL,
 
       status ENUM('active','inactive') NOT NULL DEFAULT 'active',
 
@@ -68,9 +65,7 @@ async function createProductsTable() {
     ["name_en",         "VARCHAR(500) NULL"],
     ["slug",            "VARCHAR(255) NULL"],
     ["description",     "TEXT NULL"],
-    ["sale_price",      "DECIMAL(10,2) NOT NULL DEFAULT 0.00"],
-    ["original_price",  "DECIMAL(10,2) NULL"],
-    ["stock",           "INT NOT NULL DEFAULT 0"],
+    ["unit_prices",     "JSON NULL"],
     ["status",          "ENUM('active','inactive') NOT NULL DEFAULT 'active'"],
     ["unit",            "VARCHAR(50) NULL"],
     ["featured",        "TINYINT(1) NOT NULL DEFAULT 0"],
@@ -88,6 +83,45 @@ async function createProductsTable() {
       );
       console.log(`Added column: ${columnName}`);
     }
+  }
+
+  // Migrate legacy product-level pricing and stock into the first variant.
+  const [legacyColumns] = await pool.query("SHOW COLUMNS FROM products");
+  const legacyColumnNames = new Set(legacyColumns.map((column) => column.Field));
+  if (legacyColumnNames.has("sale_price") && legacyColumnNames.has("stock")) {
+    const [legacyProducts] = await pool.query(
+      "SELECT id, sale_price, original_price, stock, unit, unit_prices FROM products"
+    );
+    for (const product of legacyProducts) {
+      let variants = [];
+      try {
+        variants = product.unit_prices ? JSON.parse(product.unit_prices) : [];
+      } catch {
+        variants = [];
+      }
+      if (Array.isArray(variants) && variants.length > 0) {
+        const migratedVariants = variants.map((variant) => ({
+          ...variant,
+          stock: Number(variant.stock ?? product.stock ?? 0),
+        }));
+        await pool.query("UPDATE products SET unit_prices = ? WHERE id = ?", [
+          JSON.stringify(migratedVariants),
+          product.id,
+        ]);
+      } else {
+        await pool.query("UPDATE products SET unit_prices = ? WHERE id = ?", [
+          JSON.stringify([{
+            unit: product.unit || "piece",
+            sale_price: Number(product.sale_price || 0),
+            original_price: product.original_price == null ? null : Number(product.original_price),
+            stock: Number(product.stock || 0),
+          }]),
+          product.id,
+        ]);
+      }
+    }
+    await pool.query("ALTER TABLE products DROP COLUMN sale_price, DROP COLUMN original_price, DROP COLUMN stock");
+    console.log("Migrated legacy product pricing and stock into unit_prices.");
   }
 
   const [freshColumns] = await pool.query("SHOW COLUMNS FROM products");

@@ -60,24 +60,25 @@ const MartCartSidebar = () => {
           <>
           <div className="flex-1 overflow-y-auto space-y-3 px-4 py-4">
             {items.map((item) => (
-              <SwipeRow key={item.product.id} onDelete={() => removeItem(item.product.id)}>
+              <SwipeRow key={`${item.product.id}-${item.product.unit || "default"}`} onDelete={() => removeItem(item.product.id, item.product.unit)}>
                 <div className="flex gap-3 p-2 rounded-lg border border-border/50 bg-card">
-                <div className="h-14 w-14 rounded-md overflow-hidden bg-muted/30 shrink-0">
-                  {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium line-clamp-1">{bn ? item.product.name : (item.product.name_en || item.product.name)}</p>
-                  <p className="text-sm font-bold text-primary mt-0.5">৳{item.product.price.toLocaleString("bn-BD")}</p>
-                  <div className="flex items-center gap-1 mt-1">
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { haptic("selection"); updateQuantity(item.product.id, item.quantity - 1); }}><Minus className="h-3 w-3" /></Button>
-                    <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
-                    <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { haptic("selection"); updateQuantity(item.product.id, item.quantity + 1); }}><Plus className="h-3 w-3" /></Button>
+                  <div className="h-14 w-14 rounded-md overflow-hidden bg-muted/30 shrink-0">
+                    {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
                   </div>
-                </div>
-                <div className="flex flex-col items-end justify-between">
-                  <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => removeItem(item.product.id)}><X className="h-3 w-3" /></Button>
-                  <span className="text-xs font-bold">৳{(item.product.price * item.quantity).toLocaleString("bn-BD")}</span>
-                </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium line-clamp-1">{bn ? item.product.name : (item.product.name_en || item.product.name)}</p>
+                    {item.product.unit && <p className="text-[11px] text-muted-foreground">{item.product.unit}</p>}
+                    <p className="text-sm font-bold text-primary mt-0.5">৳{item.product.price.toLocaleString("bn-BD")}</p>
+                    <div className="flex items-center gap-1 mt-1">
+                      <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { haptic("selection"); updateQuantity(item.product.id, item.quantity - 1, item.product.unit); }}><Minus className="h-3 w-3" /></Button>
+                      <span className="w-6 text-center text-xs font-medium">{item.quantity}</span>
+                      <Button variant="outline" size="icon" className="h-6 w-6" onClick={() => { haptic("selection"); updateQuantity(item.product.id, item.quantity + 1, item.product.unit); }}><Plus className="h-3 w-3" /></Button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end justify-between">
+                    <Button variant="ghost" size="icon" className="h-6 w-6 text-red-500" onClick={() => removeItem(item.product.id, item.product.unit)}><X className="h-3 w-3" /></Button>
+                    <span className="text-xs font-bold">৳{(item.product.price * item.quantity).toLocaleString("bn-BD")}</span>
+                  </div>
                 </div>
               </SwipeRow>
             ))}

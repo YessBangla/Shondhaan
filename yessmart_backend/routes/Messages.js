@@ -160,9 +160,9 @@ router.get("/inbox/user/:userId", async (req, res) => {
               mc.seller_name,
               COALESCE(NULLIF(mc.product_name, ''), NULLIF(p.name_bn, ''), NULLIF(p.name_en, ''), CONCAT('Product ', mc.product_id)) AS product_name,
               COALESCE(NULLIF(mc.product_image, ''), p.image) AS product_image,
-              p.sale_price AS product_price,
-              p.original_price AS product_original_price,
-              p.stock AS product_stock,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].sale_price')) AS product_price,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].original_price')) AS product_original_price,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].stock')) AS product_stock,
               mc.last_message,
               mc.last_message_at,
               mc.user_unread AS unread_count
@@ -200,9 +200,9 @@ router.get("/inbox/seller/:sellerUserId", async (req, res) => {
               mc.user_name,
               COALESCE(NULLIF(mc.product_name, ''), NULLIF(p.name_bn, ''), NULLIF(p.name_en, ''), CONCAT('Product ', mc.product_id)) AS product_name,
               COALESCE(NULLIF(mc.product_image, ''), p.image) AS product_image,
-              p.sale_price AS product_price,
-              p.original_price AS product_original_price,
-              p.stock AS product_stock,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].sale_price')) AS product_price,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].original_price')) AS product_original_price,
+              JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].stock')) AS product_stock,
               mc.last_message,
               mc.last_message_at,
               mc.seller_unread AS unread_count
@@ -282,9 +282,9 @@ router.get("/:conversationId", async (req, res) => {
          mc.*,
          COALESCE(NULLIF(mc.product_name, ''), NULLIF(p.name_bn, ''), NULLIF(p.name_en, ''), CONCAT('Product ', mc.product_id)) AS resolved_product_name,
          COALESCE(NULLIF(mc.product_image, ''), p.image) AS resolved_product_image,
-         p.sale_price AS product_price,
-         p.original_price AS product_original_price,
-         p.stock AS product_stock,
+         JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].sale_price')) AS product_price,
+         JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].original_price')) AS product_original_price,
+         JSON_UNQUOTE(JSON_EXTRACT(p.unit_prices, '$[0].stock')) AS product_stock,
          p.status AS product_status,
          p.unit AS product_unit
        FROM mart_conversations mc

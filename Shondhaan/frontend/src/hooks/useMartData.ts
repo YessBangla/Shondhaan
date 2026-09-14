@@ -50,6 +50,12 @@ export interface MartProduct {
   gallery_urls: string[];
   price: number;
   original_price: number | null;
+  unit_prices?: Array<{
+    unit: string;
+    sale_price: number;
+    original_price: number | null;
+    stock: number;
+  }>;
   stock: number;
   unit: string;
   rating: number;

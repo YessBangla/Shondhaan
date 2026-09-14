@@ -66,6 +66,50 @@ const readSelectedAreas = (value: VendorFeeSetting["selected_areas"]) => {
   }
 };
 
+// ── Price resolution ────────────────────────────────────────────────────────
+// A variant/unit can have up to three price-ish fields: sale_price (the
+// current discounted price), price (legacy field, same meaning as sale_price
+// on old records), and original_price (the "was" price used only for the
+// strikethrough/discount badge).
+//
+// If a seller adds a variant and only fills in "original price" without
+// entering an actual discount price, sale_price/price end up 0 or missing.
+// Previously that meant the displayed price was literally ৳0 with a "-100%"
+// badge. Real intent in that case is "no discount configured" — the item's
+// real price IS the original_price, and no discount should be shown at all.
+// So the fallback order is: sale_price -> legacy price -> original_price -> 0.
+const getVariantPrice = (variant: any) => {
+  const storedSalePrice = Number(variant?.sale_price);
+  const legacyPrice = Number(variant?.price);
+  const originalPrice = Number(variant?.original_price);
+
+  if (Number.isFinite(storedSalePrice) && storedSalePrice > 0) return storedSalePrice;
+  if (Number.isFinite(legacyPrice) && legacyPrice > 0) return legacyPrice;
+  if (Number.isFinite(originalPrice) && originalPrice > 0) return originalPrice;
+  return 0;
+};
+
+const parseUnitOptions = (value: unknown) => {
+  let options = value;
+  if (typeof options === "string") {
+    try {
+      options = JSON.parse(options);
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(options)) return [];
+
+  return options.filter((option) => {
+    const unit = String(option?.unit || "").trim();
+    // Reuse the same fallback cascade used for display so a variant is never
+    // considered "valid" here but priced differently (or at ৳0) on screen.
+    const salePrice = getVariantPrice(option);
+    return Boolean(unit) && Number.isFinite(salePrice) && salePrice >= 0;
+  });
+};
+
 const MartProductDetail = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
@@ -78,6 +122,7 @@ const MartProductDetail = () => {
   const { addItem, totalItems, setIsOpen } = useMartCart();
   const { toggleWishlist, isInWishlist } = useMartWishlist();
   const [qty, setQty] = useState(1);
+  const [selectedUnitIndex, setSelectedUnitIndex] = useState(0);
   const [selectedImage, setSelectedImage] = useState(0);
   const [recentlyViewed, setRecentlyViewed] = useState<any[]>([]);
   const [chatOpen, setChatOpen] = useState(false);
@@ -96,12 +141,23 @@ const MartProductDetail = () => {
 
   const productName = product ? (bn ? product.name : product.name_en || product.name) : "";
   const productImage = getFullImageUrl(product?.image_url);
-  const productPrice = product?.price ? Number(product.price) : null;
+  const unitOptions = parseUnitOptions(product?.unit_prices);
+  const selectedUnit = unitOptions[selectedUnitIndex] || unitOptions[0];
+  const displayedPrice = selectedUnit ? getVariantPrice(selectedUnit) : getVariantPrice(product);
+  const selectedStock = selectedUnit ? Number(selectedUnit.stock || 0) : Number(product?.stock || 0);
+  const displayedOriginalPrice = selectedUnit?.original_price == null
+    ? product?.original_price
+    : Number(selectedUnit.original_price);
+  const productPrice = displayedPrice || null;
   const productDesc = product
     ? bn
       ? `${productName} — ৳${productPrice?.toLocaleString("bn-BD") || ""}। সন্ধান মার্টে কিনুন।`
       : `${productName} — ৳${productPrice?.toLocaleString() || ""}. Buy on Yess Mart.`
     : "";
+
+  useEffect(() => {
+    setSelectedUnitIndex(0);
+  }, [product?.id]);
 
   useSEO({
     title: productName || (bn ? "পণ্যের বিবরণ" : "Product Details"),
@@ -287,22 +343,28 @@ const MartProductDetail = () => {
 
   // ── Discount calculation ──────────────────────────────────────────────────
   // Only treat the product as discounted when original_price is actually
-  // greater than the current price. Previously this only checked truthiness
-  // of original_price, so products where original_price === price (e.g. the
-  // seller form always saves an original_price even with no real discount)
-  // incorrectly showed a "-0%" badge and a strikethrough price equal to the
-  // current price.
-  const hasDiscount = Boolean(product.original_price) && product.original_price > product.price;
+  // greater than the current price. Because displayedPrice now falls back to
+  // original_price itself when no real sale price was entered, this also
+  // naturally covers that case: displayedOriginalPrice === displayedPrice,
+  // so hasDiscount is false and no "-100%"/strikethrough is shown.
+  const hasDiscount = Boolean(displayedOriginalPrice) && displayedOriginalPrice > displayedPrice;
   const discount = hasDiscount
-    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+    ? Math.round(((displayedOriginalPrice - displayedPrice) / displayedOriginalPrice) * 100)
     : 0;
 
   const allImages = [productImage, ...(product.gallery_urls || []).map(getFullImageUrl)].filter(Boolean);
   const wishlistProductId = String(slug?.startsWith("mysql-product-") ? slug.replace("mysql-product-", "") : product.id);
   const wishlisted = isInWishlist(wishlistProductId);
   const handleToggleWishlist = () => toggleWishlist({ ...product, id: wishlistProductId });
-  const courierFee = Math.min(COURIER_FEE_MAX, Math.max(COURIER_FEE_MIN, Math.round(product.price * 0.05)));
-  const freeShipping = product.price >= FREE_SHIPPING_MIN;
+  const courierFee = Math.min(COURIER_FEE_MAX, Math.max(COURIER_FEE_MIN, Math.round(displayedPrice * 0.05)));
+  const freeShipping = displayedPrice >= FREE_SHIPPING_MIN;
+  const cartProduct = {
+    ...product,
+    price: displayedPrice,
+    original_price: displayedOriginalPrice == null ? null : displayedOriginalPrice,
+    stock: selectedStock,
+    unit: selectedUnit?.unit || product.unit,
+  };
   const orderedCount = Number(orderStats?.order_count ?? product.total_sold ?? 0);
   const orderedCountText = orderedCount.toLocaleString(bn ? "bn-BD" : "en-US");
   const currentReviewStats = liveReviewStats || reviewStats;
@@ -480,15 +542,42 @@ const MartProductDetail = () => {
 
               <Separator className="bg-gray-100" />
 
+              {unitOptions.length > 0 && (
+                <div className="space-y-2 rounded-sm border border-gray-200 bg-gray-50 p-3">
+                  <p className="text-sm font-medium text-gray-700">
+                    {bn ? "মূল্য নির্বাচন করুন" : "Choose price"}
+                  </p>
+                  <select
+                    value={String(selectedUnitIndex)}
+                    onChange={(event) => {
+                      const nextIndex = Number(event.target.value);
+                      setSelectedUnitIndex(nextIndex);
+                      setQty(1);
+                    }}
+                    className="h-11 w-full rounded-sm border border-gray-300 bg-white px-3 text-sm font-semibold text-gray-700 outline-none transition focus:border-primary focus:ring-1 focus:ring-primary"
+                    aria-label={bn ? "মূল্য নির্বাচন করুন" : "Choose price"}
+                  >
+                    {unitOptions.map((option: any, index: number) => (
+                      <option key={`${option.unit}-${index}`} value={index}>
+                        {option.unit} - ৳{getVariantPrice(option).toLocaleString("bn-BD")}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+
               {/* Price block — Daraz orange highlight strip */}
               <div className="bg-primary/10 border-l-4 border-primary px-4 py-3 rounded-r-sm">
                 <div className="flex flex-wrap items-baseline gap-3">
                   <span className="text-2xl md:text-3xl font-bold text-primary">
-                    ৳{product.price.toLocaleString("bn-BD")}
+                    ৳{displayedPrice.toLocaleString("bn-BD")}
                   </span>
+                  {selectedUnit?.unit && (
+                    <span className="text-sm font-medium text-gray-600">/ {selectedUnit.unit}</span>
+                  )}
                   {hasDiscount && (
                     <>
-                      <span className="text-sm text-gray-400 line-through">৳{product.original_price.toLocaleString("bn-BD")}</span>
+                      <span className="text-sm text-gray-400 line-through">৳{Number(displayedOriginalPrice).toLocaleString("bn-BD")}</span>
                       <span className="text-xs bg-primary text-white px-1.5 py-0.5 rounded-sm font-bold">-{discount}%</span>
                     </>
                   )}
@@ -520,13 +609,13 @@ const MartProductDetail = () => {
               </div>
 
               {/* Stock warnings */}
-              {product.stock > 0 && product.stock <= 10 && (
+              {selectedStock > 0 && selectedStock <= 10 && (
                 <div className="flex items-center gap-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-sm px-3 py-2">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  {bn ? `মাত্র ${product.stock} টি বাকি!` : `Only ${product.stock} left in stock!`}
+                  {bn ? `মাত্র ${selectedStock} টি বাকি!` : `Only ${selectedStock} left in stock!`}
                 </div>
               )}
-              {product.stock <= 0 && (
+              {selectedStock <= 0 && (
                 <div className="flex items-center gap-2 text-xs text-red-600 bg-red-50 border border-red-200 rounded-sm px-3 py-2">
                   <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
                   {bn ? "স্টক শেষ হয়ে গেছে" : "This item is out of stock"}
@@ -545,30 +634,30 @@ const MartProductDetail = () => {
                   </button>
                   <span className="h-8 w-10 flex items-center justify-center text-sm font-semibold select-none">{qty}</span>
                   <button
-                    onClick={() => setQty((q) => Math.min(product.stock || 99, q + 1))}
+                    onClick={() => setQty((q) => Math.min(selectedStock || 99, q + 1))}
                     className="h-8 w-8 flex items-center justify-center hover:bg-gray-100 text-gray-600 transition-colors border-l border-gray-300"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
                 </div>
-                {product.stock > 0 && (
-                  <span className="text-xs text-gray-400">{product.stock} {bn ? "টি পাওয়া যাচ্ছে" : "pieces available"}</span>
+                {selectedStock > 0 && (
+                  <span className="text-xs text-gray-400">{selectedStock} {bn ? "টি পাওয়া যাচ্ছে" : "pieces available"}</span>
                 )}
               </div>
 
               {/* CTA Buttons — Daraz style */}
               <div className="flex gap-3 pt-1">
                 <button
-                  onClick={() => { addItem(product, qty); }}
-                  disabled={product.stock <= 0}
+                  onClick={() => { addItem(cartProduct, qty); }}
+                  disabled={selectedStock <= 0}
                   className="flex-1 h-11 flex items-center justify-center gap-2 border-2 border-primary text-primary bg-white hover:bg-primary/10 rounded-sm text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
                 >
                   <ShoppingCart className="h-4 w-4" />
                   {bn ? "কার্টে যোগ করুন" : "Add to Cart"}
                 </button>
                 <button
-                  onClick={() => requireAuthForPurchase(() => { addItem(product, qty); navigate("/mart/checkout"); })}
-                  disabled={product.stock <= 0}
+                  onClick={() => requireAuthForPurchase(() => { addItem(cartProduct, qty); navigate("/mart/checkout"); })}
+                  disabled={selectedStock <= 0}
                   className="flex-1 h-11 flex items-center justify-center gap-2 bg-primary hover:bg-emerald-800 text-white rounded-sm text-sm font-bold transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-sm"
                 >
                   <Zap className="h-4 w-4" />
@@ -869,8 +958,8 @@ const MartProductDetail = () => {
           </button>
           {/* Cart */}
           <button
-            onClick={() => { if (product.stock <= 0) return; haptic("medium"); addItem(product, qty); toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart"); }}
-            disabled={product.stock <= 0}
+            onClick={() => { if (selectedStock <= 0) return; haptic("medium"); addItem(cartProduct, qty); toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart"); }}
+            disabled={selectedStock <= 0}
             className="flex flex-col items-center justify-center gap-0.5 w-1/3 border-r border-gray-100 text-primary bg-white hover:bg-primary/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <ShoppingCart className="h-5 w-5" />
@@ -878,8 +967,8 @@ const MartProductDetail = () => {
           </button>
           {/* Buy Now */}
           <button
-            onClick={() => { if (product.stock <= 0) return; haptic("medium"); requireAuthForPurchase(() => { addItem(product, qty); navigate("/mart/checkout"); }); }}
-            disabled={product.stock <= 0}
+            onClick={() => { if (selectedStock <= 0) return; haptic("medium"); requireAuthForPurchase(() => { addItem(cartProduct, qty); navigate("/mart/checkout"); }); }}
+            disabled={selectedStock <= 0}
             className="flex-1 flex items-center justify-center gap-2 bg-primary text-white text-sm font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-primary/90 transition-colors"
           >
             <Zap className="h-4 w-4" />

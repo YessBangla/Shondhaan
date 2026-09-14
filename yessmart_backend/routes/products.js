@@ -31,11 +31,76 @@ const normalizeGalleryUrls = (value) => {
 
 const serializeGalleryUrls = (value) => JSON.stringify(normalizeGalleryUrls(value));
 
-const normalizeProductRow = (row) => ({
+const normalizeUnitPrices = (value) => {
+  if (value === undefined || value === null || value === "") return [];
+
+  let entries = value;
+  if (typeof entries === "string") {
+    try {
+      entries = JSON.parse(entries);
+    } catch {
+      return null;
+    }
+  }
+
+  if (!Array.isArray(entries)) return null;
+
+  const normalized = entries.map((entry) => {
+    const unit = String(entry?.unit ?? entry?.label ?? "").trim();
+    const storedSalePrice = Number(entry?.sale_price);
+    const legacyPrice = Number(entry?.price);
+    const salePrice = storedSalePrice === 0 && Number.isFinite(legacyPrice) && legacyPrice > 0
+      ? legacyPrice
+      : Number(entry?.sale_price ?? entry?.price);
+    const originalPrice = entry?.original_price === null || entry?.original_price === undefined || entry?.original_price === ""
+      ? null
+      : Number(entry.original_price);
+    const stock = Number(entry?.stock ?? 0);
+
+    if (!unit || !Number.isFinite(salePrice) || salePrice < 0) return null;
+    if (originalPrice !== null && (!Number.isFinite(originalPrice) || originalPrice < 0)) return null;
+    if (!Number.isInteger(stock) || stock < 0) return null;
+
+    return {
+      unit,
+      sale_price: Number(salePrice.toFixed(2)),
+      original_price: originalPrice === null ? null : Number(originalPrice.toFixed(2)),
+      stock,
+    };
+  });
+
+  if (normalized.some((entry) => entry === null)) return null;
+  return normalized;
+};
+
+const serializeUnitPrices = (value) => {
+  const normalized = normalizeUnitPrices(value);
+  return normalized === null ? null : JSON.stringify(normalized);
+};
+
+const parseUnitPrices = (value) => {
+  if (Array.isArray(value)) return value;
+  if (typeof value !== "string" || !value.trim()) return [];
+  try {
+    return JSON.parse(value);
+  } catch {
+    return [];
+  }
+};
+
+const normalizeProductRow = (row) => {
+  const unitPrices = normalizeUnitPrices(parseUnitPrices(row.unit_prices)) || [];
+  const firstVariant = unitPrices[0] || {};
+  return {
   ...row,
   image_url: normalizeUploadUrl(row.image_url),
   gallery_urls: normalizeGalleryUrls(row.gallery_urls),
-});
+  unit_prices: unitPrices,
+  sale_price: Number(firstVariant.sale_price || 0),
+  original_price: firstVariant.original_price == null ? null : Number(firstVariant.original_price),
+  stock: Number(firstVariant.stock || 0),
+  };
+};
 
 // ── Slug helpers ─────────────────────────────────────────────────────────
 function slugify(text) {
@@ -313,12 +378,17 @@ router.post("/", requireProductAllowance, async (req, res) => {
     const {
       seller_id, category_id, sub_category_id,
       image, gallery_urls, name_bn, name_en, description,
-      sale_price, original_price, stock, status,
-      unit, featured, sold_qty, discount, is_freedelivery, wishlist,
+      status,
+      unit, unit_prices, unitPrices, featured, sold_qty, discount, is_freedelivery, wishlist,
     } = req.body;
 
     if (!name_bn) {
       return res.status(400).json({ success: false, message: "name_bn is required" });
+    }
+
+    const normalizedUnitPrices = normalizeUnitPrices(unit_prices ?? unitPrices);
+    if (normalizedUnitPrices === null) {
+      return res.status(400).json({ success: false, message: "unit_prices must be an array of valid unit and price entries" });
     }
 
     // Prefer the English name for a clean URL slug; fall back to Bangla name.
@@ -329,9 +399,9 @@ router.post("/", requireProductAllowance, async (req, res) => {
         INSERT INTO products (
           seller_id, category_id, sub_category_id,
           image, gallery_urls, name_bn, name_en, slug, description,
-          sale_price, original_price, stock, status,
+          unit_prices, status,
           unit, featured, sold_qty, discount, is_freedelivery, wishlist
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         seller_id      || null,
@@ -343,9 +413,7 @@ router.post("/", requireProductAllowance, async (req, res) => {
         name_en        || null,
         slug,
         description    || null,
-        sale_price     ?? 0,
-        original_price ?? null,
-        stock          ?? 0,
+        serializeUnitPrices(normalizedUnitPrices),
         status         || "active",
         unit           || null,
         featured       ? 1 : 0,
@@ -376,8 +444,8 @@ router.put("/:id", async (req, res) => {
     const {
       seller_id, category_id, sub_category_id,
       image, gallery_urls, name_bn, name_en, description,
-      sale_price, original_price, stock, status,
-      unit, featured, sold_qty, discount, is_freedelivery, wishlist,
+      status,
+      unit, unit_prices, unitPrices, featured, sold_qty, discount, is_freedelivery, wishlist,
     } = req.body;
 
     if (!name_bn) {
@@ -387,13 +455,19 @@ router.put("/:id", async (req, res) => {
     // Only regenerate the slug if the product name actually changed
     // (or if it never had one, e.g. an old row from before this migration).
     const [existingRows] = await pool.query(
-      "SELECT name_bn, name_en, slug FROM products WHERE id = ?",
+      "SELECT name_bn, name_en, slug, unit_prices FROM products WHERE id = ?",
       [req.params.id]
     );
     if (existingRows.length === 0) {
       return res.status(404).json({ success: false, message: "Product not found" });
     }
     const existing = existingRows[0];
+    const normalizedUnitPrices = unit_prices === undefined && unitPrices === undefined
+      ? parseUnitPrices(existing.unit_prices)
+      : normalizeUnitPrices(unit_prices ?? unitPrices);
+    if (normalizedUnitPrices === null) {
+      return res.status(400).json({ success: false, message: "unit_prices must be an array of valid unit and price entries" });
+    }
     const nameChanged = existing.name_bn !== name_bn || existing.name_en !== (name_en || null);
     const slug = (nameChanged || !existing.slug)
       ? await generateUniqueSlug(name_en || name_bn, req.params.id)
@@ -411,9 +485,7 @@ router.put("/:id", async (req, res) => {
           name_en         = ?,
           slug            = ?,
           description     = ?,
-          sale_price      = ?,
-          original_price  = ?,
-          stock           = ?,
+          unit_prices     = ?,
           status          = ?,
           unit            = ?,
           featured        = ?,
@@ -433,9 +505,7 @@ router.put("/:id", async (req, res) => {
         name_en         || null,
         slug,
         description     || null,
-        sale_price      ?? 0,
-        original_price  ?? null,
-        stock           ?? 0,
+        serializeUnitPrices(normalizedUnitPrices),
         status          || "active",
         unit            || null,
         featured        ? 1 : 0,
