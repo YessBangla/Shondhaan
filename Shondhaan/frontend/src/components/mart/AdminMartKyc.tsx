@@ -378,7 +378,7 @@ function KycDetailsDialog({
             <div className="flex items-start gap-3">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white">
                 {seller.profile_image_url ? (
-                  <img src={seller.profile_image_url} alt="" className="h-full w-full object-cover" />
+                  <img src={`${import.meta.env.BACKEND_URL}${seller.profile_image_url}`} alt="" className="h-full w-full object-cover" />
                 ) : (
                   <Store className="h-5 w-5 text-slate-300" />
                 )}
