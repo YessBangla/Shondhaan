@@ -13,6 +13,13 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
+const MEDIA_BASE =
+  import.meta.env.VITE_MART_API_BASE_URL ||
+  import.meta.env.VITE_API_BASE_URL ||
+  "";
+
+const resolveMediaUrl = (url: string) =>
+  /^(https?:|blob:|data:)/i.test(url) ? url : `${MEDIA_BASE}${url}`;
 
 type StoreMediaItem = {
   url: string;
@@ -107,21 +114,22 @@ const ProductCard = ({
         onOpen(product);
       }
     }}
-    className="rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
+    className="flex h-full flex-col rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
   >
-    {product.image ? (
-      <img
-        src={product.image}
-        alt={product.name_bn}
-        className="w-full h-40 object-cover group-hover:scale-105 transition-transform duration-300"
-      />
-    ) : (
-      <div className="w-full h-40 bg-muted flex items-center justify-center">
-        <Package className="h-8 w-8 text-muted-foreground/30" />
-      </div>
-    )}
-
-    <div className="p-3">
+    <div className="relative aspect-square bg-muted/30 overflow-hidden">
+        {product.image ? (
+          <img
+            src={resolveMediaUrl(product.image)}
+            alt={product.name_bn}
+            className="w-auto h-full mx-auto object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+        ) : (
+          <div className="w-full h-40 bg-muted flex items-center justify-center">
+            <Package className="h-8 w-8 text-muted-foreground/30" />
+          </div>
+        )}
+    </div>
+    <div className="flex flex-1 flex-col p-3">
       <p className="font-semibold text-sm line-clamp-2 leading-snug">{product.name_bn}</p>
       {product.name_en && (
         <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{product.name_en}</p>
@@ -158,7 +166,7 @@ const ProductCard = ({
         type="button"
         disabled={product.stock <= 0}
         onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-        className="mt-3 w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="mt-auto w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <ShoppingCart className="h-3.5 w-3.5" />
         {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
@@ -427,7 +435,7 @@ const MartStore = () => {
           style={
             seller.banner_url
             ? {
-              backgroundImage:    `url(${seller.banner_url})`,
+              backgroundImage:    `url(${resolveMediaUrl(seller.banner_url)})`,
               backgroundSize:     "cover",
               backgroundPosition: "center",
             }
@@ -444,7 +452,7 @@ const MartStore = () => {
               <div className="h-20 w-20 md:h-24 md:w-24 rounded-full bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden">
                 {seller.profile_image_url ? (
                   <img
-                    src={seller.profile_image_url}
+                    src={resolveMediaUrl(seller.profile_image_url)}
                     alt={seller.shop_name || seller.seller_name}
                     className="w-full h-full object-cover"
                     onError={() => console.warn("Profile image failed:", seller.profile_image_url)}
@@ -696,118 +704,118 @@ const MartStore = () => {
         <main className="flex-1 min-w-0">
           {availableCategories.length > 0 && (
           <div className="relative mb-5">
-  {/* Trigger Button */}
-  <button
-    onClick={() => setShowCategories(!showCategories)}
-    className="
-      flex items-center gap-2
-      px-4 py-2.5
-      rounded-xl
-      bg-card
-      border border-border
-      text-sm font-medium
-      hover:bg-muted/60
-      hover:shadow-sm
-      transition-all duration-300
-    "
-  >
-    Category
-    <span
-      className={`text-xs transition-transform duration-300 ${
-        showCategories ? "rotate-180" : ""
-      }`}
-    >
-      ▼
-    </span>
-  </button>
+          {/* Trigger Button */}
+            <button
+              onClick={() => setShowCategories(!showCategories)}
+              className="
+                flex items-center gap-2
+                px-4 py-2.5
+                rounded-xl
+                bg-card
+                border border-border
+                text-sm font-medium
+                hover:bg-muted/60
+                hover:shadow-sm
+                transition-all duration-300
+              "
+            >
+              Category
+              <span
+                className={`text-xs transition-transform duration-300 ${
+                  showCategories ? "rotate-180" : ""
+                }`}
+              >
+                ▼
+              </span>
+            </button>
 
-  {/* Dropdown */}
-  {showCategories && (
-    <div
-      className="
-        absolute top-full left-0 mt-2 w-72
-        bg-card/95 backdrop-blur-md
-        border border-border
-        rounded-2xl
-        shadow-xl
-        z-50
-        p-2
-      "
-    >
-      {/* All Products */}
-      <button
-        onClick={() => {
-          setFilterCategory("all");
-          setFilterSubCategory("all");
-          setShowCategories(false);
-        }}
-        className="
-          w-full text-left
-          px-3 py-2.5
-          rounded-xl
-          text-sm font-medium
-          hover:bg-muted/60
-          transition
-        "
-      >
-        All Products
-      </button>
-
-      <div className="my-1 h-px bg-border/60" />
-
-      {/* Categories — only the ones this seller actually has products in */}
-      {availableCategories.map((cat) => (
-        <div key={cat.id} className="mb-1">
-          {/* Category */}
-          <button
-            onClick={() => handleCategoryChange(String(cat.id))}
-            className="
-              w-full text-left
-              px-3 py-2.5
-              rounded-xl
-              font-semibold
-              text-sm
-              hover:bg-muted/60
-              hover:text-primary
-              transition
-            "
-          >
-            {cat.name}
-          </button>
-
-          {/* Subcategories — only the ones this seller has products in, within this category */}
-          {filterCategory === String(cat.id) && (
-            <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
-              {availableSubCategories.map((sub) => (
+            {/* Dropdown */}
+            {showCategories && (
+              <div
+                className="
+                  absolute top-full left-0 mt-2 w-72
+                  bg-card/95 backdrop-blur-md
+                  border border-border
+                  rounded-2xl
+                  shadow-xl
+                  z-50
+                  p-2
+                "
+              >
+                {/* All Products */}
                 <button
-                  key={sub.id}
                   onClick={() => {
-                    setFilterSubCategory(String(sub.id));
+                    setFilterCategory("all");
+                    setFilterSubCategory("all");
                     setShowCategories(false);
                   }}
                   className="
                     w-full text-left
-                    px-3 py-1.5
-                    text-sm
-                    text-muted-foreground
-                    rounded-lg
-                    hover:bg-muted/50
-                    hover:text-foreground
+                    px-3 py-2.5
+                    rounded-xl
+                    text-sm font-medium
+                    hover:bg-muted/60
                     transition
                   "
                 >
-                  {sub.name}
+                  All Products
                 </button>
-              ))}
-            </div>
+
+                <div className="my-1 h-px bg-border/60" />
+
+                {/* Categories — only the ones this seller actually has products in */}
+                {availableCategories.map((cat) => (
+                  <div key={cat.id} className="mb-1">
+                    {/* Category */}
+                    <button
+                      onClick={() => handleCategoryChange(String(cat.id))}
+                      className="
+                        w-full text-left
+                        px-3 py-2.5
+                        rounded-xl
+                        font-semibold
+                        text-sm
+                        hover:bg-muted/60
+                        hover:text-primary
+                        transition
+                      "
+                    >
+                      {cat.name}
+                    </button>
+
+                    {/* Subcategories — only the ones this seller has products in, within this category */}
+                    {filterCategory === String(cat.id) && (
+                      <div className="ml-2 mt-1 space-y-1 border-l border-border/50 pl-3">
+                        {availableSubCategories.map((sub) => (
+                          <button
+                            key={sub.id}
+                            onClick={() => {
+                              setFilterSubCategory(String(sub.id));
+                              setShowCategories(false);
+                            }}
+                            className="
+                              w-full text-left
+                              px-3 py-1.5
+                              text-sm
+                              text-muted-foreground
+                              rounded-lg
+                              hover:bg-muted/50
+                              hover:text-foreground
+                              transition
+                            "
+                          >
+                            {sub.name}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
           )}
-        </div>
-      ))}
-    </div>
-  )}
-</div>
-          )}
-{/* Category filter sidebar */}
+          {/* Category filter sidebar */}
             
          
 

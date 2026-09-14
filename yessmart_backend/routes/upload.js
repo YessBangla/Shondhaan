@@ -4,7 +4,15 @@ const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
 
-const uploadRoot = path.join(__dirname, "..", "uploads", "mart-products");
+const uploadFolders = {
+  products: "mart-products",
+  category: "mart-category",
+};
+
+const getUploadFolder = (req) =>
+  req.query?.folder === uploadFolders.category ? uploadFolders.category : uploadFolders.products;
+
+const getUploadRoot = (req) => path.join(__dirname, "..", "uploads", getUploadFolder(req));
 const extensionFromMime = (mime = "") => {
   const subtype = mime.split("/")[1] || "jpg";
   return `.${subtype.replace(/[^a-z0-9.+-]/gi, "").replace("svg+xml", "svg") || "jpg"}`;
@@ -13,6 +21,7 @@ const extensionFromMime = (mime = "") => {
 // Save to /uploads folder in your backend
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
+    const uploadRoot = getUploadRoot(req);
     if (!fs.existsSync(uploadRoot)) fs.mkdirSync(uploadRoot, { recursive: true });
     cb(null, uploadRoot);
   },
@@ -43,8 +52,8 @@ function runUpload(req, res) {
   });
 }
 
-function uploadUrl(filename) {
-  return `/uploads/mart-products/${filename}`;
+function uploadUrl(req, filename) {
+  return `/uploads/${getUploadFolder(req)}/${filename}`;
 }
 
 // POST /api/upload
@@ -69,6 +78,7 @@ router.post("/", async (req, res) => {
           return res.status(400).json({ success: false, message: "Only image and video files are allowed" });
         }
 
+        const uploadRoot = getUploadRoot(req);
         if (!fs.existsSync(uploadRoot)) fs.mkdirSync(uploadRoot, { recursive: true });
 
         const extFromMime = extensionFromMime(mime);
@@ -78,7 +88,7 @@ router.post("/", async (req, res) => {
         const buffer = Buffer.from(b64, "base64");
         fs.writeFileSync(filePath, buffer);
 
-        const url = uploadUrl(filename);
+        const url = uploadUrl(req, filename);
 
         console.log("[Upload] Base64 file saved:", url);
         return res.json({ success: true, url });
@@ -92,7 +102,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ success: false, message: "No file uploaded" });
     }
 
-    const url = uploadUrl(req.file.filename);
+    const url = uploadUrl(req, req.file.filename);
 
     console.log("[Upload] File saved:", url);
 
