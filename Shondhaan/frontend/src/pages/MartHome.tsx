@@ -224,7 +224,7 @@ const CategoryCarousel = ({
       {/* Header */}
       <div className="flex items-center justify-between mb-4 px-0.5">
         <h2 className="text-[15px] md:text-[16px] font-bold text-foreground">
-          {bn ? "আমাদের ক্যাটাগরি" : "Our Categories"}
+          {bn ? "প্রোডাক্ট ক্যাটাগরি" : "Product Categories"}
         </h2>
         <button
           onClick={() => navigate("/mart/category/all")}
@@ -270,7 +270,7 @@ const CategoryCarousel = ({
                 >
                   {isHttpImg ? (
                     <img
-                      src={imgSrc}
+                      src={`${import.meta.env.VITE_API_BASE_URL}${imgSrc}`}
                       className="h-full w-full object-cover"
                       alt={cat.name}
                       onError={(e) => {
