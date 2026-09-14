@@ -43,7 +43,7 @@ const getCouponEligibleSubtotal = async (conn, coupon, items) => {
 
   const productIds = [...new Set(normalizedItems.map((item) => item.product_id))];
   const [products] = await conn.query(
-    `SELECT id, seller_id, sale_price FROM products WHERE id IN (?)`,
+    `SELECT id, seller_id FROM products WHERE id IN (?)`,
     [productIds]
   );
   const productMap = new Map(products.map((product) => [Number(product.id), product]));
@@ -54,7 +54,7 @@ const getCouponEligibleSubtotal = async (conn, coupon, items) => {
     if (!product) return sum;
     if (couponSellerId !== null && Number(product.seller_id) !== couponSellerId) return sum;
 
-    const price = Number(product.sale_price || item.unit_price || 0);
+    const price = Number(item.unit_price || 0);
     return sum + price * item.quantity;
   }, 0);
 };

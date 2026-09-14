@@ -18,6 +18,45 @@ import { getFullImageUrl } from "@/lib/imageUrl";
 import { toast } from "sonner";
 import yessMartLogo from "@/assets/yess-mart-logo.png";
 
+// ── Variant price helpers (mirrors the logic used on the product detail
+// page) ──────────────────────────────────────────────────────────────────
+// A product's real price/unit can live in two places: the top-level
+// product.price/product.unit fields, or a unit_prices array of variants
+// (e.g. "200gm" - ৳500, "300gm" - ৳700). When a seller adds variants, the
+// top-level fields are often left at 0/"piece" and are stale — the card
+// must read the first variant's price/unit the same way the detail page
+// does, or it shows "৳0 / piece -100%" while the detail page correctly
+// shows "৳500 / 200gm".
+const getVariantPrice = (variant: any) => {
+  const storedSalePrice = Number(variant?.sale_price);
+  const legacyPrice = Number(variant?.price);
+  const originalPrice = Number(variant?.original_price);
+
+  if (Number.isFinite(storedSalePrice) && storedSalePrice > 0) return storedSalePrice;
+  if (Number.isFinite(legacyPrice) && legacyPrice > 0) return legacyPrice;
+  if (Number.isFinite(originalPrice) && originalPrice > 0) return originalPrice;
+  return 0;
+};
+
+const parseUnitOptions = (value: unknown) => {
+  let options = value;
+  if (typeof options === "string") {
+    try {
+      options = JSON.parse(options);
+    } catch {
+      return [];
+    }
+  }
+
+  if (!Array.isArray(options)) return [];
+
+  return options.filter((option) => {
+    const unit = String(option?.unit || "").trim();
+    const salePrice = getVariantPrice(option);
+    return Boolean(unit) && Number.isFinite(salePrice) && salePrice >= 0;
+  });
+};
+
 const FREE_SHIPPING_MIN = 500;
 
 interface Props {
@@ -45,19 +84,46 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
     action();
   };
 
-  // Only treat the product as discounted when original_price is actually
-  // greater than the current price. Previously this only checked truthiness
-  // of original_price, so products where original_price === price (e.g. the
-  // seller form always saves an original_price even with no real discount)
-  // still showed a strikethrough "original" price equal to the current price.
-  const hasDiscount = Boolean(product.original_price) && product.original_price > product.price;
+  // ── Price resolution ──────────────────────────────────────────────────
+  // Prefer the first variant from unit_prices (e.g. "200gm" - ৳500), same as
+  // the product detail page. Products with variants often leave the
+  // top-level product.price/product.unit/product.original_price stale (0 /
+  // "piece"), which previously made the card show "৳0 / piece -100%" while
+  // the detail page correctly showed "৳500 / 200gm". Falling back to those
+  // top-level fields only when there are no variants keeps both pages
+  // consistent and still covers products that don't use variants at all.
+  const unitOptions = parseUnitOptions((product as any).unit_prices);
+  const primaryVariant = unitOptions[0];
+
+  const variantPrice = primaryVariant ? getVariantPrice(primaryVariant) : 0;
+  const rawPrice = variantPrice > 0 ? variantPrice : (Number(product.price) || 0);
+
+  const variantOriginal = Number(primaryVariant?.original_price);
+  const rawOriginalPrice = Number.isFinite(variantOriginal) && variantOriginal > 0
+    ? variantOriginal
+    : (Number(product.original_price) || 0);
+
+  const displayPrice = rawPrice > 0 ? rawPrice : rawOriginalPrice;
+
+  // Only treat the product as discounted when both a real sale price and a
+  // real original price exist, and the original price is actually greater.
+  const hasDiscount = rawPrice > 0 && rawOriginalPrice > rawPrice;
   const discount = hasDiscount
-    ? Math.round(((product.original_price - product.price) / product.original_price) * 100)
+    ? Math.round(((rawOriginalPrice - rawPrice) / rawOriginalPrice) * 100)
     : 0;
+
+  // Cart items should carry the resolved price/unit, not stale ৳0/"piece".
+  const resolvedUnit = String(primaryVariant?.unit || (product as any).unit || "").trim();
+  const cartProduct = {
+    ...product,
+    price: displayPrice,
+    unit: resolvedUnit || (product as any).unit,
+    original_price: rawOriginalPrice || null,
+  };
 
   const wishlisted = isInWishlist(product.id);
   const compared = isInCompare(product.id);
-  const freeShipping = product.price >= FREE_SHIPPING_MIN;
+  const freeShipping = displayPrice >= FREE_SHIPPING_MIN;
   const lowStock = product.stock > 0 && product.stock <= 5;
 
   const productUrl = `${window.location.origin}/mart/product/${product.slug}`;
@@ -65,6 +131,10 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
   const ratingText = Number(product.rating || 0).toFixed(1);
   const reviewCountText = Number(product.total_reviews || 0).toLocaleString(bn ? "bn-BD" : "en-US");
   const soldCountText = Number(product.total_sold || 0).toLocaleString(bn ? "bn-BD" : "en-US");
+  // Unit label shown beside the price (e.g. "200gm", "piece"). Uses the
+  // resolved unit (first variant if present, else the product's own unit)
+  // so it always matches whichever price is actually being displayed.
+  const unitLabel = resolvedUnit;
 
   const handleAddToCart = (e?: React.MouseEvent | React.SyntheticEvent) => {
     if (e && "stopPropagation" in e) e.stopPropagation();
@@ -73,7 +143,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
       return;
     }
     haptic("medium");
-    addItem(product);
+    addItem(cartProduct);
     toast.success(bn ? "কার্টে যোগ হয়েছে" : "Added to cart", {
       description: productName,
     });
@@ -105,7 +175,9 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
       <DrawerContent className="pb-[max(1rem,env(safe-area-inset-bottom))]">
         <DrawerHeader className="text-left">
           <DrawerTitle className="text-sm font-semibold line-clamp-1">{productName}</DrawerTitle>
-          <p className="text-[11px] text-muted-foreground">৳{product.price.toLocaleString("bn-BD")}</p>
+          <p className="text-[11px] text-muted-foreground">
+            ৳{displayPrice.toLocaleString("bn-BD")}{unitLabel ? `/${unitLabel}` : ""}
+          </p>
         </DrawerHeader>
         <div className="px-4 pb-4 space-y-1">
           <ProdAction icon={<Eye className="h-4 w-4" />} label={bn ? "বিস্তারিত দেখুন" : "View details"} onClick={() => { setActionsOpen(false); navigate(`/mart/product/${product.slug}`); }} />
@@ -153,8 +225,9 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
             <span className="text-xs text-muted-foreground ml-1">| {soldCountText} {bn ? "বিক্রি" : "sold"}</span>
           </div>
           <div className="flex items-baseline gap-2 mt-1.5">
-            <span className="text-lg font-bold text-primary">৳{product.price.toLocaleString("bn-BD")}</span>
-            {hasDiscount && <span className="text-xs text-muted-foreground line-through">৳{product.original_price.toLocaleString("bn-BD")}</span>}
+            <span className="text-lg font-bold text-primary">৳{displayPrice.toLocaleString("bn-BD")}</span>
+            {unitLabel && <span className="text-xs font-medium text-muted-foreground">/{unitLabel}</span>}
+            {hasDiscount && <span className="text-xs text-muted-foreground line-through">৳{rawOriginalPrice.toLocaleString("bn-BD")}</span>}
           </div>
           {lowStock && <p className="text-[10px] text-amber-600 font-medium mt-0.5">{bn ? `মাত্র ${product.stock} টি বাকি` : `Only ${product.stock} left`}</p>}
           <div className="flex gap-2 mt-2">
@@ -240,8 +313,9 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
           <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{product.description}</p>
         )}
         <div className="flex items-baseline gap-2 mt-1.5">
-          <span className="text-lg font-bold text-primary">৳{product.price.toLocaleString("bn-BD")}</span>
-          {hasDiscount && <span className="text-xs text-muted-foreground line-through">৳{product.original_price.toLocaleString("bn-BD")}</span>}
+          <span className="text-lg font-bold text-primary">৳{displayPrice.toLocaleString("bn-BD")}</span>
+          {unitLabel && <span className="text-xs font-medium text-muted-foreground">/{unitLabel}</span>}
+          {hasDiscount && <span className="text-xs text-muted-foreground line-through">৳{rawOriginalPrice.toLocaleString("bn-BD")}</span>}
         </div>
         <div className="flex items-center justify-between mt-1">
           <div className="flex items-center gap-1">

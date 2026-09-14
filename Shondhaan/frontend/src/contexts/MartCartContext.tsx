@@ -12,14 +12,17 @@ export interface MartCartItem {
 interface MartCartContextType {
   items: MartCartItem[];
   addItem: (product: MartProduct, qty?: number) => void;
-  removeItem: (productId: string) => void;
-  updateQuantity: (productId: string, qty: number) => void;
+  removeItem: (productId: string, unit?: string | null) => void;
+  updateQuantity: (productId: string, qty: number, unit?: string | null) => void;
   clearCart: () => void;
   totalItems: number;
   subtotal: number;
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
 }
+
+const getCartKey = (product: MartProduct) => `${product.id}:${product.unit || "default"}`;
+const getItemKey = (productId: string, unit?: string | null) => `${productId}:${unit || "default"}`;
 
 const MartCartContext = createContext<MartCartContextType | undefined>(undefined);
 
@@ -52,10 +55,11 @@ export function MartCartProvider({ children }: { children: ReactNode }) {
   const addItem = useCallback((product: MartProduct, qty = 1) => {
     haptic("success");
     setItems((prev) => {
-      const existing = prev.find((i) => i.product.id === product.id);
+      const cartKey = getCartKey(product);
+      const existing = prev.find((i) => getCartKey(i.product) === cartKey);
       if (existing) {
         return prev.map((i) =>
-          i.product.id === product.id
+          getCartKey(i.product) === cartKey
             ? { ...i, quantity: Math.min(i.quantity + qty, product.stock || 99) }
             : i
         );
@@ -65,17 +69,18 @@ export function MartCartProvider({ children }: { children: ReactNode }) {
     setIsOpen(true);
   }, []);
 
-  const removeItem = useCallback((productId: string) => {
+  const removeItem = useCallback((productId: string, unit?: string | null) => {
     haptic("warning");
     setItems((prev) => {
-      const removed = prev.find((i) => i.product.id === productId);
-      const next = prev.filter((i) => i.product.id !== productId);
+      const itemKey = getItemKey(productId, unit);
+      const removed = prev.find((i) => getCartKey(i.product) === itemKey);
+      const next = prev.filter((i) => getCartKey(i.product) !== itemKey);
       if (removed) {
         toast("পণ্য সরানো হয়েছে", {
           description: removed.product.name,
           action: {
             label: "Undo",
-            onClick: () => setItems((cur) => (cur.find((c) => c.product.id === productId) ? cur : [...cur, removed])),
+            onClick: () => setItems((cur) => (cur.find((c) => getCartKey(c.product) === itemKey) ? cur : [...cur, removed])),
           },
         });
       }
@@ -83,12 +88,13 @@ export function MartCartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const updateQuantity = useCallback((productId: string, qty: number) => {
+  const updateQuantity = useCallback((productId: string, qty: number, unit?: string | null) => {
+    const itemKey = getItemKey(productId, unit);
     if (qty <= 0) {
-      setItems((prev) => prev.filter((i) => i.product.id !== productId));
+      setItems((prev) => prev.filter((i) => getCartKey(i.product) !== itemKey));
     } else {
       setItems((prev) =>
-        prev.map((i) => (i.product.id === productId ? { ...i, quantity: qty } : i))
+        prev.map((i) => (getCartKey(i.product) === itemKey ? { ...i, quantity: qty } : i))
       );
     }
   }, []);

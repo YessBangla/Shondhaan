@@ -41,6 +41,21 @@ function resolveMediaUrl(url?: string | null) {
   return url.startsWith("http") ? url : `${YESSJOB_API_BASE}${url}`;
 }
 
+function htmlToPlainText(value?: string | null) {
+  if (!value) return "";
+  const container = document.createElement("div");
+  container.innerHTML = value;
+  container.querySelectorAll("br").forEach((br) => br.replaceWith("\n"));
+  container.querySelectorAll("li").forEach((li) => {
+    li.insertBefore(document.createTextNode("• "), li.firstChild);
+    li.appendChild(document.createTextNode("\n"));
+  });
+  container.querySelectorAll("p, div").forEach((element) => {
+    element.appendChild(document.createTextNode("\n"));
+  });
+  return (container.textContent || "").replace(/\n{3,}/g, "\n\n").trim();
+}
+
 async function fetchJobsJson(path: string, init?: RequestInit) {
   const res = await fetch(`${YESSJOB_API_BASE}${path}`, {
     ...init,
@@ -1336,8 +1351,8 @@ const EmployerPanel = () => {
                       <Button variant="outline" size="sm" className="text-[10px] h-7" onClick={() => setEditJobForm({
                         id: job.id,
                         title: job.title || "",
-                        description: job.description || "",
-                        requirements: job.requirements || "",
+                        description: htmlToPlainText(job.description),
+                        requirements: htmlToPlainText(job.requirements),
                         salary_min: job.salary_min ?? "",
                         salary_max: job.salary_max ?? "",
                         vacancy_count: job.vacancy_count ?? 1,

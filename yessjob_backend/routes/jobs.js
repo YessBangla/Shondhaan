@@ -66,7 +66,7 @@ function getUserRole(user = {}) {
   return String(user.type || user.role || '').trim().toLowerCase();
 }
 
-const ADMIN_ROLES = new Set(['admin', 'super_admin']);
+const ADMIN_ROLES = new Set(['admin', 'super_admin', 'job_admin']);
 
 async function resolveCategoryId(categoryInput) {
   if (categoryInput === undefined || categoryInput === null || categoryInput === '') return null;

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
-import { createMartProduct, updateMartProduct } from "@/lib/martApi";
+import { createMartProduct, updateMartProduct, type MartProductVariant } from "@/lib/martApi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +29,13 @@ import { getFullImageUrl } from "@/lib/imageUrl";
 const API_BASE =
   import.meta.env.VITE_MART_API_BASE_URL || "";
 const MAX_GALLERY_IMAGES = 4;
+
+type UnitPriceRow = {
+  unit: string;
+  sale_price: string;
+  original_price: string;
+  stock: string;
+};
 
 interface AddProductFormProps {
   open: boolean;
@@ -83,10 +90,8 @@ const AddProductForm = ({
   const [name, setName] = useState("");
   const [nameEn, setNameEn] = useState("");
   const [description, setDescription] = useState("");
-  const [price, setPrice] = useState("");
-  const [originalPrice, setOriginalPrice] = useState("");
-  const [stock, setStock] = useState("");
   const [unit, setUnit] = useState("piece");
+  const [unitPrices, setUnitPrices] = useState<UnitPriceRow[]>([]);
   const [categoryId, setCategoryId] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isFeatured, setIsFeatured] = useState(false);
@@ -122,10 +127,17 @@ const AddProductForm = ({
         setName(editProduct.name || "");
         setNameEn(editProduct.name_en || "");
         setDescription(editProduct.description || "");
-        setPrice(String(editProduct.price || ""));
-        setOriginalPrice(String(editProduct.original_price || ""));
-        setStock(String(editProduct.stock || ""));
         setUnit(editProduct.unit || "piece");
+        setUnitPrices(
+          Array.isArray(editProduct.unit_prices)
+            ? editProduct.unit_prices.map((entry: any) => ({
+                unit: String(entry?.unit || ""),
+                sale_price: String(entry?.sale_price ?? entry?.price ?? ""),
+                original_price: String(entry?.original_price ?? ""),
+                stock: String(entry?.stock ?? ""),
+              }))
+            : [],
+        );
         setCategoryId(String(editProduct.category_id || ""));
         setSubCategoryId(String(editProduct.sub_category_id || ""));
         setIsActive(editProduct.is_active ?? true);
@@ -142,10 +154,8 @@ const AddProductForm = ({
     setName("");
     setNameEn("");
     setDescription("");
-    setPrice("");
-    setOriginalPrice("");
-    setStock("");
     setUnit("piece");
+    setUnitPrices([]);
     setCategoryId("");
     setSubCategoryId("");
     setIsActive(true);
@@ -209,7 +219,7 @@ const AddProductForm = ({
     if (remainingSlots <= 0) {
       toast.error(
         bn
-          ? "à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à§ªà¦Ÿà¦¿ à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦›à¦¬à¦¿ à¦†à¦ªà¦²à§‹à¦¡ à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡"
+          ? "à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à§ªà¦Ÿà¦¿ à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦›à¦¬à¦¿ à¦†à¦ªà¦²à§‹à¦¡ à¦•à¦°à¦¾ à¦¯à¦¾à¦¬à§‡"
           : "You can upload up to 4 gallery images",
       );
       e.target.value = "";
@@ -219,7 +229,7 @@ const AddProductForm = ({
     if (files.length > remainingSlots) {
       toast.error(
         bn
-          ? "à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à§ªà¦Ÿà¦¿ à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦›à¦¬à¦¿ à¦°à¦¾à¦–à¦¾ à¦¯à¦¾à¦¬à§‡"
+          ? "à¦¸à¦°à§à¦¬à§‹à¦šà§à¦š à§ªà¦Ÿà¦¿ à¦—à§à¦¯à¦¾à¦²à¦¾à¦°à¦¿ à¦›à¦¬à¦¿ à¦°à¦¾à¦–à¦¾ à¦¯à¦¾à¦¬à§‡"
           : "Only 4 gallery images are allowed",
       );
     }
@@ -238,6 +248,18 @@ const AddProductForm = ({
     setGalleryUrls((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const addUnitPrice = () => {
+    setUnitPrices((prev) => [...prev, { unit: "", sale_price: "", original_price: "", stock: "" }]);
+  };
+
+  const updateUnitPrice = (index: number, field: keyof UnitPriceRow, value: string) => {
+    setUnitPrices((prev) => prev.map((row, rowIndex) => rowIndex === index ? { ...row, [field]: value } : row));
+  };
+
+  const removeUnitPrice = (index: number) => {
+    setUnitPrices((prev) => prev.filter((_, rowIndex) => rowIndex !== index));
+  };
+
   // Add these:
   const filteredSubCategories = categoryId
     ? subCategories.filter(
@@ -246,8 +268,8 @@ const AddProductForm = ({
     : [];
 
   const handleSubmit = async () => {
-    if (!name.trim() || !price) {
-      toast.error(bn ? "পণ্যের নাম ও মূল্য আবশ্যক" : "Name and price required");
+    if (!name.trim() || unitPrices.length === 0) {
+      toast.error(bn ? "পণ্যের নাম ও অন্তত একটি ভ্যারিয়েন্ট আবশ্যক" : "Name and at least one variant are required");
       return;
     }
     if (!user) return;
@@ -257,8 +279,18 @@ const AddProductForm = ({
     }
 
     setSaving(true);
-    const salePrice = parseFloat(price);
-    const original = originalPrice ? parseFloat(originalPrice) : null;
+    const normalizedUnitPrices: MartProductVariant[] = unitPrices.map((row) => ({
+      unit: row.unit.trim(),
+      sale_price: Number(row.sale_price),
+      original_price: row.original_price ? Number(row.original_price) : null,
+      stock: Number(row.stock),
+    }));
+
+    if (normalizedUnitPrices.some((row) => !row.unit || !Number.isFinite(row.sale_price) || row.sale_price < 0 || !Number.isInteger(row.stock) || row.stock < 0)) {
+      toast.error(bn ? "প্রতিটি ভ্যারিয়েন্টের নাম, মূল্য ও স্টক দিন" : "Enter a name, price, and stock for every variant");
+      setSaving(false);
+      return;
+    }
 
     // DEBUG: verify payload fields that affect listing visibility
     console.log("[Mart AddProductForm] submit payload:", {
@@ -267,9 +299,7 @@ const AddProductForm = ({
       sub_category_id: subCategoryId ? Number(subCategoryId) : null,
       name_bn: name.trim(),
       status: isActive ? "active" : "inactive",
-      sale_price: salePrice,
-      original_price: original,
-      stock: stock ? parseInt(stock) : 0,
+      unit_prices: normalizedUnitPrices,
       unit,
       featured: isFeatured ? 1 : 0,
     });
@@ -283,14 +313,12 @@ const AddProductForm = ({
       name_bn: name.trim(),
       name_en: nameEn.trim() || null,
       description: description.trim() || null,
-      sale_price: salePrice,
-      original_price: original,
-      stock: stock ? parseInt(stock) : 0,
+      unit_prices: normalizedUnitPrices,
       status: isActive ? "active" : "inactive",
       unit,
       featured: isFeatured ? 1 : 0,
       sold_qty: editProduct?.sold_qty ?? editProduct?.total_sold ?? 0,
-      discount: original && original > salePrice ? original - salePrice : 0,
+      discount: 0,
       is_freedelivery: editProduct?.is_freedelivery ? 1 : 0,
     };
 
@@ -505,7 +533,7 @@ const AddProductForm = ({
                     const desc = await generateMartDescription(
                       name,
                       categoryName,
-                      price,
+                      "",
                     );
                     if (desc) setDescription(desc);
                   }}
@@ -530,66 +558,87 @@ const AddProductForm = ({
             />
           </div>
 
-          {/* Pricing */}
           <Card className="border-border/50">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">
-                {bn ? "💰 মূল্য নির্ধারণ" : "💰 Pricing"}
-              </CardTitle>
+            <CardHeader className="flex flex-row items-center justify-between pb-3">
+              <CardTitle className="text-sm">{bn ? "বিভিন্ন এককের মূল্য" : "Multiple unit prices"}</CardTitle>
+              <Button type="button" variant="outline" size="sm" onClick={addUnitPrice}>
+                + {bn ? "একক যোগ করুন" : "Add unit"}
+              </Button>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                <div>
-                  <Label className="text-xs">
-                    {bn ? "বিক্রয় মূল্য (৳) *" : "Sale Price (৳) *"}
-                  </Label>
-                  <Input
-                    type="number"
-                    value={price}
-                    onChange={(e) => setPrice(e.target.value)}
-                    placeholder="0"
-                    className="mt-1"
-                    min="0"
-                  />
+            <CardContent className="space-y-3">
+              {unitPrices.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  {bn ? "যেমন: 100 gm, 300 gm এবং প্রতিটির মূল্য ও স্টক লিখুন" : "Add entries such as 100 gm or 300 gm with their price and stock."}
+                </p>
+              )}
+              {unitPrices.map((row, index) => {
+                const unitLabel = row.unit.trim();
+                return (
+                <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2 items-end">
+                  <div>
+                    <Label className="text-xs">{bn ? "এককের পরিমাণ" : "Unit amount"}</Label>
+                    <Input value={row.unit} onChange={(e) => updateUnitPrice(index, "unit", e.target.value)} placeholder="100 gm" className="mt-1" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">{bn ? "বিক্রয় মূল্য" : "Sale price"}</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={row.sale_price}
+                        onChange={(e) => updateUnitPrice(index, "sale_price", e.target.value)}
+                        placeholder="0"
+                        className={unitLabel ? "pr-16" : ""}
+                      />
+                      {unitLabel && (
+                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 max-w-[60px] truncate text-[11px] text-muted-foreground">
+                          /{unitLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{bn ? "আসল মূল্য" : "Original price"}</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={row.original_price}
+                        onChange={(e) => updateUnitPrice(index, "original_price", e.target.value)}
+                        placeholder="Optional"
+                        className={unitLabel ? "pr-16" : ""}
+                      />
+                      {unitLabel && (
+                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 max-w-[60px] truncate text-[11px] text-muted-foreground">
+                          /{unitLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <Label className="text-xs">{bn ? "স্টক" : "Stock"}</Label>
+                    <div className="relative mt-1">
+                      <Input
+                        type="number"
+                        min="0"
+                        value={row.stock}
+                        onChange={(e) => updateUnitPrice(index, "stock", e.target.value)}
+                        placeholder="0"
+                        className={unitLabel ? "pr-16" : ""}
+                      />
+                      {unitLabel && (
+                        <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 max-w-[60px] truncate text-[11px] text-muted-foreground">
+                          {unitLabel}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                  <Button type="button" variant="ghost" size="icon" onClick={() => removeUnitPrice(index)} aria-label={bn ? "একক মুছুন" : "Remove unit"}>
+                    <X className="h-4 w-4" />
+                  </Button>
                 </div>
-                <div>
-                  <Label className="text-xs">
-                    {bn ? "আসল মূল্য (৳)" : "Original Price (৳)"}
-                  </Label>
-                  <Input
-                    type="number"
-                    value={originalPrice}
-                    onChange={(e) => setOriginalPrice(e.target.value)}
-                    placeholder="0"
-                    className="mt-1"
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs">{bn ? "স্টক" : "Stock"}</Label>
-                  <Input
-                    type="number"
-                    value={stock}
-                    onChange={(e) => setStock(e.target.value)}
-                    placeholder="0"
-                    className="mt-1"
-                    min="0"
-                  />
-                </div>
-              </div>
-              {originalPrice &&
-                price &&
-                parseFloat(originalPrice) > parseFloat(price) && (
-                  <p className="text-xs text-green-600 mt-2">
-                    💸 {bn ? "ছাড়:" : "Discount:"}{" "}
-                    {Math.round(
-                      ((parseFloat(originalPrice) - parseFloat(price)) /
-                        parseFloat(originalPrice)) *
-                        100,
-                    )}
-                    %
-                  </p>
-                )}
+                );
+              })}
             </CardContent>
           </Card>
 
@@ -621,7 +670,15 @@ const AddProductForm = ({
 
             <div>
               <Label>{bn ? "একক" : "Unit"}</Label>
-              <Select value={unit} onValueChange={setUnit}>
+              <Select
+                value={unit}
+                onValueChange={(value) => {
+                  setUnit(value);
+                  if (value === "gram" && unitPrices.length === 0) {
+                    setUnitPrices([{ unit: "100 gm", sale_price: "", original_price: "", stock: "" }]);
+                  }
+                }}
+              >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
                 </SelectTrigger>

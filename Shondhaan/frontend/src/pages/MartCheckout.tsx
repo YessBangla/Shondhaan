@@ -423,6 +423,7 @@ const MartCheckout = () => {
           quantity: item.quantity,
           unit_price: item.product.price,
           total_price: item.product.price * item.quantity,
+          unit: item.product.unit,
           vendor_id: item.product.vendor_id ?? item.product.seller_id ?? null,
         })),
         save_address: !!(saveAddress && showNewAddress),
@@ -613,21 +614,22 @@ const MartCheckout = () => {
             <div className="md:col-span-2 space-y-4">
               {step === "cart" ? (
                 <>
-                  {items.map((item) => (
-                      <div key={item.product.id} className="flex gap-3 bg-card rounded-xl border border-border/50 p-3">
+                    {items.map((item) => (
+                      <div key={`${item.product.id}-${item.product.unit || "default"}`} className="flex gap-3 bg-card rounded-xl border border-border/50 p-3">
                         <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted/30 shrink-0 cursor-pointer" onClick={() => navigate(`/mart/product/${item.product.slug}`)}>
                           {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium line-clamp-2">{bn ? item.product.name : (item.product.name_en || item.product.name)}</h3>
+                          {item.product.unit && <p className="text-xs text-muted-foreground mt-0.5">{item.product.unit}</p>}
                           <p className="text-primary font-bold mt-1">৳{item.product.price.toLocaleString("bn-BD")}</p>
                           <div className="flex items-center gap-2 mt-1">
                             <div className="flex items-center border border-border rounded">
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, item.quantity - 1)}><Minus className="h-3 w-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, item.quantity - 1, item.product.unit)}><Minus className="h-3 w-3" /></Button>
                               <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
-                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, item.quantity + 1)}><Plus className="h-3 w-3" /></Button>
+                              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => updateQuantity(item.product.id, item.quantity + 1, item.product.unit)}><Plus className="h-3 w-3" /></Button>
                             </div>
-                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItem(item.product.id)}><Trash2 className="h-3 w-3" /></Button>
+                            <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => removeItem(item.product.id, item.product.unit)}><Trash2 className="h-3 w-3" /></Button>
                           </div>
                         </div>
                         <p className="text-sm font-bold shrink-0">৳{(item.product.price * item.quantity).toLocaleString("bn-BD")}</p>
