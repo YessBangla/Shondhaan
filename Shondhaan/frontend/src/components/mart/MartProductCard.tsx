@@ -16,7 +16,7 @@ import { useLongPress } from "@/hooks/useLongPress";
 import { haptic } from "@/lib/haptics";
 import { getFullImageUrl } from "@/lib/imageUrl";
 import { toast } from "sonner";
-import yessMartLogo from "@/assets/yess-mart-logo.png";
+import yessMartLogo from "/fullLogo.png";
 
 // ── Variant price helpers (mirrors the logic used on the product detail
 // page) ──────────────────────────────────────────────────────────────────
@@ -265,7 +265,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
     >
       <div className="relative aspect-square bg-muted/30 overflow-hidden">
         {product.image_url ? (
-          <img src={getFullImageUrl(product.image_url)} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
+          <img src={getFullImageUrl(product.image_url)} alt={product.name} className="w-auto mx-auto h-full group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-muted-foreground"><ShoppingCart className="h-10 w-10" /></div>
         )}
@@ -273,7 +273,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
           src={yessMartLogo}
           alt=""
           aria-hidden="true"
-          className="pointer-events-none absolute bottom-2 right-2 h-7 md:h-8 w-auto opacity-60 mix-blend-multiply drop-shadow-md"
+          className="pointer-events-none absolute bottom-6 right-2 h-7 md:h-5 w-auto opacity-60 mix-blend-multiply drop-shadow-md"
         />
         {hasDiscount && <Badge className="absolute top-2 left-2 bg-red-500 text-white text-[10px] font-bold">-{discount}%</Badge>}
         {product.is_featured && (
@@ -282,7 +282,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
           </Badge>
         )}
         {freeShipping && (
-          <Badge className="absolute bottom-2 left-2 bg-green-500 text-white text-[9px] px-1.5 gap-0.5">
+          <Badge className="absolute bottom-2 left-2 bg-gradient-to-tr from-pink-500 via-red-500 to-amber-500 text-white text-[9px] px-1.5 gap-0.5">
             <Truck className="h-3 w-3" /> {bn ? "ফ্রি ডেলিভারি" : "Free"}
           </Badge>
         )}
@@ -306,14 +306,14 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
         />
       </div>
       <div className="p-3">
-        <h3 className="text-sm font-medium line-clamp-2 text-foreground group-hover:text-primary transition-colors min-h-[2.5rem]">
+        <h3 className="text-lg font-bold line-clamp-2 text-primary group-hover:text-primary transition-colors min-h-[2.5rem]">
           {bn ? product.name : (product.name_en || product.name)}
         </h3>
         {product.description && (
           <p className="text-[10px] text-muted-foreground line-clamp-2 mt-0.5">{product.description}</p>
         )}
         <div className="flex items-baseline gap-2 mt-1.5">
-          <span className="text-lg font-bold text-primary">৳{displayPrice.toLocaleString("bn-BD")}</span>
+          <span className="text-lg text-primary">৳{displayPrice.toLocaleString("bn-BD")}</span>
           {unitLabel && <span className="text-xs font-medium text-muted-foreground">/{unitLabel}</span>}
           {hasDiscount && <span className="text-xs text-muted-foreground line-through">৳{rawOriginalPrice.toLocaleString("bn-BD")}</span>}
         </div>

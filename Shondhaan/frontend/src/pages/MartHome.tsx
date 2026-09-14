@@ -265,8 +265,8 @@ const CategoryCarousel = ({
               >
                 {/* Circular illustrated avatar */}
                 <div
-                  className="h-[76px] w-[76px] rounded-full flex items-center justify-center shrink-0 overflow-hidden shadow-sm group-hover:shadow-md group-hover:-translate-y-0.5 transition-all duration-200"
-                  style={{ background: getCategoryColor(cat.name || "") }}
+                  className="h-[76px] w-[76px] rounded-full flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
+                  // style={{ background: getCategoryColor(cat.name || "") }}
                 >
                   {isHttpImg ? (
                     <img

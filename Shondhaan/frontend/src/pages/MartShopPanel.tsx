@@ -185,7 +185,7 @@ const MartShopPanel = () => {
               <div className="rounded-xl bg-primary/10 p-3"><Store className="h-6 w-6 text-primary" /></div>
               <div>
                 <h1 className="text-xl font-bold text-foreground">{bn ? "আপনার শপ খুলুন" : "Open Your Shop"}</h1>
-                <p className="text-sm text-muted-foreground">{bn ? "দারাজের মতো নিজের শপ তৈরি করুন" : "Create your own shop like Daraz"}</p>
+                <p className="text-sm text-muted-foreground">{bn ? "আপনার নিজের শপ তৈরি করে পন্য বিক্রি করুন" : "Create your own shop like Daraz"}</p>
               </div>
             </div>
             <div className="space-y-4">
