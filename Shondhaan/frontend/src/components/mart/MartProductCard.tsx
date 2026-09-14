@@ -259,7 +259,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
     <>
     <motion.div
       whileHover={{ y: -4 }}
-      className="bg-card border border-border/50 rounded-xl overflow-hidden cursor-pointer group transition-shadow hover:shadow-lg select-none md:select-auto"
+      className="h-full flex flex-col bg-card border border-border/50 rounded-xl overflow-hidden cursor-pointer group transition-shadow hover:shadow-lg select-none md:select-auto"
       onClick={() => navigate(`/mart/product/${product.slug}`)}
       {...longPress}
     >
@@ -305,7 +305,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
           iconClassName="h-3.5 w-3.5"
         />
       </div>
-      <div className="p-3">
+      <div className="flex flex-1 flex-col p-3">
         <h3 className="text-lg font-bold line-clamp-2 text-primary group-hover:text-primary transition-colors min-h-[2.5rem]">
           {bn ? product.name : (product.name_en || product.name)}
         </h3>
@@ -326,7 +326,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
         </div>
         <Button
           size="sm"
-          className="press w-full mt-2 text-xs h-9 text-white disabled:opacity-50"
+          className="press w-full mt-auto pt-2 text-xs h-9 text-white disabled:opacity-50"
           disabled={product.stock <= 0}
           onClick={handleAddToCart}
           aria-label={bn ? "কার্টে যোগ করুন" : "Add to cart"}
