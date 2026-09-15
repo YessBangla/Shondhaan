@@ -147,6 +147,24 @@ export const ensurePlatformFeeSchema = () => {
           }
         }
       }
+
+      // New bookings use the database-generated numeric primary key. Existing
+      // UUID rows are left untouched so this startup migration never destroys
+      // booking history; convert an empty legacy table automatically.
+      try {
+        const [idColumns] = await pool.query("SHOW COLUMNS FROM bookings LIKE 'id'");
+        const idType = String(idColumns[0]?.Type || "").toLowerCase();
+        if (idType && !idType.includes("int")) {
+          const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM bookings");
+          if (Number(countRows[0]?.total || 0) === 0) {
+            await pool.query("ALTER TABLE bookings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT");
+          } else {
+            console.warn("Bookings table still has UUID IDs. Migrate existing bookings before creating numeric IDs.");
+          }
+        }
+      } catch (err) {
+        console.error("Error ensuring bookings.id numeric auto-increment:", err.message);
+      }
     })().catch((error) => {
       platformFeeSchemaPromise = null;
       throw error;

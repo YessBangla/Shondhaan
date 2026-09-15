@@ -436,7 +436,7 @@ const ServiceStaffChatInbox = () => {
                     {/* Avatar */}
                     <div className="relative shrink-0">
                       <div
-                        className="h-11 w-11 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md"
+                        className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md"
                         style={getAvatarStyle(conv.id)}
                       >
                         {getInitial(conv.user_name || "Visitor")}

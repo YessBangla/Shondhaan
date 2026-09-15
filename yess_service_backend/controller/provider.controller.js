@@ -1,4 +1,4 @@
-import { ensureProviderSchema, pool } from "../config/db.js";
+import { ensureProviderSchema, pool, centralPool } from "../config/db.js";
 import fs from "node:fs/promises";
 import path from "node:path";
 
@@ -209,6 +209,9 @@ export const getProviders = async (req, res) => {
       service_category,
       search,
       user_ids,
+      district,
+      thana,
+      limit,
     } = req.query;
 
     let query = `SELECT ${selectProviderColumns}, district AS provider_district FROM ${PROVIDER_TABLE} WHERE 1 = 1`;
@@ -221,15 +224,51 @@ export const getProviders = async (req, res) => {
     }
 
     if (service_category) {
-      query += ` AND service_category = ?`;
-      values.push(service_category);
+      query += ` AND (
+        service_category = ?
+        OR services LIKE ?
+        OR EXISTS (
+          SELECT 1 FROM service_categories sc
+          WHERE (sc.name = ? OR sc.name_en = ?)
+            AND (providers.service_category = sc.id OR providers.services LIKE CONCAT('%', sc.id, '%'))
+        )
+      )`;
+      values.push(service_category, `%${service_category}%`, service_category, service_category);
     }
 
-    const matchingUserIds = String(user_ids || "")
+    if (district) {
+      query += ` AND district = ?`;
+      values.push(district);
+    }
+
+    if (thana) {
+      query += ` AND thana LIKE ?`;
+      values.push(`%${thana}%`);
+    }
+
+    let matchingUserIds = String(user_ids || "")
       .split(",")
       .map((id) => id.trim())
       .filter(Boolean)
       .slice(0, 500);
+
+    if (search) {
+      try {
+        const like = `%${search}%`;
+        const [matchingUsers] = await centralPool.execute(
+          `SELECT id FROM users
+           WHERE name LIKE ? OR mobile LIKE ? OR email LIKE ? OR address LIKE ? OR shondhaan_id LIKE ?
+           LIMIT 500`,
+          [like, like, like, like, like]
+        );
+        matchingUserIds = [...new Set([
+          ...matchingUserIds,
+          ...matchingUsers.map((user) => String(user.id)),
+        ])].slice(0, 500);
+      } catch (error) {
+        console.warn("Could not search central user data for providers:", error.message);
+      }
+    }
 
     if (search || matchingUserIds.length) {
       const searchConditions = [];
@@ -241,10 +280,21 @@ export const getProviders = async (req, res) => {
           "phone LIKE ?",
           "email LIKE ?",
           "address LIKE ?",
-          "service_category LIKE ?"
+          "service_category LIKE ?",
+          "services LIKE ?",
+          "division LIKE ?",
+          "district LIKE ?",
+          "thana LIKE ?",
+          "area LIKE ?",
+          `EXISTS (
+            SELECT 1 FROM service_categories sc
+            WHERE (sc.name LIKE ? OR sc.name_en LIKE ?)
+              AND (providers.service_category = sc.id
+                OR providers.services LIKE CONCAT('%', sc.id, '%')))
+          )`
         );
         const like = `%${search}%`;
-        searchValues.push(like, like, like, like, like);
+        searchValues.push(like, like, like, like, like, like, like, like, like, like, like, like);
       }
 
       if (matchingUserIds.length) {
@@ -262,9 +312,32 @@ export const getProviders = async (req, res) => {
       ORDER BY created_at DESC
     `;
 
+    const requestedLimit = Number.parseInt(String(limit || ""), 10);
+    if (Number.isFinite(requestedLimit) && requestedLimit > 0) {
+      query += ` LIMIT ?`;
+      values.push(Math.min(requestedLimit, 10));
+    }
+
     const [rows] = await pool.execute(query, values);
 
-const getServiceNames = async (providers) => {
+    const userIds = rows.map((provider) => String(provider.user_id || "")).filter(Boolean);
+    let userMap = new Map();
+    if (userIds.length) {
+      try {
+        const placeholders = userIds.map(() => "?").join(",");
+        const [userRows] = await centralPool.execute(
+          `SELECT u.id, u.shondhaan_id, u.name, u.mobile, u.email, u.address, up.profile_image
+           FROM users u LEFT JOIN user_profiles up ON up.user_id = u.id
+           WHERE u.id IN (${placeholders})`,
+          userIds
+        );
+        userMap = new Map(userRows.map((user) => [String(user.id), user]));
+      } catch (error) {
+        console.warn("Could not enrich providers with central user data:", error.message);
+      }
+    }
+
+    const getServiceNames = async (providers) => {
   const [categoryRows] = await pool.execute(
     "SELECT id, name, name_en FROM service_categories"
   );
@@ -274,6 +347,7 @@ const getServiceNames = async (providers) => {
 
   return providers.map((provider) => ({
     ...formatProvider(provider),
+    ...(userMap.get(String(provider.user_id)) || {}),
     service_names: parseArrayValue(provider.services).map((serviceId) => {
       const category = categoryMap.get(String(serviceId));
       return category?.name_en || category?.name || String(serviceId);
