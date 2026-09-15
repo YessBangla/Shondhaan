@@ -20,7 +20,7 @@ const CategoryFilterDropdown = ({ value, onChange, className }: CategoryFilterDr
 
   return (
     <div className={`flex items-center gap-2 ${className || ""}`}>
-      <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+      <Filter className="h-3.5 w-3.5 text-userprimary shrink-0" />
       <select
         value={value}
         onChange={(e) => onChange(e.target.value)}
