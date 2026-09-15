@@ -5,7 +5,7 @@ import {
   ChevronLeft, Search, User, Phone, MapPin, Calendar, Clock,
   Plus, RefreshCw, FileText, ClipboardList, Headphones, Loader2,
   Zap, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart,
-  AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X,
+  AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X, Mail,
   type LucideIcon,
   UserRound,
   UserPlus,
@@ -56,7 +56,7 @@ interface Provider {
   thana?: string[] | null;
   area?: string | null;
   services?: string[] | null;
-    service_names?: string[] | null;
+  service_names?: string[] | null;
   service_category?: string | null;
   experience_years?: number | null;
   nid_front_url?: string | null;
@@ -87,9 +87,13 @@ interface ServiceRequest {
 
 interface Profile {
   user_id: string;
+  shondhaan_id: string | null;
   display_name: string | null;
   phone: string | null;
   address: string | null;
+  email: string | null;
+  profile_image: string | null;
+  created_at: string | null;
 }
 
 const bookingStatusOptions = [
@@ -113,6 +117,11 @@ const CENTRAL_API_URL = CENTRAL_API_BASE_URL.replace(/\/+$/, "");
 const getProviderAssetUrl = (value?: string | null) => {
   if (!value) return "";
   return /^https?:\/\//i.test(value) ? value : `${API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+};
+
+const getProfileImageUrl = (image?: string | null) => {
+  if (!image) return "";
+  return /^https?:\/\//i.test(image) ? image : `${CENTRAL_API_URL}${image.startsWith("/") ? image : `/${image}`}`;
 };
 
 const getAuthHeaders = () => {
@@ -152,9 +161,13 @@ const fetchOptionalArray = async <T,>(url: string): Promise<T[]> => {
 
 const normalizeUserToProfile = (item: any): Profile => ({
   user_id: String(item.id ?? item.user_id ?? ""),
+  shondhaan_id: item.shondhaan_id ?? item.shondhaanId ?? item.customer_id ?? null,
   display_name: item.name ?? item.display_name ?? item.full_name ?? item.username ?? null,
   phone: item.mobile ?? item.phone ?? item.phoneNumber ?? null,
   address: item.address ?? item.location ?? null,
+  email: item.email ?? null,
+  profile_image: item.profile_image ?? item.profile_photo ?? item.avatar ?? item.image_url ?? null,
+  created_at: item.created_at ?? item.createdAt ?? item.registered_at ?? null,
 });
 
 type ProviderFormValues = {
@@ -245,7 +258,6 @@ const CallCenterPanel = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [reqStatusFilter, setReqStatusFilter] = useState("all");
   const { data: serviceCategoryMap } = useServiceCategoryMap();
   const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
   const form = useForm<ProviderFormValues>({
@@ -928,10 +940,12 @@ const CallCenterPanel = () => {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  // Filtered requests
-  const filteredRequests = reqStatusFilter === "all"
-    ? requests
-    : requests.filter((r) => r.status === reqStatusFilter);
+  const getRequestStatus = (request: ServiceRequest) => request.status || "pending";
+
+  // Service request tab shows pending requests only.
+  const filteredRequests = requests
+    .filter((r) => getRequestStatus(r) === "pending")
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
   if (loading) {
     return (
@@ -1012,24 +1026,45 @@ const CallCenterPanel = () => {
                         <p className="text-xs text-slate-500 font-medium">{searchResults.length} {bn ? "টি ফলাফল পাওয়া গেছে" : "results found"}</p>
                         {searchResults.map((p) => {
                           const customerBookings = bookings.filter((b) => b.user_id === p.user_id);
+                          const profileImageUrl = getProfileImageUrl(p.profile_image);
                           return (
                             <div key={p.user_id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
                               <div className="flex items-start gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-600 shrink-0">
-                                  <User className="h-5 w-5" />
-                                </div>
+                                {profileImageUrl ? (
+                                  <img
+                                    src={profileImageUrl}
+                                    alt={p.display_name || "Customer"}
+                                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-600 shrink-0">
+                                    <User className="h-5 w-5" />
+                                  </div>
+                                )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-900">{p.display_name || "—"}</p>
-                                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                    <Phone className="h-3 w-3" />
-                                    {p.phone || "—"}
+                                  <p className="text-xl font-medium text-slate-900">{p.display_name || "—"}</p>
+                                  <div className="mt-2 flex flex-col items-start gap-1">
+                                    <span className="text-xs bg-userprimaryshade border px-3 py-1 rounded-full border-userprimary text-black font-semibold flex items-center gap-1">
+                                      <IdCard className="h-3 w-3 shrink-0" />
+                                      {bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {p.shondhaan_id || "—"}
+                                    </span>
+                                    <span className="text-sm text-slate-900 flex items-center gap-1">
+                                      <Phone className="h-3 w-3 shrink-0" />
+                                      {p.phone || "—"}
+                                    </span>
+                                    <span className="text-sm text-slate-900 flex items-center gap-1">
+                                      <Mail className="h-3 w-3 shrink-0" />
+                                      {p.email || "—"}
+                                    </span>
+                                    <span className="text-xs text-slate-600 flex items-center gap-1">
+                                      <Calendar className="h-3 w-3 shrink-0" />
+                                        {bn ? "তৈরি" : "Created"}: {p.created_at ? new Date(p.created_at).toLocaleDateString(bn ? "bn-BD" : "en-US") : "—"}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-600 flex items-start gap-1 mt-1.5">
+                                    <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                                    <span>{p.address || "—"}</span>
                                   </p>
-                                  {p.address && (
-                                    <p className="text-xs text-slate-500 flex items-start gap-1 mt-1">
-                                      <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
-                                      <span>{p.address}</span>
-                                    </p>
-                                  )}
                                 </div>
                               </div>
                               {customerBookings.length > 0 && (
@@ -1091,7 +1126,7 @@ const CallCenterPanel = () => {
                           className={`rounded-lg border p-3 text-left transition-all ${filterStatus === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
                         >
                           <p className="text-lg font-semibold text-slate-900">{bookings.filter((b) => b.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
+                          <span className={`mt-1 text-[11px] px-2 rounded-full font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</span>
                         </button>
                       ))}
                     </div>
@@ -1219,7 +1254,7 @@ const CallCenterPanel = () => {
                               setShowRegisterUser(!showRegisterUser);
                               setRegisterStep("details");
                             }}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                            className="text-sm font-medium text-userprimary hover:bg-userprimary px-2 py-1 rounded-full hover:text-white transition-colors"
                           >
                             {showRegisterUser ? "← সার্চে ফিরুন" : "+ নতুন গ্রাহক রেজিস্টার করুন"}
                           </button>
@@ -1241,31 +1276,45 @@ const CallCenterPanel = () => {
 
                           {searchResults.length > 0 && (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                              {searchResults.map((p) => (
-                                <button
-                                  key={p.user_id}
-                                  type="button"
-                                  onClick={() => {
-                                    setNewBooking((prev) => ({
-                                      ...prev,
-                                      user_id: p.user_id,
-                                      customer_name: p.display_name || "",
-                                      customer_phone: p.phone || "",
-                                      customer_address: p.address || "",
-                                    }));
-                                    setSearchQuery("");
-                                    setSearchResults([]);
-                                    toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
-                                  }}
-                                  className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
-                                >
-                                  <User className="h-4 w-4 text-slate-400 shrink-0" />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
-                                    <p className="text-[11px] text-slate-500 truncate">{p.phone}</p>
-                                  </div>
-                                </button>
-                              ))}
+                              {searchResults.map((p) => {
+                                const profileImageUrl = getProfileImageUrl(p.profile_image);
+                                return (
+                                  <button
+                                    key={p.user_id}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewBooking((prev) => ({
+                                        ...prev,
+                                        user_id: p.user_id,
+                                        customer_name: p.display_name || "",
+                                        customer_phone: p.phone || "",
+                                        customer_address: p.address || "",
+                                      }));
+                                      setSearchQuery("");
+                                      setSearchResults([]);
+                                      toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
+                                    }}
+                                    className="w-full flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
+                                  >
+                                    {profileImageUrl ? (
+                                      <img src={profileImageUrl} alt={p.display_name || "Customer"} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                                    ) : (
+                                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                                        <User className="h-4 w-4" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
+                                      <span className="text-[11px] text-slate-900 truncate">{bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {p.shondhaan_id || "—"}</span>
+                                      <p className="text-[11px] text-slate-900 truncate">{p.phone || "—"} • {p.email || "—"}</p>
+                                      <p className="text-[11px] text-slate-600 truncate">{p.address || "—"}</p>
+                                      <p className="text-[11px] text-slate-600 truncate">
+                                        {bn ? "তৈরি" : "Created"}: {p.created_at ? new Date(p.created_at).toLocaleDateString(bn ? "bn-BD" : "en-US") : "—"}
+                                      </p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
@@ -1917,7 +1966,7 @@ const CallCenterPanel = () => {
                                   <th className="px-4 py-3 font-bold">{bn ? "এন-আই-ডি" : "NID"}</th>
                                   <th className="px-4 py-3 font-bold">{bn ? "রেজিস্ট্রেশন ডেইট" : "Registration Date"}</th>
                                   <th className="px-4 py-3 font-bold">{bn ? "স্ট্যাটাস" : "Status"}</th>
-                                  <th className="sticky right-0 z-10 bg-userprimaryshade px-4 py-3 font-bold">{bn ? "অ্যাকশন" : "Action"}</th>
+                                  <th className="sticky right-0 z-10 bg-gray-300 text-black px-4 py-3 font-bold">{bn ? "অ্যাকশন" : "Action"}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -2050,25 +2099,11 @@ const CallCenterPanel = () => {
                       </button>
                     </div>
 
-                    {/* Status Filters */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-5">
-                      <button
-                        onClick={() => setReqStatusFilter("all")}
-                        className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === "all" ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                      >
-                        <p className="text-lg font-semibold">{requests.length}</p>
-                        <p className="text-[11px] font-medium">{bn ? "সব" : "All"}</p>
-                      </button>
-                      {requestStatusOptions.map((s) => (
-                        <button
-                          key={s.value}
-                          onClick={() => setReqStatusFilter(reqStatusFilter === s.value ? "all" : s.value)}
-                          className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
-                        >
-                          <p className="text-lg font-semibold text-slate-900">{requests.filter((r) => r.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
-                        </button>
-                      ))}
+                    <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
+                      <p className="text-lg font-semibold text-amber-800">{filteredRequests.length}</p>
+                      <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                        {bn ? "পেন্ডিং সার্ভিস অনুরোধ" : "Pending service requests"}
+                      </span>
                     </div>
 
                     {/* Requests List */}
@@ -2080,7 +2115,8 @@ const CallCenterPanel = () => {
                         </div>
                       ) : (
                         filteredRequests.map((req, i) => {
-                          const s = requestStatusOptions.find((o) => o.value === req.status) || requestStatusOptions[0];
+                          const requestStatus = getRequestStatus(req);
+                          const s = requestStatusOptions.find((o) => o.value === requestStatus) || requestStatusOptions[0];
                           return (
                             <motion.div
                               key={req.id}
@@ -2101,7 +2137,7 @@ const CallCenterPanel = () => {
                                   </p>
                                 </div>
                                 <select
-                                  value={req.status}
+                                  value={requestStatus}
                                   onChange={(e) => updateRequestStatus(req.id, e.target.value)}
                                   disabled={updatingId === req.id}
                                   className={`rounded-lg border px-2 py-1.5 text-xs font-medium outline-none ${s.className} disabled:opacity-50 shrink-0`}
