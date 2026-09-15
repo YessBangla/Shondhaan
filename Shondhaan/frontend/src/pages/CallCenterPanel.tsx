@@ -267,6 +267,7 @@ const CallCenterPanel = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
   const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingPage, setBookingPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [providerPickerBookingId, setProviderPickerBookingId] = useState<string | null>(null);
   const [providerPickerSearch, setProviderPickerSearch] = useState("");
@@ -1004,6 +1005,13 @@ const CallCenterPanel = () => {
     if (a.is_emergency !== b.is_emergency) return a.is_emergency ? -1 : 1;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+  const bookingsPerPage = 10;
+  const bookingPageCount = Math.max(1, Math.ceil(sortedBookings.length / bookingsPerPage));
+  const paginatedBookings = sortedBookings.slice((bookingPage - 1) * bookingsPerPage, bookingPage * bookingsPerPage);
+
+  useEffect(() => {
+    setBookingPage(1);
+  }, [filterStatus, filterCategory, bookingSearch, sortedBookings.length]);
 
   const normalizeSearchValue = (value: unknown) => String(value || "").toLowerCase().trim();
   const toProviderValueArray = (value: unknown): unknown[] => {
@@ -1306,7 +1314,7 @@ const CallCenterPanel = () => {
                           <p className="text-sm text-slate-500">{bn ? "কোনো বুকিং নেই" : "No bookings found"}</p>
                         </div>
                       ) : (
-                        sortedBookings.map((b, i) => {
+                        paginatedBookings.map((b, i) => {
                           const s = bookingStatusOptions.find((o) => o.value === b.status) || bookingStatusOptions[0];
                           const assignedProvider = providers.find((provider) => String(provider.id) === String(b.provider_id));
                           const assignedProviderServices = assignedProvider ? getProviderCategories(assignedProvider) : [];
@@ -1318,7 +1326,7 @@ const CallCenterPanel = () => {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.03 }}
                               className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:shadow-md transition-shadow"
-                            >
+                              >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1549,6 +1557,29 @@ const CallCenterPanel = () => {
                         })
                       )}
                     </div>
+                    {sortedBookings.length > bookingsPerPage && (
+                      <div className="mt-5 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => setBookingPage((page) => Math.max(1, page - 1))}
+                          disabled={bookingPage === 1}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {bn ? "পূর্ববর্তী" : "Previous"}
+                        </button>
+                        <span className="text-xs font-medium text-slate-500">
+                          {bn ? `পৃষ্ঠা ${bookingPage} / ${bookingPageCount}` : `Page ${bookingPage} of ${bookingPageCount}`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBookingPage((page) => Math.min(bookingPageCount, page + 1))}
+                          disabled={bookingPage === bookingPageCount}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {bn ? "পরবর্তী" : "Next"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
 
