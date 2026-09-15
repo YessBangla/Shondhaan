@@ -186,6 +186,7 @@ const ADMIN_NAV: NavGroup[] = [
       { to: "/admin/mart-management?tab=rewards", label: "Mart Rewards", icon: <Coins className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=products", label: "Products", icon: <Package className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=vendors", label: "Vendors", icon: <Store className="h-4 w-4" /> },
+      { to: "/admin/mart-management?tab=sellers", label: "Sellers", icon: <Users className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=package", label: "Packages", icon: <Package className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=wallet", label: "Wallet", icon: <Wallet className="h-4 w-4" /> },
       { to: "/admin/mart-management?tab=withdrawals", label: "Withdrawals", icon: <Banknote className="h-4 w-4" /> },
