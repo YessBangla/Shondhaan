@@ -254,6 +254,7 @@ const CallCenterPanel = () => {
   // Data states
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [newBookingProviders, setNewBookingProviders] = useState<Provider[]>([]);
   const [allProviders, setAllProviders] = useState<Provider[]>([]);
   const [allProvidersPage, setAllProvidersPage] = useState(1);
   const [allProvidersLoading, setAllProvidersLoading] = useState(false);
@@ -275,6 +276,12 @@ const CallCenterPanel = () => {
   const [providerPickerDistrictFilter, setProviderPickerDistrictFilter] = useState("");
   const [providerPickerThanaFilter, setProviderPickerThanaFilter] = useState("");
   const [providerPickerFilterOpen, setProviderPickerFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
+  const [newBookingProviderId, setNewBookingProviderId] = useState("");
+  const [newBookingProviderSearch, setNewBookingProviderSearch] = useState("");
+  const [newBookingProviderServiceFilter, setNewBookingProviderServiceFilter] = useState("");
+  const [newBookingProviderDistrictFilter, setNewBookingProviderDistrictFilter] = useState("");
+  const [newBookingProviderThanaFilter, setNewBookingProviderThanaFilter] = useState("");
+  const [newBookingProviderFilterOpen, setNewBookingProviderFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
   const { data: serviceCategoryMap } = useServiceCategoryMap();
   const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
   const form = useForm<ProviderFormValues>({
@@ -396,6 +403,7 @@ const CallCenterPanel = () => {
       if (target.closest("[data-dropdown-container]")) return;
       setProviderPickerBookingId(null);
       setProviderPickerFilterOpen(null);
+      setNewBookingProviderFilterOpen(null);
       setShowServiceCategoryDropdown(false);
       setShowServiceDropdown(false);
       setShowPackageDropdown(false);
@@ -450,7 +458,7 @@ const CallCenterPanel = () => {
         shondhaan_id: userMap.get(String(provider.user_id))?.shondhaan_id || provider.shondhaan_id || null,
       })));
       const [bookingRows, labRows] = await Promise.all([
-        listBookings(),
+        listBookings({ payment_status: "all" }),
         fetchOptionalArray<any>(`${API_BASE_URL}/api/lab-test-reports`),
       ]);
       setBookings((bookingRows || []) as Booking[]);
@@ -475,6 +483,32 @@ const CallCenterPanel = () => {
       console.error("Failed to fetch services/packages", error);
     }
   }, []);
+
+  const loadNewBookingProviders = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ status: "approved", limit: "10" });
+      if (newBookingProviderSearch.trim()) params.set("search", newBookingProviderSearch.trim());
+      if (newBookingProviderServiceFilter.trim()) params.set("service_category", newBookingProviderServiceFilter.trim());
+      if (newBookingProviderDistrictFilter.trim()) params.set("district", newBookingProviderDistrictFilter.trim());
+      if (newBookingProviderThanaFilter.trim()) params.set("thana", newBookingProviderThanaFilter.trim());
+
+      const response = await fetch(`${API_BASE_URL}/api/providers?${params.toString()}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.message || "Failed to fetch providers");
+      setNewBookingProviders(extractArray<Provider>(payload).slice(0, 10));
+    } catch (error) {
+      console.error("Failed to fetch New Booking providers:", error);
+      setNewBookingProviders([]);
+    }
+  }, [newBookingProviderDistrictFilter, newBookingProviderSearch, newBookingProviderServiceFilter, newBookingProviderThanaFilter]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadNewBookingProviders, 250);
+    return () => window.clearTimeout(timer);
+  }, [loadNewBookingProviders]);
 
   const loadAllProviders = useCallback(async () => {
     setAllProvidersLoading(true);
@@ -923,9 +957,10 @@ const CallCenterPanel = () => {
 
     setSubmitting(true);
     try {
-      await createBooking({
+      const operatorId = String(mysqlAuth?.user?.id ?? activeUserId ?? "").trim();
+      const createdBooking = await createBooking({
         user_id: String(newBooking.user_id),
-        booked_by: String(activeUserId),
+        booked_by: operatorId,
         booker_name: mysqlUser?.name || mysqlUser?.display_name || "Call Center Agent",
         booker_phone: mysqlUser?.phone || mysqlUser?.mobile || "",
         service_id: newBooking.service_id || null,
@@ -942,7 +977,10 @@ const CallCenterPanel = () => {
         status: "pending",
         payment_status: "unpaid",
         note: newBooking.is_emergency ? "Emergency booking" : null,
-      } as any);
+      });
+      if (newBookingProviderId && createdBooking?.id) {
+        await assignBookingProvider(String(createdBooking.id), newBookingProviderId);
+      }
     } catch (error: any) {
       setSubmitting(false);
       toast.error(error?.message || (bn ? "বুকিং তৈরি ব্যর্থ হয়েছে" : "Booking create failed"));
@@ -968,6 +1006,12 @@ const CallCenterPanel = () => {
     });
     setServiceSearch("");
     setPackageSearch("");
+    setNewBookingProviderId("");
+    setNewBookingProviderSearch("");
+    setNewBookingProviderServiceFilter("");
+    setNewBookingProviderDistrictFilter("");
+    setNewBookingProviderThanaFilter("");
+    setNewBookingProviderFilterOpen(null);
     fetchData();
   };
   
@@ -1048,6 +1092,10 @@ const CallCenterPanel = () => {
       });
   };
   const providerPickerServices = [...new Set(providers.flatMap(getProviderCategories).filter(Boolean))].sort();
+  const newBookingProviderServices = [...new Set([
+    ...services.flatMap((service) => [service.title, service.name, service.name_en, service.service_title]),
+    ...serviceCategories.flatMap((category: any) => [category.name, category.name_en, category.title]),
+  ].filter(Boolean).map(String))].sort();
   const providerPickerDistricts = [...new Map(locationData.flatMap((division) => division.districts).map((district) => [district.nameBn, district])).values()];
   const providerPickerThanas = providerPickerDistrictFilter
     ? [...new Set(locationData.flatMap((division) => division.districts).find((district) => district.nameBn === providerPickerDistrictFilter)?.thanas || [])].sort()
@@ -1077,14 +1125,19 @@ const CallCenterPanel = () => {
     if (details.some((value) => value.includes(normalizedQuery))) return 100;
     return -1;
   };
-  const getProviderSearchResults = () => providers
-    .map((provider) => ({ provider, score: getProviderSearchScore(provider, providerPickerSearch) }))
-    .filter(({ score }) => !providerPickerSearch.trim() || score >= 0)
-    .filter(({ provider }) => !providerPickerServiceFilter || getProviderCategories(provider).some((value) => normalizeSearchValue(value).includes(normalizeSearchValue(providerPickerServiceFilter))))
-    .filter(({ provider }) => !providerPickerDistrictFilter || String(provider.district || provider.provider_district || provider.raw_provider_district || "") === providerPickerDistrictFilter)
-    .filter(({ provider }) => !providerPickerThanaFilter || toProviderValueArray(provider.thana).map(String).includes(providerPickerThanaFilter))
+  const getProviderSearchResultsFor = (query: string, serviceFilter: string, districtFilter: string, thanaFilter: string, sourceProviders: Provider[] = providers) => sourceProviders
+    .map((provider) => ({ provider, score: getProviderSearchScore(provider, query) }))
+    .filter(({ score }) => !query.trim() || score >= 0)
+    .filter(({ provider }) => !serviceFilter || getProviderCategories(provider).some((value) => normalizeSearchValue(value).includes(normalizeSearchValue(serviceFilter))))
+    .filter(({ provider }) => !districtFilter || String(provider.district || provider.provider_district || provider.raw_provider_district || "") === districtFilter)
+    .filter(({ provider }) => !thanaFilter || toProviderValueArray(provider.thana).map(String).includes(thanaFilter))
     .sort((a, b) => b.score - a.score || String(a.provider.full_name || a.provider.name || "").localeCompare(String(b.provider.full_name || b.provider.name || "")))
     .map(({ provider }) => provider);
+  const getProviderSearchResults = () => getProviderSearchResultsFor(providerPickerSearch, providerPickerServiceFilter, providerPickerDistrictFilter, providerPickerThanaFilter);
+  const newBookingProviderResults = getProviderSearchResultsFor(newBookingProviderSearch, newBookingProviderServiceFilter, newBookingProviderDistrictFilter, newBookingProviderThanaFilter, newBookingProviders);
+  const newBookingProviderThanas = newBookingProviderDistrictFilter
+    ? [...new Set(locationData.flatMap((division) => division.districts).find((district) => district.nameBn === newBookingProviderDistrictFilter)?.thanas || [])].sort()
+    : [];
 
   if (loading) {
     return (
@@ -1316,7 +1369,10 @@ const CallCenterPanel = () => {
                       ) : (
                         paginatedBookings.map((b, i) => {
                           const s = bookingStatusOptions.find((o) => o.value === b.status) || bookingStatusOptions[0];
-                          const assignedProvider = providers.find((provider) => String(provider.id) === String(b.provider_id));
+                          const assignedProvider = providers.find((provider) => {
+                            const assignedIds = [b.provider_id, b.assigned_to].filter((value) => value !== undefined && value !== null && value !== "").map(String);
+                            return assignedIds.includes(String(provider.id)) || assignedIds.includes(String(provider.user_id));
+                          });
                           const assignedProviderServices = assignedProvider ? getProviderCategories(assignedProvider) : [];
                           const assignedProviderThanas = assignedProvider ? [...new Set(toProviderValueArray(assignedProvider.thana).map(String))] : [];
                           return (
@@ -1591,6 +1647,8 @@ const CallCenterPanel = () => {
                   <div className="p-6 bg-white">
                     <h3 className="text-lg font-semibold text-slate-900 mb-5">{bn ? "নতুন বুকিং তৈরি করুন" : "Create New Booking"}</h3>
 
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+                      <div className="min-w-0">
                     {/* Step 1: Customer Selection / Registration */}
                     <div className="mb-5 p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
@@ -1953,6 +2011,113 @@ const CallCenterPanel = () => {
                         )}
                       </button>
                     </form>
+                      </div>
+
+                      <aside className="rounded-xl border border-slate-200 bg-slate-50 p-4 lg:sticky lg:top-4" data-dropdown-container>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{bn ? "সার্ভিস প্রদানকারী নির্বাচন" : "Select Service Provider"}</p>
+                            <p className="mt-1 text-[11px] text-slate-500">{bn ? "বুকিং তৈরির আগে প্রদানকারী বাছাই করুন" : "Choose a provider before creating the booking"}</p>
+                          </div>
+                          {newBookingProviderId && (
+                            <button type="button" onClick={() => setNewBookingProviderId("")} className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-slate-700" aria-label="Clear selected provider">
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="relative mb-2">
+                          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                          <input
+                            autoComplete="off"
+                            value={newBookingProviderSearch}
+                            onChange={(event) => setNewBookingProviderSearch(event.target.value)}
+                            placeholder={bn ? "এলাকা, ক্যাটেগরি, নাম বা ফোনে খুঁজুন" : "Search area, category, name or phone"}
+                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                          />
+                        </div>
+
+                        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              value={newBookingProviderServiceFilter}
+                              onFocus={() => setNewBookingProviderFilterOpen("service")}
+                              onChange={(event) => { setNewBookingProviderServiceFilter(event.target.value); setNewBookingProviderFilterOpen("service"); }}
+                              placeholder={bn ? "সার্ভিস ক্যাটেগরি" : "Service category"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                            />
+                            {newBookingProviderServiceFilter && <button type="button" onClick={() => setNewBookingProviderServiceFilter("")} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "service" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {newBookingProviderServices.filter((service) => !newBookingProviderServiceFilter || normalizeSearchValue(service).includes(normalizeSearchValue(newBookingProviderServiceFilter))).map((service) => (
+                                  <button key={service} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderServiceFilter(service); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{service}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              value={newBookingProviderDistrictFilter}
+                              onFocus={() => setNewBookingProviderFilterOpen("district")}
+                              onChange={(event) => { setNewBookingProviderDistrictFilter(event.target.value); setNewBookingProviderThanaFilter(""); setNewBookingProviderFilterOpen("district"); }}
+                              placeholder={bn ? "জেলা" : "District"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                            />
+                            {newBookingProviderDistrictFilter && <button type="button" onClick={() => { setNewBookingProviderDistrictFilter(""); setNewBookingProviderThanaFilter(""); }} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "district" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {providerPickerDistricts.filter((district) => !newBookingProviderDistrictFilter || normalizeSearchValue(`${district.name} ${district.nameBn}`).includes(normalizeSearchValue(newBookingProviderDistrictFilter))).map((district) => (
+                                  <button key={district.nameBn} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderDistrictFilter(district.nameBn); setNewBookingProviderThanaFilter(""); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{district.name} <span className="text-slate-400">{district.nameBn}</span></button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              disabled={!newBookingProviderDistrictFilter}
+                              value={newBookingProviderThanaFilter}
+                              onFocus={() => newBookingProviderDistrictFilter && setNewBookingProviderFilterOpen("thana")}
+                              onChange={(event) => { setNewBookingProviderThanaFilter(event.target.value); setNewBookingProviderFilterOpen("thana"); }}
+                              placeholder={bn ? "থানা / উপজেলা" : "Thana / Upazila"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20 disabled:bg-slate-100 disabled:opacity-60"
+                            />
+                            {newBookingProviderThanaFilter && <button type="button" onClick={() => setNewBookingProviderThanaFilter("")} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "thana" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {newBookingProviderThanas.filter((thana) => !newBookingProviderThanaFilter || normalizeSearchValue(`${thana} ${Object.entries(thanaEnMap).find(([, banglaName]) => banglaName === thana)?.[0] || ""}`).includes(normalizeSearchValue(newBookingProviderThanaFilter))).map((thana) => (
+                                  <button key={thana} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderThanaFilter(thana); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{thana}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+                          {newBookingProviderResults.map((provider) => {
+                            const selected = String(provider.id) === String(newBookingProviderId);
+                            const providerName = provider.full_name || provider.name || provider.shop_name || (bn ? "প্রদানকারী" : "Provider");
+                            const providerThanas = toProviderValueArray(provider.thana).map(String).filter(Boolean);
+                            return (
+                              <button key={provider.id} type="button" onClick={() => setNewBookingProviderId(String(provider.id))} className={`w-full rounded-lg border p-2 text-left transition-colors ${selected ? "border-userprimary bg-userprimaryshade" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                                <div className="flex gap-2">
+                                  {provider.profile_image || provider.image_url ? <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400"><User className="h-5 w-5" /></div>}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-semibold text-slate-900">{providerName}</p>{selected && <CheckCircle className="h-4 w-4 shrink-0 text-userprimary" />}</div>
+                                    <p className="truncate text-[10px] text-slate-500">{provider.shondhaan_id || "—"} · {provider.phone || provider.mobile || "—"}</p>
+                                    <p className="truncate text-[10px] text-slate-500">{provider.email || provider.address || "—"}</p>
+                                    <div className="mt-1 flex flex-wrap gap-1"><span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{getProviderCategories(provider).slice(0, 2).join(", ") || "—"}</span><span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{providerThanas.join(", ") || "—"}</span><span className="ml-auto text-[9px] text-slate-500">★ {Number(provider.rating || 0).toFixed(1)} · {provider.total_jobs || 0}</span></div>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                          {!newBookingProviderResults.length && <p className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-5 text-center text-xs text-slate-500">{bn ? "কোনো প্রদানকারী পাওয়া যায়নি" : "No matching providers found"}</p>}
+                        </div>
+                      </aside>
+                    </div>
                   </div>
                 );
 

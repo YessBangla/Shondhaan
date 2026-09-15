@@ -110,7 +110,7 @@ export const initializeDatabase = async () => {
     // 5. Create bookings table
 await pool.query(`
   CREATE TABLE IF NOT EXISTS bookings (
-    id VARCHAR(36) PRIMARY KEY,
+    id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(255),
     booked_by VARCHAR(255),
     service_id VARCHAR(36),

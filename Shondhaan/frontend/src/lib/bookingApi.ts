@@ -2,7 +2,7 @@ import { INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
 
 export interface BookingRecord {
-  id: string;
+  id: string | number;
   user_id: string | number;
   service_id?: string | number | null;
   package_id?: string | number | null;
@@ -34,6 +34,9 @@ export interface BookingRecord {
 
 export interface CreateBookingPayload {
   user_id: string | number;
+  booked_by?: string | number | null;
+  booker_name?: string | null;
+  booker_phone?: string | null;
   service_id?: string | number | null;
   package_id?: string | number | null;
   service_slug: string;
@@ -178,6 +181,7 @@ export async function verifyBookingPayment(params: {
 export async function listBookings(params: {
   user_id?: string | number;
   status?: string;
+  payment_status?: string;
   service_slug?: string;
   date?: string;
   provider_id?: string | number;
