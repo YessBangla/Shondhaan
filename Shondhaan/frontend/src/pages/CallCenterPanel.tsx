@@ -115,6 +115,24 @@ const getProfileImageUrl = (image?: string | null) => {
   return /^https?:\/\//i.test(image) ? image : `${CENTRAL_API_URL}${image.startsWith("/") ? image : `/${image}`}`;
 };
 
+const formatBookingDate = (value?: string | null) => {
+  if (!value) return "—";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
+};
+
+const formatBookingTime = (value?: string | null) => {
+  if (!value) return "—";
+  const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value;
+  const hour = Number(match[1]);
+  const minute = match[2];
+  if (hour > 23) return value;
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${String(displayHour).padStart(2, "0")}:${minute} ${period}`;
+};
+
 const getAuthHeaders = () => {
   const auth = getMySqlAuth();
   return {
@@ -1029,8 +1047,19 @@ const CallCenterPanel = () => {
   const getProviderSearchScore = (provider: Provider, query: string) => {
     const normalizedQuery = normalizeSearchValue(query);
     if (!normalizedQuery) return 0;
-    const areas = getProviderAreas(provider).map(normalizeSearchValue);
-    const categories = getProviderCategories(provider).map(normalizeSearchValue);
+    const district = String(provider.district || provider.provider_district || provider.raw_provider_district || "");
+    const districtRecord = locationData.flatMap((division) => division.districts).find((item) => item.nameBn === district || item.name === district);
+    const districtSearchValues = [district, districtRecord?.name, districtRecord?.nameBn];
+    const thanaSearchValues = toProviderValueArray(provider.thana).flatMap((thana) => [
+      String(thana),
+      ...Object.entries(thanaEnMap).filter(([, banglaName]) => banglaName === String(thana)).map(([englishName]) => englishName),
+    ]);
+    const serviceSearchValues = toProviderValueArray(provider.services).flatMap((serviceId) => {
+      const service = services.find((item) => normalizeSearchValue(item.id) === normalizeSearchValue(serviceId));
+      return service ? [service.title, service.name, service.name_en, service.service_title] : [String(serviceId)];
+    });
+    const areas = [...getProviderAreas(provider), ...districtSearchValues, ...thanaSearchValues].filter(Boolean).map(normalizeSearchValue);
+    const categories = [...getProviderCategories(provider), ...serviceSearchValues].filter(Boolean).map(normalizeSearchValue);
     const details = [
       provider.full_name, provider.name, provider.phone, provider.mobile,
       provider.address, provider.email, provider.shondhaan_id, provider.id,
@@ -1252,9 +1281,9 @@ const CallCenterPanel = () => {
                               setFilterCategory("all");
                               setBookingSearch("");
                             }}
-                            className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
+                            className="text-xs font-medium text-red-600 hover:text-slate-900 transition-colors"
                           >
-                            সব মুছুন
+                            Remove
                           </button>
                         )}
                       </div>
@@ -1279,6 +1308,9 @@ const CallCenterPanel = () => {
                       ) : (
                         sortedBookings.map((b, i) => {
                           const s = bookingStatusOptions.find((o) => o.value === b.status) || bookingStatusOptions[0];
+                          const assignedProvider = providers.find((provider) => String(provider.id) === String(b.provider_id));
+                          const assignedProviderServices = assignedProvider ? getProviderCategories(assignedProvider) : [];
+                          const assignedProviderThanas = assignedProvider ? [...new Set(toProviderValueArray(assignedProvider.thana).map(String))] : [];
                           return (
                             <motion.div
                               key={b.id}
@@ -1315,36 +1347,36 @@ const CallCenterPanel = () => {
                               </div>
 
                               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-                                <span className="flex items-center gap-2">
-                                  <User className="h-3 w-3 text-slate-400" />
+                                <span className="flex items-center gap-2 text-[14px]">
+                                  <User className="h-3 w-3 text-userprimary" />
                                   <span>
                                     {b.customer_name}
                                     {customerShondhaanIds[String(b.user_id)] && (
-                                      <span className="ml-1.5 text-[10px] text-userprimary">
+                                      <span className="ml-1.5 text-[12px] text-userprimary">
                                         · {bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {customerShondhaanIds[String(b.user_id)]}
                                       </span>
                                     )}
                                   </span>
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Phone className="h-3 w-3 text-slate-400" />
+                                  <Phone className="h-3 w-3 text-userprimary" />
                                   {b.customer_phone}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Calendar className="h-3 w-3 text-slate-400" />
-                                  {b.booking_date}
+                                  <Calendar className="h-3 w-3 text-userprimary" />
+                                  {formatBookingDate(b.booking_date)}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Clock className="h-3 w-3 text-slate-400" />
-                                  {b.booking_time}
+                                  <Clock className="h-3 w-3 text-userprimary" />
+                                  {formatBookingTime(b.booking_time)}
                                 </span>
-                                <span className="flex items-start gap-2 col-span-2">
-                                  <MapPin className="h-3 w-3 text-slate-400 mt-0.5 shrink-0" />
-                                  <span className="truncate">{b.customer_address}</span>
+                                <span className="flex items-start gap-2 text-[14px] col-span-2">
+                                  <MapPin className="h-3 w-3 text-userprimary mt-0.5 text-[14px] shrink-0" />
+                                  <span className="truncate text-[14px]">{b.customer_address}</span>
                                 </span>
                               </div>
 
-                              <div className="relative" data-dropdown-container>
+                              <div className="relative flex items-start gap-2" data-dropdown-container>
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1367,8 +1399,18 @@ const CallCenterPanel = () => {
                                     <Plus className="h-4 w-4 shrink-0" />
                                   )}
                                 </button>
+                                {assignedProvider && (
+                                  <div className="mt-1 flex max-w-[min(65%,32rem)] flex-wrap items-center gap-1 text-[10px] text-slate-500">
+                                    {assignedProviderServices.map((service) => (
+                                      <span key={`assigned-service-${service}`} className="rounded-full bg-userprimaryshade my-auto px-2 py-0.5 text-userprimary">{service}</span>
+                                    ))}
+                                    {assignedProviderThanas.map((thana) => (
+                                      <span key={`assigned-thana-${thana}`} className="rounded-full bg-slate-100 px-2 py-0.5 my-auto text-slate-600">{thana}</span>
+                                    ))}
+                                  </div>
+                                )}
                                 {providerPickerBookingId === b.id && (
-                                  <div className="absolute left-0 right-0 z-30 mt-2 rounded-xl border border-slate-200 bg-white p-2 shadow-xl">
+                                  <div className="absolute left-0 right-0 z-30 top-0 mt-[50px] rounded-xl border border-userprimary bg-[aliceblue] p-2 shadow-xl">
                                     <div className="relative mb-2">
                                       <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                                       <input
@@ -1446,22 +1488,27 @@ const CallCenterPanel = () => {
                                     <div className="max-h-80 space-y-1 overflow-y-auto">
                                       <button
                                         type="button"
-                                        onClick={() => { handleAssignProvider(b.id, ""); setProviderPickerBookingId(null); }}
-                                        className="w-full rounded-lg px-3 py-2 text-left text-xs text-slate-500 hover:bg-slate-50"
+                                        onClick={async () => {
+                                          await updateBookingStatus(b.id, "pending");
+                                          await handleAssignProvider(b.id, "");
+                                          setProviderPickerBookingId(null);
+                                        }}
+                                        className="bg-userprimaryshade rounded-lg px-3 py-2 mb-3 mt-1 text-left text-xs text-black hover:bg-red-600 hover:text-white"
                                       >
-                                        {bn ? "প্রদানকারী সরিয়ে দিন" : "Remove assigned provider"}
+                                        {bn ? "প্রোভাইডার রিমুভ করুন" : "Remove assigned provider"}
                                       </button>
                                       {getProviderSearchResults().map((provider) => {
                                         const providerName = provider.full_name || provider.name || provider.shop_name || `প্রদানকারী ${provider.id}`;
                                         const providerPhone = provider.phone || provider.mobile;
                                         const areas = getProviderAreas(provider);
+                                        const uniqueAreas = [...new Set(areas)];
                                         const categories = getProviderCategories(provider);
                                         return (
                                           <button
                                             type="button"
                                             key={provider.id}
                                             onClick={() => { handleAssignProvider(b.id, String(provider.id)); setProviderPickerBookingId(null); }}
-                                            className="flex w-full items-start gap-3 rounded-lg border border-transparent p-2 text-left hover:border-slate-200 hover:bg-slate-50"
+                                            className="flex w-full items-start gap-3 rounded-lg bg-background border shadow p-2 text-left hover:border-slate-200 hover:bg-slate-50"
                                           >
                                             {provider.profile_image || provider.image_url ? (
                                               <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt={providerName} className="h-11 w-11 shrink-0 rounded-full object-cover" />
@@ -1470,12 +1517,20 @@ const CallCenterPanel = () => {
                                             )}
                                             <span className="min-w-0 flex-1">
                                               <span className="block truncate text-xs font-semibold text-slate-900">{providerName}</span>
-                                              <span className="block truncate text-[11px] text-slate-500">{provider.shondhaan_id || "—"} · {providerPhone || "—"}</span>
-                                              <span className="block truncate text-[11px] text-slate-500">{provider.email || "—"}</span>
+                                              <span className="block truncate text-[14px] text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan ID"} : {provider.shondhaan_id || "—"}</span>
+                                              <span className="block truncate text-[14px] text-slate-500">{providerPhone || "—"}</span>
+                                              <span className="block truncate text-[14px] text-slate-500">{provider.email || "—"}</span>
                                             </span>
-                                            <span className="w-36 shrink-0 text-right text-[10px] text-slate-500">
-                                              <span className="block truncate" title={areas.join(", ")}>{areas.join(", ") || "—"}</span>
-                                              <span className="block truncate" title={categories.join(", ")}>{categories.join(", ") || "—"}</span>
+                                            <span className="max-w-[300px] shrink-0 text-right text-[10px] text-slate-500">
+                                              <span className="flex min-w-0 flex-wrap items-center gap-1" title={uniqueAreas.join(" → ")}>
+                                                {uniqueAreas.length ? uniqueAreas.map((area, index) => (
+                                                  <span key={`${area}-${index}`} className="inline-flex items-center gap-1">
+                                                    <span className="max-w-24 text-black truncate rounded-full bg-userprimaryshade px-2 py-0.5">{area}</span>
+                                                    {index < uniqueAreas.length - 1 && <span className="text-slate-400" aria-hidden="true">→</span>}
+                                                  </span>
+                                                )) : "—"}
+                                              </span>
+                                              <span className="block truncate font-semibold text-[14px] text-userprimary mt-3" title={categories.join(", ")}>{categories.join(", ") || "—"}</span>
                                               <span className="mt-1 block font-semibold text-amber-600">★ {Number(provider.rating || 0).toFixed(1)} · {Number(provider.total_jobs || 0)} {bn ? "সম্পন্ন" : "completed"}</span>
                                             </span>
                                           </button>
@@ -2123,8 +2178,8 @@ const CallCenterPanel = () => {
                                   >
                                   <Send className="h-4 w-4" />
                                   {submitting
-                                    ? (editingProvider ? (bn ? "আপডেট হচ্ছে..." : "Updating...") : (bn ? "তৈরি হচ্ছে..." : "Creating..."))
-                                    : (editingProvider ? (bn ? "আপডেট করুন" : "Update Provider") : (bn ? "তৈরি করুন" : "Create Provider"))}
+                                    ? (editingProvider ? (bn ? "আপডেট হচ্ছে..." : "Updating...") : (bn ? "রেজিস্ট্রেশন হচ্ছে..." : "Creating..."))
+                                    : (editingProvider ? (bn ? "আপডেট করুন" : "Update Provider") : (bn ? "রেজিস্ট্রেশন করুন" : "Create Provider"))}
                                 </Button>
 
                                 <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">

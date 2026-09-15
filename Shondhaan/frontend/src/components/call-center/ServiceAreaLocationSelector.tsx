@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
 import { X } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -39,6 +39,15 @@ const SearchableLocationSelect = ({
 }: SearchableLocationSelectProps) => {
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handleOutsideClick = (event: MouseEvent) => {
+      if (!dropdownRef.current?.contains(event.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, [open]);
   const selectedValues = Array.isArray(value) ? value : value ? [value] : [];
   const selectedOptions = options.filter((option) => selectedValues.includes(option.value));
   const filteredOptions = options.filter((option) =>
@@ -48,7 +57,7 @@ const SearchableLocationSelect = ({
   const allOptionsSelected = allOptionValues.length > 0 && allOptionValues.every((optionValue) => selectedValues.includes(optionValue));
 
   return (
-    <div className="relative">
+    <div ref={dropdownRef} className="relative">
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
