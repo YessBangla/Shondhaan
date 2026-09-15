@@ -83,8 +83,14 @@ const PanelSidebarTabs = ({
   const { mode, cycle } = useTheme();
   const { language, setLanguage } = useLanguage();
 
-  const [activeTab, setActiveTabState] = useState(defaultValue);
+  // ── Active tab: derived directly from the URL, single source of truth ──
+  // (previously this was mirrored into its own useState + a syncing
+  // useEffect, which raced with clicks and could snap back to the first
+  // item. Deriving it fresh every render removes that race entirely.)
   const requestedTab = searchParams.get("tab");
+  const activeTab = items.some((item) => item.value === requestedTab)
+    ? (requestedTab as string)
+    : defaultValue;
 
   const [walletBalance, setWalletBalance] = useState(0);
   const [walletCoins, setWalletCoins] = useState(0);
@@ -99,13 +105,6 @@ const PanelSidebarTabs = ({
     (user as any)?.user_metadata?.role ||
     "";
   const isWalletHiddenRole = WALLET_HIDDEN_ROLES.has(userRole);
-
-  useEffect(() => {
-    if (!requestedTab) return;
-    if (items.some((item) => item.value === requestedTab)) {
-      setActiveTabState(requestedTab);
-    }
-  }, [requestedTab, items]);
 
   const collapseKey = `panel_collapsed_${panelTitle || "default"}`;
   const [collapsed, setCollapsed] = useState<boolean>(() => {
@@ -251,12 +250,18 @@ const PanelSidebarTabs = ({
 
   const pinnedItems = useMemo(() => items.filter((i) => pinned.includes(i.value)), [items, pinned]);
 
+  // ── Select a tab ──
+  // Builds a fresh URLSearchParams (never mutate `prev` in place — some
+  // history/back-forward-cache edge cases can end up diffing against a
+  // mutated object and skip the update) and replaces history so rapid
+  // sidebar clicks don't pile up back-button entries.
   const handleSelect = useCallback((value: string) => {
-    setSearchParams(prev => {
-      prev.set("tab", value);
-      return prev;
-    });
-    setActiveTabState(value);
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", value);
+      return next;
+    }, { replace: true });
+
     setRecent((prev) => {
       const next = prev.filter((v) => v !== value);
       next.unshift(value);
@@ -278,6 +283,14 @@ const PanelSidebarTabs = ({
     setCollapsedGroups(initial);
     setGroupsInit(true);
   }, [groups, activeGroup, groupsInit]);
+
+  // Whenever the active tab changes (including via a sidebar click), make
+  // sure the group it lives in is expanded — otherwise clicking an item
+  // inside a collapsed group looked like nothing happened.
+  useEffect(() => {
+    if (!activeGroup) return;
+    setCollapsedGroups((c) => (c[activeGroup] ? { ...c, [activeGroup]: false } : c));
+  }, [activeGroup]);
 
   useEffect(() => {
     let lastG = 0;
@@ -456,7 +469,14 @@ const PanelSidebarTabs = ({
       )}
 
       {/* Main Nav */}
-      <nav className={cn("flex-1 overflow-y-auto py-4 px-3 space-y-1 min-h-0", customScrollbar)}>
+      {/* overflow-anchor: none — without this, the browser's scroll-anchoring
+          kicks in while a group's height animates open/closed (or the main
+          panel swaps below), and keeps nudging scrollTop down mid-animation.
+          That's what read as "the menu keeps going down" after a click. */}
+      <nav
+        style={{ overflowAnchor: "none" }}
+        className={cn("flex-1 overflow-y-auto py-4 px-3 space-y-1 min-h-0", customScrollbar)}
+      >
         {groups.map((group, gi) => {
           const groupKey = group.label || `g-${gi}`;
           const groupCollapsed = collapsedGroups[groupKey];
@@ -534,7 +554,7 @@ const PanelSidebarTabs = ({
             collapsed ? "w-[80px]" : "w-[280px]"
           )}
         >
-          <SidebarBody />
+          {SidebarBody({})}
         </aside>
       )}
 
@@ -557,7 +577,7 @@ const PanelSidebarTabs = ({
                 transition={{ type: "spring", damping: 30, stiffness: 300 }}
                 className="md:hidden fixed left-0 top-0 bottom-0 z-[70] w-[85%] max-w-[320px] shadow-2xl"
               >
-                <SidebarBody inDrawer />
+                {SidebarBody({ inDrawer: true })}
               </motion.aside>
             </>
           )}
@@ -623,13 +643,16 @@ const PanelSidebarTabs = ({
           "flex-1 min-h-0 overflow-hidden",
           isFullViewport ? "flex flex-col" : ""
         )}>
-          <div className={cn(
-            "w-full",
-            isFullViewport
-              ? "h-full flex-1 min-h-0"
-              : "h-full overflow-y-auto",
-            embedded ? "p-0" : "px-5 py-2"
-          )}>
+          <div
+            style={isFullViewport ? undefined : { overflowAnchor: "none" }}
+            className={cn(
+              "w-full",
+              isFullViewport
+                ? "h-full flex-1 min-h-0"
+                : "h-full overflow-y-auto",
+              embedded ? "p-0" : "px-5 py-2"
+            )}
+          >
             {/* Hero — hidden for full-viewport tabs */}
             {hero && !hero.hideOnTabs?.includes(activeTab) && !isFullViewport && (
               <PanelHero

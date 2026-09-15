@@ -280,7 +280,7 @@ const CategoryCarousel = ({
                   className="h-[76px] w-[76px] flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
                   // style={{ background: getCategoryColor(cat.name || "") }}
                   >
-                  {isHttpImg ? (
+                  {isHttpImg ? (   
                     <img
                       src={imageSrc || ""}
                       className="h-full w-full object-cover"
@@ -333,7 +333,8 @@ const MartHome = () => {
   const [homeSort, setHomeSort] = useState("popular");
   const [navTransition, setNavTransition] = useState(false);
   const [currentBanner, setCurrentBanner] = useState(0);
-  const [homeSearch, setHomeSearch] = useState("");
+    const [homeSearch, setHomeSearch] = useState("");
+  const [searchOpen, setSearchOpen] = useState(false);
 
   const queryClient = useQueryClient();
   const bannerInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -576,7 +577,7 @@ const MartHome = () => {
   const sortedForYou = sortForYouProducts(forYouProducts, homeSort).slice(0, 18);
 
   return (
-    <div className="min-h-screen bg-[#f8f8f8] dark:bg-background">
+    <div className="min-h-screen overflow-x-hidden bg-[#f8f8f8] dark:bg-background">
       <PullToRefreshIndicator pull={pull} refreshing={refreshing} />
 
       {navTransition && (
@@ -653,26 +654,28 @@ const MartHome = () => {
             className="relative z-30 mb-3"
             role="search"
           >
-            <div className="relative flex items-center rounded-xl border border-primary bg-white dark:bg-card shadow-sm focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/15">
-              <Search className="absolute left-4 h-5 w-5 text-muted-foreground" />
-              <input
-                value={homeSearch}
-                onChange={(e) => setHomeSearch(e.target.value)}
-                placeholder={bn ? "Search by product name or category" : "Search by product name or category"}
-                className="h-12 w-full bg-transparent pl-12 pr-12 text-sm font-medium text-foreground outline-none placeholder:text-muted-foreground"
-                aria-label="Search products by name or category"
-              />
-              {homeSearch && (
-                <button
-                  type="button"
-                  onClick={() => setHomeSearch("")}
-                  className="absolute right-3 flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                  aria-label="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
-            </div>
+           <div className="flex justify-center w-full">
+  <div className="relative flex items-center w-full max-w-xs rounded-full border border-blue-500 bg-white dark:bg-card shadow-sm transition-all duration-200 focus-within:max-w-sm focus-within:border-blue-600 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-500/15">
+    <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground peer-focus:text-blue-600 transition-colors" />
+    <input
+      value={homeSearch}
+      onChange={(e) => setHomeSearch(e.target.value)}
+      placeholder={bn ? "খুঁজুন..." : "Search products..."}
+      className="peer h-9 w-full bg-transparent pl-9 pr-8 text-[13px] font-medium text-foreground outline-none placeholder:text-muted-foreground placeholder:font-normal"
+      aria-label="Search products by name or category"
+    />
+    {homeSearch && (
+      <button
+        type="button"
+        onClick={() => setHomeSearch("")}
+        className="absolute right-2 flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+        aria-label="Clear search"
+      >
+        <X className="h-3.5 w-3.5" />
+      </button>
+    )}
+  </div>
+</div>
             {hasSearchSuggestions && (
               <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-40 overflow-hidden rounded-2xl border border-border/70 bg-white dark:bg-card shadow-lg">
                 {productSearchSuggestions.length > 0 && (
@@ -754,7 +757,7 @@ const MartHome = () => {
             )}
           </form>
 
-          <div className="relative rounded-2xl overflow-hidden h-[140px] sm:h-[170px] md:h-[220px] lg:h-[250px] bg-muted shadow-sm">
+                    <div className="relative left-1/2 w-screen -translate-x-1/2 h-[110px] sm:h-[140px] md:h-[170px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
             {banners.length > 0 ? (
               banners.map((banner: any, i: number) => (
                 <div

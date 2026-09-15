@@ -6,7 +6,7 @@ import {
   BarChart3, DollarSign, Loader2, MessageCircle, Eye, 
   Shield, Store, FolderTree, Image, Tag, RotateCcw, ImageIcon, Trash2, AlertTriangle,
   Wallet, UserCheck, Truck,
-  Coins
+  Coins, Star
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -100,6 +100,13 @@ const MartAdminPanel = () => {
   const [txSellerId, setTxSellerId] = useState<number | null>(null);
   const [txSellerLabel, setTxSellerLabel] = useState<string>("");
 
+  // Sellers (sellers table — GET /api/sellers)
+  const [sellers, setSellers] = useState<any[]>([]);
+  const [sellersLoading, setSellersLoading] = useState(false);
+  const [sellerSearch, setSellerSearch] = useState("");
+  const [sellerVerifiedFilter, setSellerVerifiedFilter] = useState("all");
+  const [popularUpdatingId, setPopularUpdatingId] = useState<number | null>(null);
+
   useEffect(() => {
     if (!authLoading && !isSignedIn) navigate("/mart/login", { replace: true });
   }, [isSignedIn, authLoading, navigate]);
@@ -160,6 +167,27 @@ const MartAdminPanel = () => {
     }
   }, [API_BASE_URL, txPage, txStatus, txSearch, txSellerId, bn]);
 
+  // Sellers — pulls from GET /api/sellers (no query params returns all sellers, id DESC)
+  const fetchSellers = useCallback(async () => {
+    setSellersLoading(true);
+    try {
+      const auth = getMySqlAuth();
+      const res = await fetch(`${API_BASE_URL}/api/sellers`, {
+        credentials: "include",
+        headers: auth?.token ? { Authorization: `Bearer ${auth.token}` } : {},
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const json = await res.json();
+      setSellers(json.data || []);
+    } catch (e) {
+      console.error("fetchSellers error:", e);
+      toast.error(bn ? "সেলার লোড ব্যর্থ" : "Failed to load sellers");
+      setSellers([]);
+    } finally {
+      setSellersLoading(false);
+    }
+  }, [API_BASE_URL, bn]);
+
   const filterTransactionsBySeller = (id: number, label: string) => {
     setTxSellerId(id);
     setTxSellerLabel(label);
@@ -175,6 +203,7 @@ const MartAdminPanel = () => {
   useEffect(() => { checkRole(); }, [checkRole]);
   useEffect(() => { if (hasAccess) fetchAll(); }, [hasAccess, fetchAll]);
   useEffect(() => { if (hasAccess) fetchTransactions(); }, [hasAccess, fetchTransactions]);
+  useEffect(() => { if (hasAccess) fetchSellers(); }, [hasAccess, fetchSellers]);
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     const { error } = await supabase.from("mart_orders").update({ status: newStatus }).eq("id", orderId);
@@ -262,6 +291,57 @@ const MartAdminPanel = () => {
     }
   };
 
+  // ── Seller verify toggle (calls existing PATCH /api/sellers/:id/verify) ──
+  const toggleSellerVerified = async (id: number, current: boolean) => {
+    try {
+      const auth = getMySqlAuth();
+      const res = await fetch(`${API_BASE_URL}/api/sellers/${id}/verify`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+        },
+        body: JSON.stringify({ verified: !current }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setSellers(prev => prev.map(s => s.id === id ? { ...s, seller_verified: !current ? 1 : 0 } : s));
+      toast.success(bn ? "আপডেট হয়েছে" : "Updated");
+    } catch (e) {
+      console.error("toggleSellerVerified error:", e);
+      toast.error(bn ? "আপডেট ব্যর্থ" : "Update failed");
+    }
+  };
+
+  // ── "Make Popular" / "Remove Popular" button handler (calls existing PATCH /api/sellers/:id/popular) ──
+  const toggleSellerPopular = async (id: number, current: boolean) => {
+    setPopularUpdatingId(id);
+    try {
+      const auth = getMySqlAuth();
+      const res = await fetch(`${API_BASE_URL}/api/sellers/${id}/popular`, {
+        method: "PATCH",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+          ...(auth?.token ? { Authorization: `Bearer ${auth.token}` } : {}),
+        },
+        body: JSON.stringify({ popular: !current }),
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setSellers(prev => prev.map(s => s.id === id ? { ...s, shop_popular: !current ? 1 : 0 } : s));
+      toast.success(
+        !current
+          ? (bn ? "জনপ্রিয় শপ হিসেবে চিহ্নিত হয়েছে" : "Marked as popular")
+          : (bn ? "জনপ্রিয় থেকে সরানো হয়েছে" : "Removed from popular")
+      );
+    } catch (e) {
+      console.error("toggleSellerPopular error:", e);
+      toast.error(bn ? "আপডেট ব্যর্থ" : "Update failed");
+    } finally {
+      setPopularUpdatingId(null);
+    }
+  };
+
   if (authLoading || loading) {
     return <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div>;
   }
@@ -289,6 +369,20 @@ const MartAdminPanel = () => {
     return matchSearch && matchStatus;
   });
 
+  const filteredSellers = sellers.filter(s => {
+    const q = sellerSearch.toLowerCase();
+    const matchSearch =
+      !q ||
+      (s.shop_name || "").toLowerCase().includes(q) ||
+      (s.seller_name || "").toLowerCase().includes(q) ||
+      (s.seller_mobile || "").includes(sellerSearch) ||
+      (s.slug || "").toLowerCase().includes(q);
+    const matchVerified =
+      sellerVerifiedFilter === "all" ||
+      (sellerVerifiedFilter === "verified" ? !!s.seller_verified : !s.seller_verified);
+    return matchSearch && matchVerified;
+  });
+
   const totalRevenue = orders.filter(o => o.status === "delivered").reduce((s: number, o: any) => s + (o.total || 0), 0);
 
   const statusData = Object.entries(orderStatusMap).map(([k, v]) => ({
@@ -302,6 +396,7 @@ const MartAdminPanel = () => {
     { value: "returns", label: bn ? "রিটার্ন/রিফান্ড" : "Returns", icon: <RotateCcw />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
     { value: "products", label: bn ? "পণ্য" : "Products", icon: <Package />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
     { value: "vendors", label: bn ? "ভেন্ডর/শপ" : "Vendors", icon: <Store />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
+    { value: "sellers", label: bn ? "সেলার" : "Sellers", icon: <Users />, group: bn ? "ড্যাশবোর্ড" : "Dashboard" },
     { value: "package", label: bn ? "প্যাকেজ" : "Package", icon: <Package />, group: bn ? "ফাইন্যান্স" : "Finance" },
     { value: "wallet", label: bn ? "ওয়ালেট" : "Wallet", icon: <Wallet />, group: bn ? "ফাইন্যান্স" : "Finance" },
     { value: "withdrawals", label: bn ? "উইথড্রয়াল" : "Withdrawals", icon: <DollarSign />, group: bn ? "ফাইন্যান্স" : "Finance" },
@@ -704,6 +799,118 @@ const MartAdminPanel = () => {
                             </Card>
                           );
                         })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Sellers — live MySQL data from the `sellers` table (GET /api/sellers) */}
+                {activeTab === "sellers" && (
+                  <div className="space-y-4">
+                    <div className="flex flex-col md:flex-row gap-3">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder={bn ? "শপ, নাম বা মোবাইল খুঁজুন..." : "Search shop, name or mobile..."}
+                          value={sellerSearch}
+                          onChange={e => setSellerSearch(e.target.value)}
+                          className="pl-9"
+                        />
+                      </div>
+                      <Select value={sellerVerifiedFilter} onValueChange={setSellerVerifiedFilter}>
+                        <SelectTrigger className="w-full md:w-44"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">{bn ? "সকল" : "All"}</SelectItem>
+                          <SelectItem value="verified">{bn ? "ভেরিফাইড" : "Verified"}</SelectItem>
+                          <SelectItem value="unverified">{bn ? "অ-ভেরিফাইড" : "Unverified"}</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {sellersLoading ? (
+                      <div className="py-12 flex justify-center"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+                    ) : (
+                      <div className="overflow-x-auto rounded-lg border border-border/50">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted/50">
+                            <tr>
+                              <th className="text-left p-3 font-medium">{bn ? "শপ" : "Shop"}</th>
+                              <th className="text-left p-3 font-medium">{bn ? "মোবাইল" : "Mobile"}</th>
+                              <th className="text-left p-3 font-medium">{bn ? "ইমেইল" : "Email"}</th>
+                              <th className="text-center p-3 font-medium">{bn ? "ভেরিফাইড" : "Verified"}</th>
+                              <th className="text-center p-3 font-medium">{bn ? "জনপ্রিয়" : "Popular"}</th>
+                              <th className="text-center p-3 font-medium">{bn ? "অ্যাকশন" : "Action"}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredSellers.map(s => {
+                              const isPopular = !!s.shop_popular;
+                              const isUpdating = popularUpdatingId === s.id;
+                              return (
+                                <tr key={s.id} className="border-t border-border/30 hover:bg-muted/30">
+                                  <td className="p-3">
+                                    <div className="flex flex-col">
+                                      <span className="font-medium text-foreground">{s.shop_name || s.seller_name || "—"}</span>
+                                      <span className="text-[10px] text-muted-foreground font-mono">{s.slug}</span>
+                                    </div>
+                                  </td>
+                                  <td className="p-3">{s.seller_mobile || "—"}</td>
+                                  <td className="p-3">{s.seller_email || "—"}</td>
+                                  <td className="p-3 text-center">
+                                    <Badge
+                                      variant={s.seller_verified ? "default" : "secondary"}
+                                      className="text-[10px] cursor-pointer"
+                                      onClick={() => toggleSellerVerified(s.id, !!s.seller_verified)}
+                                    >
+                                      {s.seller_verified ? (bn ? "✓ ভেরিফাইড" : "✓ Verified") : (bn ? "✗ অ-ভেরিফাইড" : "✗ Unverified")}
+                                    </Badge>
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    {isPopular ? (
+                                      <Badge className="bg-amber-100 text-amber-800 text-[10px] gap-1">
+                                        <Star className="h-3 w-3 fill-amber-600 text-amber-600" />
+                                        {bn ? "জনপ্রিয়" : "Popular"}
+                                      </Badge>
+                                    ) : (
+                                      <span className="text-xs text-muted-foreground">—</span>
+                                    )}
+                                  </td>
+                                  <td className="p-3 text-center">
+                                    <div className="flex items-center justify-center gap-1">
+                                      <Button
+                                        size="sm"
+                                        variant={isPopular ? "outline" : "default"}
+                                        className={`h-7 text-xs gap-1 ${isPopular ? "text-destructive" : ""}`}
+                                        disabled={isUpdating}
+                                        onClick={() => toggleSellerPopular(s.id, isPopular)}
+                                      >
+                                        {isUpdating ? (
+                                          <Loader2 className="h-3 w-3 animate-spin" />
+                                        ) : (
+                                          <Star className={`h-3 w-3 ${isPopular ? "" : "fill-current"}`} />
+                                        )}
+                                        {isPopular
+                                          ? (bn ? "জনপ্রিয় সরান" : "Remove Popular")
+                                          : (bn ? "জনপ্রিয় করুন" : "Make Popular")}
+                                      </Button>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-7 w-7"
+                                        onClick={() => navigate(`/mart/store/${s.slug}`)}
+                                      >
+                                        <Eye className="h-3.5 w-3.5" />
+                                      </Button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                            {filteredSellers.length === 0 && (
+                              <tr><td colSpan={6} className="p-8 text-center text-muted-foreground">{bn ? "কোনো সেলার নেই" : "No sellers"}</td></tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
