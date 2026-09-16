@@ -264,7 +264,7 @@ const AdminBanners = () => {
 
           <button
             onClick={() => setEditing({ ...empty })}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white"
+            className="flex items-center gap-1.5 rounded-lg bg-userprimary px-3 py-2 text-xs font-medium text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             নতুন ব্যানার
@@ -335,7 +335,7 @@ const AdminBanners = () => {
           {editing.image_url && (
             <div className="overflow-hidden rounded-xl border border-border">
               <img
-                src={editing.image_url}
+                src={`${import.meta.env.VITE_SERVICE_API_BASE_URL}${editing.image_url}`} 
                 alt="Banner preview"
                 className="h-40 w-full object-cover"
               />
@@ -375,7 +375,7 @@ const AdminBanners = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
+              className="flex items-center gap-1.5 rounded-lg bg-userprimary px-4 py-2 text-xs font-medium text-white disabled:opacity-50"
             >
               {saving ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -404,7 +404,7 @@ const AdminBanners = () => {
             </p>
             <button
               onClick={() => setEditing({ ...empty })}
-              className="mt-3 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white"
+              className="mt-3 rounded-lg bg-userprimary px-4 py-2 text-xs font-medium text-white"
             >
               প্রথম ব্যানার যোগ করুন
             </button>
