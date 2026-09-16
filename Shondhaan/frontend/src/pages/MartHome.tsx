@@ -786,7 +786,7 @@ const MartHome = () => {
             )}
           </form>
 
-          <div className="relative left-1/2 w-screen -translate-x-1/2 h-[180px] sm:h-[200px] md:h-[200px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
+          <div className="relative left-1/2 w-screen -translate-x-1/2 h-[180px] sm:h-[250px] md:h-[250px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
             {banners.length > 0 ? (
               banners.map((banner: any, i: number) => (
                 <div

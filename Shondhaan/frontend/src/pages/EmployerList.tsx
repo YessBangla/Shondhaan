@@ -32,6 +32,7 @@ const EmployerList = () => {
 
   return (
     <JobsPageTransition>
+      <Navbar />
       <JobsMenuBar />
       <div className="pt-[44px] md:pt-[20px] bg-blue-700 md:bg-card" />
 
@@ -45,7 +46,7 @@ const EmployerList = () => {
                 <Building2 className="h-7 w-7" />
               </div>
               <div>
-                <h1 className="text-2xl md:text-3xl font-extrabold">{bn ? "নিয়োগদাতা তালিকা" : "Employer Directory"}</h1>
+                <h1 className="text-2xl md:text-3xl font-extrabold">{bn ? "নিয়োগদাতার তালিকা" : "Employer List"}</h1>
                 <p className="text-blue-200 text-xs">{bn ? `মোট ${filtered.length} টি কোম্পানি` : `${filtered.length} companies listed`}</p>
               </div>
             </div>
