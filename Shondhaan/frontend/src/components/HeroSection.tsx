@@ -354,7 +354,7 @@ const HeroSection = () => {
     (bn ? "প্রিমিয়াম সার্ভিস প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
   const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
-  const heroImageMobile = "/hero-mobile.png";
+  const heroImageMobile = "/hero-mobile2.png";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);
@@ -494,11 +494,13 @@ const HeroSection = () => {
       
       {/* ══════════════════════ MOBILE HERO ══════════════════════ */}
       <div 
-        className="md:hidden relative min-h-fit pb-6 flex flex-col bg-slate-950 bg-cover bg-center" 
+        className="md:hidden relative min-h-fit pb-6 flex flex-col bg-slate-950 bg-no-repeat bg-top" 
         style={{ 
           paddingTop: "70px",
+          backgroundSize: "100% 100%",
+          backgroundPosition: "top center",
           backgroundImage: heroImageMobile 
-            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.32), rgba(15, 23, 42, 0.65)), url('${heroImageMobile}')`
+            ? `linear-gradient(135deg, rgba(15, 23, 42, 0.69), rgba(15, 23, 42, 0.65)), url('${heroImageMobile}')`
             : "linear-gradient(135deg, rgba(15, 23, 42, 1), rgba(15, 23, 42, 0.95))"
         }}
         >
