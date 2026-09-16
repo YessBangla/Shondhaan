@@ -1,4 +1,5 @@
 import express from "express";
+import { authMiddleware } from "../middleware/auth.middleware.js";
 import {
   createBooking,
   getBookings,
@@ -34,7 +35,7 @@ router.get("/:id", getBookingById);
  */
 router.patch("/:id/status", updateBookingStatus);
 router.patch("/:id/payment-status", updatePaymentStatus);
-router.patch("/:id/assign-provider", assignBookingProvider);
+router.patch("/:id/assign-provider", authMiddleware, assignBookingProvider);
 
 router.put("/:id", updateBooking);
 router.patch("/:id", updateBooking);

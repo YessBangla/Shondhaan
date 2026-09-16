@@ -277,7 +277,6 @@ const CallCenterPanel = () => {
   const [providerPickerThanaFilter, setProviderPickerThanaFilter] = useState("");
   const [providerPickerFilterOpen, setProviderPickerFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
   const [newBookingProviderId, setNewBookingProviderId] = useState("");
-  const [newBookingProviderSearch, setNewBookingProviderSearch] = useState("");
   const [newBookingProviderServiceFilter, setNewBookingProviderServiceFilter] = useState("");
   const [newBookingProviderDistrictFilter, setNewBookingProviderDistrictFilter] = useState("");
   const [newBookingProviderThanaFilter, setNewBookingProviderThanaFilter] = useState("");
@@ -487,7 +486,6 @@ const CallCenterPanel = () => {
   const loadNewBookingProviders = useCallback(async () => {
     try {
       const params = new URLSearchParams({ status: "approved", limit: "10" });
-      if (newBookingProviderSearch.trim()) params.set("search", newBookingProviderSearch.trim());
       if (newBookingProviderServiceFilter.trim()) params.set("service_category", newBookingProviderServiceFilter.trim());
       if (newBookingProviderDistrictFilter.trim()) params.set("district", newBookingProviderDistrictFilter.trim());
       if (newBookingProviderThanaFilter.trim()) params.set("thana", newBookingProviderThanaFilter.trim());
@@ -503,7 +501,7 @@ const CallCenterPanel = () => {
       console.error("Failed to fetch New Booking providers:", error);
       setNewBookingProviders([]);
     }
-  }, [newBookingProviderDistrictFilter, newBookingProviderSearch, newBookingProviderServiceFilter, newBookingProviderThanaFilter]);
+  }, [newBookingProviderDistrictFilter, newBookingProviderServiceFilter, newBookingProviderThanaFilter]);
 
   useEffect(() => {
     const timer = window.setTimeout(loadNewBookingProviders, 250);
@@ -1093,7 +1091,7 @@ const CallCenterPanel = () => {
   };
   const providerPickerServices = [...new Set(providers.flatMap(getProviderCategories).filter(Boolean))].sort();
   const newBookingProviderServices = [...new Set([
-    ...services.flatMap((service) => [service.title, service.name, service.name_en, service.service_title]),
+    ...services.flatMap((service) => [service.title, service.title_en, service.name, service.name_en, service.service_title]),
     ...serviceCategories.flatMap((category: any) => [category.name, category.name_en, category.title]),
   ].filter(Boolean).map(String))].sort();
   const providerPickerDistricts = [...new Map(locationData.flatMap((division) => division.districts).map((district) => [district.nameBn, district])).values()];
@@ -1134,7 +1132,7 @@ const CallCenterPanel = () => {
     .sort((a, b) => b.score - a.score || String(a.provider.full_name || a.provider.name || "").localeCompare(String(b.provider.full_name || b.provider.name || "")))
     .map(({ provider }) => provider);
   const getProviderSearchResults = () => getProviderSearchResultsFor(providerPickerSearch, providerPickerServiceFilter, providerPickerDistrictFilter, providerPickerThanaFilter);
-  const newBookingProviderResults = getProviderSearchResultsFor(newBookingProviderSearch, newBookingProviderServiceFilter, newBookingProviderDistrictFilter, newBookingProviderThanaFilter, newBookingProviders);
+  const newBookingProviderResults = getProviderSearchResultsFor("", newBookingProviderServiceFilter, newBookingProviderDistrictFilter, newBookingProviderThanaFilter, newBookingProviders);
   const newBookingProviderThanas = newBookingProviderDistrictFilter
     ? [...new Set(locationData.flatMap((division) => division.districts).find((district) => district.nameBn === newBookingProviderDistrictFilter)?.thanas || [])].sort()
     : [];
@@ -1454,10 +1452,10 @@ const CallCenterPanel = () => {
                                   disabled={updatingId === b.id}
                                   className="rounded-lg border flex gap-2 border-userprimary bg-userprimaryshade px-3 py-2 text-left text-xs font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-50 transition-all"
                                 >
-                                  {b.provider_id
-                                    ? (providers.find((provider) => String(provider.id) === String(b.provider_id))?.full_name || (bn ? "নির্ধারিত প্রদানকারী" : "Assigned provider"))
+                                  {b.provider_id || b.assigned_to
+                                    ? (assignedProvider?.full_name || assignedProvider?.name || assignedProvider?.shop_name || (bn ? "নির্ধারিত প্রদানকারী" : "Assigned provider"))
                                     : (bn ? "সার্ভিস প্রদানকারী নির্ধারণ করুন" : "Assign a service provider")}
-                                  {b.provider_id ? (
+                                  {b.provider_id || b.assigned_to ? (
                                     <CheckCircle className="h-4 w-4 shrink-0 text-userprimary" />
                                   ) : (
                                     <Plus className="h-4 w-4 shrink-0" />
@@ -1999,7 +1997,7 @@ const CallCenterPanel = () => {
                       <button
                         type="submit"
                         disabled={submitting || !newBooking.user_id}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-userprimary text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
                       >
                         {submitting ? (
                           <>
@@ -2026,17 +2024,6 @@ const CallCenterPanel = () => {
                           )}
                         </div>
 
-                        <div className="relative mb-2">
-                          <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                          <input
-                            autoComplete="off"
-                            value={newBookingProviderSearch}
-                            onChange={(event) => setNewBookingProviderSearch(event.target.value)}
-                            placeholder={bn ? "এলাকা, ক্যাটেগরি, নাম বা ফোনে খুঁজুন" : "Search area, category, name or phone"}
-                            className="w-full rounded-lg border border-slate-200 bg-white py-2 pl-9 pr-3 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
-                          />
-                        </div>
-
                         <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
                           <div className="relative">
                             <input
@@ -2044,7 +2031,7 @@ const CallCenterPanel = () => {
                               value={newBookingProviderServiceFilter}
                               onFocus={() => setNewBookingProviderFilterOpen("service")}
                               onChange={(event) => { setNewBookingProviderServiceFilter(event.target.value); setNewBookingProviderFilterOpen("service"); }}
-                              placeholder={bn ? "সার্ভিস ক্যাটেগরি" : "Service category"}
+                              placeholder={bn ? "সিলেক্ট সার্ভিস" : "Select Services"}
                               className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
                             />
                             {newBookingProviderServiceFilter && <button type="button" onClick={() => setNewBookingProviderServiceFilter("")} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
@@ -2106,9 +2093,17 @@ const CallCenterPanel = () => {
                                   {provider.profile_image || provider.image_url ? <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400"><User className="h-5 w-5" /></div>}
                                   <div className="min-w-0 flex-1">
                                     <div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-semibold text-slate-900">{providerName}</p>{selected && <CheckCircle className="h-4 w-4 shrink-0 text-userprimary" />}</div>
-                                    <p className="truncate text-[10px] text-slate-500">{provider.shondhaan_id || "—"} · {provider.phone || provider.mobile || "—"}</p>
-                                    <p className="truncate text-[10px] text-slate-500">{provider.email || provider.address || "—"}</p>
-                                    <div className="mt-1 flex flex-wrap gap-1"><span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{getProviderCategories(provider).slice(0, 2).join(", ") || "—"}</span><span className="rounded-full bg-slate-100 px-1.5 py-0.5 text-[9px] text-slate-600">{providerThanas.join(", ") || "—"}</span><span className="ml-auto text-[9px] text-slate-500">★ {Number(provider.rating || 0).toFixed(1)} · {provider.total_jobs || 0}</span></div>
+                                    <span className="truncate text-[12px] font-semibold text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan ID"} : {provider.shondhaan_id || "—"}</span>
+                                    <p className="truncate text-[10px] text-slate-800">{provider.phone || provider.mobile || "—"}</p>
+                                    <p className="truncate text-[10px] text-slate-800">{provider.email || provider.address || "—"}</p>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[12px] font-semibold text-slate-800">
+                                        {getProviderCategories(provider).slice(0, 2).join(", ") || "—"}
+                                      </span>
+                                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[12px] font-semibold text-slate-800">
+                                        {providerThanas.join(", ") || "—"}
+                                      </span>
+                                      <span className="ml-auto text-[9px] text-slate-500">★ {Number(provider.rating || 0).toFixed(1)} · {provider.total_jobs || 0}</span></div>
                                   </div>
                                 </div>
                               </button>
@@ -2496,11 +2491,12 @@ const CallCenterPanel = () => {
                                           <p className="truncate font-semibold text-slate-900">{provider.full_name || provider.name || "—"}</p>
                                           <p className="truncate text-xs text-slate-500">{provider.email || "—"}</p>
                                           <p className="truncate text-xs text-slate-500">{provider.phone || "—"}</p>
-                                          <p className="truncate text-xs text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan-ID"} : {provider.shondhaan_id || "—"}</p>
+                                          <p className="truncate text-xs font-semibold text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan-ID"} : {provider.shondhaan_id || "—"}</p>
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="min-w-[210px] px-4 py-3"><div className="flex flex-wrap gap-1">{provider.service_names?.length ? provider.service_names.map((serviceName) => <span key={serviceName} className="rounded-full bg-userprimaryshade px-2 py-1 text-[11px] border border-userprimary font-bold text-userprimary">{serviceName}</span>) : <span>—</span>}</div></td>
+                                    <td className="min-w-[210px] px-4 py-3"><div className="flex flex-wrap gap-1">
+                                      {provider.service_names?.length ? provider.service_names.map((serviceName) => <span key={serviceName} className="rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-800">{serviceName}</span>) : <span>—</span>}</div></td>
                                     <td className="min-w-[190px] px-4 py-3 text-slate-700">
                                       <p className="font-medium">{provider.raw_provider_district || provider.provider_district || provider.district || "—"}</p>
                                       <div className="flex flex-wrap gap-1">{provider.thana?.length ? provider.thana.map((thana) => <span key={thana} className="text-xs text-slate-500">{thana}</span>) : <span className="text-xs text-slate-500">—</span>}</div>
@@ -2508,7 +2504,7 @@ const CallCenterPanel = () => {
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} {bn ? "বছর" : "years"}</td>
                                    <td>
-                                    <span className={`whitespace-nowrap px-3 rounded-full text-[12px] py-1 border ${
+                                    <span className={`whitespace-nowrap px-2 rounded-full text-[11px] py-0 border ${
                                             provider.nid_front_url || provider.nid_back_url
                                                 ? "border-userprimary bg-userprimaryshade text-userprimary font-bold"
                                                 : "border-red-500 bg-red-100 text-red-700 font-medium"
