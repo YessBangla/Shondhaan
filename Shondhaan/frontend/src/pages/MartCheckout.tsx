@@ -388,7 +388,12 @@ const MartCheckout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!user) { toast.error(bn ? "লগইন করুন" : "Please login"); navigate("/auth"); return; }
+    if (!user) {
+      toast.error(bn ? "লগইন করুন" : "Please login");
+      const returnPath = `${location.pathname}${location.search}`;
+      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
+      return;
+    }
     if (!name || !phone || !address) { toast.error(bn ? "সব তথ্য পূরণ করুন" : "Fill all fields"); return; }
     if (paymentMethod === "sslcommerz" && sslCommerzChecked && !sslCommerzReady) {
       toast.error("SSLCommerz is not configured yet. Please choose Cash on Delivery.");

@@ -277,7 +277,7 @@ const CategoryCarousel = ({
               >
                 {/* Circular illustrated avatar */}
                 <div
-                  className="h-[76px] w-[76px] flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
+                  className="h-[60px] w-[60px] flex items-center justify-center shrink-0 overflow-hidden group-hover:-translate-y-0.5 transition-all duration-200"
                   // style={{ background: getCategoryColor(cat.name || "") }}
                   >
                   {isHttpImg ? (   
@@ -590,62 +590,9 @@ const MartHome = () => {
       <Navbar />
       <PlatformSwitcher className="hidden" />
 
-      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[60px] md:mt-[30px]">
-        <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
-          <div className="app-container md:py-3">
-            <div className="grid grid-cols-4 auto-cols-[100%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
-              {[
-                {
-                  icon: <Truck className="h-4.5 w-4.5" />,
-                  label: bn ? "ফ্রি ডেলিভারি" : "Free Delivery",
-                  sub: bn ? "নির্বাচিত অর্ডারে" : "On selected orders",
-                  card: "from-orange-500/12 to-orange-50 dark:to-orange-950/20 border-orange-200/70",
-                  iconBox: "bg-orange-500 text-white shadow-orange-500/25",
-                },
-                {
-                  icon: <Shield className="h-4.5 w-4.5" />,
-                  label: bn ? "নিরাপদ পেমেন্ট" : "Secure Payment",
-                  sub: bn ? "বিশ্বস্ত ও সুরক্ষিত" : "Safe & trusted",
-                  card: "from-emerald-500/12 to-emerald-50 dark:to-emerald-950/20 border-emerald-200/70",
-                  iconBox: "bg-emerald-500 text-white shadow-emerald-500/25",
-                },
-                {
-                  icon: <RotateCcw className="h-4.5 w-4.5" />,
-                  label: bn ? "সহজ রিটার্ন" : "Easy Returns",
-                  sub: bn ? "ঝামেলাহীন সাপোর্ট" : "Hassle-free support",
-                  card: "from-sky-500/12 to-sky-50 dark:to-sky-950/20 border-sky-200/70",
-                  iconBox: "bg-sky-500 text-white shadow-sky-500/25",
-                },
-                {
-                  icon: <Tag className="h-4.5 w-4.5" />,
-                  label: bn ? "সেরা দাম" : "Best Price",
-                  sub: bn ? "প্রতিদিন নতুন অফার" : "Daily best offers",
-                  card: "from-rose-500/12 to-rose-50 dark:to-rose-950/20 border-rose-200/70",
-                  iconBox: "bg-rose-500 text-white shadow-rose-500/25",
-                },
-              ].map((b, i) => (
-                <div
-                  key={i}
-                  className={`group relative overflow-hidden rounded-0 md:rounded-2xl md:border bg-transparent md:bg-gradient-to-br ${b.card} px-0 md:px-3.5 py-3 shadow-sm hover:-translate-y-0.5 transition-all duration-200 shrink-0`}
-                  >
-                  <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/45 dark:bg-white/5" />
-                  <div className="relative flex flex-col md:flex-row items-center gap-3">
-                    <div className={`h-9 w-9 rounded-xl ${b.iconBox} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
-                      {b.icon}
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-[12px] md:text-[13px] text-center font-extrabold text-foreground leading-tight">{b.label}</p>
-                      <p className="hidden md:block text-[10px] md:text-[11px] text-center text-muted-foreground mt-0.5 line-clamp-1">{b.sub}</p>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </header>
+      
 
-      <div className="app-container py-1 md:py-2">
+      <div className="app-container py-1 md:py-2 mt-[60px] md:mt-[30px]">
 
         {/* Hero Banner Carousel */}
         <section className="mb-7">
@@ -757,7 +704,7 @@ const MartHome = () => {
             )}
           </form>
 
-                    <div className="relative left-1/2 w-screen -translate-x-1/2 h-[110px] sm:h-[140px] md:h-[170px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
+                    <div className="relative left-1/2 w-screen -translate-x-1/2 h-[110px] sm:h-[140px] md:h-[170px] lg:h-[310px] overflow-hidden bg-muted shadow-sm">
             {banners.length > 0 ? (
               banners.map((banner: any, i: number) => (
                 <div
@@ -875,7 +822,60 @@ const MartHome = () => {
         {categories.length > 0 && (
           <CategoryCarousel categories={categories} bn={bn} navigate={navigate} />
         )}
-
+<header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[60px] md:mt-[30px]">
+        <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
+          <div className="app-container md:py-3">
+            <div className="grid grid-cols-4 auto-cols-[100%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
+              {[
+                {
+                  icon: <Truck className="h-4.5 w-4.5" />,
+                  label: bn ? "ফ্রি ডেলিভারি" : "Free Delivery",
+                  sub: bn ? "নির্বাচিত অর্ডারে" : "On selected orders",
+                  card: "from-orange-500/12 to-orange-50 dark:to-orange-950/20 border-orange-200/70",
+                  iconBox: "bg-orange-500 text-white shadow-orange-500/25",
+                },
+                {
+                  icon: <Shield className="h-4.5 w-4.5" />,
+                  label: bn ? "নিরাপদ পেমেন্ট" : "Secure Payment",
+                  sub: bn ? "বিশ্বস্ত ও সুরক্ষিত" : "Safe & trusted",
+                  card: "from-emerald-500/12 to-emerald-50 dark:to-emerald-950/20 border-emerald-200/70",
+                  iconBox: "bg-emerald-500 text-white shadow-emerald-500/25",
+                },
+                {
+                  icon: <RotateCcw className="h-4.5 w-4.5" />,
+                  label: bn ? "সহজ রিটার্ন" : "Easy Returns",
+                  sub: bn ? "ঝামেলাহীন সাপোর্ট" : "Hassle-free support",
+                  card: "from-sky-500/12 to-sky-50 dark:to-sky-950/20 border-sky-200/70",
+                  iconBox: "bg-sky-500 text-white shadow-sky-500/25",
+                },
+                {
+                  icon: <Tag className="h-4.5 w-4.5" />,
+                  label: bn ? "সেরা দাম" : "Best Price",
+                  sub: bn ? "প্রতিদিন নতুন অফার" : "Daily best offers",
+                  card: "from-rose-500/12 to-rose-50 dark:to-rose-950/20 border-rose-200/70",
+                  iconBox: "bg-rose-500 text-white shadow-rose-500/25",
+                },
+              ].map((b, i) => (
+                <div
+                  key={i}
+                  className={`group relative overflow-hidden rounded-0 md:rounded-2xl md:border bg-transparent md:bg-gradient-to-br ${b.card} px-0 md:px-3.5 py-3 shadow-sm hover:-translate-y-0.5 transition-all duration-200 shrink-0`}
+                  >
+                  <div className="absolute -right-6 -top-6 h-16 w-16 rounded-full bg-white/45 dark:bg-white/5" />
+                  <div className="relative flex flex-col md:flex-row items-center gap-3">
+                    <div className={`h-9 w-9 rounded-xl ${b.iconBox} flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform`}>
+                      {b.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[12px] md:text-[13px] text-center font-extrabold text-foreground leading-tight">{b.label}</p>
+                      <p className="hidden md:block text-[10px] md:text-[11px] text-center text-muted-foreground mt-0.5 line-clamp-1">{b.sub}</p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </header>
         {/* Flash Sale */}
         {featured.length > 0 && (
           <section className="mb-1">
