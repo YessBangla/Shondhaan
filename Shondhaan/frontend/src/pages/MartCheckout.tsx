@@ -622,7 +622,7 @@ const MartCheckout = () => {
                     {items.map((item) => (
                       <div key={`${item.product.id}-${item.product.unit || "default"}`} className="flex gap-3 bg-card rounded-xl border border-border/50 p-3">
                         <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted/30 shrink-0 cursor-pointer" onClick={() => navigate(`/mart/product/${item.product.slug}`)}>
-                          {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
+                          {item.product.image_url && <img src={`${import.meta.env.VITE_MART_API_BASE_URL}${item.product.image_url}`} alt={item.product.name} className="w-full h-full object-cover" />}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="text-sm font-medium line-clamp-2">{bn ? item.product.name : (item.product.name_en || item.product.name)}</h3>
