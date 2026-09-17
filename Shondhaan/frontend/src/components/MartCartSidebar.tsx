@@ -63,7 +63,13 @@ const MartCartSidebar = () => {
               <SwipeRow key={`${item.product.id}-${item.product.unit || "default"}`} onDelete={() => removeItem(item.product.id, item.product.unit)}>
                 <div className="flex gap-3 p-2 rounded-lg border border-border/50 bg-card">
                   <div className="h-14 w-14 rounded-md overflow-hidden bg-muted/30 shrink-0">
-                    {item.product.image_url && <img src={item.product.image_url} alt={item.product.name} className="w-full h-full object-cover" />}
+                    {item.product.image_url && (
+                      <img
+                        src={`${import.meta.env.VITE_MART_API_BASE_URL}${item.product.image_url}`}
+                        alt={item.product.name}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-xs font-medium line-clamp-1">{bn ? item.product.name : (item.product.name_en || item.product.name)}</p>
