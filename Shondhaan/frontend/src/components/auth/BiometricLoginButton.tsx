@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { haptic } from "@/lib/haptics";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 
 const STORAGE_KEY = "yess_biometric_v1";
 
@@ -87,6 +87,7 @@ const BiometricLoginButton = () => {
   const { language } = useLanguage();
   const bn = language === "bn";
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [available, setAvailable] = useState(false);
   const [stored, setStored] = useState<Stored | null>(null);
   const [busy, setBusy] = useState(false);
@@ -141,7 +142,11 @@ const BiometricLoginButton = () => {
       }
       haptic("success");
       toast.success(bn ? "স্বাগতম! ✨" : "Welcome back ✨");
-      navigate("/", { replace: true });
+      const requestedRedirect = searchParams.get("redirect");
+      const redirectPath = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+        ? requestedRedirect
+        : "/";
+      navigate(redirectPath, { replace: true });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "";
       if (msg && msg !== "cancelled") {

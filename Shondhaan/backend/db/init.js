@@ -99,8 +99,6 @@ export async function initDatabase() {
       address VARCHAR(300) NULL,
       email VARCHAR(255) NOT NULL UNIQUE,
       password VARCHAR(255) NOT NULL,
-      shop_name VARCHAR(255) NULL,
-      shop_type VARCHAR(50) NULL,
       type ${USER_TYPE_ENUM},
       email_verified TINYINT(1) NOT NULL DEFAULT 0,
       otp_hash VARCHAR(64) NULL,
@@ -430,8 +428,6 @@ export async function initDatabase() {
 
   const columns = [
     ["shondhaan_id", "ALTER TABLE users ADD COLUMN shondhaan_id VARCHAR(11) NULL AFTER id"],
-    ["shop_name", "ALTER TABLE users ADD COLUMN shop_name VARCHAR(255) NULL"],
-    ["shop_type", "ALTER TABLE users ADD COLUMN shop_type VARCHAR(50) NULL AFTER shop_name"],
     ["type", `ALTER TABLE users ADD COLUMN type ${USER_TYPE_ENUM}`],
     ["email_verified", "ALTER TABLE users ADD COLUMN email_verified TINYINT(1) NOT NULL DEFAULT 0"],
     ["otp_hash", "ALTER TABLE users ADD COLUMN otp_hash VARCHAR(64) NULL"],
