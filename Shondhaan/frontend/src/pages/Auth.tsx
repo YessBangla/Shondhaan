@@ -106,6 +106,7 @@ const Auth = () => {
     setShowPassword(true);
     toast.success(language === "bn" ? "শক্তিশালী পাসওয়ার্ড সাজেস্ট করা হয়েছে" : "Strong password suggested");
   };
+  
   const requestedRedirect = searchParams.get("redirect");
   const redirectPath = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
     ? requestedRedirect
