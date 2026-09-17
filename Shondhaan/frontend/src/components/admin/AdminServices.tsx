@@ -325,7 +325,7 @@ const AdminServices = () => {
                   <ChevronDown className={`h-4 w-4 opacity-50 transition-transform ${showCitiesDropdown ? "rotate-180" : ""}`} />
                 </button>
                 {showCitiesDropdown && (
-                  <div className="absolute z-30 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-popover shadow-lg p-1">
+                  <div className="absolute z-30 mt-1 w-full max-h-48 overflow-y-auto rounded-lg border border-border bg-background shadow-lg p-1">
                     {CITY_OPTIONS.map(city => (
                       <label
                         key={city}

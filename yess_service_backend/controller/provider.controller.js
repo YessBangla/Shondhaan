@@ -118,11 +118,11 @@ export const submitProviderApplication = async (req, res) => {
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
     if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+      const [serviceRows] = await pool.execute(
+        "SELECT id FROM services WHERE id = ? AND is_active = 1 LIMIT 1",
         [service_category]
       );
-      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+      if (!serviceRows.length) return res.status(400).json({ message: "Select an active service" });
     }
 
     const [existing] = await pool.execute(
@@ -225,24 +225,35 @@ export const getProviders = async (req, res) => {
 
     if (service_category) {
       query += ` AND (
-        service_category = ?
-        OR services LIKE ?
+        CONVERT(service_category USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+        OR CONVERT(services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
         OR EXISTS (
           SELECT 1 FROM service_categories sc
-          WHERE (sc.name = ? OR sc.name_en = ?)
-            AND (providers.service_category = sc.id OR providers.services LIKE CONCAT('%', sc.id, '%'))
+          WHERE (CONVERT(sc.name USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            OR CONVERT(sc.name_en USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+            AND (CONVERT(CAST(providers.service_category AS CHAR) USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(CAST(sc.id AS CHAR) USING utf8mb4) COLLATE utf8mb4_unicode_ci
+              OR CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', sc.id, '%'))
+        )
+        OR EXISTS (
+          SELECT 1 FROM services svc
+          WHERE (CONVERT(svc.title USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            OR CONVERT(svc.title_en USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+            OR CONVERT(svc.slug USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+            AND (CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', svc.id, '%')
+              OR CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', svc.slug, '%'))
         )
       )`;
-      values.push(service_category, `%${service_category}%`, service_category, service_category);
+      const serviceLike = `%${service_category}%`;
+      values.push(service_category, serviceLike, serviceLike, serviceLike, serviceLike, serviceLike, serviceLike);
     }
 
     if (district) {
-      query += ` AND district = ?`;
+      query += ` AND CONVERT(district USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci`;
       values.push(district);
     }
 
     if (thana) {
-      query += ` AND thana LIKE ?`;
+      query += ` AND CONVERT(thana USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci`;
       values.push(`%${thana}%`);
     }
 
@@ -280,21 +291,30 @@ export const getProviders = async (req, res) => {
           "phone LIKE ?",
           "email LIKE ?",
           "address LIKE ?",
-          "service_category LIKE ?",
-          "services LIKE ?",
-          "division LIKE ?",
-          "district LIKE ?",
-          "thana LIKE ?",
-          "area LIKE ?",
+          "CONVERT(service_category USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
+          "CONVERT(services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
+          "CONVERT(division USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
+          "CONVERT(district USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
+          "CONVERT(thana USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
+          "CONVERT(area USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci",
           `EXISTS (
             SELECT 1 FROM service_categories sc
-            WHERE (sc.name LIKE ? OR sc.name_en LIKE ?)
-              AND (providers.service_category = sc.id
-                OR providers.services LIKE CONCAT('%', sc.id, '%')))
+            WHERE (CONVERT(sc.name USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+              OR CONVERT(sc.name_en USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+              AND (CONVERT(CAST(providers.service_category AS CHAR) USING utf8mb4) COLLATE utf8mb4_unicode_ci = CONVERT(CAST(sc.id AS CHAR) USING utf8mb4) COLLATE utf8mb4_unicode_ci
+                OR CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', sc.id, '%'))
+          )`,
+          `EXISTS (
+            SELECT 1 FROM services svc
+            WHERE (CONVERT(svc.title USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+              OR CONVERT(svc.title_en USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci
+              OR CONVERT(svc.slug USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONVERT(? USING utf8mb4) COLLATE utf8mb4_unicode_ci)
+              AND (CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', svc.id, '%')
+                OR CONVERT(providers.services USING utf8mb4) COLLATE utf8mb4_unicode_ci LIKE CONCAT('%', svc.slug, '%'))
           )`
         );
         const like = `%${search}%`;
-        searchValues.push(like, like, like, like, like, like, like, like, like, like, like, like);
+        searchValues.push(like, like, like, like, like, like, like, like, like, like, like, like, like, like, like);
       }
 
       if (matchingUserIds.length) {
@@ -338,19 +358,26 @@ export const getProviders = async (req, res) => {
     }
 
     const getServiceNames = async (providers) => {
-  const [categoryRows] = await pool.execute(
-    "SELECT id, name, name_en FROM service_categories"
-  );
+  const [categoryRows] = await pool.execute("SELECT id, name, name_en FROM service_categories");
+  const [serviceRows] = await pool.execute("SELECT id, slug, title, title_en FROM services");
   const categoryMap = new Map(
     categoryRows.map((category) => [String(category.id), category])
+  );
+  const serviceMap = new Map(
+    serviceRows.flatMap((service) => [
+      [String(service.id), service],
+      [String(service.slug), service],
+    ])
   );
 
   return providers.map((provider) => ({
     ...formatProvider(provider),
     ...(userMap.get(String(provider.user_id)) || {}),
-    service_names: parseArrayValue(provider.services).map((serviceId) => {
-      const category = categoryMap.get(String(serviceId));
-      return category?.name_en || category?.name || String(serviceId);
+    service_names: parseArrayValue(provider.services).map((serviceValue) => {
+      const service = serviceMap.get(String(serviceValue));
+      if (service) return service.title_en || service.title || service.slug || String(serviceValue);
+      const category = categoryMap.get(String(serviceValue));
+      return category?.name_en || category?.name || String(serviceValue);
     }),
   }));
 };
@@ -565,14 +592,6 @@ export const createCallCenterProvider = async (req, res) => {
 
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
-    if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
-        [service_category]
-      );
-      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
-    }
-
     if (user_id) {
       const [existing] = await pool.execute(
         `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
@@ -636,17 +655,6 @@ export const updateCallCenterProvider = async (req, res) => {
     }
 
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
-    if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
-        [service_category]
-      );
-      if (!categoryRows.length) {
-        await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
-        return res.status(400).json({ message: "Select an active service category" });
-      }
-    }
-
     const [existingRows] = await pool.execute(
       `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
       [id]
