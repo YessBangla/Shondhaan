@@ -118,11 +118,11 @@ export const submitProviderApplication = async (req, res) => {
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
     if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
+      const [serviceRows] = await pool.execute(
+        "SELECT id FROM services WHERE id = ? AND is_active = 1 LIMIT 1",
         [service_category]
       );
-      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
+      if (!serviceRows.length) return res.status(400).json({ message: "Select an active service" });
     }
 
     const [existing] = await pool.execute(
@@ -592,14 +592,6 @@ export const createCallCenterProvider = async (req, res) => {
 
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
 
-    if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
-        [service_category]
-      );
-      if (!categoryRows.length) return res.status(400).json({ message: "Select an active service category" });
-    }
-
     if (user_id) {
       const [existing] = await pool.execute(
         `SELECT id FROM ${PROVIDER_TABLE} WHERE user_id = ? LIMIT 1`,
@@ -663,17 +655,6 @@ export const updateCallCenterProvider = async (req, res) => {
     }
 
     const normalizedYears = Number.isFinite(years) && years >= 0 && years <= 60 ? years : 0;
-    if (service_category) {
-      const [categoryRows] = await pool.execute(
-        "SELECT id FROM service_categories WHERE id = ? AND is_active = 1 LIMIT 1",
-        [service_category]
-      );
-      if (!categoryRows.length) {
-        await Promise.all(uploadedFiles.map((file) => removeStoredFile(providerNidUrl(file.filename))));
-        return res.status(400).json({ message: "Select an active service category" });
-      }
-    }
-
     const [existingRows] = await pool.execute(
       `SELECT ${selectProviderColumns} FROM ${PROVIDER_TABLE} WHERE id = ? LIMIT 1`,
       [id]

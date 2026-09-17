@@ -111,6 +111,24 @@ export const ensurePlatformFeeSchema = () => {
         }
       }
 
+      // New services use MySQL-generated numeric IDs. Existing UUID rows are
+      // left untouched because changing them would break package/provider
+      // references without an explicit data migration.
+      try {
+        const [idColumns] = await pool.query("SHOW COLUMNS FROM services LIKE 'id'");
+        const idType = String(idColumns[0]?.Type || "").toLowerCase();
+        if (idType && !idType.includes("int")) {
+          const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM services");
+          if (Number(countRows[0]?.total || 0) === 0) {
+            await pool.query("ALTER TABLE services MODIFY COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT");
+          } else {
+            console.warn("Services table still has UUID IDs. Migrate existing services before changing the primary key type.");
+          }
+        }
+      } catch (err) {
+        console.error("Error ensuring services.id numeric auto-increment:", err.message);
+      }
+
       // 2. Ensure bookings table has all required new columns
       const columnsToEnsure = [
         { name: "booked_by", type: "VARCHAR(255) NULL", after: "user_id" },

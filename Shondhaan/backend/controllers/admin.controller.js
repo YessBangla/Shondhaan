@@ -33,6 +33,16 @@ export const createUser = async (req, res) => {
       [insertEmail, mobile],
     );
     if (existing.length) {
+      if (type === "provider") {
+        const [existingRows] = await pool.execute(
+          "SELECT id, shondhaan_id, name, mobile, address, email, type, email_verified, created_at, updated_at FROM users WHERE id = ? LIMIT 1",
+          [existing[0].id],
+        );
+        return res.status(200).json({
+          user: safeAdminUser(existingRows[0]),
+          existing: true,
+        });
+      }
       return res.status(409).json({ message: "A user already exists with this email or mobile" });
     }
 

@@ -27,7 +27,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import CategoryFilterDropdown, { useServiceCategoryMap } from "@/components/CategoryFilterDropdown";
-import { useCmsCategories } from "@/hooks/useCmsData";
 import { useForm } from "react-hook-form";
 import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -282,7 +281,6 @@ const CallCenterPanel = () => {
   const [newBookingProviderThanaFilter, setNewBookingProviderThanaFilter] = useState("");
   const [newBookingProviderFilterOpen, setNewBookingProviderFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
   const { data: serviceCategoryMap } = useServiceCategoryMap();
-  const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
   const form = useForm<ProviderFormValues>({
     defaultValues: {
       full_name: "",
@@ -1092,7 +1090,6 @@ const CallCenterPanel = () => {
   const providerPickerServices = [...new Set(providers.flatMap(getProviderCategories).filter(Boolean))].sort();
   const newBookingProviderServices = [...new Set([
     ...services.flatMap((service) => [service.title, service.title_en, service.name, service.name_en, service.service_title]),
-    ...serviceCategories.flatMap((category: any) => [category.name, category.name_en, category.title]),
   ].filter(Boolean).map(String))].sort();
   const providerPickerDistricts = [...new Map(locationData.flatMap((division) => division.districts).map((district) => [district.nameBn, district])).values()];
   const providerPickerThanas = providerPickerDistrictFilter
@@ -2220,7 +2217,7 @@ const CallCenterPanel = () => {
                                       name="service_category"
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{bn ? "সার্ভিস ক্যাটেগরি" : "Service Categories"}</FormLabel>
+                                          <FormLabel>{bn ? "সার্ভিস" : "Services"}</FormLabel>
                                           <div className="relative" data-dropdown-container>
                                             <div
                                               role="button"
@@ -2235,18 +2232,18 @@ const CallCenterPanel = () => {
                                               className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-left"
                                             >
                                               <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                                                {field.value.map((categoryId) => {
-                                                  const category = serviceCategories.find((item) => item.id === categoryId);
-                                                  if (!category) return null;
+                                                {field.value.map((serviceId) => {
+                                                  const service = services.find((item) => String(item.id) === String(serviceId));
+                                                  if (!service) return null;
                                                   return (
-                                                    <span key={category.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                                                      {bn ? category.name : category.name_en || category.name}
+                                                    <span key={service.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                                                      {bn ? service.title : service.title_en || service.title}
                                                       <button
                                                         type="button"
-                                                        aria-label={`Remove ${category.name}`}
+                                                        aria-label={`Remove ${service.title}`}
                                                         onClick={(event) => {
                                                           event.stopPropagation();
-                                                          field.onChange(field.value.filter((id) => id !== category.id));
+                                                          field.onChange(field.value.filter((id) => String(id) !== String(service.id)));
                                                         }}
                                                         className="rounded-full text-slate-500 hover:text-slate-900"
                                                       >
@@ -2257,7 +2254,7 @@ const CallCenterPanel = () => {
                                                 })}
                                                 {!field.value.length && (
                                                   <span className="text-muted-foreground">
-                                                    {bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select categories"}
+                                                    {bn ? "সার্ভিস নির্বাচন করুন" : "Select services"}
                                                   </span>
                                                 )}
                                               </div>
@@ -2270,21 +2267,24 @@ const CallCenterPanel = () => {
                                                   value={serviceCategorySearch}
                                                   onChange={(event) => setServiceCategorySearch(event.target.value)}
                                                   onClick={(event) => event.stopPropagation()}
-                                                  placeholder={bn ? "ক্যাটেগরি খুঁজুন..." : "Search categories..."}
+                                                  placeholder={bn ? "সার্ভিস খুঁজুন..." : "Search services..."}
                                                   className="mb-1 h-9"
                                                 />
                                                 <div className="max-h-52 overflow-y-auto">
-                                                {serviceCategories
-                                                  .filter((category) => category.is_active)
-                                                  .filter((category) => {
+                                                {services
+                                                  .filter((service) => service.is_active !== false)
+                                                  .filter((service) => {
                                                     const query = serviceCategorySearch.trim().toLowerCase();
-                                                    return !query || category.name.toLowerCase().includes(query) || (category.name_en || "").toLowerCase().includes(query);
+                                                    return !query
+                                                      || String(service.title || "").toLowerCase().includes(query)
+                                                      || String(service.title_en || "").toLowerCase().includes(query)
+                                                      || String(service.slug || "").toLowerCase().includes(query);
                                                   })
-                                                  .map((category) => {
-                                                  const selected = field.value.includes(category.id);
+                                                  .map((service) => {
+                                                  const selected = field.value.some((id) => String(id) === String(service.id));
                                                   return (
                                                     <label
-                                                      key={category.id}
+                                                      key={service.id}
                                                       onClick={(event) => event.stopPropagation()}
                                                       className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-slate-50"
                                                     >
@@ -2293,12 +2293,12 @@ const CallCenterPanel = () => {
                                                         checked={selected}
                                                         onChange={() => field.onChange(
                                                           selected
-                                                            ? field.value.filter((id) => id !== category.id)
-                                                            : [...field.value, category.id]
+                                                            ? field.value.filter((id) => String(id) !== String(service.id))
+                                                            : [...field.value, String(service.id)]
                                                         )}
                                                         className="h-4 w-4 rounded border-slate-300"
                                                       />
-                                                      <span>{bn ? category.name : category.name_en || category.name}</span>
+                                                      <span>{bn ? service.title : service.title_en || service.title}</span>
                                                     </label>
                                                   );
                                                   })}
@@ -2306,8 +2306,7 @@ const CallCenterPanel = () => {
                                               </div>
                                             )}
                                           </div>
-                                          {categoriesError && <p className="text-sm font-medium text-destructive">{bn ? "ক্যাটেগরি লোড করা যায়নি" : "Could not load service categories"}</p>}
-                                          {categoriesLoading && <p className="text-sm text-muted-foreground">{bn ? "ক্যাটেগরি লোড হচ্ছে..." : "Loading categories..."}</p>}
+                                          {!services.length && <p className="text-sm text-muted-foreground">{bn ? "সার্ভিস লোড হচ্ছে..." : "Loading services..."}</p>}
                                           <FormMessage />
                                         </FormItem>
                                       )}
@@ -2394,9 +2393,9 @@ const CallCenterPanel = () => {
                 const totalPages = Math.max(1, Math.ceil(allProviders.length / 10));
                 const startIndex = (allProvidersPage - 1) * 10;
                 const paginatedProviders = allProviders.slice(startIndex, startIndex + 10);
-                const getCategoryName = (categoryId: string) => {
-                  const category = serviceCategories.find((item) => String(item.id) === String(categoryId));
-                  return category ? (bn ? category.name : category.name_en || category.name) : categoryId;
+                const getCategoryName = (serviceId: string) => {
+                  const service = services.find((item) => String(item.id) === String(serviceId));
+                  return service ? (bn ? service.title : service.title_en || service.title) : serviceId;
                 };
                 const getProfileImageUrl = (image?: string | null) => {
                   if (!image) return "";
@@ -2590,91 +2589,6 @@ const CallCenterPanel = () => {
                   </div>
                 );
               }
-
-              /* ─────────────────────────────────────────────
-                 TAB: SERVICE REQUESTS
-              ───────────────────────────────────────────── */
-              /* if (activeTab === "requests")
-                return (
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <h3 className="text-lg font-semibold text-slate-900">{bn ? "সার্ভিস অনুরোধ" : "Service Requests"}</h3>
-                      <button
-                        onClick={fetchData}
-                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                        title={bn ? "রিফ্রেশ" : "Refresh"}
-                      >
-                        <RefreshCw className="h-4 w-4 text-slate-600" />
-                      </button>
-                    </div>
-
-                    <div className="mb-5 rounded-lg border border-amber-200 bg-amber-50 p-3">
-                      <p className="text-lg font-semibold text-amber-800">{filteredRequests.length}</p>
-                      <span className="rounded-full border border-amber-200 bg-white px-2 py-0.5 text-[11px] font-medium text-amber-700">
-                        {bn ? "পেন্ডিং সার্ভিস অনুরোধ" : "Pending service requests"}
-                      </span>
-                    </div>
-
-                    Requests List
-                    <div className="space-y-3">
-                      {filteredRequests.length === 0 ? (
-                        <div className="text-center py-12">
-                          <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-                          <p className="text-sm text-slate-500">{bn ? "কোনো সার্ভিস অনুরোধ নেই" : "No service requests found"}</p>
-                        </div>
-                      ) : (
-                        filteredRequests.map((req, i) => {
-                          const requestStatus = getRequestStatus(req);
-                          const s = requestStatusOptions.find((o) => o.value === requestStatus) || requestStatusOptions[0];
-                          return (
-                            <motion.div
-                              key={req.id}
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.03 }}
-                              className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:shadow-md transition-shadow"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <User className="h-4 w-4 text-slate-400 shrink-0" />
-                                    <p className="text-sm font-medium text-slate-900">{req.customer_name}</p>
-                                  </div>
-                                  <p className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {req.customer_phone}
-                                  </p>
-                                </div>
-                                <select
-                                  value={requestStatus}
-                                  onChange={(e) => updateRequestStatus(req.id, e.target.value)}
-                                  disabled={updatingId === req.id}
-                                  className={`rounded-lg border px-2 py-1.5 text-xs font-medium outline-none ${s.className} disabled:opacity-50 shrink-0`}
-                                >
-                                  {requestStatusOptions.map((o) => (
-                                    <option key={o.value} value={o.value}>
-                                      {bn ? o.labelBn : o.labelEn}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{req.service_description}</p>
-                              <div className="flex items-start gap-1.5 text-xs text-slate-500">
-                                <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
-                                <span>
-                                  {[req.district, req.thana, req.detail_area].filter(Boolean).join(", ") || "ঠিকানা নেই"}
-                                </span>
-                              </div>
-
-                              <p className="text-[10px] text-slate-400">{new Date(req.created_at).toLocaleString("bn-BD")}</p>
-                            </motion.div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
 
               /* ─────────────────────────────────────────────
                  TAB: SERVICE MESSAGES (CHAT)
