@@ -279,6 +279,8 @@ const MartPanel = () => {
 
   const [deliverymenByOrder, setDeliverymenByOrder] = useState<Record<string, DeliverymanMatch[]>>({});
   const [deliverymenLoading, setDeliverymenLoading] = useState<Record<string, boolean>>({});
+  // ── "Cart"-style dropdown open/close state for the matching-deliverymen panel ──
+  const [openDeliverymenCart, setOpenDeliverymenCart] = useState<Record<string, boolean>>({});
   const [requestStatus, setRequestStatus] = useState<Record<string, RequestStatus>>({});
   const [requestIds, setRequestIds]       = useState<Record<string, number>>({});
 
@@ -1385,6 +1387,7 @@ const MartPanel = () => {
                       const itemList: OrderItem[] = order.items ?? [];
                       const matchingDeliverymen  = deliverymenByOrder[order.id] || [];
                       const isDeliverymenLoading = !!deliverymenLoading[order.id];
+                      const isCartOpen           = !!openDeliverymenCart[order.id];
                       return (
                         <motion.div key={order.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
                           <div className="rounded-2xl bg-white border border-slate-100 hover:border-slate-200 hover:shadow-sm transition-all overflow-hidden">
@@ -1439,9 +1442,22 @@ const MartPanel = () => {
                                       </SelectContent>
                                     </Select>
                                     {order.status === "shipped" && (
-                                      <Button size="sm" variant="outline" className="h-8 text-xs rounded-xl border-emerald-200 text-emerald-700"
-                                        onClick={() => fetchDeliverymenForOrder(order)} disabled={isDeliverymenLoading}>
-                                        {isDeliverymenLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : bn ? "ডেলিভারিম্যান খুঁজুন" : "Find Deliveryman"}
+                                      <Button size="sm" variant="outline" className="h-8 text-xs rounded-xl border-emerald-200 text-emerald-700 gap-1.5"
+                                        onClick={() => {
+                                          const willOpen = !openDeliverymenCart[order.id];
+                                          setOpenDeliverymenCart(prev => ({ ...prev, [order.id]: willOpen }));
+                                          if (willOpen) fetchDeliverymenForOrder(order);
+                                        }}
+                                        disabled={isDeliverymenLoading}>
+                                        {isDeliverymenLoading
+                                          ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                                          : <ShoppingCart className="h-3.5 w-3.5" />}
+                                        {bn ? "ডেলিভারিম্যান খুঁজুন" : "Find Deliveryman"}
+                                        {matchingDeliverymen.length > 0 && (
+                                          <span className="ml-1 inline-flex items-center justify-center h-4 min-w-4 px-1 rounded-full bg-emerald-500 text-white text-[10px] font-bold">
+                                            {matchingDeliverymen.length}
+                                          </span>
+                                        )}
                                       </Button>
                                     )}
                                   </div>
@@ -1449,52 +1465,63 @@ const MartPanel = () => {
                               </div>
                             </div>
 
-                            {order.status === "shipped" && (
-                              <div className="mx-4 mb-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-3">
-                                <div className="flex items-center justify-between gap-3 mb-2">
+                            {order.status === "shipped" && isCartOpen && (
+                              <div className="mx-4 mb-4 rounded-xl border border-emerald-100 bg-emerald-50/40 shadow-sm overflow-hidden">
+                                <div className="flex items-center justify-between gap-3 px-3 py-2 border-b border-emerald-100">
                                   <p className="text-xs font-bold text-emerald-800">{bn ? "ম্যাচিং ডেলিভারিম্যান" : "Matching Deliverymen"}</p>
-                                  <span className="text-[11px] text-emerald-700">
-                                    {[order.shipping_thana, order.shipping_district].filter(Boolean).join(", ") || (bn ? "এলাকা নেই" : "Address area missing")}
-                                  </span>
-                                </div>
-                                {isDeliverymenLoading ? (
-                                  <div className="flex items-center gap-2 text-xs text-emerald-700">
-                                    <Loader2 className="h-3.5 w-3.5 animate-spin" />{bn ? "লোড হচ্ছে..." : "Loading deliverymen..."}
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] text-emerald-700">
+                                      {[order.shipping_thana, order.shipping_district].filter(Boolean).join(", ") || (bn ? "এলাকা নেই" : "Address area missing")}
+                                    </span>
+                                    <button
+                                      onClick={() => setOpenDeliverymenCart(prev => ({ ...prev, [order.id]: false }))}
+                                      className="w-6 h-6 rounded-md flex items-center justify-center hover:bg-emerald-100 text-emerald-700"
+                                    >
+                                      <XCircle className="h-3.5 w-3.5" />
+                                    </button>
                                   </div>
-                                ) : matchingDeliverymen.length === 0 ? (
-                                  <p className="text-xs text-slate-500">{bn ? "এই এলাকায় কোনো ডেলিভারিম্যান পাওয়া যায়নি।" : "No matching deliveryman found for this district/area."}</p>
-                                ) : (
-                                  <div className="grid gap-2 md:grid-cols-2">
-                                    {matchingDeliverymen.map(deliveryman => {
-                                      const key    = `${order.id}-${deliveryman.user_id}`;
-                                      const status = requestStatus[key] ?? "idle";
-                                      return (
-                                        <div key={`${deliveryman.user_id}-${deliveryman.thana || deliveryman.area}`}
-                                          className="rounded-xl border border-white bg-white px-3 py-2 shadow-sm">
-                                          <div className="flex items-center gap-2">
-                                            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
-                                              <UserRound className="h-4 w-4" />
-                                            </div>
-                                            <div className="flex flex-1 items-center justify-between gap-3 min-w-0">
-                                              <div className="min-w-0 flex-1">
-                                                <p className="truncate text-sm font-semibold text-slate-800">
-                                                  {deliveryman.deliveryman_name || `Deliveryman #${deliveryman.user_id}`}
-                                                </p>
-                                                <p className="text-[11px] text-slate-400">{deliveryman.thana || deliveryman.area}, {deliveryman.district}</p>
-                                                {deliveryman.deliveryman_phone && (
-                                                  <a href={`tel:${deliveryman.deliveryman_phone}`} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
-                                                    <PhoneCall className="h-3 w-3" />{deliveryman.deliveryman_phone}
-                                                  </a>
-                                                )}
+                                </div>
+
+                                <div className="p-3">
+                                  {isDeliverymenLoading ? (
+                                    <div className="flex items-center gap-2 text-xs text-emerald-700">
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin" />{bn ? "লোড হচ্ছে..." : "Loading deliverymen..."}
+                                    </div>
+                                  ) : matchingDeliverymen.length === 0 ? (
+                                    <p className="text-xs text-slate-500">{bn ? "এই এলাকায় কোনো ডেলিভারিম্যান পাওয়া যায়নি।" : "No matching deliveryman found for this district/area."}</p>
+                                  ) : (
+                                    <div className="grid gap-2 md:grid-cols-2">
+                                      {matchingDeliverymen.map(deliveryman => {
+                                        const key    = `${order.id}-${deliveryman.user_id}`; 
+                                        const status = requestStatus[key] ?? "idle";
+                                        return (
+                                          <div key={`${deliveryman.user_id}-${deliveryman.thana || deliveryman.area}`}
+                                            className="rounded-xl border border-white bg-white px-3 py-2 shadow-sm">
+                                            <div className="flex items-center gap-2">
+                                              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-emerald-700">
+                                                <UserRound className="h-4 w-4" />
                                               </div>
-                                              <RequestButton status={status} bn={bn} onSend={() => sendDeliveryRequest(order, deliveryman.user_id)} />
+                                              <div className="flex flex-1 items-center justify-between gap-3 min-w-0">
+                                                <div className="min-w-0 flex-1">
+                                                  <p className="truncate text-sm font-semibold text-slate-800">
+                                                    {deliveryman.deliveryman_name || `Deliveryman #${deliveryman.user_id}`}
+                                                  </p>
+                                                  <p className="text-[11px] text-slate-400">{deliveryman.thana || deliveryman.area}, {deliveryman.district}</p>
+                                                  {deliveryman.deliveryman_phone && (
+                                                    <a href={`tel:${deliveryman.deliveryman_phone}`} className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                                                      <PhoneCall className="h-3 w-3" />{deliveryman.deliveryman_phone}
+                                                    </a>
+                                                  )}
+                                                </div>
+                                                <RequestButton status={status} bn={bn} onSend={() => sendDeliveryRequest(order, deliveryman.user_id)} />
+                                              </div>
                                             </div>
                                           </div>
-                                        </div>
-                                      );
-                                    })}
-                                  </div>
-                                )}
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
                               </div>
                             )}
 

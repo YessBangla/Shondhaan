@@ -92,6 +92,24 @@ const ROLE_LABELS: Record<string, string> = Object.fromEntries(
   ROLE_OPTIONS.map((role) => [role.value, role.label]),
 );
 
+// Only these roles are shown by default in the admin assignment view.
+// A name/email/mobile search bypasses this restriction and searches all users,
+// so an admin can find e.g. a plain "user" and change their role.
+const ADMIN_ASSIGNMENT_ROLES: RoleKey[] = [
+  "super_admin",
+  "admin",
+  "mart_admin",
+  "job_admin",
+  "service_admin",
+  "deal_admin",
+  "moderator",
+  "supervisor",
+  "finance",
+  "call_center",
+  "mart_cs",
+  "representative",
+];
+
 interface ListProps {
   grouped: Record<string, AssignmentRow[]>;
   onRevoke: (id: string) => void;
@@ -287,7 +305,10 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
     } catch {}
   }, [storageKey, selectedUserId, userSearch, roleFilter, filterScopeType, assignmentSearch, sortPrimary, sortDir, sortSecondary, lockedUserId]);
 
-  const targetRoles = ROLE_OPTIONS.map((role) => role.value);
+  // Role filter dropdown only offers the restricted admin-assignment roles.
+  // (ROLE_OPTIONS / ROLE_LABELS still cover every role and are used wherever
+  // an admin actually sets a user's type, e.g. handleTypeChange's <Select>.)
+  const targetRoles = ADMIN_ASSIGNMENT_ROLES;
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -325,7 +346,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
       setUsers(mapped);
       if (!lockedUserId && !selectedUserId && mapped.length > 0) setSelectedUserId(mapped[0].user_id);
     } catch (error: any) {
-      toast.error(error.message || "ইউজার লোড করা যায়নি");
+      toast.error(error.message || "ইউজার লোড করা যায়নি");
       setUsers([]);
     }
 
@@ -354,9 +375,18 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
     !scopeSearch.trim() || o.label.toLowerCase().includes(scopeSearch.toLowerCase()) ||
     (o.hint || "").toLowerCase().includes(scopeSearch.toLowerCase()));
 
+  // Default (no search): only show users whose role is in ADMIN_ASSIGNMENT_ROLES.
+  // Once the admin types a name/email/mobile, search across ALL users regardless
+  // of role, so e.g. a plain "user" can be found and have their role changed.
   const filteredUsers = users.filter(u => {
+    const hasSearch = userSearch.trim().length > 0;
+
+    if (!hasSearch && !ADMIN_ASSIGNMENT_ROLES.includes(u.type as RoleKey)) return false;
+
     if (roleFilter !== "all" && u.type !== roleFilter) return false;
-    if (!userSearch.trim()) return true;
+
+    if (!hasSearch) return true;
+
     const q = userSearch.toLowerCase();
     return (u.full_name || "").toLowerCase().includes(q) ||
       (u.email || "").toLowerCase().includes(q) ||
@@ -437,10 +467,10 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
     try {
       const { user: updated } = await updateMySqlUserType(target.mysql_id, nextType as RoleKey);
       setUsers(prev => prev.map(u => u.user_id === target.user_id ? { ...u, type: updated.type } : u));
-      toast.success("ইউজার টাইপ আপডেট হয়েছে");
+      toast.success("ইউজার টাইপ আপডেট হয়েছে");
     } catch (error: any) {
       setUsers(prev => prev.map(u => u.user_id === target.user_id ? { ...u, type: previous } : u));
-      toast.error(error.message || "ইউজার টাইপ আপডেট করা যায়নি");
+      toast.error(error.message || "ইউজার টাইপ আপডেট করা যায়নি");
     }
   };
 
@@ -454,7 +484,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
 
   const handleCreateUser = async () => {
     if (!newUserName.trim() || !newUserEmail.trim() || !newUserMobile.trim() || newUserPassword.length < 6) {
-      toast.error("সঠিক নাম, ইমেইল, মোবাইল ও ৬+ অক্ষরের পাসওয়ার্ড দিন");
+      toast.error("সঠিক নাম, ইমেইল, মোবাইল ও ৬+ অক্ষরের পাসওয়ার্ড দিন");
       return;
     }
 
@@ -476,14 +506,14 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
         type: newUserType,
       });
       console.log("User created successfully:", created);
-      toast.success("ব্যাকএন্ড ইউজার তৈরি হয়েছে");
+      toast.success("ব্যাকএন্ড ইউজার তৈরি হয়েছে");
       resetCreateForm();
       setCreatePanelOpen(false);
       await load();
       setSelectedUserId(String(created.id));
     } catch (error: any) {
       console.error("Error creating user:", error);
-      toast.error(error.message || "ব্যাকএন্ড ইউজার তৈরি করা যায়নি");
+      toast.error(error.message || "ব্যাকএন্ড ইউজার তৈরি করা যায়নি");
     } finally {
       setCreatingUser(false);
     }
@@ -789,7 +819,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
                         <Input value={newUserMobile} onChange={e => setNewUserMobile(e.target.value)} placeholder="01XXXXXXXXX" className="h-9 text-xs" />
                       </div>
                       <div>
-                        <Label className="text-xs font-semibold mb-1 block">পাসওয়ার্ড</Label>
+                        <Label className="text-xs font-semibold mb-1 block">পাসওয়ার্ড</Label>
                         <Input type="password" value={newUserPassword} onChange={e => setNewUserPassword(e.target.value)} placeholder="কমপক্ষে ৬টি অক্ষর" className="h-9 text-xs" />
                       </div>
                       <div>
@@ -847,7 +877,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
               <tbody className="divide-y divide-border">
                 {filteredUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">কোনো ইউজার পাওয়া যায়নি</td>
+                    <td colSpan={9} className="px-3 py-8 text-center text-muted-foreground">কোনো ইউজার পাওয়া যায়নি</td>
                   </tr>
                 ) : filteredUsers.map((u) => (
                   <tr
@@ -960,7 +990,7 @@ const StaffAssignmentManager = ({ mode, lockedUserId }: Props) => {
                       {selectedUser.mysql_id && <Badge variant="secondary" className="text-[10px]">ID: {selectedUser.mysql_id}</Badge>}
                       {typeof selectedUser.email_verified === "boolean" && (
                         <Badge variant={selectedUser.email_verified ? "default" : "outline"} className="text-[10px] bg-userprimary hover:bg-emerald-600">
-                          {selectedUser.email_verified ? "ভেরিফায়েড" : "আনভেরিফায়েড"}
+                          {selectedUser.email_verified ? "ভেরিফায়েড" : "আনভেরিফায়েড"}
                         </Badge>
                       )}
                     </div>
