@@ -352,7 +352,7 @@ const AdminHomepageSections = () => {
 
           <button
             onClick={() => startEdit()}
-            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-xs font-medium text-white"
+            className="flex items-center gap-1.5 rounded-lg bg-userprimary px-3 py-2 text-xs font-medium text-white"
           >
             <Plus className="h-3.5 w-3.5" />
             নতুন সেকশন
@@ -476,7 +476,7 @@ const AdminHomepageSections = () => {
                               type="checkbox"
                               checked={editing.service_slugs?.includes(service.slug) || false}
                               onChange={() => toggleSlug(service.slug)}
-                              className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                              className="h-4 w-4 rounded border-input text-userprimary focus:ring-userprimary"
                             />
                             <div className="flex flex-col">
                               <span>{service.title}</span>
@@ -501,7 +501,7 @@ const AdminHomepageSections = () => {
                     type="checkbox"
                     checked={editing.is_active ?? true}
                     onChange={(e) => setEditing({ ...editing, is_active: e.target.checked })}
-                    className="h-4 w-4 rounded border-input text-primary focus:ring-primary"
+                    className="h-4 w-4 rounded border-input text-userprimary focus:ring-userprimary"
                   />
                   সক্রিয় করুন
                 </label>
@@ -519,7 +519,7 @@ const AdminHomepageSections = () => {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center gap-1.5 rounded-lg bg-primary px-5 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
+                className="flex items-center gap-1.5 rounded-lg bg-userprimary px-5 py-2 text-sm font-medium text-white hover:bg-emerald-600 transition-colors disabled:opacity-50"
               >
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                 {saving ? "সেভ হচ্ছে..." : "সেভ করুন"}
@@ -536,7 +536,7 @@ const AdminHomepageSections = () => {
             <p className="text-sm text-muted-foreground">এখনো কোনো হোমপেজ সেকশন নেই</p>
             <button
               onClick={() => startEdit()}
-              className="mt-3 rounded-lg bg-primary px-4 py-2 text-xs font-medium text-white"
+              className="mt-3 rounded-lg bg-userprimary px-4 py-2 text-xs font-medium text-white"
             >
               প্রথম সেকশন যোগ করুন
             </button>
@@ -545,7 +545,7 @@ const AdminHomepageSections = () => {
           sections.map((section) => (
             <div
               key={section.id}
-              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 hover:border-primary/30 transition-colors"
+              className="flex items-center justify-between gap-3 rounded-xl border border-border bg-card p-3 hover:border-userprimary/30 transition-colors"
             >
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-foreground">

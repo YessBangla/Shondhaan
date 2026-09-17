@@ -253,7 +253,7 @@ const CategoryCarousel = ({
         <div
           ref={scrollRef}
           className="flex gap-6 overflow-x-auto px-6 py-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-        >
+          >
           {categories.map((cat: any) => {
             // Prefer image_url (full category illustration), then icon_url, then emoji fallback
             const imgSrc = cat.image_url || cat.icon_url || null;
@@ -333,8 +333,38 @@ const MartHome = () => {
   const [homeSort, setHomeSort] = useState("popular");
   const [navTransition, setNavTransition] = useState(false);
   const [currentBanner, setCurrentBanner] = useState(0);
-    const [homeSearch, setHomeSearch] = useState("");
+  const [homeSearch, setHomeSearch] = useState("");
+  const [animatedSearchPlaceholder, setAnimatedSearchPlaceholder] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+
+  useEffect(() => {
+    const fullPlaceholder = bn ? "আপনার প্রয়োজনীয় প্রোডাক্ট খুঁজুন..." : "Search products...";
+    let position = 0;
+    let deleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const animatePlaceholder = () => {
+      if (!deleting) {
+        position += 1;
+        setAnimatedSearchPlaceholder(fullPlaceholder.slice(0, position));
+        if (position >= fullPlaceholder.length) {
+          deleting = true;
+          timer = setTimeout(animatePlaceholder, 1800);
+          return;
+        }
+      } else {
+        position -= 1;
+        setAnimatedSearchPlaceholder(fullPlaceholder.slice(0, position));
+        if (position <= 0) deleting = false;
+      }
+
+      timer = setTimeout(animatePlaceholder, deleting ? 45 : 75);
+    };
+
+    setAnimatedSearchPlaceholder("");
+    timer = setTimeout(animatePlaceholder, 300);
+    return () => clearTimeout(timer);
+  }, [bn]);
 
   const queryClient = useQueryClient();
   const bannerInterval = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -590,7 +620,7 @@ const MartHome = () => {
       <Navbar />
       <PlatformSwitcher className="hidden" />
 
-      <header className="bg-white dark:bg-card border-b border-border/60 shadow-sm mt-[60px] md:mt-[30px]">
+      <header className="hidden md:block bg-background dark:bg-card border-b border-border/60 shadow-sm mt-[60px] md:mt-[30px]">
         <div className="border-t border-border/40 bg-gradient-to-r from-orange-50 via-white to-emerald-50 dark:from-orange-950/20 dark:via-card dark:to-emerald-950/20">
           <div className="app-container md:py-3">
             <div className="grid grid-cols-4 auto-cols-[100%] sm:auto-cols-[45%] md:grid-flow-row md:grid-cols-4 gap-3 overflow-x-auto md:overflow-visible scrollbar-none">
@@ -645,39 +675,38 @@ const MartHome = () => {
         </div>
       </header>
 
-      <div className="app-container py-1 md:py-2">
+      <div className="app-container mt-[50px] md:mt-[0px]">
 
         {/* Hero Banner Carousel */}
-        <section className="mb-7">
+        <section className="relative mb-7">
           <form
             onSubmit={(e) => e.preventDefault()}
-            className="relative z-30 mb-3"
-            role="search"
-          >
-           <div className="flex justify-center w-full">
-  <div className="relative flex items-center w-full max-w-xs rounded-full border border-blue-500 bg-white dark:bg-card shadow-sm transition-all duration-200 focus-within:max-w-sm focus-within:border-blue-600 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-500/15">
-    <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground peer-focus:text-blue-600 transition-colors" />
-    <input
-      value={homeSearch}
-      onChange={(e) => setHomeSearch(e.target.value)}
-      placeholder={bn ? "খুঁজুন..." : "Search products..."}
-      className="peer h-9 w-full bg-transparent pl-9 pr-8 text-[13px] font-medium text-foreground outline-none placeholder:text-muted-foreground placeholder:font-normal"
-      aria-label="Search products by name or category"
-    />
-    {homeSearch && (
-      <button
-        type="button"
-        onClick={() => setHomeSearch("")}
-        className="absolute right-2 flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-        aria-label="Clear search"
-      >
-        <X className="h-3.5 w-3.5" />
-      </button>
-    )}
-  </div>
-</div>
+            className="absolute inset-x-0 bottom-1 z-30 -translate-y-1/2"
+            role="search">
+           <div className="flex justify-center">
+              <div className="relative flex bg-background items-center w-full max-w-[400px] rounded-full border-2 border-primary shadow-sm transition-all duration-200 focus-within:max-w-[500px] focus-within:border-blue-600 focus-within:shadow-md focus-within:ring-2 focus-within:ring-blue-500/15">
+                <Search className="absolute left-3.5 h-4 w-4 text-muted-foreground peer-focus:text-blue-600 transition-colors" />
+                <input
+                  value={homeSearch}
+                  onChange={(e) => setHomeSearch(e.target.value)}
+                  placeholder={animatedSearchPlaceholder}
+                  className="peer h-11 w-full bg-transparent pl-9 pr-8 text-[13px] font-medium text-foreground outline-none placeholder:text-muted-foreground placeholder:font-normal"
+                  aria-label="Search products by name or category"
+                />
+                {homeSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setHomeSearch("")}
+                    className="absolute right-2 flex h-5 w-5 items-center justify-center rounded-full text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                )}
+              </div>
+            </div>
             {hasSearchSuggestions && (
-              <div className="absolute left-0 right-0 top-[calc(100%+0.5rem)] z-40 overflow-hidden rounded-2xl border border-border/70 bg-white dark:bg-card shadow-lg">
+              <div className="absolute left-0 right-0 max-w-[500px] mx-auto top-[calc(100%+0.5rem)] z-40 overflow-hidden rounded-2xl border border-border/70 bg-white dark:bg-card shadow-lg">
                 {productSearchSuggestions.length > 0 && (
                   <div className="py-2">
                     <p className="px-4 pb-1 text-[11px] font-semibold uppercase text-muted-foreground">
@@ -757,7 +786,7 @@ const MartHome = () => {
             )}
           </form>
 
-                    <div className="relative left-1/2 w-screen -translate-x-1/2 h-[110px] sm:h-[140px] md:h-[170px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
+          <div className="relative left-1/2 w-screen -translate-x-1/2 h-[180px] sm:h-[250px] md:h-[250px] lg:h-[250px] overflow-hidden bg-muted shadow-sm">
             {banners.length > 0 ? (
               banners.map((banner: any, i: number) => (
                 <div
@@ -765,40 +794,42 @@ const MartHome = () => {
                   className={`absolute inset-0 transition-opacity duration-700 ${i === currentBanner ? "opacity-100 z-10" : "opacity-0 z-0"}`}
                   onClick={() => openBannerLink(banner.link_url)}
                   style={{ cursor: banner.link_url ? "pointer" : "default" }}
-                >
+                  >
                   {banner.image_url ? (
                     <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-primary/20 via-primary/10 to-accent/10" />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent flex flex-col justify-end p-4 md:p-6">
-                    <h2 className="text-base md:text-2xl font-extrabold text-white mb-1 drop-shadow-sm">
-                      {bn ? banner.title : banner.title_en || banner.title}
-                    </h2>
-                    {(bn ? banner.subtitle : banner.subtitle_en || banner.subtitle) && (
-                      <p className="text-xs md:text-sm text-white/80 drop-shadow-sm">
-                        {bn ? banner.subtitle : banner.subtitle_en || banner.subtitle}
-                      </p>
-                    )}
-                    {banner.link_url && (
-                      <button
-                        type="button"
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          openBannerLink(banner.link_url);
-                        }}
-                        className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition-colors hover:bg-white/90 md:text-sm"
-                        style={{
-                          backgroundColor: safeHexColor(banner.button_bg_color, "#ffffff"),
-                          color: safeHexColor(banner.button_text_color, "#0f172a"),
-                        }}
-                      >
-                        {bn
-                          ? banner.button_label || "à¦¦à§‡à¦–à§à¦¨"
-                          : banner.button_label_en || banner.button_label || "View"}
-                        <ArrowRight className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                    <div className="app-container hidden md:block">
+                      <h2 className="text-base md:text-2xl font-extrabold text-white mb-1 drop-shadow-sm">
+                        {bn ? banner.title : banner.title_en || banner.title}
+                      </h2>
+                      {(bn ? banner.subtitle : banner.subtitle_en || banner.subtitle) && (
+                        <p className="text-xs md:text-sm text-white/80 drop-shadow-sm">
+                          {bn ? banner.subtitle : banner.subtitle_en || banner.subtitle}
+                        </p>
+                      )}
+                      {banner.link_url && (
+                        <button
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            openBannerLink(banner.link_url);
+                          }}
+                          className="mt-3 inline-flex w-fit items-center gap-1.5 rounded-xl bg-white px-3.5 py-2 text-xs font-bold text-slate-950 shadow-sm transition-colors hover:bg-white/90 md:text-sm"
+                          style={{
+                            backgroundColor: safeHexColor(banner.button_bg_color, "#ffffff"),
+                            color: safeHexColor(banner.button_text_color, "#0f172a"),
+                          }}
+                        >
+                          {bn
+                            ? banner.button_label || "à¦¦à§‡à¦–à§à¦¨"
+                            : banner.button_label_en || banner.button_label || "View"}
+                          <ArrowRight className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               ))

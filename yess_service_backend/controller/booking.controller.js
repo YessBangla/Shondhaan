@@ -748,6 +748,13 @@ export const assignBookingProvider = async (req, res) => {
   try {
     const { id } = req.params;
     const { provider_id } = req.body;
+    const authenticatedUserId = req.user?.id;
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        message: "Authenticated operator ID is required",
+      });
+    }
 
     const [bookingRows] = await pool.execute(
       `
@@ -788,6 +795,7 @@ export const assignBookingProvider = async (req, res) => {
       SET
         provider_id = ?,
         assigned_to = ?,
+        booked_by = CASE WHEN ? IS NULL THEN booked_by ELSE ? END,
         status = CASE
           WHEN ? IS NULL THEN status
           WHEN status IN ('pending', 'confirmed', 'processing') THEN 'assigned'
@@ -795,7 +803,7 @@ export const assignBookingProvider = async (req, res) => {
         END
       WHERE id = ?
       `,
-      [finalProviderId, finalAssignedTo, finalProviderId, id]
+      [finalProviderId, finalAssignedTo, finalProviderId, String(authenticatedUserId), finalProviderId, id]
     );
     const [rows] = await pool.execute(
       `

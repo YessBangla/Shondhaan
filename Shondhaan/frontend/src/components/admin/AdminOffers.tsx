@@ -413,7 +413,7 @@ const AdminOffers = () => {
             )}
           </p>
         </div>
-        <button onClick={startCreating} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary/90 transition-colors shadow-sm">
+        <button onClick={startCreating} className="flex items-center gap-1.5 rounded-lg bg-userprimary px-4 py-2.5 text-xs font-semibold text-white hover:bg-primary transition-colors shadow-sm">
           <Plus className="h-4 w-4" /> নতুন অফার
         </button>
       </div>
@@ -431,12 +431,12 @@ const AdminOffers = () => {
             className={`
               flex items-center gap-2 rounded-lg border px-3 py-2 bg-background transition-all duration-200
               ${isSearchFocused
-                ? "border-primary/60 ring-2 ring-primary/15 shadow-sm"
+                ? "border-userprimary/60 ring-2 ring-primary/15 shadow-sm"
                 : "border-input hover:border-border"
               }
             `}
           >
-            <Search className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSearchFocused ? "text-primary" : "text-muted-foreground/50"}`} />
+            <Search className={`h-4 w-4 shrink-0 transition-colors duration-200 ${isSearchFocused ? "text-userprimary" : "text-muted-foreground/50"}`} />
             <input
               id="admin-offer-search"
               type="text"
@@ -485,7 +485,7 @@ const AdminOffers = () => {
             className={`
               flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium transition-all duration-200 whitespace-nowrap
               ${isFiltering
-                ? "border-primary/40 bg-primary/5 text-primary"
+                ? "border-userprimary bg-userprimary text-white"
                 : "border-input bg-background text-muted-foreground hover:border-border hover:text-foreground"
               }
             `}
@@ -493,7 +493,7 @@ const AdminOffers = () => {
             <SlidersHorizontal className="h-3.5 w-3.5" />
             <span>{activeFilterLabel}</span>
             {isFiltering && (
-              <span className="flex items-center justify-center h-4 w-4 rounded-full bg-primary text-white text-[10px] font-bold">
+              <span className="flex items-center justify-center h-4 w-4 rounded-full bg-userprimary text-white text-[10px] font-bold">
                 {statusFilterOptions.find((f) => f.key === statusFilter)?.count || 0}
               </span>
             )}
@@ -523,14 +523,14 @@ const AdminOffers = () => {
                       className={`
                         w-full flex items-center justify-between px-3 py-2 text-xs transition-colors
                         ${statusFilter === opt.key
-                          ? "bg-primary/8 text-primary font-semibold"
+                          ? "bg-primary/8 text-userprimary font-semibold"
                           : "text-foreground hover:bg-muted/60"
                         }
                       `}
                     >
                       <span className="flex items-center gap-2">
                         {statusFilter === opt.key && (
-                          <span className="w-1.5 h-1.5 rounded-full bg-primary" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-userprimary" />
                         )}
                         {opt.label}
                       </span>
@@ -578,7 +578,7 @@ const AdminOffers = () => {
               <p className="text-[11px] text-muted-foreground whitespace-nowrap">
                 <span className="font-mono font-semibold text-foreground">"{searchQuery}"</span>
                 দিয়ে {filteredOffers.length > 0
-                  ? <span className="text-primary font-medium">{filteredOffers.length}টি ফলাফল</span>
+                  ? <span className="text-userprimary font-medium">{filteredOffers.length}টি ফলাফল</span>
                   : <span className="text-destructive font-medium">কোনো ফলাফল নেই</span>
                 } পাওয়া গেছে
               </p>
@@ -610,8 +610,8 @@ const AdminOffers = () => {
                     </div>
                   </div>
                 ) : (
-                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full max-w-xs h-28 border-2 border-dashed border-border hover:border-primary/50 rounded-xl flex flex-col items-center justify-center gap-1.5 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group">
-                    <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/20"><ImageIcon className="h-5 w-5 text-primary" /></div>
+                  <button type="button" onClick={() => fileInputRef.current?.click()} className="w-full max-w-xs h-28 border-2 border-dashed border-border hover:border-userprimary rounded-xl flex flex-col items-center justify-center gap-1.5 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer group">
+                    <div className="p-2.5 rounded-xl bg-primary/10 group-hover:bg-primary/20"><ImageIcon className="h-5 w-5 text-userprimary" /></div>
                     <p className="text-xs font-medium text-muted-foreground">ছবি আপলোড করুন</p>
                     <p className="text-[10px] text-muted-foreground/70">PNG, JPG, WebP • ৫MB</p>
                   </button>
@@ -703,7 +703,7 @@ const AdminOffers = () => {
                                   {s.title_en && s.title_en !== s.title && <p className="text-[10px] text-muted-foreground truncate">{s.title_en}</p>}
                                   <p className="text-[10px] font-mono text-primary/70 truncate">{s.slug}</p>
                                 </div>
-                                {String(s.id) === String(editing?.service_id) && <span className="shrink-0 text-[10px] font-semibold text-primary">✓</span>}
+                                {String(s.id) === String(editing?.service_id) && <span className="shrink-0 text-[10px] font-semibold text-userprimary">✓</span>}
                               </button>
                             ))
                           )}
@@ -727,7 +727,7 @@ const AdminOffers = () => {
                   </label>
                 </div>
                 <div className="flex gap-2">
-                  <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-primary/90 transition-colors">
+                  <button onClick={handleSave} disabled={isSaving} className="flex items-center gap-1.5 rounded-lg bg-userprimary px-4 py-2 text-xs font-semibold text-white disabled:opacity-50 hover:bg-primary transition-colors">
                     {isSaving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                     {isSaving ? "সেভ হচ্ছে..." : "সেভ করুন"}
                   </button>

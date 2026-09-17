@@ -4,10 +4,37 @@ export const initializeDatabase = async () => {
   try {
     console.log("🔄 Initializing database tables...");
 
+    // Older installations may contain child tables that reference a previous
+    // UUID-based service_categories schema. Remove those stale constraints
+    // only when the parent table is missing; existing data is preserved.
+    try {
+      const [categoryTableRows] = await pool.query(`
+        SELECT 1
+        FROM information_schema.TABLES
+        WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'service_categories'
+        LIMIT 1
+      `);
+      if (!categoryTableRows.length) {
+        const [categoryForeignKeys] = await pool.query(`
+          SELECT TABLE_NAME, CONSTRAINT_NAME
+          FROM information_schema.KEY_COLUMN_USAGE
+          WHERE CONSTRAINT_SCHEMA = DATABASE()
+            AND REFERENCED_TABLE_NAME = 'service_categories'
+        `);
+        for (const foreignKey of categoryForeignKeys) {
+          await pool.query(
+            `ALTER TABLE \`${foreignKey.TABLE_NAME}\` DROP FOREIGN KEY \`${foreignKey.CONSTRAINT_NAME}\``
+          );
+        }
+      }
+    } catch (error) {
+      console.error("⚠️ Could not remove stale category foreign keys:", error.message);
+    }
+
     // 1. Create service_categories table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS service_categories (
-        id INT AUTO_INCREMENT PRIMARY KEY,
+        id VARCHAR(36) PRIMARY KEY,
         name VARCHAR(255) NOT NULL,
         name_en VARCHAR(255),
         icon_url VARCHAR(500),
@@ -33,10 +60,29 @@ export const initializeDatabase = async () => {
       if (error.errno !== 1060) console.error("⚠️ service_categories.slug:", error.message);
     }
 
+    // Older installations may have UUID-based child columns referencing the
+    // services table. Remove only those stale constraints before creating the
+    // numeric services table; the existing child data is preserved.
+    try {
+      const [serviceForeignKeys] = await pool.query(`
+        SELECT TABLE_NAME, CONSTRAINT_NAME
+        FROM information_schema.KEY_COLUMN_USAGE
+        WHERE CONSTRAINT_SCHEMA = DATABASE()
+          AND REFERENCED_TABLE_NAME = 'services'
+      `);
+      for (const foreignKey of serviceForeignKeys) {
+        await pool.query(
+          `ALTER TABLE \`${foreignKey.TABLE_NAME}\` DROP FOREIGN KEY \`${foreignKey.CONSTRAINT_NAME}\``
+        );
+      }
+    } catch (error) {
+      console.error("⚠️ Could not remove stale service foreign keys:", error.message);
+    }
+
     // 2. Create services table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS services (
-        id VARCHAR(36) PRIMARY KEY,
+        id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
         slug VARCHAR(255) NOT NULL UNIQUE,
         title VARCHAR(255) NOT NULL,
         title_en VARCHAR(255),
@@ -50,7 +96,7 @@ export const initializeDatabase = async () => {
         platform_fee DECIMAL(10,2) DEFAULT 0,
         features JSON,
         available_cities JSON,
-        category_id VARCHAR(36),
+        category_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
         is_active TINYINT DEFAULT 1,
         sort_order INT DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -67,7 +113,7 @@ export const initializeDatabase = async () => {
     await pool.query(`
       CREATE TABLE IF NOT EXISTS service_packages (
         id VARCHAR(36) PRIMARY KEY,
-        service_id VARCHAR(36) NOT NULL,
+        service_id INT UNSIGNED NOT NULL,
         name VARCHAR(255) NOT NULL,
         description LONGTEXT,
         price DECIMAL(10,2) NOT NULL,
@@ -113,8 +159,8 @@ await pool.query(`
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id VARCHAR(255),
     booked_by VARCHAR(255),
-    service_id VARCHAR(36),
-    package_id VARCHAR(36),
+    service_id INT UNSIGNED,
+    package_id CHAR(36) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci,
     service_slug VARCHAR(255),
     service_title VARCHAR(255),
     package_name VARCHAR(255),
@@ -165,7 +211,7 @@ console.log("✅ bookings table ready");
     await pool.query(`
       CREATE TABLE IF NOT EXISTS service_reviews (
         id VARCHAR(36) PRIMARY KEY,
-        service_id VARCHAR(36) NOT NULL,
+        service_id INT UNSIGNED NOT NULL,
         user_id VARCHAR(255),
         rating DECIMAL(3,2),
         title VARCHAR(255),
@@ -237,7 +283,7 @@ console.log("✅ bookings table ready");
       CREATE TABLE IF NOT EXISTS service_chat_conversations (
         id VARCHAR(36) PRIMARY KEY,
         user_id VARCHAR(255) NOT NULL,
-        service_id VARCHAR(36),
+        service_id INT UNSIGNED,
         service_title VARCHAR(255),
         last_message TEXT,
         last_message_time TIMESTAMP NULL,
