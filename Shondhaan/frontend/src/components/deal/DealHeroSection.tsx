@@ -25,7 +25,7 @@ import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { toast } from "sonner";
 
-const DEFAULT_BG_IMAGE = "/deal_assets/hero_deal-3.png";
+const DEFAULT_BG_IMAGE = "/deal_assets/hero_deal8.png";
 
 interface LocationValue {
   division: string;
@@ -210,7 +210,7 @@ const cardData = {
           className="absolute h-full inset-0 bg-center md:bg-top bg-cover"
           style={{ backgroundImage: `url(${DEFAULT_BG_IMAGE})` }}
         />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-xs" />
+        <div className="absolute inset-0 bg-black/0 backdrop-blur-xs" />
 
         {/* Two-column content wrapper */}
         <div className="relative z-10 flex flex-col md:flex-row items-center gap-6 md:gap-8 w-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 min-h-[300px] md:min-h-[400px]">
@@ -220,14 +220,14 @@ const cardData = {
             {/* Search bar */}
             <div className="relative w-full">
               {/* Search Input */}
-              <div className="relative w-full">
+              <div className="relative w-full max-w-[400px] duration-200 focus-within:max-w-[500px]  transition-all">
                 <Search className="absolute text-foreground left-3 z-20 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400 pointer-events-none" />
                 <Input
                   placeholder={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   onKeyDown={handleKeyDown}
-                  className="pl-10 pr-10 py-6 w-full rounded-lg bg-background backdrop-blur-sm shadow-md border-2 border-primary focus-visible:ring-2 focus-visible:ring-emerald-400"
+                  className="pl-10 pr-10 py-6 w-full rounded-lg bg-background backdrop-blur-sm shadow-md border-2 border-primary focus-visible:ring-2 focus-visible:ring-primary"
                   aria-label={bn ? "আপনার প্রয়োজনীয় যেকোনো কিছু খুঁজুন" : "Find Something you need"}
                 />
                 {loading ? (
@@ -304,7 +304,7 @@ const cardData = {
                 size="lg"
                 variant="outline"
                 onClick={() => navigate("/deal/my-ads")}
-                className="rounded-xl text-[12px] md:text-base font-bold gap-2 px-2 md:px-6 border-blue-200 text-blue-700 hover:bg-primary hover:border-blue-300 transition-colors"
+                className="rounded-xl text-[12px] md:text-base font-bold bg-primary gap-2 px-2 md:px-6 border-blue-200 text-white hover:bg-primary hover:border-blue-300 transition-colors"
                 >
                 <Package className="h-5 w-5" />
                 {bn ? "আমার বিজ্ঞাপন" : "My Ads"}
@@ -381,7 +381,7 @@ const cardData = {
                   }}
                   whileHover={{ scale: 1.04 }}
                   // rounded-xl border border-white/20 bg-white/30 backdrop-blur-md
-                  className="rounded-xl bg-gradient-to-r from-blue-600/30 to-green-400/20 backdrop-blur-md p-3 md:p-5 min-h-[90px] md:min-h-[120px] flex flex-col items-start justify-start gap-2 text-center shadow-lg shadow-black/10"
+                  className="rounded-xl bg-gradient-to-r from-blue-900/70 to-green-800/70 backdrop-blur-md p-3 md:p-5 min-h-[90px] md:min-h-[120px] flex flex-col items-start justify-start gap-2 text-center shadow-lg shadow-black/10"
                   >
                   <div className="p-1 bg-white rounded-lg">
                     <img

@@ -75,12 +75,13 @@ function lazy<T extends ComponentType<any>>(load: () => Promise<{ default: T }>)
       return module;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
-      const isChunkFailure = /chunk|import|module|fetch/i.test(message);
+      const isChunkFailure = /chunk|dynamically imported module|failed to fetch|import|module|404/i.test(message);
       const alreadyRetried = sessionStorage.getItem(CHUNK_RELOAD_KEY) === "1";
 
       if (isChunkFailure && !alreadyRetried) {
         sessionStorage.setItem(CHUNK_RELOAD_KEY, "1");
-        window.location.reload();
+        window.location.replace(window.location.href);
+        return new Promise<never>(() => {});
       }
 
       throw error;
