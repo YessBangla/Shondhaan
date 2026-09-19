@@ -462,7 +462,7 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
                           {bn ? "আপনার রেফারেল লিংক:" : "Your referral link:"}
                         </p>
                         <p className="break-all text-sm font-medium text-emerald-700">
-                          {browserReferralLink}
+                          {referralShareLink}
                         </p>
                       </div>
                     )}
@@ -647,10 +647,10 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
 
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 bg-slate-50 rounded-xl px-4 py-3 truncate">
-                <span className="text-sm text-slate-600 font-mono">{stats.code.link}</span>
+                <span className="text-sm text-slate-600 font-mono">{referralShareLink}</span>
               </div>
               <button
-                onClick={() => copyToClipboard(stats.code.link, "link")}
+                onClick={() => copyToClipboard(referralShareLink, "link")}
                 className="h-11 w-11 rounded-lg bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors shrink-0"
               >
                 {copiedField === "link" ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
