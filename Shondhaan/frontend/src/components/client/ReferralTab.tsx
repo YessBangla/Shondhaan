@@ -25,6 +25,25 @@ const formatRewardValue = (amount: number, currency: string, bn: boolean) => {
 const WALLET_API_BASE_URL = import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "";
 const REFERRAL_API_BASE_URL = import.meta.env.VITE_CENTRAL_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || "";
 
+const getReferralBaseUrl = () => {
+  const configuredUrl = String(import.meta.env.VITE_FRONTEND_URL || window.location.origin)
+    .split(",")
+    .map((url) => url.trim())
+    .find(Boolean) || window.location.origin;
+
+  try {
+    const url = new URL(configuredUrl);
+    return url.hostname.endsWith("shondhaan.com")
+      ? "https://www.shondhaan.com"
+      : url.origin;
+  } catch {
+    return window.location.origin;
+  }
+};
+
+const buildReferralLink = (code: string | null | undefined) =>
+  code ? `${getReferralBaseUrl()}/ref/${encodeURIComponent(code)}` : null;
+
 const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
   const { language } = useLanguage();
   const bn = language === "bn";
@@ -53,14 +72,8 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
   const [depositAmount, setDepositAmount] = useState("100");
   const [depositLoading, setDepositLoading] = useState(false);
   const visibleReferralCode = referralCode || browser_referralCode;
-  const browserReferralLink = browser_referralCode
-    ? `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/?ref=${browser_referralCode}`
-    : null;
-  const referralShareLink = stats?.code?.link || (
-    referralCode
-      ? `${import.meta.env.VITE_FRONTEND_URL || window.location.origin}/?ref=${referralCode}`
-      : null
-  );
+  const browserReferralLink = buildReferralLink(browser_referralCode);
+  const referralShareLink = buildReferralLink(browser_referralCode || referralCode);
   const referralSettings = programConfig;
   const referralStats = stats;
   const referralSharing = generating;
