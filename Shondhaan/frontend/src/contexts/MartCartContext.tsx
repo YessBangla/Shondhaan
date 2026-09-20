@@ -24,6 +24,20 @@ interface MartCartContextType {
 const getCartKey = (product: MartProduct) => `${product.id}:${product.unit || "default"}`;
 const getItemKey = (productId: string, unit?: string | null) => `${productId}:${unit || "default"}`;
 
+const mergeCartItems = (accountItems: MartCartItem[], guestItems: MartCartItem[]) => {
+  const merged = new Map<string, MartCartItem>();
+  [...accountItems, ...guestItems].forEach((item) => {
+    const key = getCartKey(item.product);
+    const existing = merged.get(key);
+    // `max` keeps this merge idempotent if auth state changes during a
+    // persistence effect, while retaining quantities from either basket.
+    merged.set(key, existing
+      ? { ...existing, quantity: Math.max(existing.quantity, item.quantity) }
+      : item);
+  });
+  return [...merged.values()];
+};
+
 const MartCartContext = createContext<MartCartContextType | undefined>(undefined);
 
 export function MartCartProvider({ children }: { children: ReactNode }) {
@@ -43,9 +57,19 @@ export function MartCartProvider({ children }: { children: ReactNode }) {
     if (typeof window === "undefined") return;
     try {
       const raw = localStorage.getItem(storageKey);
-      setItems(raw ? (JSON.parse(raw) as MartCartItem[]) : []);
+      const storedItems = raw ? (JSON.parse(raw) as MartCartItem[]) : [];
+      if (user?.id) {
+        const guestRaw = localStorage.getItem("mart-cart-guest");
+        const guestItems = guestRaw ? (JSON.parse(guestRaw) as MartCartItem[]) : [];
+        const mergedItems = mergeCartItems(storedItems, guestItems);
+        setItems(mergedItems);
+        localStorage.setItem(storageKey, JSON.stringify(mergedItems));
+        localStorage.removeItem("mart-cart-guest");
+      } else {
+        setItems(storedItems);
+      }
     } catch { setItems([]); }
-  }, [storageKey]);
+  }, [storageKey, user?.id]);
 
   // Persist optimistically — survives refresh / app re-open like a native app.
   useEffect(() => {
