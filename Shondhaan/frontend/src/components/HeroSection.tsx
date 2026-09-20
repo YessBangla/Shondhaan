@@ -32,7 +32,6 @@ type HeroBanner = {
   sort_order?: number | string | null;
 };
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 const parseStringList = (value: unknown): string[] => {
   if (!value) return [];
