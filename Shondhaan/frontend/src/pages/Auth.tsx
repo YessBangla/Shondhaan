@@ -106,14 +106,21 @@ const Auth = () => {
     setShowPassword(true);
     toast.success(language === "bn" ? "শক্তিশালী পাসওয়ার্ড সাজেস্ট করা হয়েছে" : "Strong password suggested");
   };
-  // Always redirect to the role-specific dashboard. The optional `?redirect=`
-  // query param is intentionally ignored so that every login lands on the
-  // user's own panel (per product requirement).
+  
+  const requestedRedirect = searchParams.get("redirect");
+  const redirectPath = requestedRedirect?.startsWith("/") && !requestedRedirect.startsWith("//")
+    ? requestedRedirect
+    : null;
   const { enrol, isEnrolled } = useBiometricEnrolment();
 
   // Open the role-specific dashboard in a new tab and send the current tab home.
   // Falls back to same-tab navigation if the popup is blocked.
   const openDashboardInNewTab = async () => {
+    if (redirectPath) {
+      navigate(redirectPath, { replace: true });
+      return;
+    }
+
     const path = await getRoleRedirectPath();
     const url = `${window.location.origin}${path}`;
     const win = window.open(url, "_blank", "noopener,noreferrer");

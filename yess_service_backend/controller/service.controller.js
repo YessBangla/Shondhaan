@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
 const parseJsonArray = (value) => {
@@ -95,8 +94,6 @@ export const createService = async (req, res) => {
       });
     }
 
-    const id = uuidv4();
-
     const finalPrice =
       price !== undefined && price !== null && price !== ""
         ? Number(price)
@@ -121,7 +118,6 @@ export const createService = async (req, res) => {
 
     const query = `
       INSERT INTO services (
-        id,
         slug,
         title,
         title_en,
@@ -139,11 +135,10 @@ export const createService = async (req, res) => {
         is_active,
         sort_order
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     const values = [
-      id,
       slug,
       title,
       title_en || null,
@@ -162,7 +157,8 @@ export const createService = async (req, res) => {
       sort_order || 0,
     ];
 
-    await pool.execute(query, values);
+    const [result] = await pool.execute(query, values);
+    const id = result.insertId;
 
     const [rows] = await pool.execute(
       `

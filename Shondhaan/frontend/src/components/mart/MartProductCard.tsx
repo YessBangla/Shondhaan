@@ -262,7 +262,7 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
       className="h-full flex flex-col bg-card border border-border/50 rounded-xl overflow-hidden cursor-pointer group transition-shadow hover:shadow-lg select-none md:select-auto"
       onClick={() => navigate(`/mart/product/${product.slug}`)}
       {...longPress}
-    >
+      >
       <div className="relative aspect-square bg-muted/30 overflow-hidden">
         {product.image_url ? (
           <img src={getFullImageUrl(product.image_url)} alt={product.name} className="w-auto mx-auto h-full group-hover:scale-105 transition-transform duration-300" loading="lazy" decoding="async" />

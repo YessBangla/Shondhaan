@@ -1,4 +1,3 @@
-import { v4 as uuidv4 } from "uuid";
 import { ensurePlatformFeeSchema, pool } from "../config/db.js";
 
 const CENTRAL_API_BASE_URL = process.env.CENTRAL_API_BASE_URL || process.env.WALLET_API_BASE_URL || "";
@@ -165,8 +164,6 @@ export const createBooking = async (req, res) => {
       });
     }
 
-    const id = uuidv4();
-
     let platformFeeAmount =
       platform_fee_amount !== undefined &&
       platform_fee_amount !== null &&
@@ -213,6 +210,10 @@ export const createBooking = async (req, res) => {
     const finalWalletCash = money(wallet_cash_used || 0);
     const finalWalletCoins = money(wallet_coins_used || 0);
 
+    // Call-center bookings must retain the authenticated operator that created them.
+    // Keep the explicit payload value, with the authenticated token as a fallback
+    // when this route is called by an authenticated client.
+    const finalBookedBy = booked_by ?? req.user?.id ?? null;
     const finalStatus = "pending";
     const finalPaymentStatus = allowedPaymentStatuses.includes(payment_status) ? payment_status : "unpaid";
     
@@ -220,10 +221,9 @@ export const createBooking = async (req, res) => {
     const allowedBookingTypes = ["regular", "offer", "emergency"];
     const finalBookingType = allowedBookingTypes.includes(booking_type) ? booking_type : "regular";
 
-    await pool.execute(
+    const [insertResult] = await pool.execute(
       `
       INSERT INTO bookings (
-        id,
         user_id,
         booked_by,
         service_id,
@@ -255,12 +255,11 @@ export const createBooking = async (req, res) => {
         offer_discount_amount,
         final_price
       )
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
-        id,
         user_id,
-        booked_by || user_id || null,
+        finalBookedBy,
         service_id || null,
         package_id || null,
         service_slug,
@@ -291,6 +290,8 @@ export const createBooking = async (req, res) => {
         money(final_price || price)     // Save final price
       ]
     );
+
+    const id = String(insertResult.insertId);
 
     // Fire-and-forget referral reservation via central API
     if (referral_code) {
@@ -357,10 +358,10 @@ export const getBookings = async (req, res) => {
       values.push(status);
     }
 
-    if (payment_status) {
+    if (payment_status && payment_status !== "all") {
       query += ` AND payment_status = ?`;
       values.push(payment_status);
-    } else if (!user_id && !booked_by) {
+    } else if (payment_status !== "all" && !user_id && !booked_by) {
       query += ` AND payment_status = 'paid'`;
     }
 
@@ -747,6 +748,13 @@ export const assignBookingProvider = async (req, res) => {
   try {
     const { id } = req.params;
     const { provider_id } = req.body;
+    const authenticatedUserId = req.user?.id;
+
+    if (!authenticatedUserId) {
+      return res.status(401).json({
+        message: "Authenticated operator ID is required",
+      });
+    }
 
     const [bookingRows] = await pool.execute(
       `
@@ -787,6 +795,7 @@ export const assignBookingProvider = async (req, res) => {
       SET
         provider_id = ?,
         assigned_to = ?,
+        booked_by = CASE WHEN ? IS NULL THEN booked_by ELSE ? END,
         status = CASE
           WHEN ? IS NULL THEN status
           WHEN status IN ('pending', 'confirmed', 'processing') THEN 'assigned'
@@ -794,7 +803,7 @@ export const assignBookingProvider = async (req, res) => {
         END
       WHERE id = ?
       `,
-      [finalProviderId, finalAssignedTo, finalProviderId, id]
+      [finalProviderId, finalAssignedTo, finalProviderId, String(authenticatedUserId), finalProviderId, id]
     );
     const [rows] = await pool.execute(
       `

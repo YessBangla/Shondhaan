@@ -223,16 +223,38 @@ const  Navbar = () => {
 
 const handleSignOut = async () => {
   const result = await Swal.fire({
-    title: bn ? "আপনি কি লগআউট করতে চান?" : "Are you sure you want to logout?",
+    title: bn ? "লগআউট করতে চান?" : "Logout from your account?",
     text: bn
-      ? "আপনাকে আবার লগইন করতে হবে।"
-      : "You'll need to sign in again to access your account.",
-    icon: "warning",
+      ? "আপনি কি নিশ্চিতভাবে আপনার অ্যাকাউন্ট থেকে লগআউট করতে চান?"
+      : "Are you sure you want to logout from your account?",
+    icon: "question",
+
     showCancelButton: true,
-    confirmButtonColor: "#ef4444", // matches your destructive/red theme
-    cancelButtonColor: "#6b7280",
-    confirmButtonText: bn ? "হ্যাঁ, লগআউট করুন" : "Yes, logout",
+
+    confirmButtonText: bn ? "লগআউট করুন" : "Logout",
     cancelButtonText: bn ? "বাতিল" : "Cancel",
+
+    buttonsStyling: false,
+
+    customClass: {
+      popup:
+        "rounded-3xl border border-border/60 bg-card shadow-2xl !w-[320px] px-5 py-6",
+      title:
+        "text-xl font-bold text-foreground",
+      htmlContainer:
+        "text-sm text-muted-foreground",
+      icon:
+        "!border-primary/20 !text-primary",
+      actions:
+        "gap-2 mt-4",
+      confirmButton:
+        "rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:opacity-90 active:scale-95",
+      cancelButton:
+        "rounded-xl border border-border bg-secondary px-5 py-2.5 text-sm font-semibold text-foreground transition-all hover:bg-secondary/80 active:scale-95",
+    },
+
+    reverseButtons: true,
+    focusCancel: true,
   });
 
   if (result.isConfirmed) {
@@ -240,12 +262,30 @@ const handleSignOut = async () => {
     setWishlistCount(0);
     navigate("/");
 
-    Swal.fire({
-      title: bn ? "লগআউট সফল হয়েছে" : "Logged out",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    });
+   await Swal.fire({
+  title: bn ? "লগআউট সফল হয়েছে" : "Logged out successfully",
+  text: bn
+    ? "আপনাকে সফলভাবে আপনার অ্যাকাউন্ট থেকে লগআউট করা হয়েছে।"
+    : "You have been successfully logged out of your account.",
+  icon: "success",
+
+  timer: 1600,
+  timerProgressBar: true,
+  showConfirmButton: false,
+
+  customClass: {
+    popup:
+      "rounded-3xl border border-primary/20 bg-card shadow-2xl !w-[320px] px-2 py-6",
+    title:
+      "text-lg font-bold text-foreground",
+    htmlContainer:
+      "text-sm text-muted-foreground",
+    icon:
+       "!border-primary/20 !text-primary",
+    timerProgressBar:
+      "!bg-primary",
+  },
+});
   }
 };
 

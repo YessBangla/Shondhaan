@@ -111,6 +111,24 @@ export const ensurePlatformFeeSchema = () => {
         }
       }
 
+      // New services use MySQL-generated numeric IDs. Existing UUID rows are
+      // left untouched because changing them would break package/provider
+      // references without an explicit data migration.
+      try {
+        const [idColumns] = await pool.query("SHOW COLUMNS FROM services LIKE 'id'");
+        const idType = String(idColumns[0]?.Type || "").toLowerCase();
+        if (idType && !idType.includes("int")) {
+          const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM services");
+          if (Number(countRows[0]?.total || 0) === 0) {
+            await pool.query("ALTER TABLE services MODIFY COLUMN id INT UNSIGNED NOT NULL AUTO_INCREMENT");
+          } else {
+            console.warn("Services table still has UUID IDs. Migrate existing services before changing the primary key type.");
+          }
+        }
+      } catch (err) {
+        console.error("Error ensuring services.id numeric auto-increment:", err.message);
+      }
+
       // 2. Ensure bookings table has all required new columns
       const columnsToEnsure = [
         { name: "booked_by", type: "VARCHAR(255) NULL", after: "user_id" },
@@ -146,6 +164,24 @@ export const ensurePlatformFeeSchema = () => {
             console.error(`Error ensuring bookings.${col.name}:`, err.message);
           }
         }
+      }
+
+      // New bookings use the database-generated numeric primary key. Existing
+      // UUID rows are left untouched so this startup migration never destroys
+      // booking history; convert an empty legacy table automatically.
+      try {
+        const [idColumns] = await pool.query("SHOW COLUMNS FROM bookings LIKE 'id'");
+        const idType = String(idColumns[0]?.Type || "").toLowerCase();
+        if (idType && !idType.includes("int")) {
+          const [countRows] = await pool.query("SELECT COUNT(*) AS total FROM bookings");
+          if (Number(countRows[0]?.total || 0) === 0) {
+            await pool.query("ALTER TABLE bookings MODIFY COLUMN id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT");
+          } else {
+            console.warn("Bookings table still has UUID IDs. Migrate existing bookings before creating numeric IDs.");
+          }
+        }
+      } catch (err) {
+        console.error("Error ensuring bookings.id numeric auto-increment:", err.message);
       }
     })().catch((error) => {
       platformFeeSchemaPromise = null;

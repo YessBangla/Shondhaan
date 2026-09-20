@@ -3,14 +3,15 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   ChevronLeft, Search, User, Phone, MapPin, Calendar, Clock,
-  Plus, RefreshCw, FileText, ClipboardList, Headphones, Loader2,
+  Plus, RefreshCw, ClipboardList, Headphones, Loader2,
   Zap, Download, Wallet, MessageSquare, FlaskConical, ShoppingCart,
-  AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X,
+  AlertCircle, CheckCircle, Circle, Briefcase, IdCard, Send, Camera, X, Mail,
   type LucideIcon,
   UserRound,
   UserPlus,
   Users,
-  Trash2
+  Trash2,
+  ArrowBigRight
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import PanelSidebarTabs from "@/components/PanelSidebarTabs";
@@ -20,12 +21,12 @@ import AccountsSection from "@/components/AccountsSection";
 import NotificationBell from "@/components/NotificationBell";
 import ServiceStaffChatInbox from "@/components/admin/ServiceStaffChatInbox";
 import ServiceAreaLocationSelector, { type ServiceAreaLocation } from "@/components/call-center/ServiceAreaLocationSelector";
+import { divisions as locationData, thanaEnMap } from "@/data/locations";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import CategoryFilterDropdown, { useServiceCategoryMap } from "@/components/CategoryFilterDropdown";
-import { useCmsCategories } from "@/hooks/useCmsData";
 import { useForm } from "react-hook-form";
 import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { useLanguage } from "@/contexts/LanguageContext";
@@ -47,7 +48,9 @@ interface Provider {
   name?: string | null;
   full_name: string;
   phone?: string | null;
+  mobile?: string | null;
   email?: string | null;
+  shop_name?: string | null;
   address?: string | null;
   division?: string | null;
   district?: string | null;
@@ -56,7 +59,7 @@ interface Provider {
   thana?: string[] | null;
   area?: string | null;
   services?: string[] | null;
-    service_names?: string[] | null;
+  service_names?: string[] | null;
   service_category?: string | null;
   experience_years?: number | null;
   nid_front_url?: string | null;
@@ -72,24 +75,15 @@ interface Provider {
   updated_at?: string | null;
 }
 
-interface ServiceRequest {
-  id: string;
-  customer_name: string;
-  customer_phone: string;
-  division: string;
-  district: string;
-  thana: string | null;
-  detail_area: string | null;
-  service_description: string;
-  status: string;
-  created_at: string;
-}
-
 interface Profile {
   user_id: string;
+  shondhaan_id: string | null;
   display_name: string | null;
   phone: string | null;
   address: string | null;
+  email: string | null;
+  profile_image: string | null;
+  created_at: string | null;
 }
 
 const bookingStatusOptions = [
@@ -113,6 +107,29 @@ const CENTRAL_API_URL = CENTRAL_API_BASE_URL.replace(/\/+$/, "");
 const getProviderAssetUrl = (value?: string | null) => {
   if (!value) return "";
   return /^https?:\/\//i.test(value) ? value : `${API_BASE_URL}${value.startsWith("/") ? value : `/${value}`}`;
+};
+
+const getProfileImageUrl = (image?: string | null) => {
+  if (!image) return "";
+  return /^https?:\/\//i.test(image) ? image : `${CENTRAL_API_URL}${image.startsWith("/") ? image : `/${image}`}`;
+};
+
+const formatBookingDate = (value?: string | null) => {
+  if (!value) return "—";
+  const date = new Date(`${value.slice(0, 10)}T00:00:00`);
+  return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString("en-US", { day: "numeric", month: "long", year: "numeric" });
+};
+
+const formatBookingTime = (value?: string | null) => {
+  if (!value) return "—";
+  const match = String(value).match(/^(\d{1,2}):(\d{2})/);
+  if (!match) return value;
+  const hour = Number(match[1]);
+  const minute = match[2];
+  if (hour > 23) return value;
+  const period = hour >= 12 ? "PM" : "AM";
+  const displayHour = hour % 12 || 12;
+  return `${String(displayHour).padStart(2, "0")}:${minute} ${period}`;
 };
 
 const getAuthHeaders = () => {
@@ -152,9 +169,13 @@ const fetchOptionalArray = async <T,>(url: string): Promise<T[]> => {
 
 const normalizeUserToProfile = (item: any): Profile => ({
   user_id: String(item.id ?? item.user_id ?? ""),
+  shondhaan_id: item.shondhaan_id ?? item.shondhaanId ?? item.customer_id ?? null,
   display_name: item.name ?? item.display_name ?? item.full_name ?? item.username ?? null,
   phone: item.mobile ?? item.phone ?? item.phoneNumber ?? null,
   address: item.address ?? item.location ?? null,
+  email: item.email ?? null,
+  profile_image: item.profile_image ?? item.profile_photo ?? item.avatar ?? item.image_url ?? null,
+  created_at: item.created_at ?? item.createdAt ?? item.registered_at ?? null,
 });
 
 type ProviderFormValues = {
@@ -232,22 +253,34 @@ const CallCenterPanel = () => {
   // Data states
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [newBookingProviders, setNewBookingProviders] = useState<Provider[]>([]);
   const [allProviders, setAllProviders] = useState<Provider[]>([]);
   const [allProvidersPage, setAllProvidersPage] = useState(1);
   const [allProvidersLoading, setAllProvidersLoading] = useState(false);
   const [allProvidersSearch, setAllProvidersSearch] = useState("");
   const [editingProvider, setEditingProvider] = useState<Provider | null>(null);
-  const [requests, setRequests] = useState<ServiceRequest[]>([]);
   const [labTests, setLabTests] = useState<any[]>([]);
+  const [customerShondhaanIds, setCustomerShondhaanIds] = useState<Record<string, string>>({});
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Profile[]>([]);
   const [searching, setSearching] = useState(false);
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterCategory, setFilterCategory] = useState("all");
+  const [bookingSearch, setBookingSearch] = useState("");
+  const [bookingPage, setBookingPage] = useState(1);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [reqStatusFilter, setReqStatusFilter] = useState("all");
+  const [providerPickerBookingId, setProviderPickerBookingId] = useState<string | null>(null);
+  const [providerPickerSearch, setProviderPickerSearch] = useState("");
+  const [providerPickerServiceFilter, setProviderPickerServiceFilter] = useState("");
+  const [providerPickerDistrictFilter, setProviderPickerDistrictFilter] = useState("");
+  const [providerPickerThanaFilter, setProviderPickerThanaFilter] = useState("");
+  const [providerPickerFilterOpen, setProviderPickerFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
+  const [newBookingProviderId, setNewBookingProviderId] = useState("");
+  const [newBookingProviderServiceFilter, setNewBookingProviderServiceFilter] = useState("");
+  const [newBookingProviderDistrictFilter, setNewBookingProviderDistrictFilter] = useState("");
+  const [newBookingProviderThanaFilter, setNewBookingProviderThanaFilter] = useState("");
+  const [newBookingProviderFilterOpen, setNewBookingProviderFilterOpen] = useState<"service" | "district" | "thana" | null>(null);
   const { data: serviceCategoryMap } = useServiceCategoryMap();
-  const { data: serviceCategories = [], isLoading: categoriesLoading, isError: categoriesError } = useCmsCategories();
   const form = useForm<ProviderFormValues>({
     defaultValues: {
       full_name: "",
@@ -362,6 +395,22 @@ const CallCenterPanel = () => {
   const [showPackageDropdown, setShowPackageDropdown] = useState(false);
 
   useEffect(() => {
+    const handleOutsideDropdownClick = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (target.closest("[data-dropdown-container]")) return;
+      setProviderPickerBookingId(null);
+      setProviderPickerFilterOpen(null);
+      setNewBookingProviderFilterOpen(null);
+      setShowServiceCategoryDropdown(false);
+      setShowServiceDropdown(false);
+      setShowPackageDropdown(false);
+    };
+
+    document.addEventListener("mousedown", handleOutsideDropdownClick);
+    return () => document.removeEventListener("mousedown", handleOutsideDropdownClick);
+  }, []);
+
+  useEffect(() => {
     if (!mysqlAuth?.token || !activeUserId) {
       navigate("/main-login", { replace: true });
     }
@@ -387,14 +436,29 @@ const CallCenterPanel = () => {
         throw new Error(providerPayload.message || "Failed to fetch providers");
       }
 
-      setProviders(extractArray<Provider>(providerPayload));
-      const [bookingRows, requestRows, labRows] = await Promise.all([
-        listBookings(),
-        fetchOptionalArray<ServiceRequest>(`${API_BASE_URL}/api/service-requests`),
+      const providerRows = extractArray<Provider>(providerPayload);
+      const usersResponse = await fetch(`${CENTRAL_API_URL}/api/admin/users`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const usersPayload = await usersResponse.json().catch(() => ({}));
+      const userMap = new Map(
+        extractArray<any>(usersPayload).map((user) => [String(user.id), user])
+      );
+      setCustomerShondhaanIds(Object.fromEntries(
+        extractArray<any>(usersPayload)
+          .filter((user) => user?.shondhaan_id)
+          .map((user) => [String(user.id), String(user.shondhaan_id)])
+      ));
+      setProviders(providerRows.map((provider) => ({
+        ...provider,
+        shondhaan_id: userMap.get(String(provider.user_id))?.shondhaan_id || provider.shondhaan_id || null,
+      })));
+      const [bookingRows, labRows] = await Promise.all([
+        listBookings({ payment_status: "all" }),
         fetchOptionalArray<any>(`${API_BASE_URL}/api/lab-test-reports`),
       ]);
       setBookings((bookingRows || []) as Booking[]);
-      setRequests(requestRows || []);
       setLabTests(labRows || []);
     } catch (error: any) {
       console.error("Call center data load error:", error);
@@ -416,6 +480,31 @@ const CallCenterPanel = () => {
       console.error("Failed to fetch services/packages", error);
     }
   }, []);
+
+  const loadNewBookingProviders = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({ status: "approved", limit: "10" });
+      if (newBookingProviderServiceFilter.trim()) params.set("service_category", newBookingProviderServiceFilter.trim());
+      if (newBookingProviderDistrictFilter.trim()) params.set("district", newBookingProviderDistrictFilter.trim());
+      if (newBookingProviderThanaFilter.trim()) params.set("thana", newBookingProviderThanaFilter.trim());
+
+      const response = await fetch(`${API_BASE_URL}/api/providers?${params.toString()}`, {
+        headers: getAuthHeaders(),
+        credentials: "include",
+      });
+      const payload = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(payload?.message || "Failed to fetch providers");
+      setNewBookingProviders(extractArray<Provider>(payload).slice(0, 10));
+    } catch (error) {
+      console.error("Failed to fetch New Booking providers:", error);
+      setNewBookingProviders([]);
+    }
+  }, [newBookingProviderDistrictFilter, newBookingProviderServiceFilter, newBookingProviderThanaFilter]);
+
+  useEffect(() => {
+    const timer = window.setTimeout(loadNewBookingProviders, 250);
+    return () => window.clearTimeout(timer);
+  }, [loadNewBookingProviders]);
 
   const loadAllProviders = useCallback(async () => {
     setAllProvidersLoading(true);
@@ -569,7 +658,6 @@ const CallCenterPanel = () => {
       if (!response.ok) {
         throw new Error(bn ? "অনুরোধের স্ট্যাটাস আপডেট ব্যর্থ হয়েছে" : "Request status update failed");
       }
-      setRequests((prev) => prev.map((request) => (request.id === id ? { ...request, status } : request)));
     } catch (error: any) {
       toast.error(error?.message || (bn ? "অনুরোধের স্ট্যাটাস আপডেট ব্যর্থ হয়েছে" : "Request status update failed"));
     } finally {
@@ -865,9 +953,10 @@ const CallCenterPanel = () => {
 
     setSubmitting(true);
     try {
-      await createBooking({
+      const operatorId = String(mysqlAuth?.user?.id ?? activeUserId ?? "").trim();
+      const createdBooking = await createBooking({
         user_id: String(newBooking.user_id),
-        booked_by: String(activeUserId),
+        booked_by: operatorId,
         booker_name: mysqlUser?.name || mysqlUser?.display_name || "Call Center Agent",
         booker_phone: mysqlUser?.phone || mysqlUser?.mobile || "",
         service_id: newBooking.service_id || null,
@@ -884,7 +973,10 @@ const CallCenterPanel = () => {
         status: "pending",
         payment_status: "unpaid",
         note: newBooking.is_emergency ? "Emergency booking" : null,
-      } as any);
+      });
+      if (newBookingProviderId && createdBooking?.id) {
+        await assignBookingProvider(String(createdBooking.id), newBookingProviderId);
+      }
     } catch (error: any) {
       setSubmitting(false);
       toast.error(error?.message || (bn ? "বুকিং তৈরি ব্যর্থ হয়েছে" : "Booking create failed"));
@@ -910,6 +1002,12 @@ const CallCenterPanel = () => {
     });
     setServiceSearch("");
     setPackageSearch("");
+    setNewBookingProviderId("");
+    setNewBookingProviderSearch("");
+    setNewBookingProviderServiceFilter("");
+    setNewBookingProviderDistrictFilter("");
+    setNewBookingProviderThanaFilter("");
+    setNewBookingProviderFilterOpen(null);
     fetchData();
   };
   
@@ -919,19 +1017,122 @@ const CallCenterPanel = () => {
     : filterStatus === "emergency"
       ? bookings.filter((b) => b.is_emergency || b.note === "Emergency booking")
       : bookings.filter((b) => b.status === filterStatus);
-  const filteredBookings = filterCategory === "all"
+  const categoryFilteredBookings = filterCategory === "all"
     ? statusFilteredBookings
     : statusFilteredBookings.filter((b) => serviceCategoryMap?.get(b.service_slug) === filterCategory);
+  const normalizedBookingSearch = bookingSearch.trim().toLowerCase();
+  const filteredBookings = normalizedBookingSearch
+    ? categoryFilteredBookings.filter((booking) => {
+        const provider = providers.find((item) => String(item.id) === String(booking.provider_id));
+        return [
+          booking.service_title,
+          booking.customer_name,
+          booking.customer_phone,
+          booking.customer_address,
+          customerShondhaanIds[String(booking.user_id)],
+          provider?.phone,
+          provider?.mobile,
+          provider?.shondhaan_id,
+          provider?.full_name,
+          provider?.name,
+          provider?.email,
+          provider?.address,
+        ].some((value) => String(value || "").toLowerCase().includes(normalizedBookingSearch));
+      })
+    : categoryFilteredBookings;
 
   const sortedBookings = [...filteredBookings].sort((a, b) => {
     if (a.is_emergency !== b.is_emergency) return a.is_emergency ? -1 : 1;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
+  const bookingsPerPage = 10;
+  const bookingPageCount = Math.max(1, Math.ceil(sortedBookings.length / bookingsPerPage));
+  const paginatedBookings = sortedBookings.slice((bookingPage - 1) * bookingsPerPage, bookingPage * bookingsPerPage);
 
-  // Filtered requests
-  const filteredRequests = reqStatusFilter === "all"
-    ? requests
-    : requests.filter((r) => r.status === reqStatusFilter);
+  useEffect(() => {
+    setBookingPage(1);
+  }, [filterStatus, filterCategory, bookingSearch, sortedBookings.length]);
+
+  const normalizeSearchValue = (value: unknown) => String(value || "").toLowerCase().trim();
+  const toProviderValueArray = (value: unknown): unknown[] => {
+    if (Array.isArray(value)) return value;
+    if (typeof value !== "string") return value == null ? [] : [value];
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+    try {
+      const parsed = JSON.parse(trimmed);
+      return Array.isArray(parsed) ? parsed : [parsed];
+    } catch {
+      return trimmed.split(",").map((item) => item.trim()).filter(Boolean);
+    }
+  };
+  const getProviderAreas = (provider: Provider) => [
+    provider.division,
+    provider.district,
+    provider.provider_district,
+    provider.raw_provider_district,
+    provider.thana,
+    provider.area,
+  ].flatMap(toProviderValueArray).filter(Boolean).map(String);
+  const getProviderCategories = (provider: Provider) => {
+    const resolvedServiceNames = toProviderValueArray(provider.service_names).filter(Boolean).map(String);
+    if (resolvedServiceNames.length) return resolvedServiceNames;
+
+    return [provider.service_category, provider.services]
+      .flatMap(toProviderValueArray)
+      .filter(Boolean)
+      .map((value) => {
+    const serviceId = String(value).trim();
+    const service = services.find((item) => normalizeSearchValue(item.id) === normalizeSearchValue(serviceId));
+    return service ? (service.title || service.name || service.service_title || serviceId) : serviceId;
+      });
+  };
+  const providerPickerServices = [...new Set(providers.flatMap(getProviderCategories).filter(Boolean))].sort();
+  const newBookingProviderServices = [...new Set([
+    ...services.flatMap((service) => [service.title, service.title_en, service.name, service.name_en, service.service_title]),
+  ].filter(Boolean).map(String))].sort();
+  const providerPickerDistricts = [...new Map(locationData.flatMap((division) => division.districts).map((district) => [district.nameBn, district])).values()];
+  const providerPickerThanas = providerPickerDistrictFilter
+    ? [...new Set(locationData.flatMap((division) => division.districts).find((district) => district.nameBn === providerPickerDistrictFilter)?.thanas || [])].sort()
+    : [];
+  const getProviderSearchScore = (provider: Provider, query: string) => {
+    const normalizedQuery = normalizeSearchValue(query);
+    if (!normalizedQuery) return 0;
+    const district = String(provider.district || provider.provider_district || provider.raw_provider_district || "");
+    const districtRecord = locationData.flatMap((division) => division.districts).find((item) => item.nameBn === district || item.name === district);
+    const districtSearchValues = [district, districtRecord?.name, districtRecord?.nameBn];
+    const thanaSearchValues = toProviderValueArray(provider.thana).flatMap((thana) => [
+      String(thana),
+      ...Object.entries(thanaEnMap).filter(([, banglaName]) => banglaName === String(thana)).map(([englishName]) => englishName),
+    ]);
+    const serviceSearchValues = toProviderValueArray(provider.services).flatMap((serviceId) => {
+      const service = services.find((item) => normalizeSearchValue(item.id) === normalizeSearchValue(serviceId));
+      return service ? [service.title, service.name, service.name_en, service.service_title] : [String(serviceId)];
+    });
+    const areas = [...getProviderAreas(provider), ...districtSearchValues, ...thanaSearchValues].filter(Boolean).map(normalizeSearchValue);
+    const categories = [...getProviderCategories(provider), ...serviceSearchValues].filter(Boolean).map(normalizeSearchValue);
+    const details = [
+      provider.full_name, provider.name, provider.phone, provider.mobile,
+      provider.address, provider.email, provider.shondhaan_id, provider.id,
+    ].map(normalizeSearchValue);
+    if (areas.some((value) => value.includes(normalizedQuery))) return 300;
+    if (categories.some((value) => value.includes(normalizedQuery))) return 200;
+    if (details.some((value) => value.includes(normalizedQuery))) return 100;
+    return -1;
+  };
+  const getProviderSearchResultsFor = (query: string, serviceFilter: string, districtFilter: string, thanaFilter: string, sourceProviders: Provider[] = providers) => sourceProviders
+    .map((provider) => ({ provider, score: getProviderSearchScore(provider, query) }))
+    .filter(({ score }) => !query.trim() || score >= 0)
+    .filter(({ provider }) => !serviceFilter || getProviderCategories(provider).some((value) => normalizeSearchValue(value).includes(normalizeSearchValue(serviceFilter))))
+    .filter(({ provider }) => !districtFilter || String(provider.district || provider.provider_district || provider.raw_provider_district || "") === districtFilter)
+    .filter(({ provider }) => !thanaFilter || toProviderValueArray(provider.thana).map(String).includes(thanaFilter))
+    .sort((a, b) => b.score - a.score || String(a.provider.full_name || a.provider.name || "").localeCompare(String(b.provider.full_name || b.provider.name || "")))
+    .map(({ provider }) => provider);
+  const getProviderSearchResults = () => getProviderSearchResultsFor(providerPickerSearch, providerPickerServiceFilter, providerPickerDistrictFilter, providerPickerThanaFilter);
+  const newBookingProviderResults = getProviderSearchResultsFor("", newBookingProviderServiceFilter, newBookingProviderDistrictFilter, newBookingProviderThanaFilter, newBookingProviders);
+  const newBookingProviderThanas = newBookingProviderDistrictFilter
+    ? [...new Set(locationData.flatMap((division) => division.districts).find((district) => district.nameBn === newBookingProviderDistrictFilter)?.thanas || [])].sort()
+    : [];
 
   if (loading) {
     return (
@@ -969,14 +1170,14 @@ const CallCenterPanel = () => {
           <PanelSidebarTabs
             items={[
               { value: "search", label: bn ? "কাস্টমার সার্চ" : "Customer Search", icon: <Search className="h-4 w-4" />, group: bn ? "সার্চ" : "Search" },
+              { value: "bookings", label: bn ? "সার্ভিস রিকোয়েস্ট" : "Service Request", icon: <ClipboardList className="h-4 w-4" /> },
               { value: "new-booking", label: bn ? "নতুন সার্ভিস বুকিং" : "New Service Booking", icon: <Plus className="h-4 w-4" /> },
               { value: "create-provider", label: bn ? "প্রোভাইডার রেজিস্ট্রেশন" : "Provider Registration", icon: <UserPlus className="h-4 w-4" /> },
               { value: "all-providers", label: bn ? "সকল প্রোভাইডার" : "All Providers", icon: <Users className="h-4 w-4" /> },
-              { value: "bookings", label: bn ? "সকল বুকিং" : "All Bookings", icon: <ClipboardList className="h-4 w-4" />, group: bn ? "ম্যানেজমেন্ট" : "Management" },
-              { value: "requests", label: bn ? "সার্ভিস রিকোয়েস্ট" : "Service Requests", icon: <FileText className="h-4 w-4" /> },
+              // { value: "bookings", label: bn ? "সার্ভিস রিকোয়েস্ট" : "Service Request", icon: <ClipboardList className="h-4 w-4" />, group: bn ? "ম্যানেজমেন্ট" : "Management" },
               { value: "service-messages", label: bn ? "কাস্টমার মেসেজ" : "Messages", icon: <MessageSquare className="h-4 w-4" /> },
             ]}
-            defaultValue="search"
+            defaultValue="bookings"
       
           >
             {(activeTab, setActiveTab) => {
@@ -1012,24 +1213,45 @@ const CallCenterPanel = () => {
                         <p className="text-xs text-slate-500 font-medium">{searchResults.length} {bn ? "টি ফলাফল পাওয়া গেছে" : "results found"}</p>
                         {searchResults.map((p) => {
                           const customerBookings = bookings.filter((b) => b.user_id === p.user_id);
+                          const profileImageUrl = getProfileImageUrl(p.profile_image);
                           return (
                             <div key={p.user_id} className="rounded-lg border border-slate-200 bg-slate-50 p-4 space-y-3">
                               <div className="flex items-start gap-3">
-                                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-slate-200 text-slate-600 shrink-0">
-                                  <User className="h-5 w-5" />
-                                </div>
+                                {profileImageUrl ? (
+                                  <img
+                                    src={profileImageUrl}
+                                    alt={p.display_name || "Customer"}
+                                    className="h-12 w-12 shrink-0 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-200 text-slate-600 shrink-0">
+                                    <User className="h-5 w-5" />
+                                  </div>
+                                )}
                                 <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium text-slate-900">{p.display_name || "—"}</p>
-                                  <p className="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                    <Phone className="h-3 w-3" />
-                                    {p.phone || "—"}
+                                  <p className="text-xl font-medium text-slate-900">{p.display_name || "—"}</p>
+                                  <div className="mt-2 flex flex-col items-start gap-1">
+                                    <span className="text-xs bg-userprimaryshade border px-3 py-1 rounded-full border-userprimary text-black font-semibold flex items-center gap-1">
+                                      <IdCard className="h-3 w-3 shrink-0" />
+                                      {bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {p.shondhaan_id || "—"}
+                                    </span>
+                                    <span className="text-sm text-slate-900 flex items-center gap-1">
+                                      <Phone className="h-3 w-3 shrink-0" />
+                                      {p.phone || "—"}
+                                    </span>
+                                    <span className="text-sm text-slate-900 flex items-center gap-1">
+                                      <Mail className="h-3 w-3 shrink-0" />
+                                      {p.email || "—"}
+                                    </span>
+                                    <span className="text-xs text-slate-600 flex items-center gap-1">
+                                      <Calendar className="h-3 w-3 shrink-0" />
+                                        {bn ? "তৈরি" : "Created"}: {p.created_at ? new Date(p.created_at).toLocaleDateString(bn ? "bn-BD" : "en-US") : "—"}
+                                    </span>
+                                  </div>
+                                  <p className="text-xs text-slate-600 flex items-start gap-1 mt-1.5">
+                                    <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
+                                    <span>{p.address || "—"}</span>
                                   </p>
-                                  {p.address && (
-                                    <p className="text-xs text-slate-500 flex items-start gap-1 mt-1">
-                                      <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
-                                      <span>{p.address}</span>
-                                    </p>
-                                  )}
                                 </div>
                               </div>
                               {customerBookings.length > 0 && (
@@ -1091,24 +1313,46 @@ const CallCenterPanel = () => {
                           className={`rounded-lg border p-3 text-left transition-all ${filterStatus === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
                         >
                           <p className="text-lg font-semibold text-slate-900">{bookings.filter((b) => b.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
+                          <span className={`mt-1 text-[11px] px-2 rounded-full font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</span>
                         </button>
                       ))}
                     </div>
 
-                    <div className="flex items-center gap-2 mb-4 flex-wrap">
-                      <CategoryFilterDropdown value={filterCategory} onChange={setFilterCategory} />
-                      {(filterStatus !== "all" || filterCategory !== "all") && (
-                        <button
-                          onClick={() => {
-                            setFilterStatus("all");
-                            setFilterCategory("all");
-                          }}
-                          className="text-xs font-medium text-slate-600 hover:text-slate-900 transition-colors"
-                        >
-                          সব মুছুন
-                        </button>
-                      )}
+                    <div className="flex items-center justify-between gap-2 mb-4 flex-wrap py-2 px-2 bg-userprimaryshade rounded-xl">
+                      <div className="flex min-w-0 flex-1 items-center gap-2 flex-wrap">
+                        <CategoryFilterDropdown value={filterCategory} onChange={setFilterCategory} />
+                        <div className="relative min-w-[260px] flex-1 md:max-w-md">
+                          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                          <Input
+                            value={bookingSearch}
+                            onChange={(event) => setBookingSearch(event.target.value)}
+                            placeholder={bn ? "সার্ভিস, কাস্টমার নম্বর, ফোন, আইডি বা ঠিকানা খুঁজুন" : "Search service, customer number, phone, ID or address"}
+                            className="h-10 bg-white pl-9"
+                          />
+                        </div>
+                        {(filterStatus !== "all" || filterCategory !== "all" || bookingSearch) && (
+                          <button
+                            onClick={() => {
+                              setFilterStatus("all");
+                              setFilterCategory("all");
+                              setBookingSearch("");
+                            }}
+                            className="text-xs font-medium text-red-600 hover:text-slate-900 transition-colors"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={fetchData}
+                        disabled={loading}
+                        className="inline-flex h-10 shrink-0 items-center gap-2 rounded-lg border border-userprimary bg-userprimary px-3 text-xs font-medium text-white hover:bg-userprimaryshade hover:text-black disabled:cursor-not-allowed disabled:opacity-50"
+                        title={bn ? "বুকিং রিফ্রেশ করুন" : "Refresh bookings"}
+                      >
+                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+                        <span className="hidden sm:inline">{bn ? "রিফ্রেশ" : "Refresh"}</span>
+                      </button>
                     </div>
 
                     <div className="space-y-2.5">
@@ -1118,8 +1362,14 @@ const CallCenterPanel = () => {
                           <p className="text-sm text-slate-500">{bn ? "কোনো বুকিং নেই" : "No bookings found"}</p>
                         </div>
                       ) : (
-                        sortedBookings.map((b, i) => {
+                        paginatedBookings.map((b, i) => {
                           const s = bookingStatusOptions.find((o) => o.value === b.status) || bookingStatusOptions[0];
+                          const assignedProvider = providers.find((provider) => {
+                            const assignedIds = [b.provider_id, b.assigned_to].filter((value) => value !== undefined && value !== null && value !== "").map(String);
+                            return assignedIds.includes(String(provider.id)) || assignedIds.includes(String(provider.user_id));
+                          });
+                          const assignedProviderServices = assignedProvider ? getProviderCategories(assignedProvider) : [];
+                          const assignedProviderThanas = assignedProvider ? [...new Set(toProviderValueArray(assignedProvider.thana).map(String))] : [];
                           return (
                             <motion.div
                               key={b.id}
@@ -1127,7 +1377,7 @@ const CallCenterPanel = () => {
                               animate={{ opacity: 1, y: 0 }}
                               transition={{ delay: i * 0.03 }}
                               className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:shadow-md transition-shadow"
-                            >
+                              >
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
                                   <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -1155,48 +1405,232 @@ const CallCenterPanel = () => {
                                 </select>
                               </div>
 
-                              <select
-                                value={b.provider_id ? String(b.provider_id) : ""}
-                                onChange={(e) => handleAssignProvider(b.id, e.target.value)}
-                                disabled={updatingId === b.id}
-                                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-50 transition-all"
-                              >
-                                <option value="">{bn ? "সার্ভিস প্রদানকারী নির্ধারণ করুন" : "Assign a service provider"}</option>
-                                {providers.map((provider) => (
-                                  <option key={provider.id} value={provider.id}>
-                                    {provider.full_name || provider.name || provider.shop_name || `প্রদানকারী ${provider.id}`}
-                                    {provider.phone || provider.mobile ? ` · ${provider.phone || provider.mobile}` : ""}
-                                  </option>
-                                ))}
-                              </select>
-
                               <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-100 text-xs text-slate-600">
-                                <span className="flex items-center gap-2">
-                                  <User className="h-3 w-3 text-slate-400" />
-                                  {b.customer_name}
+                                <span className="flex items-center gap-2 text-[14px]">
+                                  <User className="h-3 w-3 text-userprimary" />
+                                  <span>
+                                    {b.customer_name}
+                                    {customerShondhaanIds[String(b.user_id)] && (
+                                      <span className="ml-1.5 text-[12px] text-userprimary">
+                                        · {bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {customerShondhaanIds[String(b.user_id)]}
+                                      </span>
+                                    )}
+                                  </span>
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Phone className="h-3 w-3 text-slate-400" />
+                                  <Phone className="h-3 w-3 text-userprimary" />
                                   {b.customer_phone}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Calendar className="h-3 w-3 text-slate-400" />
-                                  {b.booking_date}
+                                  <Calendar className="h-3 w-3 text-userprimary" />
+                                  {formatBookingDate(b.booking_date)}
                                 </span>
                                 <span className="flex items-center gap-2">
-                                  <Clock className="h-3 w-3 text-slate-400" />
-                                  {b.booking_time}
+                                  <Clock className="h-3 w-3 text-userprimary" />
+                                  {formatBookingTime(b.booking_time)}
                                 </span>
-                                <span className="flex items-start gap-2 col-span-2">
-                                  <MapPin className="h-3 w-3 text-slate-400 mt-0.5 shrink-0" />
-                                  <span className="truncate">{b.customer_address}</span>
+                                <span className="flex items-start gap-2 text-[14px] col-span-2">
+                                  <MapPin className="h-3 w-3 text-userprimary mt-0.5 text-[14px] shrink-0" />
+                                  <span className="truncate text-[14px]">{b.customer_address}</span>
                                 </span>
                               </div>
+
+                              <div className="relative flex items-start gap-2" data-dropdown-container>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setProviderPickerBookingId(providerPickerBookingId === b.id ? null : b.id);
+                                    setProviderPickerSearch("");
+                                    setProviderPickerServiceFilter("");
+                                    setProviderPickerDistrictFilter("");
+                                    setProviderPickerThanaFilter("");
+                                    setProviderPickerFilterOpen(null);
+                                  }}
+                                  disabled={updatingId === b.id}
+                                  className="rounded-lg border flex gap-2 border-userprimary bg-userprimaryshade px-3 py-2 text-left text-xs font-medium text-slate-900 outline-none focus:ring-2 focus:ring-slate-900/20 disabled:opacity-50 transition-all"
+                                >
+                                  {b.provider_id || b.assigned_to
+                                    ? (assignedProvider?.full_name || assignedProvider?.name || assignedProvider?.shop_name || (bn ? "নির্ধারিত প্রদানকারী" : "Assigned provider"))
+                                    : (bn ? "সার্ভিস প্রদানকারী নির্ধারণ করুন" : "Assign a service provider")}
+                                  {b.provider_id || b.assigned_to ? (
+                                    <CheckCircle className="h-4 w-4 shrink-0 text-userprimary" />
+                                  ) : (
+                                    <Plus className="h-4 w-4 shrink-0" />
+                                  )}
+                                </button>
+                                {assignedProvider && (
+                                  <div className="mt-1 flex max-w-[min(65%,32rem)] flex-wrap items-center gap-1 text-[10px] text-slate-500">
+                                    {assignedProviderServices.map((service) => (
+                                      <span key={`assigned-service-${service}`} className="rounded-full bg-userprimaryshade my-auto px-2 py-0.5 text-userprimary">{service}</span>
+                                    ))}
+                                    {assignedProviderThanas.map((thana) => (
+                                      <span key={`assigned-thana-${thana}`} className="rounded-full bg-slate-100 px-2 py-0.5 my-auto text-slate-600">{thana}</span>
+                                    ))}
+                                  </div>
+                                )}
+                                {providerPickerBookingId === b.id && (
+                                  <div className="absolute left-0 right-0 z-30 top-0 mt-[50px] rounded-xl border border-userprimary bg-[aliceblue] p-2 shadow-xl">
+                                    <div className="relative mb-2">
+                                      <Search className="pointer-events-none absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+                                      <input
+                                        autoFocus
+                                        value={providerPickerSearch}
+                                        onChange={(e) => setProviderPickerSearch(e.target.value)}
+                                        placeholder={bn ? "এলাকা, ক্যাটেগরি, নাম বা ফোনে খুঁজুন" : "Search area, category, name or phone"}
+                                        className="w-full rounded-lg border border-slate-200 py-2 pl-9 pr-3 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                                      />
+                                    </div>
+                                    <div className="mb-2 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                                      <div className="relative">
+                                        <input
+                                          value={providerPickerServiceFilter}
+                                          onFocus={() => setProviderPickerFilterOpen("service")}
+                                          onChange={(event) => { setProviderPickerServiceFilter(event.target.value); setProviderPickerFilterOpen("service"); }}
+                                          placeholder={bn ? "সার্ভিস ক্যাটেগরি" : "Service category"}
+                                          className="w-full rounded-lg border border-slate-200 px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                                        />
+                                        {providerPickerServiceFilter && (
+                                          <button type="button" onClick={() => setProviderPickerServiceFilter("")} className="absolute right-2 top-2 text-slate-400 hover:text-slate-700" aria-label="Clear service filter">
+                                            <X className="h-4 w-4" />
+                                          </button>
+                                        )}
+                                        {providerPickerFilterOpen === "service" && (
+                                          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                            {providerPickerServices.filter((service) => !providerPickerServiceFilter || normalizeSearchValue(service).includes(normalizeSearchValue(providerPickerServiceFilter))).map((service) => (
+                                              <button key={service} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setProviderPickerServiceFilter(service); setProviderPickerFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{service}</button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="relative">
+                                        <input
+                                          value={providerPickerDistrictFilter}
+                                          onFocus={() => setProviderPickerFilterOpen("district")}
+                                          onChange={(event) => { setProviderPickerDistrictFilter(event.target.value); setProviderPickerThanaFilter(""); setProviderPickerFilterOpen("district"); }}
+                                          placeholder={bn ? "জেলা খুঁজুন" : "Search district"}
+                                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                                        />
+                                        {providerPickerDistrictFilter && <button type="button" onClick={() => { setProviderPickerDistrictFilter(""); setProviderPickerThanaFilter(""); }} className="absolute right-2 top-2 text-slate-400 hover:text-slate-700" aria-label="Clear district filter"><X className="h-4 w-4" /></button>}
+                                        {providerPickerFilterOpen === "district" && (
+                                          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                            {providerPickerDistricts.filter((district) => !providerPickerDistrictFilter || `${district.name} ${district.nameBn}`.toLowerCase().includes(providerPickerDistrictFilter.toLowerCase())).map((district) => (
+                                              <button key={district.nameBn} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setProviderPickerDistrictFilter(district.nameBn); setProviderPickerThanaFilter(""); setProviderPickerFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{bn ? district.nameBn : district.name}</button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                      <div className="relative">
+                                        <input
+                                          value={providerPickerThanaFilter}
+                                          disabled={!providerPickerDistrictFilter}
+                                          onFocus={() => providerPickerDistrictFilter && setProviderPickerFilterOpen("thana")}
+                                          onChange={(event) => { setProviderPickerThanaFilter(event.target.value); setProviderPickerFilterOpen("thana"); }}
+                                          placeholder={bn ? "থানা/উপজেলা খুঁজুন" : "Search thana/upazila"}
+                                          className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20 disabled:bg-slate-50 disabled:text-slate-400"
+                                        />
+                                        {providerPickerThanaFilter && <button type="button" onClick={() => setProviderPickerThanaFilter("")} className="absolute right-2 top-2 text-slate-400 hover:text-slate-700" aria-label="Clear thana filter"><X className="h-4 w-4" /></button>}
+                                        {providerPickerFilterOpen === "thana" && providerPickerDistrictFilter && (
+                                          <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-48 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                            {providerPickerThanas.filter((thana) => {
+                                              const englishName = Object.entries(thanaEnMap)
+                                                .filter(([, banglaName]) => banglaName === thana)
+                                                .map(([english]) => english)
+                                                .join(" ");
+                                              return !providerPickerThanaFilter || normalizeSearchValue(`${thana} ${englishName}`).includes(normalizeSearchValue(providerPickerThanaFilter));
+                                            }).map((thana) => (
+                                              <button key={thana} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setProviderPickerThanaFilter(thana); setProviderPickerFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{thana}</button>
+                                            ))}
+                                          </div>
+                                        )}
+                                      </div>
+                                    </div>
+                                    <div className="max-h-80 space-y-1 overflow-y-auto">
+                                      <button
+                                        type="button"
+                                        onClick={async () => {
+                                          await updateBookingStatus(b.id, "pending");
+                                          await handleAssignProvider(b.id, "");
+                                          setProviderPickerBookingId(null);
+                                        }}
+                                        className="bg-userprimaryshade rounded-lg px-3 py-2 mb-3 mt-1 text-left text-xs text-black hover:bg-red-600 hover:text-white"
+                                      >
+                                        {bn ? "প্রোভাইডার রিমুভ করুন" : "Remove assigned provider"}
+                                      </button>
+                                      {getProviderSearchResults().map((provider) => {
+                                        const providerName = provider.full_name || provider.name || provider.shop_name || `প্রদানকারী ${provider.id}`;
+                                        const providerPhone = provider.phone || provider.mobile;
+                                        const areas = getProviderAreas(provider);
+                                        const uniqueAreas = [...new Set(areas)];
+                                        const categories = getProviderCategories(provider);
+                                        return (
+                                          <button
+                                            type="button"
+                                            key={provider.id}
+                                            onClick={() => { handleAssignProvider(b.id, String(provider.id)); setProviderPickerBookingId(null); }}
+                                            className="flex w-full items-start gap-3 rounded-lg bg-background border shadow p-2 text-left hover:border-slate-200 hover:bg-slate-50"
+                                          >
+                                            {provider.profile_image || provider.image_url ? (
+                                              <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt={providerName} className="h-11 w-11 shrink-0 rounded-full object-cover" />
+                                            ) : (
+                                              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-semibold text-slate-500">{providerName.charAt(0)}</div>
+                                            )}
+                                            <span className="min-w-0 flex-1">
+                                              <span className="block truncate text-xs font-semibold text-slate-900">{providerName}</span>
+                                              <span className="block truncate text-[14px] text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan ID"} : {provider.shondhaan_id || "—"}</span>
+                                              <span className="block truncate text-[14px] text-slate-500">{providerPhone || "—"}</span>
+                                              <span className="block truncate text-[14px] text-slate-500">{provider.email || "—"}</span>
+                                            </span>
+                                            <span className="max-w-[300px] shrink-0 text-right text-[10px] text-slate-500">
+                                              <span className="flex min-w-0 flex-wrap items-center gap-1" title={uniqueAreas.join(" → ")}>
+                                                {uniqueAreas.length ? uniqueAreas.map((area, index) => (
+                                                  <span key={`${area}-${index}`} className="inline-flex items-center gap-1">
+                                                    <span className="max-w-24 text-black truncate rounded-full bg-userprimaryshade px-2 py-0.5">{area}</span>
+                                                    {index < uniqueAreas.length - 1 && <span className="text-slate-400" aria-hidden="true">→</span>}
+                                                  </span>
+                                                )) : "—"}
+                                              </span>
+                                              <span className="block truncate font-semibold text-[14px] text-userprimary mt-3" title={categories.join(", ")}>{categories.join(", ") || "—"}</span>
+                                              <span className="mt-1 block font-semibold text-amber-600">★ {Number(provider.rating || 0).toFixed(1)} · {Number(provider.total_jobs || 0)} {bn ? "সম্পন্ন" : "completed"}</span>
+                                            </span>
+                                          </button>
+                                        );
+                                      })}
+                                      {getProviderSearchResults().length === 0 && (
+                                        <p className="p-4 text-center text-xs text-slate-500">{bn ? "কোনো প্রদানকারী পাওয়া যায়নি" : "No providers found"}</p>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
                             </motion.div>
                           );
                         })
                       )}
                     </div>
+                    {sortedBookings.length > bookingsPerPage && (
+                      <div className="mt-5 flex items-center justify-between rounded-lg border border-slate-200 bg-white px-3 py-2">
+                        <button
+                          type="button"
+                          onClick={() => setBookingPage((page) => Math.max(1, page - 1))}
+                          disabled={bookingPage === 1}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {bn ? "পূর্ববর্তী" : "Previous"}
+                        </button>
+                        <span className="text-xs font-medium text-slate-500">
+                          {bn ? `পৃষ্ঠা ${bookingPage} / ${bookingPageCount}` : `Page ${bookingPage} of ${bookingPageCount}`}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setBookingPage((page) => Math.min(bookingPageCount, page + 1))}
+                          disabled={bookingPage === bookingPageCount}
+                          className="rounded-md border border-slate-200 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+                        >
+                          {bn ? "পরবর্তী" : "Next"}
+                        </button>
+                      </div>
+                    )}
                   </div>
                 );
 
@@ -1208,6 +1642,8 @@ const CallCenterPanel = () => {
                   <div className="p-6 bg-white">
                     <h3 className="text-lg font-semibold text-slate-900 mb-5">{bn ? "নতুন বুকিং তৈরি করুন" : "Create New Booking"}</h3>
 
+                    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start">
+                      <div className="min-w-0">
                     {/* Step 1: Customer Selection / Registration */}
                     <div className="mb-5 p-4 rounded-lg border border-slate-200 bg-slate-50 space-y-3">
                       <div className="flex justify-between items-center">
@@ -1219,7 +1655,7 @@ const CallCenterPanel = () => {
                               setShowRegisterUser(!showRegisterUser);
                               setRegisterStep("details");
                             }}
-                            className="text-xs font-medium text-blue-600 hover:text-blue-700 transition-colors"
+                            className="text-sm font-medium text-userprimary hover:bg-userprimary px-2 py-1 rounded-full hover:text-white transition-colors"
                           >
                             {showRegisterUser ? "← সার্চে ফিরুন" : "+ নতুন গ্রাহক রেজিস্টার করুন"}
                           </button>
@@ -1241,31 +1677,45 @@ const CallCenterPanel = () => {
 
                           {searchResults.length > 0 && (
                             <div className="space-y-1.5 max-h-48 overflow-y-auto">
-                              {searchResults.map((p) => (
-                                <button
-                                  key={p.user_id}
-                                  type="button"
-                                  onClick={() => {
-                                    setNewBooking((prev) => ({
-                                      ...prev,
-                                      user_id: p.user_id,
-                                      customer_name: p.display_name || "",
-                                      customer_phone: p.phone || "",
-                                      customer_address: p.address || "",
-                                    }));
-                                    setSearchQuery("");
-                                    setSearchResults([]);
-                                    toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
-                                  }}
-                                  className="w-full flex items-center gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
-                                >
-                                  <User className="h-4 w-4 text-slate-400 shrink-0" />
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
-                                    <p className="text-[11px] text-slate-500 truncate">{p.phone}</p>
-                                  </div>
-                                </button>
-                              ))}
+                              {searchResults.map((p) => {
+                                const profileImageUrl = getProfileImageUrl(p.profile_image);
+                                return (
+                                  <button
+                                    key={p.user_id}
+                                    type="button"
+                                    onClick={() => {
+                                      setNewBooking((prev) => ({
+                                        ...prev,
+                                        user_id: p.user_id,
+                                        customer_name: p.display_name || "",
+                                        customer_phone: p.phone || "",
+                                        customer_address: p.address || "",
+                                      }));
+                                      setSearchQuery("");
+                                      setSearchResults([]);
+                                      toast.success(bn ? `${p.display_name} নির্বাচিত হয়েছে` : `${p.display_name} selected`);
+                                    }}
+                                    className="w-full flex items-start gap-3 rounded-lg border border-slate-200 bg-white p-2.5 text-left hover:bg-slate-50 transition-colors"
+                                  >
+                                    {profileImageUrl ? (
+                                      <img src={profileImageUrl} alt={p.display_name || "Customer"} className="h-9 w-9 shrink-0 rounded-full object-cover" />
+                                    ) : (
+                                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+                                        <User className="h-4 w-4" />
+                                      </div>
+                                    )}
+                                    <div className="min-w-0 flex-1">
+                                      <p className="text-xs font-medium text-slate-900 truncate">{p.display_name || "—"}</p>
+                                      <span className="text-[11px] text-slate-900 truncate">{bn ? "সন্ধান আইডি" : "Shondhaan ID"}: {p.shondhaan_id || "—"}</span>
+                                      <p className="text-[11px] text-slate-900 truncate">{p.phone || "—"} • {p.email || "—"}</p>
+                                      <p className="text-[11px] text-slate-600 truncate">{p.address || "—"}</p>
+                                      <p className="text-[11px] text-slate-600 truncate">
+                                        {bn ? "তৈরি" : "Created"}: {p.created_at ? new Date(p.created_at).toLocaleDateString(bn ? "bn-BD" : "en-US") : "—"}
+                                      </p>
+                                    </div>
+                                  </button>
+                                );
+                              })}
                             </div>
                           )}
 
@@ -1409,7 +1859,7 @@ const CallCenterPanel = () => {
                         />
 
                         {/* Service Searchable Input */}
-                        <div className="relative">
+                        <div className="relative" data-dropdown-container>
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                           <input
                             type="text"
@@ -1462,7 +1912,7 @@ const CallCenterPanel = () => {
                         </div>
 
                         {/* Package Searchable Input */}
-                        <div className="relative">
+                        <div className="relative" data-dropdown-container>
                           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />
                           <input
                             type="text"
@@ -1544,7 +1994,7 @@ const CallCenterPanel = () => {
                       <button
                         type="submit"
                         disabled={submitting || !newBooking.user_id}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-userprimary text-white text-sm font-medium rounded-lg hover:bg-slate-800 disabled:opacity-50 transition-colors"
                       >
                         {submitting ? (
                           <>
@@ -1556,6 +2006,110 @@ const CallCenterPanel = () => {
                         )}
                       </button>
                     </form>
+                      </div>
+
+                      <aside className="rounded-xl border border-slate-200 bg-slate-50 p-4 lg:sticky lg:top-4" data-dropdown-container>
+                        <div className="mb-3 flex items-center justify-between gap-2">
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900">{bn ? "সার্ভিস প্রদানকারী নির্বাচন" : "Select Service Provider"}</p>
+                            <p className="mt-1 text-[11px] text-slate-500">{bn ? "বুকিং তৈরির আগে প্রদানকারী বাছাই করুন" : "Choose a provider before creating the booking"}</p>
+                          </div>
+                          {newBookingProviderId && (
+                            <button type="button" onClick={() => setNewBookingProviderId("")} className="rounded-full p-1 text-slate-400 hover:bg-white hover:text-slate-700" aria-label="Clear selected provider">
+                              <X className="h-4 w-4" />
+                            </button>
+                          )}
+                        </div>
+
+                        <div className="mb-3 grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1">
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              value={newBookingProviderServiceFilter}
+                              onFocus={() => setNewBookingProviderFilterOpen("service")}
+                              onChange={(event) => { setNewBookingProviderServiceFilter(event.target.value); setNewBookingProviderFilterOpen("service"); }}
+                              placeholder={bn ? "সিলেক্ট সার্ভিস" : "Select Services"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                            />
+                            {newBookingProviderServiceFilter && <button type="button" onClick={() => setNewBookingProviderServiceFilter("")} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "service" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {newBookingProviderServices.filter((service) => !newBookingProviderServiceFilter || normalizeSearchValue(service).includes(normalizeSearchValue(newBookingProviderServiceFilter))).map((service) => (
+                                  <button key={service} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderServiceFilter(service); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{service}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              value={newBookingProviderDistrictFilter}
+                              onFocus={() => setNewBookingProviderFilterOpen("district")}
+                              onChange={(event) => { setNewBookingProviderDistrictFilter(event.target.value); setNewBookingProviderThanaFilter(""); setNewBookingProviderFilterOpen("district"); }}
+                              placeholder={bn ? "জেলা" : "District"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20"
+                            />
+                            {newBookingProviderDistrictFilter && <button type="button" onClick={() => { setNewBookingProviderDistrictFilter(""); setNewBookingProviderThanaFilter(""); }} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "district" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {providerPickerDistricts.filter((district) => !newBookingProviderDistrictFilter || normalizeSearchValue(`${district.name} ${district.nameBn}`).includes(normalizeSearchValue(newBookingProviderDistrictFilter))).map((district) => (
+                                  <button key={district.nameBn} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderDistrictFilter(district.nameBn); setNewBookingProviderThanaFilter(""); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{district.name} <span className="text-slate-400">{district.nameBn}</span></button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                          <div className="relative">
+                            <input
+                              autoComplete="off"
+                              disabled={!newBookingProviderDistrictFilter}
+                              value={newBookingProviderThanaFilter}
+                              onFocus={() => newBookingProviderDistrictFilter && setNewBookingProviderFilterOpen("thana")}
+                              onChange={(event) => { setNewBookingProviderThanaFilter(event.target.value); setNewBookingProviderFilterOpen("thana"); }}
+                              placeholder={bn ? "থানা / উপজেলা" : "Thana / Upazila"}
+                              className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 pr-8 text-xs outline-none focus:ring-2 focus:ring-slate-900/20 disabled:bg-slate-100 disabled:opacity-60"
+                            />
+                            {newBookingProviderThanaFilter && <button type="button" onClick={() => setNewBookingProviderThanaFilter("")} className="absolute right-2 top-2 text-slate-400"><X className="h-4 w-4" /></button>}
+                            {newBookingProviderFilterOpen === "thana" && (
+                              <div className="absolute left-0 right-0 top-full z-40 mt-1 max-h-40 overflow-y-auto rounded-lg border border-slate-200 bg-white p-1 shadow-lg">
+                                {newBookingProviderThanas.filter((thana) => !newBookingProviderThanaFilter || normalizeSearchValue(`${thana} ${Object.entries(thanaEnMap).find(([, banglaName]) => banglaName === thana)?.[0] || ""}`).includes(normalizeSearchValue(newBookingProviderThanaFilter))).map((thana) => (
+                                  <button key={thana} type="button" onMouseDown={(event) => event.preventDefault()} onClick={() => { setNewBookingProviderThanaFilter(thana); setNewBookingProviderFilterOpen(null); }} className="block w-full rounded-md px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-slate-100">{thana}</button>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="max-h-[520px] space-y-2 overflow-y-auto pr-1">
+                          {newBookingProviderResults.map((provider) => {
+                            const selected = String(provider.id) === String(newBookingProviderId);
+                            const providerName = provider.full_name || provider.name || provider.shop_name || (bn ? "প্রদানকারী" : "Provider");
+                            const providerThanas = toProviderValueArray(provider.thana).map(String).filter(Boolean);
+                            return (
+                              <button key={provider.id} type="button" onClick={() => setNewBookingProviderId(String(provider.id))} className={`w-full rounded-lg border p-2 text-left transition-colors ${selected ? "border-userprimary bg-userprimaryshade" : "border-slate-200 bg-white hover:border-slate-300"}`}>
+                                <div className="flex gap-2">
+                                  {provider.profile_image || provider.image_url ? <img src={getProfileImageUrl(provider.profile_image || provider.image_url)} alt="" className="h-10 w-10 shrink-0 rounded-full object-cover" /> : <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-slate-400"><User className="h-5 w-5" /></div>}
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-start justify-between gap-2"><p className="truncate text-xs font-semibold text-slate-900">{providerName}</p>{selected && <CheckCircle className="h-4 w-4 shrink-0 text-userprimary" />}</div>
+                                    <span className="truncate text-[12px] font-semibold text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan ID"} : {provider.shondhaan_id || "—"}</span>
+                                    <p className="truncate text-[10px] text-slate-800">{provider.phone || provider.mobile || "—"}</p>
+                                    <p className="truncate text-[10px] text-slate-800">{provider.email || provider.address || "—"}</p>
+                                    <div className="mt-1 flex flex-wrap gap-1">
+                                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[12px] font-semibold text-slate-800">
+                                        {getProviderCategories(provider).slice(0, 2).join(", ") || "—"}
+                                      </span>
+                                      <span className="rounded-full bg-slate-200 px-1.5 py-0.5 text-[12px] font-semibold text-slate-800">
+                                        {providerThanas.join(", ") || "—"}
+                                      </span>
+                                      <span className="ml-auto text-[9px] text-slate-500">★ {Number(provider.rating || 0).toFixed(1)} · {provider.total_jobs || 0}</span></div>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                          {!newBookingProviderResults.length && <p className="rounded-lg border border-dashed border-slate-200 bg-white px-3 py-5 text-center text-xs text-slate-500">{bn ? "কোনো প্রদানকারী পাওয়া যায়নি" : "No matching providers found"}</p>}
+                        </div>
+                      </aside>
+                    </div>
                   </div>
                 );
 
@@ -1663,8 +2217,8 @@ const CallCenterPanel = () => {
                                       name="service_category"
                                       render={({ field }) => (
                                         <FormItem>
-                                          <FormLabel>{bn ? "সার্ভিস ক্যাটেগরি" : "Service Categories"}</FormLabel>
-                                          <div className="relative">
+                                          <FormLabel>{bn ? "সার্ভিস" : "Services"}</FormLabel>
+                                          <div className="relative" data-dropdown-container>
                                             <div
                                               role="button"
                                               tabIndex={0}
@@ -1678,18 +2232,18 @@ const CallCenterPanel = () => {
                                               className="flex min-h-10 w-full cursor-pointer items-center gap-2 rounded-md border border-input bg-background px-3 py-2 text-sm text-left"
                                             >
                                               <div className="flex min-w-0 flex-1 flex-wrap gap-1.5">
-                                                {field.value.map((categoryId) => {
-                                                  const category = serviceCategories.find((item) => item.id === categoryId);
-                                                  if (!category) return null;
+                                                {field.value.map((serviceId) => {
+                                                  const service = services.find((item) => String(item.id) === String(serviceId));
+                                                  if (!service) return null;
                                                   return (
-                                                    <span key={category.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
-                                                      {bn ? category.name : category.name_en || category.name}
+                                                    <span key={service.id} className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-700">
+                                                      {bn ? service.title : service.title_en || service.title}
                                                       <button
                                                         type="button"
-                                                        aria-label={`Remove ${category.name}`}
+                                                        aria-label={`Remove ${service.title}`}
                                                         onClick={(event) => {
                                                           event.stopPropagation();
-                                                          field.onChange(field.value.filter((id) => id !== category.id));
+                                                          field.onChange(field.value.filter((id) => String(id) !== String(service.id)));
                                                         }}
                                                         className="rounded-full text-slate-500 hover:text-slate-900"
                                                       >
@@ -1700,7 +2254,7 @@ const CallCenterPanel = () => {
                                                 })}
                                                 {!field.value.length && (
                                                   <span className="text-muted-foreground">
-                                                    {bn ? "ক্যাটেগরি নির্বাচন করুন" : "Select categories"}
+                                                    {bn ? "সার্ভিস নির্বাচন করুন" : "Select services"}
                                                   </span>
                                                 )}
                                               </div>
@@ -1713,21 +2267,24 @@ const CallCenterPanel = () => {
                                                   value={serviceCategorySearch}
                                                   onChange={(event) => setServiceCategorySearch(event.target.value)}
                                                   onClick={(event) => event.stopPropagation()}
-                                                  placeholder={bn ? "ক্যাটেগরি খুঁজুন..." : "Search categories..."}
+                                                  placeholder={bn ? "সার্ভিস খুঁজুন..." : "Search services..."}
                                                   className="mb-1 h-9"
                                                 />
                                                 <div className="max-h-52 overflow-y-auto">
-                                                {serviceCategories
-                                                  .filter((category) => category.is_active)
-                                                  .filter((category) => {
+                                                {services
+                                                  .filter((service) => service.is_active !== false)
+                                                  .filter((service) => {
                                                     const query = serviceCategorySearch.trim().toLowerCase();
-                                                    return !query || category.name.toLowerCase().includes(query) || (category.name_en || "").toLowerCase().includes(query);
+                                                    return !query
+                                                      || String(service.title || "").toLowerCase().includes(query)
+                                                      || String(service.title_en || "").toLowerCase().includes(query)
+                                                      || String(service.slug || "").toLowerCase().includes(query);
                                                   })
-                                                  .map((category) => {
-                                                  const selected = field.value.includes(category.id);
+                                                  .map((service) => {
+                                                  const selected = field.value.some((id) => String(id) === String(service.id));
                                                   return (
                                                     <label
-                                                      key={category.id}
+                                                      key={service.id}
                                                       onClick={(event) => event.stopPropagation()}
                                                       className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm hover:bg-slate-50"
                                                     >
@@ -1736,12 +2293,12 @@ const CallCenterPanel = () => {
                                                         checked={selected}
                                                         onChange={() => field.onChange(
                                                           selected
-                                                            ? field.value.filter((id) => id !== category.id)
-                                                            : [...field.value, category.id]
+                                                            ? field.value.filter((id) => String(id) !== String(service.id))
+                                                            : [...field.value, String(service.id)]
                                                         )}
                                                         className="h-4 w-4 rounded border-slate-300"
                                                       />
-                                                      <span>{bn ? category.name : category.name_en || category.name}</span>
+                                                      <span>{bn ? service.title : service.title_en || service.title}</span>
                                                     </label>
                                                   );
                                                   })}
@@ -1749,8 +2306,7 @@ const CallCenterPanel = () => {
                                               </div>
                                             )}
                                           </div>
-                                          {categoriesError && <p className="text-sm font-medium text-destructive">{bn ? "ক্যাটেগরি লোড করা যায়নি" : "Could not load service categories"}</p>}
-                                          {categoriesLoading && <p className="text-sm text-muted-foreground">{bn ? "ক্যাটেগরি লোড হচ্ছে..." : "Loading categories..."}</p>}
+                                          {!services.length && <p className="text-sm text-muted-foreground">{bn ? "সার্ভিস লোড হচ্ছে..." : "Loading services..."}</p>}
                                           <FormMessage />
                                         </FormItem>
                                       )}
@@ -1812,8 +2368,8 @@ const CallCenterPanel = () => {
                                   >
                                   <Send className="h-4 w-4" />
                                   {submitting
-                                    ? (editingProvider ? (bn ? "আপডেট হচ্ছে..." : "Updating...") : (bn ? "তৈরি হচ্ছে..." : "Creating..."))
-                                    : (editingProvider ? (bn ? "আপডেট করুন" : "Update Provider") : (bn ? "তৈরি করুন" : "Create Provider"))}
+                                    ? (editingProvider ? (bn ? "আপডেট হচ্ছে..." : "Updating...") : (bn ? "রেজিস্ট্রেশন হচ্ছে..." : "Creating..."))
+                                    : (editingProvider ? (bn ? "আপডেট করুন" : "Update Provider") : (bn ? "রেজিস্ট্রেশন করুন" : "Create Provider"))}
                                 </Button>
 
                                 <p className="mt-3 text-[11px] text-muted-foreground text-center leading-relaxed">
@@ -1837,9 +2393,9 @@ const CallCenterPanel = () => {
                 const totalPages = Math.max(1, Math.ceil(allProviders.length / 10));
                 const startIndex = (allProvidersPage - 1) * 10;
                 const paginatedProviders = allProviders.slice(startIndex, startIndex + 10);
-                const getCategoryName = (categoryId: string) => {
-                  const category = serviceCategories.find((item) => String(item.id) === String(categoryId));
-                  return category ? (bn ? category.name : category.name_en || category.name) : categoryId;
+                const getCategoryName = (serviceId: string) => {
+                  const service = services.find((item) => String(item.id) === String(serviceId));
+                  return service ? (bn ? service.title : service.title_en || service.title) : serviceId;
                 };
                 const getProfileImageUrl = (image?: string | null) => {
                   if (!image) return "";
@@ -1917,7 +2473,7 @@ const CallCenterPanel = () => {
                                   <th className="px-4 py-3 font-bold">{bn ? "এন-আই-ডি" : "NID"}</th>
                                   <th className="px-4 py-3 font-bold">{bn ? "রেজিস্ট্রেশন ডেইট" : "Registration Date"}</th>
                                   <th className="px-4 py-3 font-bold">{bn ? "স্ট্যাটাস" : "Status"}</th>
-                                  <th className="sticky right-0 z-10 bg-userprimaryshade px-4 py-3 font-bold">{bn ? "অ্যাকশন" : "Action"}</th>
+                                  <th className="sticky right-0 z-10 bg-gray-300 text-black px-4 py-3 font-bold">{bn ? "অ্যাকশন" : "Action"}</th>
                                 </tr>
                               </thead>
                               <tbody>
@@ -1934,11 +2490,12 @@ const CallCenterPanel = () => {
                                           <p className="truncate font-semibold text-slate-900">{provider.full_name || provider.name || "—"}</p>
                                           <p className="truncate text-xs text-slate-500">{provider.email || "—"}</p>
                                           <p className="truncate text-xs text-slate-500">{provider.phone || "—"}</p>
-                                          <p className="truncate text-xs text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan-ID"} : {provider.shondhaan_id || "—"}</p>
+                                          <p className="truncate text-xs font-semibold text-userprimary">{bn ? "সন্ধান আইডি" : "Shondhaan-ID"} : {provider.shondhaan_id || "—"}</p>
                                         </div>
                                       </div>
                                     </td>
-                                    <td className="min-w-[210px] px-4 py-3"><div className="flex flex-wrap gap-1">{provider.service_names?.length ? provider.service_names.map((serviceName) => <span key={serviceName} className="rounded-full bg-userprimaryshade px-2 py-1 text-[11px] border border-userprimary font-bold text-userprimary">{serviceName}</span>) : <span>—</span>}</div></td>
+                                    <td className="min-w-[210px] px-4 py-3"><div className="flex flex-wrap gap-1">
+                                      {provider.service_names?.length ? provider.service_names.map((serviceName) => <span key={serviceName} className="rounded-full bg-slate-200 px-2 py-1 text-[11px] font-semibold text-slate-800">{serviceName}</span>) : <span>—</span>}</div></td>
                                     <td className="min-w-[190px] px-4 py-3 text-slate-700">
                                       <p className="font-medium">{provider.raw_provider_district || provider.provider_district || provider.district || "—"}</p>
                                       <div className="flex flex-wrap gap-1">{provider.thana?.length ? provider.thana.map((thana) => <span key={thana} className="text-xs text-slate-500">{thana}</span>) : <span className="text-xs text-slate-500">—</span>}</div>
@@ -1946,7 +2503,7 @@ const CallCenterPanel = () => {
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3 text-slate-700">{provider.experience_years ?? 0} {bn ? "বছর" : "years"}</td>
                                    <td>
-                                    <span className={`whitespace-nowrap px-3 rounded-full text-[12px] py-1 border ${
+                                    <span className={`whitespace-nowrap px-2 rounded-full text-[11px] py-0 border ${
                                             provider.nid_front_url || provider.nid_back_url
                                                 ? "border-userprimary bg-userprimaryshade text-userprimary font-bold"
                                                 : "border-red-500 bg-red-100 text-red-700 font-medium"
@@ -2032,104 +2589,6 @@ const CallCenterPanel = () => {
                   </div>
                 );
               }
-
-              /* ─────────────────────────────────────────────
-                 TAB: SERVICE REQUESTS
-              ───────────────────────────────────────────── */
-              if (activeTab === "requests")
-                return (
-                  <div className="p-6">
-                    <div className="flex items-center justify-between mb-5">
-                      <h3 className="text-lg font-semibold text-slate-900">{bn ? "সার্ভিস অনুরোধ" : "Service Requests"}</h3>
-                      <button
-                        onClick={fetchData}
-                        className="p-2 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors"
-                        title={bn ? "রিফ্রেশ" : "Refresh"}
-                      >
-                        <RefreshCw className="h-4 w-4 text-slate-600" />
-                      </button>
-                    </div>
-
-                    {/* Status Filters */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-5">
-                      <button
-                        onClick={() => setReqStatusFilter("all")}
-                        className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === "all" ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 bg-white hover:border-slate-300"}`}
-                      >
-                        <p className="text-lg font-semibold">{requests.length}</p>
-                        <p className="text-[11px] font-medium">{bn ? "সব" : "All"}</p>
-                      </button>
-                      {requestStatusOptions.map((s) => (
-                        <button
-                          key={s.value}
-                          onClick={() => setReqStatusFilter(reqStatusFilter === s.value ? "all" : s.value)}
-                          className={`rounded-lg border p-2.5 text-left transition-all ${reqStatusFilter === s.value ? `${s.className} ring-2 ring-offset-1` : "border-slate-200 bg-white hover:border-slate-300"}`}
-                        >
-                          <p className="text-lg font-semibold text-slate-900">{requests.filter((r) => r.status === s.value).length}</p>
-                          <p className={`mt-1 text-[11px] font-medium ${s.className.includes("bg-") ? s.className : "text-slate-600"}`}>{bn ? s.labelBn : s.labelEn}</p>
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Requests List */}
-                    <div className="space-y-3">
-                      {filteredRequests.length === 0 ? (
-                        <div className="text-center py-12">
-                          <FileText className="h-10 w-10 mx-auto text-slate-300 mb-3" />
-                          <p className="text-sm text-slate-500">{bn ? "কোনো সার্ভিস অনুরোধ নেই" : "No service requests found"}</p>
-                        </div>
-                      ) : (
-                        filteredRequests.map((req, i) => {
-                          const s = requestStatusOptions.find((o) => o.value === req.status) || requestStatusOptions[0];
-                          return (
-                            <motion.div
-                              key={req.id}
-                              initial={{ opacity: 0, y: 8 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ delay: i * 0.03 }}
-                              className="rounded-lg border border-slate-200 bg-white p-4 space-y-3 hover:shadow-md transition-shadow"
-                            >
-                              <div className="flex items-start justify-between gap-3">
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <User className="h-4 w-4 text-slate-400 shrink-0" />
-                                    <p className="text-sm font-medium text-slate-900">{req.customer_name}</p>
-                                  </div>
-                                  <p className="text-xs text-slate-500 flex items-center gap-1">
-                                    <Phone className="h-3 w-3" />
-                                    {req.customer_phone}
-                                  </p>
-                                </div>
-                                <select
-                                  value={req.status}
-                                  onChange={(e) => updateRequestStatus(req.id, e.target.value)}
-                                  disabled={updatingId === req.id}
-                                  className={`rounded-lg border px-2 py-1.5 text-xs font-medium outline-none ${s.className} disabled:opacity-50 shrink-0`}
-                                >
-                                  {requestStatusOptions.map((o) => (
-                                    <option key={o.value} value={o.value}>
-                                      {bn ? o.labelBn : o.labelEn}
-                                    </option>
-                                  ))}
-                                </select>
-                              </div>
-
-                              <p className="text-sm text-slate-700 bg-slate-50 rounded-lg p-3">{req.service_description}</p>
-                              <div className="flex items-start gap-1.5 text-xs text-slate-500">
-                                <MapPin className="h-3 w-3 mt-0.5 shrink-0" />
-                                <span>
-                                  {[req.district, req.thana, req.detail_area].filter(Boolean).join(", ") || "ঠিকানা নেই"}
-                                </span>
-                              </div>
-
-                              <p className="text-[10px] text-slate-400">{new Date(req.created_at).toLocaleString("bn-BD")}</p>
-                            </motion.div>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
-                );
 
               /* ─────────────────────────────────────────────
                  TAB: SERVICE MESSAGES (CHAT)
