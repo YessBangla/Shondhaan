@@ -388,12 +388,6 @@ const MartCheckout = () => {
   };
 
   const handlePlaceOrder = async () => {
-    if (!user) {
-      toast.error(bn ? "লগইন করুন" : "Please login");
-      const returnPath = `${location.pathname}${location.search}`;
-      navigate(`/login?redirect=${encodeURIComponent(returnPath)}`);
-      return;
-    }
     if (!name || !phone || !address) { toast.error(bn ? "সব তথ্য পূরণ করুন" : "Fill all fields"); return; }
     if (paymentMethod === "sslcommerz" && sslCommerzChecked && !sslCommerzReady) {
       toast.error("SSLCommerz is not configured yet. Please choose Cash on Delivery.");
@@ -403,7 +397,9 @@ const MartCheckout = () => {
     try {
       const estDate = format(estimatedMax, "yyyy-MM-dd");
       const payload = {
-        user_id: user.id,
+        // Guest checkout is supported. Account orders continue to be linked
+        // to the user and remain visible from the authenticated dashboard.
+        user_id: user?.id ?? null,
         subtotal,
         shipping_fee: shipping,
         courier_fee: 0,
@@ -431,7 +427,7 @@ const MartCheckout = () => {
           unit: item.product.unit,
           vendor_id: item.product.vendor_id ?? item.product.seller_id ?? null,
         })),
-        save_address: !!(saveAddress && showNewAddress),
+        save_address: !!(user && saveAddress && showNewAddress),
         address_label: addressLabel,
       };
 
@@ -448,7 +444,7 @@ const MartCheckout = () => {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            customer_email: (user as any)?.email || "customer@yessmart.local",
+            customer_email: (user as any)?.email || "guest@yessmart.local",
           }),
         });
         const paymentResult = await paymentResp.json();

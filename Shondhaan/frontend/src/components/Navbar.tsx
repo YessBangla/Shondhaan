@@ -37,6 +37,7 @@ import Swal from "sweetalert2";
 import { useAuth } from "@/contexts/AuthContext";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useMartCart } from "@/contexts/MartCartContext";
+import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { useSiteSettings } from "@/hooks/useSiteSettings";
 import { supabase } from "@/integrations/supabase/client";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
@@ -69,12 +70,12 @@ const  Navbar = () => {
   const [trackToken, setTrackToken] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userRoles, setUserRoles] = useState<string[]>([]);
-  const [wishlistCount, setWishlistCount] = useState(0);
 
   const navRef = useRef<HTMLElement | null>(null);
 
   const { user, signOut } = useAuth();
   const { totalItems, setIsOpen } = useMartCart();
+  const { count: wishlistCount } = useMartWishlist();
   const { settings } = useSiteSettings();
   const { language, setLanguage, t } = useLanguage();
 
@@ -114,43 +115,6 @@ const  Navbar = () => {
 
   const isJobsHeader =
     location.pathname.startsWith("/jobs") || location.pathname.startsWith("/employer");
-
-  const loadWishlistCount = useCallback(async () => {
-    if (!martToken) {
-      setWishlistCount(0);
-      return;
-    }
-
-    try {
-      const res = await fetch(`${API_BASE}/api/wishlist`, {
-        headers: {
-          Authorization: `Bearer ${martToken}`,
-        },
-      });
-
-      const json = await res.json();
-
-      if (res.ok && json.success) {
-        setWishlistCount((json.data || []).length);
-      } else {
-        setWishlistCount(0);
-      }
-    } catch (error) {
-      console.error("Navbar wishlist count error:", error);
-      setWishlistCount(0);
-    }
-  }, [martToken]);
-
-  useEffect(() => {
-    loadWishlistCount();
-
-    const refreshWishlist = () => loadWishlistCount();
-    window.addEventListener("mart:wishlist-updated", refreshWishlist);
-
-    return () => {
-      window.removeEventListener("mart:wishlist-updated", refreshWishlist);
-    };
-  }, [loadWishlistCount]);
 
   useEffect(() => {
     const el = navRef.current;
@@ -772,32 +736,16 @@ const handleSignOut = async () => {
           <div className="flex items-center gap-1 shrink-0">
             {/* Wishlist */}
             <button
-              onClick={() => {
-                if (isLoggedIn) {
-                  navigate("/mart/wishlist");
-                } else {
-                  navigate("/login", { state: { from: "/mart/wishlist" } });
-                }
-              }}
+              onClick={() => navigate("/mart/wishlist")}
               className="relative h-10 w-10 rounded-xl bg-muted/60 hover:bg-muted flex items-center justify-center transition-colors"
               aria-label={bn ? "উইশলিস্ট" : "Wishlist"}
-              title={
-                isLoggedIn
-                  ? bn
-                    ? "উইশলিস্ট"
-                    : "Wishlist"
-                  : bn
-                    ? "উইশলিস্ট দেখতে লগইন করুন"
-                    : "Login to view wishlist"
-              }
+              title={bn ? "উইশলিস্ট" : "Wishlist"}
             >
               <Heart
-                className={`h-4.5 w-4.5 ${
-                  isLoggedIn ? "text-foreground" : "text-muted-foreground"
-                }`}
+                className="h-4.5 w-4.5 text-foreground"
               />
 
-              {isLoggedIn && wishlistCount > 0 && (
+              {wishlistCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold leading-none">
                   {wishlistCount}
                 </span>

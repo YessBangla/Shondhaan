@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Drawer, DrawerContent, DrawerHeader, DrawerTitle } from "@/components/ui/drawer";
 import { useLanguage } from "@/contexts/LanguageContext";
-import { useAuth } from "@/contexts/AuthContext";
 import { useMartCart } from "@/contexts/MartCartContext";
 import { useMartWishlist } from "@/contexts/MartWishlistContext";
 import { useMartCompare } from "@/contexts/MartCompareContext";
@@ -66,7 +65,6 @@ interface Props {
 
 const MartProductCard = ({ product, variant = "grid" }: Props) => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { addItem } = useMartCart();
   const { toggleWishlist, isInWishlist } = useMartWishlist();
   const { addToCompare, removeFromCompare, isInCompare } = useMartCompare();
@@ -74,15 +72,6 @@ const MartProductCard = ({ product, variant = "grid" }: Props) => {
   const bn = language === "bn";
   const [actionsOpen, setActionsOpen] = useState(false);
   const longPress = useLongPress<HTMLDivElement>(() => setActionsOpen(true), 480);
-
-  const requireAuthForPurchase = (action: () => void) => {
-    if (!user) {
-      toast.info(bn ? "ক্রয় করতে অনুগ্রহ করে লগইন করুন" : "Please login to purchase");
-      navigate("/auth?redirect=/mart/home");
-      return;
-    }
-    action();
-  };
 
   // ── Price resolution ──────────────────────────────────────────────────
   // Prefer the first variant from unit_prices (e.g. "200gm" - ৳500), same as

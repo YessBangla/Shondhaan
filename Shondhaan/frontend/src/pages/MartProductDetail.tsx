@@ -130,14 +130,9 @@ const MartProductDetail = () => {
   const [activeTab, setActiveTab] = useState<ProductDetailTab>("description");
   const [vendorFeeSettings, setVendorFeeSettings] = useState<VendorFeeSetting[]>([]);
 
-  const requireAuthForPurchase = (action: () => void) => {
-    if (!user) {
-      toast.info(bn ? "ক্রয় করতে অনুগ্রহ করে লগইন করুন" : "Please login to purchase");
-      navigate(`/login?redirect=/mart/product/${slug}`);
-      return;
-    }
-    action();
-  };
+  // Adding an item and checking out are available to guests. Account-only
+  // areas (such as the dashboard and seller chat) remain protected.
+  const requireAuthForPurchase = (action: () => void) => action();
 
   const productName = product ? (bn ? product.name : product.name_en || product.name) : "";
   const productImage = getFullImageUrl(product?.image_url);

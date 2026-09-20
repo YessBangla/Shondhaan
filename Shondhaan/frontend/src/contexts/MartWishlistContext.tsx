@@ -25,6 +25,17 @@ function normalizeProductId(product: unknown) {
   return String((product as { id?: unknown })?.id ?? "");
 }
 
+const GUEST_WISHLIST_KEY = "mart-wishlist-guest";
+
+const readGuestWishlist = (): MartProduct[] => {
+  try {
+    const raw = localStorage.getItem(GUEST_WISHLIST_KEY);
+    return raw ? (JSON.parse(raw) as MartProduct[]) : [];
+  } catch {
+    return [];
+  }
+};
+
 export function MartWishlistProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [items, setItems] = useState<MartProduct[]>([]);
@@ -34,7 +45,7 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
 
     const token = getMySqlAuth()?.token;
     if (!token && !user) {
-      setItems([]);
+      setItems(readGuestWishlist());
       return;
     }
 
@@ -50,7 +61,24 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
       }
 
       const wishlistRows = Array.isArray(json.data) ? json.data : [];
-      setItems(wishlistRows.map((row) => toPublicProduct(row as any)) as MartProduct[]);
+      const accountItems = wishlistRows.map((row) => toPublicProduct(row as any)) as MartProduct[];
+      const guestItems = readGuestWishlist();
+      const missingGuestItems = guestItems.filter(
+        (guest) => !accountItems.some((item) => normalizeProductId(item) === normalizeProductId(guest))
+      );
+
+      // Move a guest wishlist into the account after sign-in/sign-up. Leave
+      // the guest copy intact on an API failure so products are never lost.
+      await Promise.all(missingGuestItems.map(async (product) => {
+        const response = await fetch(`${API_BASE}/api/wishlist/${encodeURIComponent(normalizeProductId(product))}`, {
+          method: "POST",
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) throw new Error("Wishlist migration failed");
+      }));
+      try { localStorage.removeItem(GUEST_WISHLIST_KEY); } catch { /* storage unavailable */ }
+      setItems([...accountItems, ...missingGuestItems]);
     } catch (error) {
       console.error("Wishlist refresh error:", error);
     }
@@ -80,7 +108,15 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
 
       const token = getMySqlAuth()?.token;
       if (!token && !user) {
-        toast.info("Please login to use wishlist");
+        const productId = String(product.id);
+        const exists = isInWishlist(productId);
+        const nextItems = exists
+          ? items.filter((item) => normalizeProductId(item) !== productId)
+          : [...items, { ...product, id: productId }];
+        setItems(nextItems);
+        try { localStorage.setItem(GUEST_WISHLIST_KEY, JSON.stringify(nextItems)); } catch { /* quota */ }
+        toast[exists ? "info" : "success"](exists ? "Removed from wishlist" : "Added to wishlist");
+        window.dispatchEvent(new Event("mart:wishlist-updated"));
         return;
       }
 
@@ -119,7 +155,12 @@ export function MartWishlistProvider({ children }: { children: ReactNode }) {
     [items, isInWishlist, authLoading, user]
   );
 
-  const clearWishlist = useCallback(() => setItems([]), []);
+  const clearWishlist = useCallback(() => {
+    setItems([]);
+    if (!getMySqlAuth()?.token && !user) {
+      try { localStorage.removeItem(GUEST_WISHLIST_KEY); } catch { /* storage unavailable */ }
+    }
+  }, [user]);
 
   return (
     <MartWishlistContext.Provider
