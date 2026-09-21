@@ -15,13 +15,7 @@ const AuthCallback = () => {
       return;
     }
     getRoleRedirectPath().then((path) => {
-      const url = `${window.location.origin}${path}`;
-      const win = window.open(url, "_blank", "noopener,noreferrer");
-      if (win) {
-        navigate("/", { replace: true });
-      } else {
-        navigate(path, { replace: true });
-      }
+      navigate(path, { replace: true });
     });
   }, [user, loading, navigate]);
 
