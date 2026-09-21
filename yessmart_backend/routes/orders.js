@@ -370,6 +370,7 @@ router.get("/", async (req, res) => {
         orders.courier_fee, orders.cod_fee, orders.discount, orders.total,
         orders.coupon_code, orders.payment_method, orders.payment_status,
         orders.order_status AS status, orders.notes, orders.estimated_delivery_date,
+        orders.delivered_at,
         orders.created_at, orders.updated_at, orders.customer_name,
         orders.customer_phone, orders.shipping_address, orders.shipping_division,
         orders.shipping_district, orders.shipping_thana, orders.order_number,
@@ -998,6 +999,10 @@ router.put("/:id", async (req, res) => {
         setFields.push("payment_status = 'paid'");
         console.log(`💰 Online order #${req.params.id} → payment_status = paid`);
       }
+    }
+
+    if (status === "delivered") {
+      setFields.push("delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP)");
     }
 
     // Persist cancel reason

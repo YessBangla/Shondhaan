@@ -7,7 +7,7 @@ import {
   ChevronDown, ChevronUp, Store, ShieldCheck, RefreshCw, LogOut,
   MapPin, PhoneCall, UserRound, Send, Clock, CheckCircle2, XCircle,
   LayoutGrid, List, CreditCard, Banknote, MessageSquareWarning,
-  Tag, Percent, Truck,
+  Tag, Percent, Truck, RotateCcw,
 } from "lucide-react";
 import { MessageCircle } from "lucide-react";
 import AddProductForm from "@/components/mart/AddProductForm";
@@ -34,6 +34,7 @@ import { getMartSocket } from "@/lib/martSocket";
 import { createMartSellerNotification } from "@/lib/martSellerNotifications";
 import { getFullImageUrl } from "@/lib/imageUrl";
 import MartFeeSettingTab from "@/components/mart/MartFeeSettingTab";
+import MartRefundSettingTab from "@/components/mart/MartRefundSettingTab";
 
 const orderStatusMap: Record<string, { label: string; color: string; dot: string }> = {
   pending:    { label: "অপেক্ষমাণ",       color: "bg-amber-50 text-amber-700 border border-amber-200",       dot: "bg-amber-400"  },
@@ -930,6 +931,7 @@ const MartPanel = () => {
     { value: "kyc",            label: bn ? "KYC ভেরিফিকেশন"        : "KYC Verification",   icon: <ShieldCheck />,  group: bn ? "ভেরিফিকেশন"         : "Verification"    },
     { value: "store settings", label: bn ? "মার্ট ভেন্ডর প্রোফাইল" : "Mart Vendor Profile", icon: <Store />,       group: bn ? "সেটিংস"             : "store settings"  },
     { value: "mart_fee_setting", label: bn ? "ডেলিভারি ফি সেটিং" : "Delivery Fee Setting", icon: <Truck />, group: bn ? "আর্থিক" : "Finance" },
+    { value: "refund_cms", label: bn ? "রিফান্ড CMS" : "Refund CMS", icon: <RotateCcw />, group: bn ? "আর্থিক" : "Finance" },
     { value: "withdrawal-requests", label: bn ? "উত্তোলন অনুরোধ" : "Withdrawal Requests", icon: <CreditCard />, group: bn ? "আর্থিক" : "Financial" },
     { value: "logout",         label: bn ? "লগআউট"                  : "Logout",             icon: <LogOut />,       group: bn ? "অ্যাকাউন্ট"         : "Account"         },
     {
@@ -2111,6 +2113,10 @@ const MartPanel = () => {
 
             {activeTab === "mart_fee_setting" && user && (
               <MartFeeSettingTab userId={sellerUserId ?? user.id} bn={bn} apiBase={API_BASE} />
+            )}
+
+            {activeTab === "refund_cms" && user && (
+              <MartRefundSettingTab userId={sellerUserId ?? user.id} bn={bn} apiBase={API_BASE} />
             )}
 
           </div>
