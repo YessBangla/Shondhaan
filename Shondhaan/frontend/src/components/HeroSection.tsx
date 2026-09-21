@@ -146,7 +146,7 @@ const normalizeHeroBanner = (banner: any): HeroBanner => ({
 
 const PLATFORM_CARDS = [
   {
-    to: "/#services-section",
+    to: "/all-services",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
     smlabelBn: "সার্ভিস", smlabelEn: "Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",

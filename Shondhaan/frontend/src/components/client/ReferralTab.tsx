@@ -214,7 +214,7 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
   const handleShare = useCallback(async () => {
     if (!referralShareLink) return;
     const shareData = {
-      title: bn ? "শন্ধান রেফারেল" : "Shondhaan Referral",
+      title: bn ? "সন্ধান রেফারেল" : "Shondhaan Referral",
       text: bn
         ? `আমার রেফারেল লিংক দিয়ে সাইন আপ করুন এবং ${formatRewardValue(referredReward.amount, referredReward.currency, true)} পুরস্কার পান!`
         : `Sign up with my referral link and get ${formatRewardValue(referredReward.amount, referredReward.currency, false)} reward!`,

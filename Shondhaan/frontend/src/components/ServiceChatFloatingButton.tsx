@@ -20,10 +20,10 @@ const CONVERSATION_KEY = "yess_service_chat_conversation_id";
 export const SERVICE_CHAT_OPEN_EVENT = "shondhaan:open-service-chat";
 
 const CHAT_TOPIC_OPTIONS: { value: string; label: { en: string; bn: string } }[] = [
-  { value: "Shondhaan service", label: { en: "Shondhaan service", bn: "শন্ধান সার্ভিস" } },
-  { value: "Shondhaan mart", label: { en: "Shondhaan mart", bn: "শন্ধান মার্ট" } },
-  { value: "Shondhaan deal", label: { en: "Shondhaan deal", bn: "শন্ধান ডিল" } },
-  { value: "Shondhaan job", label: { en: "Shondhaan job", bn: "শন্ধান জব" } },
+  { value: "Shondhaan service", label: { en: "Shondhaan service", bn: "সন্ধান সার্ভিস" } },
+  { value: "Shondhaan mart", label: { en: "Shondhaan mart", bn: "সন্ধান মার্ট" } },
+  { value: "Shondhaan deal", label: { en: "Shondhaan deal", bn: "সন্ধান ডিল" } },
+  { value: "Shondhaan job", label: { en: "Shondhaan job", bn: "সন্ধান জব" } },
 ] as const;
 
 const TAGGED_MESSAGE_PATTERN = /^"([^"]+)"\s*\n([\s\S]*)$/;

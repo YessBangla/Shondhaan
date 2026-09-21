@@ -204,7 +204,7 @@ const MobileBottomNav = () => {
 
 const PLATFORM_CARDS = [
   {
-    to: "/",
+    to: "/all-services",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
     imgIcon: "/images/modules_logo/service.png",
