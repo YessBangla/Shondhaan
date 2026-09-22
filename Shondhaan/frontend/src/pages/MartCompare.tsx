@@ -120,7 +120,7 @@ const MartCompare = () => {
             <GitCompareArrows className="h-16 w-16 mx-auto mb-4 text-muted-foreground/40" />
             <h2 className="text-lg font-bold mb-2">{bn ? "তুলনা করতে কমপক্ষে ২টি পণ্য যোগ করুন" : "Add at least 2 products to compare"}</h2>
             <p className="text-muted-foreground text-sm mb-4">{bn ? "প্রডাক্ট কার্ডে তুলনা বাটনে ক্লিক করুন" : "Click the compare button on product cards"}</p>
-            <Button onClick={() => navigate("/mart/home")}>{bn ? "পণ্য ব্রাউজ করুন" : "Browse Products"}</Button>
+            <Button onClick={() => navigate("/mart")}>{bn ? "পণ্য ব্রাউজ করুন" : "Browse Products"}</Button>
           </div>
         ) : (
           <div className="overflow-x-auto">

@@ -25,7 +25,7 @@ export default function SocialProofToaster() {
     timersRef.current.forEach((t) => window.clearTimeout(t));
     timersRef.current = [];
 
-    const allowedPrefixes = ["/", "/all-services", "/service/", "/mart/home", "/mart/category", "/mart/product"];
+    const allowedPrefixes = ["/", "/all-services", "/service/", "/mart", "/mart/category", "/mart/product"];
     const skipExact = ["/checkout", "/dashboard", "/profile", "/admin"];
     const path = location.pathname;
     const allowed =

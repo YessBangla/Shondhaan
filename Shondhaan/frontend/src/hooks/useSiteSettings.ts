@@ -19,10 +19,10 @@ export interface SiteSettings {
 }
 
 const DEFAULTS: SiteSettings = {
-  logo_url: "/fullLogo.png",
+  logo_url: "/images/fullLogo.png",
   logo_text: "Yess",
   logo_accent: "Service",
-  favicon_url: "/favicon.png",
+  favicon_url: "/images/favicon.png",
   footer_tagline_bn: "আপনার বিশ্বস্ত হোম সার্ভিস পার্টনার",
   footer_tagline_en: "Your trusted home service partner",
   footer_phone: "+880 01805464345",

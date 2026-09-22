@@ -566,7 +566,7 @@ const MartCheckout = () => {
           <p className="text-muted-foreground mb-2">{bn ? "আনুমানিক ডেলিভারি:" : "Estimated delivery:"}</p>
           <p className="text-lg font-bold text-primary mb-6">{deliveryDateText}</p>
           <div className="flex gap-3 justify-center">
-            <Button onClick={() => navigate("/mart/home")}>{bn ? "শপিং চালান" : "Continue Shopping"}</Button>
+            <Button onClick={() => navigate("/mart")}>{bn ? "শপিং চালান" : "Continue Shopping"}</Button>
             <Button variant="outline" onClick={() => navigate("/mart/orders")}>{bn ? "অর্ডার দেখুন" : "View Orders"}</Button>
           </div>
         </div>
@@ -608,7 +608,7 @@ const MartCheckout = () => {
           <div className="text-center py-20">
             <ShoppingCart className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
             <p className="text-lg font-medium text-muted-foreground">{bn ? "কার্ট খালি" : "Cart is empty"}</p>
-            <Button className="mt-4" onClick={() => navigate("/mart/home")}>{bn ? "শপিং শুরু" : "Start Shopping"}</Button>
+            <Button className="mt-4" onClick={() => navigate("/mart")}>{bn ? "শপিং শুরু" : "Start Shopping"}</Button>
           </div>
         ) : (
           <div className="grid md:grid-cols-3 gap-6">

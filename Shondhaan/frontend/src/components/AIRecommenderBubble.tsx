@@ -20,7 +20,7 @@ export default function AIRecommenderBubble() {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    const validRoutes = ["/", "/all-services", "/mart/home"];
+    const validRoutes = ["/", "/all-services", "/mart"];
     if (!validRoutes.includes(location.pathname)) {
       setOpen(false);
       return;

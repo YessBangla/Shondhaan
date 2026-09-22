@@ -5,7 +5,7 @@ import {
   ClipboardCheck, MapPinCheck, Briefcase, Lock, Activity, Users, ShieldCheck,
 } from "lucide-react";
 import { useLanguage } from "@/contexts/LanguageContext";
-import logo from "/yess-service-logo.png?url";
+import logo from "/images/yess-service-logo.png?url";
 
 /**
  * Hero panel for the Staff/Office login page (`/main-login`).

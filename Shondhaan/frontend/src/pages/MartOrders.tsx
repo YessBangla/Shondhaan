@@ -150,7 +150,7 @@ const escapeInvoiceHtml = (value: string | number) => String(value).replace(/[&<
 
 const generateInvoice = async (order: MartOrder, bn: boolean) => {
   const html2pdf = (await import("html2pdf.js")).default;
-  const logoUrl = "/fullLogo.png";
+  const logoUrl = "/images/fullLogo.png";
   let logoSource = logoUrl;
   try {
     const logoResponse = await fetch(logoUrl);
@@ -431,7 +431,7 @@ const MartOrders = () => {
       <div className="pt-[55px] md:pt-[10px]" />
       <div className="max-w-4xl mx-auto px-4 py-6">
         <div className="flex items-center gap-2 mb-4">
-          <Button variant="ghost" size="icon" onClick={() => navigate("/mart/home")}>
+          <Button variant="ghost" size="icon" onClick={() => navigate("/mart")}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
           <h1 className="text-xl font-bold flex items-center gap-2">
@@ -673,7 +673,7 @@ const MartOrders = () => {
                 ? (bn ? "কোনো অর্ডার নেই" : "No orders yet")
                 : (bn ? "এই ক্যাটেগরিতে কোনো অর্ডার নেই" : "No orders in this category")}
             </p>
-            <Button className="mt-4" onClick={() => navigate("/mart/home")}>
+            <Button className="mt-4" onClick={() => navigate("/mart")}>
               {bn ? "শপিং শুরু করুন" : "Start Shopping"}
             </Button>
           </div>

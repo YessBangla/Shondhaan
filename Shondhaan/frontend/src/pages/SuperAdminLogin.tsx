@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import StaffLoginPage from "@/components/auth/StaffLoginPage";
-import logo from "/yess-service-logo.png?url";
+import logo from "/images/yess-service-logo.png?url";
 import { useSEO } from "@/hooks/useSEO";
 import { Button } from "@/components/ui/button";
 
