@@ -1,5 +1,48 @@
 import { pool } from "./db.js";
 
+const migrateLegacyServiceCategories = async () => {
+  const [categoryRows] = await pool.query(
+    `SELECT id, name_en FROM service_categories WHERE is_active = 1`
+  );
+  const categoryIds = new Map(
+    categoryRows.map((row) => [String(row.name_en || "").trim().toLowerCase(), row.id])
+  );
+
+  // Older service rows contain UUIDs from the previous subcategory model.
+  // Current service_categories rows use numeric IDs, so those UUIDs cannot be
+  // joined to the current category list. Clear only orphaned references first;
+  // the rules below then restore a current high-level category where possible.
+  await pool.query(`
+    UPDATE services s
+    LEFT JOIN service_categories c
+      ON c.id COLLATE utf8mb4_general_ci = s.category_id COLLATE utf8mb4_general_ci
+    SET s.category_id = NULL
+    WHERE s.category_id IS NOT NULL AND c.id IS NULL
+  `);
+
+  const rules = [
+    ["home & property services", "(^|-)car(-|$)|car-|engine-wash|tire-repair"],
+    ["home service & repair", "computer|(^|-)ac(-|$)|ac-|plumb|electric|refrigerator|fridge|fan-|washing-machine|mobile-repair|repair|tap|mixer|water-line|basin|toilet|commode|drain"],
+    ["home  improvement", "paint|waterproof|texture|wall-|garden"],
+    ["cleaning services", "clean|pest|termite|mosquito|cockroach|bed-bug|laundry"],
+    ["home moving & shifting", "shift|moving|packing"],
+    ["home beauty service", "salon|beauty|makeup|mehendi"],
+    ["security & surveillance", "cctv|security|fire|surveillance"],
+  ];
+
+  for (const [categoryName, slugPattern] of rules) {
+    const categoryId = categoryIds.get(categoryName);
+    if (categoryId === undefined) continue;
+
+    await pool.query(
+      `UPDATE services
+       SET category_id = ?
+       WHERE category_id IS NULL AND slug REGEXP ?`,
+      [categoryId, slugPattern]
+    );
+  }
+};
+
 export const initializeDatabase = async () => {
   try {
     console.log("🔄 Initializing database tables...");
@@ -108,6 +151,13 @@ export const initializeDatabase = async () => {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `);
     console.log("✅ services table ready");
+
+    try {
+      await migrateLegacyServiceCategories();
+      console.log("Legacy service categories migrated");
+    } catch (error) {
+      console.error("Could not migrate legacy service categories:", error.message);
+    }
 
     // 3. Create service_packages table
     await pool.query(`
