@@ -429,13 +429,14 @@ const App = () => {
                                   <Route path="/finance" element={<FinancePanel />} />
                                   <Route path="/internal" element={<InternalChatHub />} />
                                   <Route path="/internal/:slug" element={<InternalServiceChat />} />
-                                  <Route path="/mart" element={<MartPanel />} />
+                                  <Route path="/mart" element={<MartHome />} />
                                   <Route path="/mart/vendor/messages/:conversationId" element={<VendorMessageDetail />} />
                                   <Route path="/mart/mart-admin" element={<Navigate to="/admin/mart-management" replace />} />
                                   <Route path="/job/admin" element={<Navigate to="/admin/job-listings" replace />} />
                                   <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
                                   <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
-                                  <Route path="/mart/home" element={<MartHome />} />
+                                  <Route path="/mart/admin" element={<MartPanel />} />
+                                  <Route path="/mart/home" element={<Navigate to="/mart" replace />} />
                                   <Route path="/mart/MartAdmin" element={<MartStoreShopPage />} />
                                   <Route path="/mart/category/:slug" element={<MartCategoryPage />} />
                                   <Route path="/mart/product/:slug" element={<MartProductDetail />} />

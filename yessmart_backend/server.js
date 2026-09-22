@@ -32,6 +32,7 @@ const createUserProfileTable = require("./database/user_profile.table");
 const createBannersTable = require("./database/banners.table"); // ★ NEW — banners table for mart home carousel
 const createMartRewardTables = require("./database/mart_reward_rules"); // ★ NEW — mart_reward_rules table for mart reward rules
 const createMartFeeSettingsTable = require("./database/mart_fee_settings.table");
+const createMartRefundTables = require("./database/mart_refunds.table");
 const createWithdrawalRequestsTable = require("./database/Createwithdrawalrequeststable"); // ★ FIXED — was pointing at ./routes/Withdrawalrequests and using destructuring; this file's default export is the function itself
 
 // create table
@@ -192,6 +193,7 @@ app.use("/api/banners", bannersRoutes); // ★ NEW — banners CRUD routes
 app.use("/api/transactions", transactionsRoutes); // ★ NEW — transactions routes
 app.use("/api/mart-wallets", martWalletRoutes);
 app.use("/api/mart-fee-settings", martFeeSettingsRoutes);
+app.use("/api/mart-refunds", require("./routes/martRefunds"));
 app.use("/api", require("./routes/martPackages")); // ★ NEW — mart packages routes (defines /api/mart-packages, /api/sellers/:id/product-allowance, etc.)
 app.use("/api/mart-reward-rules", require("./routes/martRewardRules")); // ★ NEW — mart reward rules routes (defines /api/mart-reward-rules, /api/mart-reward-rules/active, etc.)
 app.use("/api/withdrawal-requests", require("./routes/Withdrawalrequests")); // ★ NEW — withdrawal requests routes (defines /api/withdrawal-requests, /api/withdrawal-requests/:id, etc.)
@@ -230,6 +232,7 @@ server.listen(PORT, async () => {
     await createMartRewardTables(); // ★ NEW — Create the mart_reward_rules table
     await createWithdrawalRequestsTable(); // ★ NEW — Create the withdrawal_requests table for seller withdrawal requests
     await createMartFeeSettingsTable();
+    await createMartRefundTables();
     console.log("All tables initialized successfully.");
   } catch (error) {
     console.error("Server initialization failed:", error.message);

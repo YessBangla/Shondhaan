@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -61,6 +61,13 @@ interface MartOrdersTabProps {
   onRefresh: () => void;
   // Pass your API base URL or axios instance; component calls PUT /:orderId
   apiBase?: string;
+}
+
+interface RefundEligibility {
+  eligible: boolean;
+  refund_window_days: number;
+  refund_deadline: string | null;
+  refund_status: string | null;
 }
 
 // ── Status config ──────────────────────────────────────────────────────────────
@@ -253,10 +260,11 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
 
   const [expandedId,    setExpandedId]    = useState<number | string | null>(null);
   const [filter,        setFilter]        = useState<string>("all");
-  const [dialogMode,    setDialogMode]    = useState<"cancel" | null>(null);
+  const [dialogMode,    setDialogMode]    = useState<"cancel" | "refund" | null>(null);
   const [dialogOrderId, setDialogOrderId] = useState<number | string | null>(null);
   const [reason,        setReason]        = useState("");
   const [processing,    setProcessing]    = useState(false);
+  const [refundEligibility, setRefundEligibility] = useState<Record<string, RefundEligibility>>({});
 
   const handleExpand = (id: number | string) =>
     setExpandedId(prev => (prev === id ? null : id));
@@ -287,6 +295,40 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
   };
 
   const canCancel = (s: string) => ["pending", "confirmed"].includes(s);
+
+  useEffect(() => {
+    let cancelled = false;
+    const deliveredOrders = orders.filter((order) => order.status === "delivered" && order.user_id);
+    void Promise.all(deliveredOrders.map(async (order) => {
+      try {
+        const response = await fetch(`${apiBase}/mart-refunds/eligibility?order_id=${encodeURIComponent(String(order.id))}&user_id=${encodeURIComponent(String(order.user_id))}`);
+        const result = await response.json();
+        return result.success ? [String(order.id), result.data as RefundEligibility] as const : null;
+      } catch { return null; }
+    })).then((results) => {
+      if (cancelled) return;
+      setRefundEligibility(Object.fromEntries(results.filter((item): item is readonly [string, RefundEligibility] => item !== null)));
+    });
+    return () => { cancelled = true; };
+  }, [apiBase, orders]);
+
+  const handleRefundRequest = async () => {
+    const order = orders.find((item) => String(item.id) === String(dialogOrderId));
+    if (!order || !reason.trim()) { toast.error(bn ? "Please provide a reason" : "Please provide a reason"); return; }
+    setProcessing(true);
+    try {
+      const response = await fetch(`${apiBase}/mart-refunds/requests`, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ order_id: order.id, user_id: order.user_id, reason: reason.trim() }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.message || "Could not submit refund request");
+      setRefundEligibility((previous) => ({ ...previous, [String(order.id)]: { ...previous[String(order.id)], eligible: false, refund_status: "requested" } }));
+      toast.success(bn ? "Refund request submitted" : "Refund request submitted");
+      setDialogMode(null); setReason("");
+    } catch (error: any) { toast.error(error?.message || "Could not submit refund request"); }
+    finally { setProcessing(false); }
+  };
 
   const filteredOrders = filter === "all"
     ? orders
@@ -635,6 +677,22 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                               {bn ? "বাতিল করুন" : "Cancel Order"}
                             </Button>
                           )}
+                          {refundEligibility[String(order.id)]?.eligible && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                              onClick={() => { setDialogMode("refund"); setDialogOrderId(order.id); setReason(""); }}
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              {bn ? "Refund Request" : "Request Refund"}
+                            </Button>
+                          )}
+                          {refundEligibility[String(order.id)]?.refund_status && (
+                            <Badge variant="outline" className="text-xs text-amber-700 border-amber-300">
+                              {bn ? "Refund" : "Refund"}: {refundEligibility[String(order.id)].refund_status}
+                            </Badge>
+                          )}
                         </div>
 
                       </div>
@@ -680,6 +738,25 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                 ? <Loader2 className="h-4 w-4 animate-spin" />
                 : (bn ? "বাতিল করুন" : "Confirm Cancel")
               }
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={dialogMode === "refund"} onOpenChange={() => { setDialogMode(null); setReason(""); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2"><RotateCcw className="h-5 w-5 text-amber-600" />{bn ? "Refund Request" : "Request a refund"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">{bn ? "Explain why you are requesting a refund." : "Explain why you are requesting a refund."}</p>
+            <Textarea value={reason} onChange={event => setReason(event.target.value)} placeholder={bn ? "Refund reason" : "Refund reason"} rows={3} />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="ghost" onClick={() => { setDialogMode(null); setReason(""); }}>{bn ? "Cancel" : "Cancel"}</Button>
+            <Button onClick={handleRefundRequest} disabled={processing || !reason.trim()} className="gap-2">
+              {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+              {bn ? "Submit request" : "Submit request"}
             </Button>
           </DialogFooter>
         </DialogContent>
