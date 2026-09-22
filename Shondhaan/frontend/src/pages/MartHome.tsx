@@ -389,7 +389,7 @@ const MartHome = () => {
     description: bn
       ? "সন্ধান মার্টে কেনাকাটা করুন — মুদি, ইলেকট্রনিক্স, পোশাক, প্রসাধনী ও আরও অনেক পণ্য। দ্রুত ডেলিভারি, ক্যাশ অন ডেলিভারি।"
       : "Shop on Yess Mart — groceries, electronics, fashion, beauty & more. Fast delivery, Cash on Delivery available.",
-    canonical: "/mart/home",
+    canonical: "/mart",
     keywords: bn
       ? "অনলাইন শপিং বাংলাদেশ, সন্ধান মার্ট, ক্যাশ অন ডেলিভারি"
       : "online shopping bangladesh, yess mart, cash on delivery",

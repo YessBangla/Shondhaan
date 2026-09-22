@@ -3,14 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, MessageCircle, Play, UserPlus } from "lucide-react";
 import {
-  Store, Package, Tag, Truck, MapPin,
-  Phone, ShieldCheck, ShoppingCart,
+  Store, Package, Truck, MapPin,
+  Phone, ShieldCheck,
 } from "lucide-react";
-import { useMartCart } from "@/contexts/MartCartContext";
 import { useAuth } from "@/contexts/AuthContext";
 import MartChatModal from "@/components/mart/MartChatModal";
+import MartProductCard from "@/components/mart/MartProductCard";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import { toPublicProduct } from "@/lib/martApi";
 
 const API_BASE = `${import.meta.env.VITE_MART_API_BASE_URL}/api`;
 const MEDIA_BASE =
@@ -58,6 +59,7 @@ type MartSeller = {
   profile_image_url?: string | null;
   store_carousel_media?: unknown;
   seller_mobile?: string | null;
+  seller_email?: string | null;
   seller_address?: string | null;
 };
 
@@ -94,88 +96,7 @@ const fetchProducts = async (sellerId: number): Promise<MartProduct[]> => {
   return json.data;
 };
 
-// ── Product Card ───────────────────────────────────────────────────────────────
-const ProductCard = ({
-  product,
-  onAddToCart,
-  onOpen,
-}: {
-  product: MartProduct;
-  onAddToCart: (product: MartProduct) => void;
-  onOpen: (product: MartProduct) => void;
-}) => (
-  <div
-    role="button"
-    tabIndex={0}
-    onClick={() => onOpen(product)}
-    onKeyDown={(e) => {
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        onOpen(product);
-      }
-    }}
-    className="flex h-full flex-col rounded-xl border bg-card overflow-hidden hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
-  >
-    <div className="relative aspect-square bg-muted/30 overflow-hidden">
-        {product.image ? (
-          <img
-            src={resolveMediaUrl(product.image)}
-            alt={product.name_bn}
-            className="w-auto h-full mx-auto object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-        ) : (
-          <div className="w-full h-40 bg-muted flex items-center justify-center">
-            <Package className="h-8 w-8 text-muted-foreground/30" />
-          </div>
-        )}
-    </div>
-    <div className="flex flex-1 flex-col p-3">
-      <p className="font-semibold text-sm line-clamp-2 leading-snug">{product.name_bn}</p>
-      {product.name_en && (
-        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{product.name_en}</p>
-      )}
-
-      <div className="mt-2 flex items-center gap-2">
-        <span className="text-primary font-bold">৳{product.sale_price}</span>
-        {product.original_price &&
-          Number(product.original_price) > Number(product.sale_price) && (
-            <span className="text-xs text-muted-foreground line-through">
-              ৳{product.original_price}
-            </span>
-          )}
-      </div>
-
-      <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1">
-        {product.discount > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs text-orange-500">
-            <Tag className="h-3 w-3" /> {product.discount}% off
-          </span>
-        )}
-        {product.is_freedelivery === 1 && (
-          <span className="inline-flex items-center gap-1 text-xs text-green-600">
-            <Truck className="h-3 w-3" /> Free delivery
-          </span>
-        )}
-      </div>
-
-      <p className={`text-xs mt-1.5 ${product.stock > 0 ? "text-muted-foreground" : "text-destructive"}`}>
-        {product.stock > 0 ? `${product.stock} in stock` : "Out of stock"}
-      </p>
-
-      <button
-        type="button"
-        disabled={product.stock <= 0}
-        onClick={(e) => { e.stopPropagation(); onAddToCart(product); }}
-        className="mt-auto w-full flex items-center justify-center gap-1.5 rounded-lg bg-primary text-white text-xs font-semibold py-2 px-3 hover:bg-emerald-600 active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-      >
-        <ShoppingCart className="h-3.5 w-3.5" />
-        {product.stock <= 0 ? "Out of Stock" : "Add to Cart"}
-      </button>
-    </div>
-  </div>
-);
-
-// ── Skeleton ───────────────────────────────────────────────────────────────────
+// ── Skeleton (kept for the loading state, independent of MartProductCard) ──────
 const SkeletonCard = () => (
   <div className="rounded-xl border bg-card overflow-hidden animate-pulse">
     <div className="h-40 bg-muted" />
@@ -191,7 +112,6 @@ const SkeletonCard = () => (
 // ── Main Component ─────────────────────────────────────────────────────────────
 const MartStore = () => {
   const { vendorId } = useParams<{ vendorId: string }>();
-  const { addItem }  = useMartCart();
   const { user } = useAuth();
   const navigate = useNavigate();
 
@@ -200,6 +120,7 @@ const MartStore = () => {
   const [activeSlide, setActiveSlide] = useState(0);
   const [chatOpen, setChatOpen] = useState(false);
   const [following, setFollowing] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
 
   // ── Categories (global list — filtered down below to what this seller actually stocks) ──
   const { data: categories = [] } = useQuery({
@@ -235,12 +156,18 @@ const MartStore = () => {
     enabled: !!vendorId,
   });
 
-  // ── Products ─────────────────────────────────────────────────────────────────
-  const { data: products = [], isLoading: productsLoading } = useQuery({
+  // ── Products (raw shape from the seller-products endpoint) ─────────────────
+  const { data: rawProducts = [], isLoading: productsLoading } = useQuery({
     queryKey: ["seller-products", seller?.id],
     queryFn: () => fetchProducts(seller.id),
     enabled: !!seller?.id,
   });
+
+  // Normalize to the same product shape MartProductCard/MartHome use everywhere else
+  const products = useMemo(
+    () => rawProducts.map((p) => toPublicProduct(p)),
+    [rawProducts]
+  );
 
   const carouselMedia = useMemo(
     () => parseStoreCarouselMedia(seller?.store_carousel_media),
@@ -249,8 +176,8 @@ const MartStore = () => {
 
   // ── Category scoping: only show categories/subcategories this seller has products in ──
   const sellerCategoryIds = useMemo(
-    () => new Set(products.map((p) => p.category_id).filter((id): id is number => id != null)),
-    [products]
+    () => new Set(rawProducts.map((p) => p.category_id).filter((id): id is number => id != null)),
+    [rawProducts]
   );
 
   const availableCategories = useMemo(
@@ -261,12 +188,12 @@ const MartStore = () => {
   const sellerSubCategoryIds = useMemo(
     () =>
       new Set(
-        products
+        rawProducts
           .filter((p) => String(p.category_id) === filterCategory)
           .map((p) => p.sub_category_id)
           .filter((id): id is number => id != null)
       ),
-    [products, filterCategory]
+    [rawProducts, filterCategory]
   );
 
   const availableSubCategories = useMemo(
@@ -297,22 +224,24 @@ const MartStore = () => {
     return () => window.clearInterval(timer);
   }, [carouselMedia.length]);
 
-  // ── Filtering ─────────────────────────────────────────────────────────────────
-  const filteredProducts = products.filter((p) => {
-    // category filter
+  // ── Filtering (operates on raw products, keyed by id, then mapped to normalized for render) ──
+  const filteredRawProducts = rawProducts.filter((p) => {
     if (filterCategory !== "all" && String(p.category_id) !== filterCategory) return false;
 
-    // sub-category filter
     if (filterSubCategory !== "all") {
       if (p.sub_category_id != null) {
         return String(p.sub_category_id) === filterSubCategory;
       }
-      // product has no sub_category_id saved yet — keep it visible under parent
       return true;
     }
 
     return true;
   });
+
+  const filteredProducts = useMemo(
+    () => filteredRawProducts.map((p) => toPublicProduct(p)),
+    [filteredRawProducts]
+  );
 
   // ── Handlers ──────────────────────────────────────────────────────────────────
   const handleCategoryChange = (catId: string) => {
@@ -323,40 +252,12 @@ const MartStore = () => {
     }
     setFilterSubCategory("all");
   };
-  const [showCategories, setShowCategories] = useState(false);
-  const handleAddToCart = (product: MartProduct) => {
-    const cartProduct = {
-      id:             product.id,
-      slug:           product.slug ?? String(product.id),
-      name:           product.name_bn,
-      name_en:        product.name_en    ?? null,
-      price:          Number(product.sale_price),
-      original_price: product.original_price ? Number(product.original_price) : null,
-      image_url:      product.image      ?? null,
-      stock:          product.stock,
-      unit:           product.unit       ?? null,
-      rating:         product.rating     ?? 0,
-      total_sold:     product.total_sold ?? 0,
-    };
-    addItem(cartProduct, 1);
-    toast.success(`"${product.name_bn}" added to cart`);
-  };
-
-  // Navigate to the product detail page. Falls back to the legacy
-  // "mysql-product-<id>" route (which MartProductDetail auto-upgrades to the
-  // readable slug URL) when the product payload doesn't include a slug.
-  const handleOpenProduct = (product: MartProduct) => {
-    const target = product.slug
-      ? `/mart/product/${product.slug}`
-      : `/mart/product/mysql-product-${product.id}`;
-    navigate(target);
-  };
 
   // Product-backed conversations are still used when possible. Stores without
   // products use a negative seller id as a stable virtual product id, allowing
   // visitors to start a live store conversation before products are listed.
   const handleOpenChat = () => {
-    const chatProduct = products[0];
+    const chatProduct = rawProducts[0];
     const sellerUserId = seller?.user_id ?? chatProduct?.vendor_id;
 
     if (!user) {
@@ -471,9 +372,6 @@ const MartStore = () => {
                   <h1 className="absolute md:relative left-[100px] md:left-0 top-0 md:top-[-15px] text-2xl md:text-3xl font-bold">
                     {seller.shop_name || seller.seller_name}
                   </h1>
-                  {/* {seller.shop_name && seller.seller_name && (
-                    <p className="text-muted-foreground mt-1">by {seller.seller_name}</p>
-                  )} */}
                   <div className="flex flex-wrap items-center gap-2 mt-0">
                     {seller.seller_verified === 1 && (
                       <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-sm font-medium">
@@ -695,8 +593,6 @@ const MartStore = () => {
               </div>
             </div>
 
-            
-
           </div>
         </aside>
 
@@ -815,9 +711,6 @@ const MartStore = () => {
             )}
           </div>
           )}
-          {/* Category filter sidebar */}
-            
-         
 
           {/* Breadcrumb */}
           {filterCategory !== "all" && (
@@ -879,13 +772,8 @@ const MartStore = () => {
             </div>
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filteredProducts.map((product) => (
-                <ProductCard
-                  key={product.id}
-                  product={product}
-                  onAddToCart={handleAddToCart}
-                  onOpen={handleOpenProduct}
-                />
+              {filteredProducts.map((product: any) => (
+                <MartProductCard key={product.id} product={product} />
               ))}
             </div>
           )}
@@ -895,11 +783,11 @@ const MartStore = () => {
       <MartChatModal
         open={chatOpen}
         onOpenChange={setChatOpen}
-        productId={products[0]?.id ?? -Number(seller.id)}
-        productName={products[0]?.name_bn || products[0]?.name_en || seller.shop_name || seller.seller_name || "Store"}
-        productImage={products[0]?.image || seller.profile_image_url || null}
-        productPrice={products[0]?.sale_price ?? null}
-        sellerId={seller.user_id ?? products[0]?.vendor_id ?? 0}
+        productId={rawProducts[0]?.id ?? -Number(seller.id)}
+        productName={rawProducts[0]?.name_bn || rawProducts[0]?.name_en || seller.shop_name || seller.seller_name || "Store"}
+        productImage={rawProducts[0]?.image || seller.profile_image_url || null}
+        productPrice={rawProducts[0]?.sale_price ?? null}
+        sellerId={seller.user_id ?? rawProducts[0]?.vendor_id ?? 0}
       />
     </>
   );
