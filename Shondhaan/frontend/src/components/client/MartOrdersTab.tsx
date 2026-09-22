@@ -624,6 +624,18 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                               </div>
                             ))}
                           </div>
+                          
+                          {order.status === "delivered" && refundEligibility[String(order.id)]?.eligible && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 w-full gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                              onClick={() => { setDialogMode("refund"); setDialogOrderId(order.id); setReason(""); }}
+                              >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              {bn ? "Refund Request" : "Request Refund"}
+                            </Button>
+                          )}
                         </div>
 
                         {/* Full price breakdown — all 4 fee columns from schema */}
@@ -675,17 +687,6 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                             >
                               <XCircle className="h-3.5 w-3.5" />
                               {bn ? "বাতিল করুন" : "Cancel Order"}
-                            </Button>
-                          )}
-                          {refundEligibility[String(order.id)]?.eligible && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
-                              onClick={() => { setDialogMode("refund"); setDialogOrderId(order.id); setReason(""); }}
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                              {bn ? "Refund Request" : "Request Refund"}
                             </Button>
                           )}
                           {refundEligibility[String(order.id)]?.refund_status && (

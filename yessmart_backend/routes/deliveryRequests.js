@@ -215,7 +215,10 @@ router.put("/:id", async (req, res) => {
       if (status === "delivered") {
         // Delivered to customer → orders = delivered
         await pool.query(
-          `UPDATE orders SET order_status = 'delivered' WHERE id = ?`,
+          `UPDATE orders
+           SET order_status = 'delivered',
+               delivered_at = COALESCE(delivered_at, CURRENT_TIMESTAMP)
+           WHERE id = ?`,
           [order_id]
         );
         console.log(`✅ orders #${order_id} → delivered`);
