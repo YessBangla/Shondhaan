@@ -71,9 +71,8 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
   const [addMoneyOpen, setAddMoneyOpen] = useState(false);
   const [depositAmount, setDepositAmount] = useState("100");
   const [depositLoading, setDepositLoading] = useState(false);
-  const visibleReferralCode = referralCode || browser_referralCode;
-  const browserReferralLink = buildReferralLink(browser_referralCode);
-  const referralShareLink = buildReferralLink(browser_referralCode || referralCode);
+  const visibleReferralCode = referralCode;
+  const referralShareLink = buildReferralLink(referralCode) || stats?.code?.link || null;
   const referralSettings = programConfig;
   const referralStats = stats;
   const referralSharing = generating;
@@ -215,7 +214,7 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
   const handleShare = useCallback(async () => {
     if (!referralShareLink) return;
     const shareData = {
-      title: bn ? "শন্ধান রেফারেল" : "Shondhaan Referral",
+      title: bn ? "সন্ধান রেফারেল" : "Shondhaan Referral",
       text: bn
         ? `আমার রেফারেল লিংক দিয়ে সাইন আপ করুন এবং ${formatRewardValue(referredReward.amount, referredReward.currency, true)} পুরস্কার পান!`
         : `Sign up with my referral link and get ${formatRewardValue(referredReward.amount, referredReward.currency, false)} reward!`,
@@ -469,24 +468,14 @@ const ReferralTab = ({ onNavigateToPayments }: ReferralTabProps) => {
                   </div>
                 </div>
                 <div className="relative shrink-0">
-                    {browserReferralLink && (
-                      <div className="mb-2 max-w-xs">
-                        <p className="text-xs font-semibold text-slate-700">
-                          {bn ? "আপনার রেফারেল লিংক:" : "Your referral link:"}
-                        </p>
-                        <p className="break-all text-sm font-medium text-emerald-700">
-                          {referralShareLink}
-                        </p>
-                      </div>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => navigate("/")}
-                      className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
-                      >
-                      <Home className="h-4 w-4" />
-                      {bn ? "এখনই কিনুন" : "Buy Now"}
-                    </button>
+                  <button
+                    type="button"
+                    onClick={() => navigate("/")}
+                    className="inline-flex w-full mt-2 items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                  >
+                    <Home className="h-4 w-4" />
+                    {bn ? "এখনই কিনুন" : "Buy Now"}
+                  </button>
                 </div>
               </div>
             </motion.div>

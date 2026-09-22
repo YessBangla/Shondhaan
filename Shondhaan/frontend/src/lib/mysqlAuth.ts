@@ -11,6 +11,8 @@ export interface MySqlAuthUser {
   role?: RoleKey;
   shop_name?: string | null;
   shop_type?: string | null;
+  profile_image?: string | null;
+  avatar_url?: string | null;
 }
 
 interface AuthResponse {

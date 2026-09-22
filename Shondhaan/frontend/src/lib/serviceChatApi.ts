@@ -8,6 +8,10 @@ export interface ServiceChatConversation {
   user_name?: string | null;
   user_email?: string | null;
   user_phone?: string | null;
+  user_avatar?: string | null;
+  profile_image?: string | null;
+  avatar_url?: string | null;
+  user_profile_image?: string | null;
   subject?: string | null;
   status: string;
   last_message?: string | null;
@@ -90,6 +94,9 @@ export async function createServiceChatConversation(message: string) {
       user_name: user?.name,
       user_email: user?.email,
       user_phone: user?.mobile,
+      user_avatar: user?.profile_image || user?.avatar_url,
+      profile_image: user?.profile_image || user?.avatar_url,
+      user_profile_image: user?.profile_image || user?.avatar_url,
       subject: "Service support",
     }),
   });
@@ -109,6 +116,12 @@ export async function sendServiceChatMessage(conversationId: string, message: st
       message,
       visitor_id: getServiceChatVisitorId(),
       sender_name: auth?.user?.name,
+      user_name: auth?.user?.name,
+      user_email: auth?.user?.email,
+      user_phone: auth?.user?.mobile,
+      user_avatar: auth?.user?.profile_image || auth?.user?.avatar_url,
+      profile_image: auth?.user?.profile_image || auth?.user?.avatar_url,
+      user_profile_image: auth?.user?.profile_image || auth?.user?.avatar_url,
     }),
   });
 
