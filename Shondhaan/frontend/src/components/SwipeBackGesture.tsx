@@ -23,7 +23,7 @@ const SwipeBackGesture = () => {
   // Disable on root home routes — nothing to go back to
   const disabled =
     location.pathname === "/" ||
-    location.pathname === "/mart/home" ||
+    location.pathname === "/mart" ||
     location.pathname === "/deal" ||
     location.pathname === "/jobs";
 

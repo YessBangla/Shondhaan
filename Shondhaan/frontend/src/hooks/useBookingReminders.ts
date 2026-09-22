@@ -53,7 +53,7 @@ export function useBookingReminders(bn: boolean) {
           if (typeof Notification !== "undefined" && Notification.permission === "granted") {
             try {
               new Notification(bn ? "Shondhaan • রিমাইন্ডার" : "Shondhaan • Reminder", {
-                body, icon: "/favicon.ico", tag: `reminder-${r.bookingId}`,
+                body, icon: "/images/favicon.ico", tag: `reminder-${r.bookingId}`,
               });
             } catch {}
           }

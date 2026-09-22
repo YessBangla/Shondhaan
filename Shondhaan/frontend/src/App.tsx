@@ -436,7 +436,7 @@ const App = () => {
                                   <Route path="/mart/delivery" element={<MartDeliveryPanel />} />
                                   <Route path="/mart/cs" element={<MartCustomerServicePanel />} />
                                   <Route path="/mart/admin" element={<MartPanel />} />
-                                  <Route path="/mart/home" element={<Navigate to="/mart" replace />} />
+                                  <Route path="/mart" element={<Navigate to="/mart" replace />} />
                                   <Route path="/mart/MartAdmin" element={<MartStoreShopPage />} />
                                   <Route path="/mart/category/:slug" element={<MartCategoryPage />} />
                                   <Route path="/mart/product/:slug" element={<MartProductDetail />} />

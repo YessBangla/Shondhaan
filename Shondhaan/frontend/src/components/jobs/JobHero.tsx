@@ -8,7 +8,7 @@ import { divisions } from "@/data/locations";
 import { JOB_CATEGORIES } from "@/hooks/useJobData";
 import yessJobsLogo from "@/assets/yess-jobs-logo.png";
 import JobsMenuBar from "./JobsMenuBar";
-const heroBackgroundImage = "/job-bg.png";
+const heroBackgroundImage = "/images/job-bg.png";
 
 interface JobHeroProps {
   bn: boolean;

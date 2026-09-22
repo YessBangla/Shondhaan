@@ -38,7 +38,7 @@ const MartWishlist = () => {
         <div className="app-container py-5">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="icon" className="text-white hover:bg-primary-foreground/10" onClick={() => navigate("/mart/home")}>
+              <Button variant="ghost" size="icon" className="text-white hover:bg-primary-foreground/10" onClick={() => navigate("/mart")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <div>
@@ -172,7 +172,7 @@ const MartWishlist = () => {
             <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
               {bn ? "পছন্দের পণ্যে ❤️ চাপুন, এখানে সেভ হবে!" : "Tap ❤️ on products you love to save them here!"}
             </p>
-            <Button onClick={() => navigate("/mart/home")} className="rounded-full px-6">
+            <Button onClick={() => navigate("/mart")} className="rounded-full px-6">
               <Sparkles className="h-4 w-4 mr-2" /> {bn ? "শপিং শুরু করুন" : "Start Shopping"}
             </Button>
           </motion.div>

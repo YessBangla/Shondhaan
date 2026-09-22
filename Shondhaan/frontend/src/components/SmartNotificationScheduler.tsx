@@ -52,8 +52,8 @@ const SmartNotificationScheduler = () => {
               body: bn
                 ? "আজকের ফ্ল্যাশ ডিল মিস করবেন না — এখনই দেখুন!"
                 : "Don't miss today's flash deals — check now!",
-              icon: "/favicon.ico",
-              badge: "/favicon.ico",
+              icon: "/images/favicon.ico",
+              badge: "/images/favicon.ico",
               tag: "Shondhaan-engage",
             },
           );

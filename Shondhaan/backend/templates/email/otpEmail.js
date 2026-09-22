@@ -95,7 +95,7 @@ export function otpEmailTemplate({ otp, expiryMinutes, password = null }) {
             <tr>
               <td align="center" style="background: #021543; padding: 24px 20px">
                 <img
-                  src="https://shondhaan.com/fullLogo.png"
+                  src="https://shondhaan.com/images/fullLogo.png"
                   alt="Shondhaan"
                   width="100"
                   style="display: block; margin: 0 auto 12px; padding:5px; border-radius: 10px; max-width: 160px; background: #ffffff;"
@@ -243,7 +243,7 @@ export function otpEmailTemplate({ otp, expiryMinutes, password = null }) {
                 "
               >
                 <img
-                  src="https://shondhaan.com/fullLogo.png"
+                  src="https://shondhaan.com/images/fullLogo.png"
                   alt="Shondhaan"
                   width="95"
                   style="display: block; margin: 0 auto 14px"

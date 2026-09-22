@@ -157,7 +157,7 @@ const PLATFORM_CARDS = [
     bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
   },
   {
-    to: "/mart/home",
+    to: "/mart",
     labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
     smlabelBn: "মার্ট", smlabelEn: "Mart",
     descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
@@ -353,8 +353,8 @@ const HeroSection = () => {
     (bn ? activeHeroBanner?.subtitle_bn : activeHeroBanner?.subtitle_en || activeHeroBanner?.subtitle_bn) ||
     (bn ? "প্রিমিয়াম সার্ভিস প্রদানকারী এবং নির্ভরযোগ্য সমাধান" : "Premium providers and trusted solutions");
 
-  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/hero1.png";
-  const heroImageMobile = "/hero-mobile2.png";
+  const heroImage = getBackendImageUrl(activeHeroBanner?.image_url) || "/images/hero1.png";
+  const heroImageMobile = "/images/hero-mobile2.png";
 
   const mobileSearchRef = useRef<HTMLDivElement>(null);
   const desktopSearchRef = useRef<HTMLDivElement>(null);

@@ -483,7 +483,7 @@ img[loading="lazy"] {
   pointer-events: none;
   width: 44px;
   height: 16px;
-  background-image: url("/yess-service-logo.png");
+  background-image: url("/images/yess-service-logo.png");
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;

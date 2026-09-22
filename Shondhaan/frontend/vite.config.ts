@@ -19,8 +19,8 @@ export default defineConfig(() => ({
       injectRegister: false,
       devOptions: { enabled: false },
       includeAssets: [
-        "favicon.ico",
-        "favicon.png",
+        "images/favicon.ico",
+        "images/favicon.png",
         "icons/apple-touch-icon.png",
       ],
       workbox: {

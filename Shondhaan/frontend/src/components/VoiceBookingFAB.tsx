@@ -67,7 +67,7 @@ const VoiceBookingFAB = () => {
     }
     // Multi-language voice navigation commands first
     const navMap: Array<{ keys: string[]; path: string; label: string }> = [
-      { keys: ["মার্ট", "mart", "shop", "কেনা"], path: "/mart/home", label: bn ? "মার্ট" : "Mart" },
+      { keys: ["মার্ট", "mart", "shop", "কেনা"], path: "/mart", label: bn ? "মার্ট" : "Mart" },
       { keys: ["ডিল", "deal", "বিক্রয়", "sell", "buy"], path: "/deal", label: bn ? "ডিল" : "Deal" },
       { keys: ["চাকরি", "চাকরি", "job", "career"], path: "/jobs", label: bn ? "চাকরি" : "Jobs" },
       { keys: ["বুকিং", "booking", "অর্ডার", "order"], path: "/bookings", label: bn ? "বুকিং" : "Bookings" },

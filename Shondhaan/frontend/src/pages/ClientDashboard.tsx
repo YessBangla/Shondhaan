@@ -1242,7 +1242,7 @@ const ClientDashboard = () => {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   {[
                     { title: bn ? "মার্ট" : "Mart", subtitle: bn ? "পণ্য কিনুন" : "Shop products", icon: ShoppingBag, 
-                      img_icon:'images/modules_logo/mart.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/mart/home") },
+                      img_icon:'images/modules_logo/mart.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/mart") },
                     { title: bn ? "ডিল" : "Deal", subtitle: bn ? "কিনুন ও বিক্রি করুন" : "Buy & sell", icon: Megaphone, 
                       img_icon:'images/modules_logo/deal.png', bg: "bg-userprimaryshade", color: "text-userprimary", action: () => navigate("/deal") },
                     { title: bn ? "বিজ্ঞাপন দিন" : "Post Ad", subtitle: bn ? "ফ্রি বিজ্ঞাপন" : "Free listing", icon: Megaphone, 

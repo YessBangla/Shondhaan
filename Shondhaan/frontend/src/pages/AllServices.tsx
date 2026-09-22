@@ -953,7 +953,10 @@ const CategorySections = ({ categories, services, sectionRefs, getCatName, getSe
 }) => {
   const { language } = useLanguage(); const bn = language === "bn";
   const visibleCategoryCount = categories.filter((cat) => services.some((s) => String(s.category_id || "") === String(cat.id))).length;
-  const uncategorizedServices = services.filter((s) => !s.category_id).sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
+  const categoryIds = new Set(categories.map((category) => String(category.id)));
+  const uncategorizedServices = services
+    .filter((s) => !s.category_id || !categoryIds.has(String(s.category_id)))
+    .sort((a, b) => Number(a.sort_order || 0) - Number(b.sort_order || 0));
 
   if (visibleCategoryCount === 0 && uncategorizedServices.length === 0) {
     return <div className="py-16 text-center text-muted-foreground">{bn ? "কোনো সার্ভিস পাওয়া যায়নি" : "No services available"}</div>;
