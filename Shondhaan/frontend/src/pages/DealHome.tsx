@@ -223,7 +223,7 @@ const CategoryCardItem = ({
             <img 
               src={getDealImageUrl(cat.icon)} 
               alt={cat.name} 
-              className="w-5 h-5 md:w-5 md:h-5 object-cover group-hover:scale-110 transition-transform duration-300" 
+              className="w-auto h-5 md:w-auto md:h-10 group-hover:scale-110 transition-transform duration-300" 
             />
           ) : (
             <span className="text-sm md:text-base leading-none group-hover:scale-110 transition-transform duration-300">
