@@ -214,7 +214,7 @@ const CategoryCardItem = ({
         className="relative w-full h-full flex flex-col items-center justify-center gap-2 p-1 md:p-2 rounded-2xl bg-gradient-to-br from-white to-blue-50/40 border border-blue-100/40 backdrop-blur-sm hover:border-emerald-300/60 hover:from-white hover:to-emerald-50/40 transition-all duration-300 shadow-sm hover:shadow-xl hover:shadow-emerald-500/15 text-center overflow-hidden"
         >
         {/* Premium icon container */}
-        <span className="relative w-full h-full md:w-full md:h-full flex items-center justify-center transition-all duration-300 overflow-hidden">
+        <span className="relative w-full h-auto md:w-full md:h-auto flex items-center justify-center transition-all duration-300 overflow-hidden">
           {/* Subtle inner shine on hover */}
           <span className="absolute inset-0 bg-gradient-to-br from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           
@@ -223,7 +223,7 @@ const CategoryCardItem = ({
             <img 
               src={getDealImageUrl(cat.icon)} 
               alt={cat.name} 
-              className="w-auto h-10 md:w-auto md:h-[100px] group-hover:scale-110 transition-transform duration-300" 
+              className="w-auto h-10 md:w-auto md:h-[50px] group-hover:scale-110 transition-transform duration-300" 
             />
           ) : (
             <span className="text-sm md:text-base leading-none group-hover:scale-110 transition-transform duration-300">
