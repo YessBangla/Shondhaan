@@ -27,6 +27,7 @@ async function createOrdersTable() {
         notes                   TEXT          NULL,
         cancel_reason           TEXT          NULL,
         return_reason           TEXT          NULL,
+        delivered_at            DATETIME      NULL,
         estimated_delivery_date DATE          NULL,
         created_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at              TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -77,6 +78,7 @@ async function createOrdersTable() {
       { name: "notes",                   def: "TEXT NULL" },
       { name: "cancel_reason",           def: "TEXT NULL" },
       { name: "return_reason",           def: "TEXT NULL" },
+      { name: "delivered_at",            def: "DATETIME NULL" },
       { name: "estimated_delivery_date", def: "DATE NULL" },
     ];
 
