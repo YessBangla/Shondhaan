@@ -328,7 +328,7 @@ const MartProductDetail = () => {
         {/* <div className="pt-[44px] md:pt-[104px]" /> */}
         <div className="text-center py-20">
           <p className="text-xl text-gray-600">{bn ? "পণ্য পাওয়া যায়নি" : "Product not found"}</p>
-          <Button className="mt-4 bg-primary hover:bg-primary/90 text-white border-0" onClick={() => navigate("/mart/home")}>
+          <Button className="mt-4 bg-primary hover:bg-primary/90 text-white border-0" onClick={() => navigate("/mart")}>
             {bn ? "মার্টে ফিরুন" : "Back to Mart"}
           </Button>
         </div>
@@ -394,7 +394,7 @@ const MartProductDetail = () => {
       {/* Breadcrumb */}
       <div className="bg-white border-b border-gray-200">
         <div className="app-container py-2 flex items-center gap-1 overflow-x-auto text-xs text-gray-500 whitespace-nowrap">
-          <button onClick={() => navigate("/mart/home")} className="hover:text-primary">
+          <button onClick={() => navigate("/mart")} className="hover:text-primary">
             {bn ? "সন্ধান মার্ট" : "Yess Mart"}
           </button>
           <ChevronRight className="h-3 w-3 text-gray-400 shrink-0" />

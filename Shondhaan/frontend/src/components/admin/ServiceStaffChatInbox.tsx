@@ -28,6 +28,7 @@ import {
 } from "@/lib/serviceChatApi";
 import { emitServiceChatWithAck, getServiceChatSocket } from "@/lib/serviceChatSocket";
 import { getMySqlAuth } from "@/lib/mysqlAuth";
+import { CENTRAL_API_BASE_URL, INDIVIDUAL_API_BASE_URL } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 type Ack = {
@@ -98,6 +99,35 @@ const formatMessageDate = (dateStr: string) => {
 const shouldShowDateSeparator = (current: string, previous?: string) => {
   if (!previous) return true;
   return new Date(current).toDateString() !== new Date(previous).toDateString();
+};
+
+const resolveAvatarUrl = (url?: string | null) => {
+  if (!url) return "";
+  if (/^https?:\/\//i.test(url) || url.startsWith("data:")) return url;
+  const base = (CENTRAL_API_BASE_URL || INDIVIDUAL_API_BASE_URL || "").replace(/\/+$/, "");
+  return base ? `${base}${url.startsWith("/") ? "" : "/"}${url}` : url;
+};
+
+const getConversationAvatar = (conversation?: ServiceChatConversation | null) =>
+  resolveAvatarUrl(
+    (conversation as ServiceChatConversation & {
+      user_avatar?: string | null;
+      user_profile_image?: string | null;
+      profile_image?: string | null;
+      avatar_url?: string | null;
+    } | null)?.user_avatar ||
+      (conversation as ServiceChatConversation & { user_profile_image?: string | null } | null)?.user_profile_image ||
+      (conversation as ServiceChatConversation & { profile_image?: string | null } | null)?.profile_image ||
+      (conversation as ServiceChatConversation & { avatar_url?: string | null } | null)?.avatar_url
+  );
+
+const TAGGED_MESSAGE_PATTERN = /^"([^"]+)"\s*\n([\s\S]*)$/;
+
+const parseTaggedMessage = (body?: string | null) => {
+  const text = body || "";
+  const match = text.match(TAGGED_MESSAGE_PATTERN);
+  if (!match) return { topic: "", text };
+  return { topic: match[1], text: match[2] };
 };
 
 /* ── Component ── */
@@ -417,6 +447,7 @@ const ServiceStaffChatInbox = () => {
               {sortedConversations.map((conv, idx) => {
                 const isActive = conv.id === activeId;
                 const hasUnread = (conv.unread_count || 0) > 0;
+                const avatarUrl = getConversationAvatar(conv);
                 return (
                   <motion.button
                     key={conv.id}
@@ -435,12 +466,20 @@ const ServiceStaffChatInbox = () => {
                   >
                     {/* Avatar */}
                     <div className="relative shrink-0">
-                      <div
-                        className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md"
-                        style={getAvatarStyle(conv.id)}
-                      >
-                        {getInitial(conv.user_name || "Visitor")}
-                      </div>
+                      {avatarUrl ? (
+                        <img
+                          src={avatarUrl}
+                          alt={conv.user_name || "Customer"}
+                          className="h-11 w-11 rounded-full object-cover shadow-md"
+                        />
+                      ) : (
+                        <div
+                          className="h-11 w-11 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-md"
+                          style={getAvatarStyle(conv.id)}
+                        >
+                          {getInitial(conv.user_name || "Visitor")}
+                        </div>
+                      )}
                       {hasUnread && (
                         <span className="absolute -top-0.5 -right-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-blue-600 text-[9px] font-bold text-white border-2 border-slate-50 dark:border-slate-900 shadow-sm shadow-blue-600/30">
                           {conv.unread_count}
@@ -492,7 +531,7 @@ const ServiceStaffChatInbox = () => {
                             : "text-slate-400 dark:text-slate-500"
                         )}
                       >
-                        {conv.last_message || "No messages yet"}
+                        {parseTaggedMessage(conv.last_message).text || "No messages yet"}
                       </p>
                     </div>
                   </motion.button>
@@ -525,12 +564,20 @@ const ServiceStaffChatInbox = () => {
                 >
                   <ChevronLeft className="h-5 w-5" />
                 </button>
-                <div
-                  className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md shrink-0"
-                  style={getAvatarStyle(activeConversation.id)}
-                >
-                  {getInitial(activeConversation.user_name || "Visitor")}
-                </div>
+                {getConversationAvatar(activeConversation) ? (
+                  <img
+                    src={getConversationAvatar(activeConversation)}
+                    alt={activeConversation.user_name || "Customer"}
+                    className="h-10 w-10 rounded-xl object-cover shadow-md shrink-0"
+                  />
+                ) : (
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center text-white text-sm font-bold shadow-md shrink-0"
+                    style={getAvatarStyle(activeConversation.id)}
+                  >
+                    {getInitial(activeConversation.user_name || "Visitor")}
+                  </div>
+                )}
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-bold text-slate-900 dark:text-white truncate">
@@ -619,6 +666,7 @@ const ServiceStaffChatInbox = () => {
                 <div className="space-y-3 max-w-2xl mx-auto">
                   {sortedMessages.map((msg, idx) => {
                     const isStaff = msg.sender_role === "staff";
+                    const parsedMessage = parseTaggedMessage(msg.body);
                     const prevMsg = sortedMessages[idx - 1];
                     const showDate = shouldShowDateSeparator(
                       msg.created_at,
@@ -660,15 +708,23 @@ const ServiceStaffChatInbox = () => {
                           {!isStaff && (
                             <div className="w-7 shrink-0 flex flex-col items-center">
                               {showSenderAvatar ? (
-                                <div
-                                  className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
-                                  style={getAvatarStyle(activeConversation.id)}
-                                >
-                                  {getInitial(
-                                    activeConversation.user_name ||
-                                      "Visitor"
-                                  )}
-                                </div>
+                                getConversationAvatar(activeConversation) ? (
+                                  <img
+                                    src={getConversationAvatar(activeConversation)}
+                                    alt={activeConversation.user_name || "Customer"}
+                                    className="h-7 w-7 rounded-lg object-cover shadow-sm"
+                                  />
+                                ) : (
+                                  <div
+                                    className="h-7 w-7 rounded-lg flex items-center justify-center text-white text-[10px] font-bold shadow-sm"
+                                    style={getAvatarStyle(activeConversation.id)}
+                                  >
+                                    {getInitial(
+                                      activeConversation.user_name ||
+                                        "Visitor"
+                                    )}
+                                  </div>
+                                )
                               ) : (
                                 <div className="w-7" />
                               )}
@@ -704,11 +760,23 @@ const ServiceStaffChatInbox = () => {
                                 "rounded-2xl px-3.5 py-2.5 text-[13px] leading-relaxed shadow-sm",
                                 isStaff
                                   ? "bg-gradient-to-br from-blue-600 to-blue-700 text-white rounded-br-md shadow-blue-600/10"
-                                  : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-bl-md"
+                                : "bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200/80 dark:border-slate-700 rounded-bl-md"
                               )}
                             >
+                              {parsedMessage.topic && (
+                                <span
+                                  className={cn(
+                                    "mb-1.5 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold",
+                                    isStaff
+                                      ? "bg-white/20 text-white"
+                                      : "bg-blue-50 text-blue-700 border border-blue-100 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20"
+                                  )}
+                                >
+                                  {parsedMessage.topic}
+                                </span>
+                              )}
                               <div className="whitespace-pre-wrap break-words">
-                                {msg.body}
+                                {parsedMessage.text}
                               </div>
                             </div>
 

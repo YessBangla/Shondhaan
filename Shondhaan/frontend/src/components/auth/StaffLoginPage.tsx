@@ -64,14 +64,8 @@ const StaffLoginPage = ({
     document.title = `${platformNameEn} Staff Login | Yess`;
   }, [platformNameEn]);
 
-  const openPanelInNewTab = (path: string) => {
-    const url = `${window.location.origin}${path}`;
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    if (win) {
-      navigate(homeHref, { replace: true });
-    } else {
-      navigate(path, { replace: true });
-    }
+  const navigateToPanel = (path: string) => {
+    navigate(path, { replace: true });
   };
 
   const completeBackendLogin = async (loginId: string, loginPassword: string) => {
@@ -88,7 +82,7 @@ const StaffLoginPage = ({
       title: "Welcome",
       description: `Signed in as ${bn ? role?.labelBn : role?.labelEn || match}.`,
     });
-    openPanelInNewTab(role?.panelPath || homeHref);
+    navigateToPanel(role?.panelPath || homeHref);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {

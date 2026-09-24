@@ -351,7 +351,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
         <p className="text-sm text-muted-foreground mt-1">
           {bn ? "সন্ধান মার্ট থেকে পণ্য কিনুন" : "Shop from Shondhaan Mart"}
         </p>
-        <Button className="mt-4 bg-userprimary gap-2 text-white" onClick={() => navigate("/mart/home")}>
+        <Button className="mt-4 bg-userprimary gap-2 text-white" onClick={() => navigate("/mart")}>
           <ShoppingBag className="h-4 w-4" />
           {bn ? "শপিং শুরু করুন" : "Start Shopping"}
         </Button>
@@ -426,7 +426,7 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
               cancelLabel={bn ? "বাতিল" : "CANCEL"}
               reorderLabel={bn ? "পুনরায়" : "REORDER"}
               onCancel={() => { setDialogOrderId(order.id); setDialogMode("cancel"); }}
-              onReorder={() => { navigate("/mart/home"); toast.success(bn ? "মার্ট হোমে নিয়ে যাচ্ছি" : "Going to Mart"); }}
+              onReorder={() => { navigate("/mart"); toast.success(bn ? "মার্ট হোমে নিয়ে যাচ্ছি" : "Going to Mart"); }}
             >
               <div className="bg-card border border-border/50 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 
@@ -624,6 +624,18 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                               </div>
                             ))}
                           </div>
+                          
+                          {order.status === "delivered" && refundEligibility[String(order.id)]?.eligible && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="mt-3 w-full gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
+                              onClick={() => { setDialogMode("refund"); setDialogOrderId(order.id); setReason(""); }}
+                              >
+                              <RotateCcw className="h-3.5 w-3.5" />
+                              {bn ? "Refund Request" : "Request Refund"}
+                            </Button>
+                          )}
                         </div>
 
                         {/* Full price breakdown — all 4 fee columns from schema */}
@@ -675,17 +687,6 @@ const MartOrdersTab = ({ orders, onRefresh, apiBase = "/api" }: MartOrdersTabPro
                             >
                               <XCircle className="h-3.5 w-3.5" />
                               {bn ? "বাতিল করুন" : "Cancel Order"}
-                            </Button>
-                          )}
-                          {refundEligibility[String(order.id)]?.eligible && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="gap-1.5 text-xs text-amber-700 border-amber-300 hover:bg-amber-50"
-                              onClick={() => { setDialogMode("refund"); setDialogOrderId(order.id); setReason(""); }}
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                              {bn ? "Refund Request" : "Request Refund"}
                             </Button>
                           )}
                           {refundEligibility[String(order.id)]?.refund_status && (

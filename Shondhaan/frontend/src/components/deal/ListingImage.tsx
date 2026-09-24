@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import yessDealLogo from "../../../public/fullLogo.png";
+import yessDealLogo from "../../../public/images/fullLogo.png";
 
 interface Props {
   src?: string | null;

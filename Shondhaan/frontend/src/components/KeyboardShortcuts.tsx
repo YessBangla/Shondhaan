@@ -46,7 +46,7 @@ const KeyboardShortcuts = () => {
       if (e.key === "g") { lastG = Date.now(); return; }
       if (Date.now() - lastG < 900) {
         const map: Record<string, string> = {
-          h: "/", m: "/mart/home", d: "/deal", j: "/jobs",
+          h: "/", m: "/mart", d: "/deal", j: "/jobs",
           b: "/bookings", p: "/profile", a: "/all-services", c: "/checkout",
         };
         const path = map[e.key];

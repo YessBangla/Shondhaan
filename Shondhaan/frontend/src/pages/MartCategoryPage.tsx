@@ -103,7 +103,7 @@ const MartCategoryPage = () => {
         <div className="app-container py-2">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <Button variant="ghost" size="icon" className="text-primary" onClick={() => navigate("/mart/home")}>
+              <Button variant="ghost" size="icon" className="text-primary" onClick={() => navigate("/mart")}>
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-xl font-bold flex items-center gap-2">

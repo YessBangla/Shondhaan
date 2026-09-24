@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Search, Eye, CheckCircle, XCircle, Clock, Star, Trash2, Tag, Shield, BarChart3, Users, Package, AlertTriangle, MessageSquare, Plus, Pencil, Save, ImageOff, ImagePlus } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,7 @@ const statusConfig: Record<string, { label: string; color: string; icon: any }> 
 const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[]; onRefresh: () => void }) => {
   const [editing, setEditing] = useState<string | null>(null);
   const [adding, setAdding] = useState(false);
+  const formRef = useRef<HTMLDivElement>(null);
   const [form, setForm] = useState({ name: "", name_en: "", slug: "", icon: "", parent_id: "", sort_order: 0, is_active: true });
 
   const resetForm = () => setForm({ name: "", name_en: "", slug: "", icon: "", parent_id: "", sort_order: 0, is_active: true });
@@ -98,6 +99,12 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
     setAdding(false);
     setForm({ name: cat.name, name_en: cat.name_en || "", slug: cat.slug, icon: cat.icon || "", parent_id: cat.parent_id || "", sort_order: cat.sort_order || 0, is_active: cat.is_active !== false });
   };
+
+  useEffect(() => {
+    if (adding || editing) {
+      formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [adding, editing]);
 
   const saveCategory = async () => {
     if (!form.name || !form.slug) {
@@ -155,13 +162,14 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <h4 className="font-bold text-sm text-foreground">ডিল ক্যাটেগরি ({categories.length})</h4>
-        <Button size="sm" onClick={() => { setAdding(true); setEditing(null); resetForm(); }}>
+        <Button className="bg-userprimary" size="sm" onClick={() => { setAdding(true); setEditing(null); resetForm(); }}>
           <Plus className="h-3.5 w-3.5 mr-1" /> নতুন ক্যাটেগরি
         </Button>
       </div>
 
       {(adding || editing) && (
-        <Card className="border-primary/30 bg-primary/5">
+        <div ref={formRef} className="scroll-mt-4">
+          <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-4 space-y-3">
             <h4 className="font-bold text-sm">{editing ? "ক্যাটেগরি সম্পাদনা" : "নতুন ক্যাটেগরি যোগ"}</h4>
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
@@ -184,12 +192,13 @@ const DealCategoryManager = ({ categories, onRefresh }: { categories: DealCat[];
               </Select>
               <Input type="number" placeholder="সর্ট অর্ডার" value={form.sort_order} onChange={e => setForm(f => ({ ...f, sort_order: Number(e.target.value) }))} />
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 bg-userprimary">
               <Button size="sm" onClick={saveCategory}><Save className="h-3.5 w-3.5 mr-1" /> {editing ? "আপডেট" : "যোগ করুন"}</Button>
               <Button size="sm" variant="outline" onClick={() => { setAdding(false); setEditing(null); resetForm(); }}>বাতিল</Button>
             </div>
           </CardContent>
-        </Card>
+          </Card>
+        </div>
       )}
 
       <div className="rounded-lg border border-border overflow-hidden">

@@ -101,7 +101,7 @@ const hasSidebar =
     "/mart/admin", "/mart/cs",
     "/yessdeal", "/dashboard",
   ];
-  if (location.pathname === "/mart") return null;
+  if (location.pathname === "/login") return null;
 if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWith(p + "/"))) return null;
 
   const handleDashboardClick = async () => {
@@ -136,7 +136,7 @@ if (hiddenPaths.some(p => location.pathname === p || location.pathname.startsWit
       icon: ShoppingBag,
       children: [
         { labelBn: "মার্ট হোম", labelEn: "Mart Home", href: "/mart", icon: Store },
-        { labelBn: "প্রোডাক্ট খুঁজুন", labelEn: "Browse Products", href: "/mart#products", icon: Search },
+        { labelBn: "প্রোডাক্ট খুঁজুন", labelEn: "Browse Products", href: "/mart/category/all", icon: Search },
         { labelBn: "উইশলিস্ট", labelEn: "Wishlist", href: "/mart/wishlist", icon: Heart },
         { labelBn: "অর্ডারসমূহ", labelEn: "My Orders", href: "/mart/orders", icon: Package },
         { labelBn: "প্রোডাক্ট তুলনা", labelEn: "Compare Products", href: "/mart/compare", icon: ArrowRightLeft },

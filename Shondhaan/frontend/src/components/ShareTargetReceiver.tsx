@@ -42,7 +42,7 @@ const ShareTargetReceiver = () => {
   const close = () => setShared(null);
 
   const goService = () => { close(); nav(`/all-services?q=${encodeURIComponent(query)}`); };
-  const goMart = () => { close(); nav(`/mart/home?q=${encodeURIComponent(query)}`); };
+  const goMart = () => { close(); nav(`/mart?q=${encodeURIComponent(query)}`); };
   const goDeal = () => { close(); nav(`/deal/post?title=${encodeURIComponent(query)}`); };
 
   return (

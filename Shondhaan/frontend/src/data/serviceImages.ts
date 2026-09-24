@@ -332,5 +332,5 @@ export const serviceImageMap: Record<string, string> = {
 /** Get service image: use CMS image_url if available, otherwise fallback to local asset */
 export function getServiceImage(slug: string, imageUrl?: string | null): string {
   if (imageUrl) return imageUrl;
-  return serviceImageMap[slug] || "/placeholder.svg";
+  return serviceImageMap[slug] || "/images/placeholder.svg";
 }

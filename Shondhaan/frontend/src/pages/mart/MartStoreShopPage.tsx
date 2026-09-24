@@ -118,7 +118,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
           <h1 className="text-xl font-bold text-foreground mb-2">{bn ? "শপ খুঁজে পাওয়া যায়নি" : "Shop not found"}</h1>
           <p className="text-muted-foreground mb-4">{bn ? "এই লিংকে কোনো শপ নেই" : "No shop exists at this URL"}</p>
           <button
-            onClick={() => navigate("/mart/home")}
+            onClick={() => navigate("/mart")}
             className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-white"
           >
             {bn ? "মার্টে ফিরুন" : "Go to Mart"}
@@ -235,7 +235,7 @@ return base.sort((a, b) => (Number((a as any).price) || 0) - (Number((b as any).
           <main className="flex-1 min-w-0">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-3 overflow-x-auto">
-              <button onClick={() => navigate("/mart/home")} className="hover:text-primary shrink-0">{bn ? "সন্ধান মার্ট" : "Yess Mart"}</button>
+              <button onClick={() => navigate("/mart")} className="hover:text-primary shrink-0">{bn ? "সন্ধান মার্ট" : "Yess Mart"}</button>
               <ChevronRight className="h-3 w-3 shrink-0" />
               <span className="text-foreground truncate">{currentTitle}</span>
             </div>

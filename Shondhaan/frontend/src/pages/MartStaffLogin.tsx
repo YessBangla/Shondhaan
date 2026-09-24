@@ -7,7 +7,7 @@ const MartStaffLogin = () => (
     platformName="সন্ধান মার্ট"
     platformNameEn="Yess Mart"
     logoSrc={logo}
-    homeHref="/mart/home"
+    homeHref="/mart"
     roleKeys={[
       "super_admin",
       "admin",

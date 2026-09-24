@@ -204,7 +204,7 @@ const MobileBottomNav = () => {
 
 const PLATFORM_CARDS = [
   {
-    to: "/",
+    to: "/all-services",
     labelBn: "হোম সার্ভিস", labelEn: "Sondhaan Services",
     descBn: "সেরা সার্ভিসসমূহ", descEn: "Best Services",
     imgIcon: "/images/modules_logo/service.png",
@@ -213,7 +213,7 @@ const PLATFORM_CARDS = [
     bgPattern: "radial-gradient(circle at 100% 100%, rgba(168, 154, 156, 0.08), transparent 50%)",
   },
   {
-    to: "/mart/home",
+    to: "/mart",
     labelBn: "সন্ধান মার্ট", labelEn: "Shondhaan Mart",
     descBn: "প্রিমিয়াম পণ্য ও সার্ভিস", descEn: "Premium products",
     imgIcon: "/images/modules_logo/mart.png",

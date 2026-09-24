@@ -15,7 +15,7 @@ import { useLongPress } from "@/hooks/useLongPress";
 import { haptic } from "@/lib/haptics";
 import { getFullImageUrl } from "@/lib/imageUrl";
 import { toast } from "sonner";
-import yessMartLogo from "/fullLogo.png";
+import yessMartLogo from "/images/fullLogo.png";
 
 // ── Variant price helpers (mirrors the logic used on the product detail
 // page) ──────────────────────────────────────────────────────────────────

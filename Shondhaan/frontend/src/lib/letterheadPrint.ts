@@ -11,7 +11,7 @@
  *   - sides  : 18mm
  */
 
-const LETTERHEAD_URL = "/letterhead-yess-bangla.jpg";
+const LETTERHEAD_URL = "/images/letterhead-yess-bangla.jpg";
 
 /**
  * Per-script font stacks. We always keep the Bengali/Latin defaults at the end

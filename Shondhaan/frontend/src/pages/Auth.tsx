@@ -113,22 +113,15 @@ const Auth = () => {
     : null;
   const { enrol, isEnrolled } = useBiometricEnrolment();
 
-  // Open the role-specific dashboard in a new tab and send the current tab home.
-  // Falls back to same-tab navigation if the popup is blocked.
-  const openDashboardInNewTab = async () => {
+  // Navigate to the role-specific dashboard in the current tab.
+  const navigateToDashboard = async () => {
     if (redirectPath) {
       navigate(redirectPath, { replace: true });
       return;
     }
 
     const path = await getRoleRedirectPath();
-    const url = `${window.location.origin}${path}`;
-    const win = window.open(url, "_blank", "noopener,noreferrer");
-    if (win) {
-      navigate("/", { replace: true });
-    } else {
-      navigate(path, { replace: true });
-    }
+    navigate(path, { replace: true });
   };
 
   useEffect(() => {
@@ -143,8 +136,7 @@ const Auth = () => {
 
   useEffect(() => {
     // Intentionally do NOT auto-redirect already-logged-in users away from /auth.
-    // The user explicitly wants the dashboard to open in a separate tab on
-    // login, while the current tab stays on the public site.
+    // Login success itself handles navigation to the dashboard in this tab.
   }, [user, navigate]);
 
   // --- LOGIN with password ---
@@ -191,7 +183,7 @@ const Auth = () => {
           if (yes && loginMethod === "email") await enrol(loginId);
         }
       } catch { /* ignore */ }
-      await openDashboardInNewTab();
+      await navigateToDashboard();
     } catch (error: any) {
       toast.error(
         error.message ||
@@ -268,7 +260,7 @@ const Auth = () => {
 
       toast.success(t("auth.accountCreated"));
       clearStoredReferralCode();
-      await openDashboardInNewTab();
+      await navigateToDashboard();
     } catch (error: any) {
       toast.error(error.message || t("auth.invalidOtp"));
     } finally {
@@ -344,7 +336,7 @@ const Auth = () => {
       {/* Background Image */}
       <div className="absolute h-[100vh] inset-0 -z-20">
         <img
-          src="/hero1.png"
+          src="/images/hero1.png"
           alt=""
           className="h-full w-full object-cover scale-110 blur-md"
         />
@@ -701,7 +693,7 @@ const Auth = () => {
                               });
                               if (error) throw error;
                               toast.success(`${demo.label} ${language === "bn" ? "হিসেবে লগইন হয়েছে" : "logged in"}`);
-                              await openDashboardInNewTab();
+                              await navigateToDashboard();
                             } catch (err: any) {
                               toast.error(err.message || "Login failed");
                             } finally {
